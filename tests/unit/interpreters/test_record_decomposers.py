@@ -14,7 +14,7 @@ def test_iteration_record():
     value_provider = StubbedValueProvider(values=[1, 2, 3])
     subject = RecordDecomposer.from_iteration_arguments(value_provider)
     assert [
-        IngestContext(1, DesiredIngestion()), 
-        IngestContext(2, DesiredIngestion()), 
-        IngestContext(3, DesiredIngestion()), 
+        IngestContext(1, DesiredIngestion()),
+        IngestContext(2, DesiredIngestion()),
+        IngestContext(3, DesiredIngestion()),
     ] == list(subject.decompose_record(context))
