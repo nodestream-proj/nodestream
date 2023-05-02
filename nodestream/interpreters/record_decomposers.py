@@ -2,45 +2,47 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Iterable, Optional
 
-from ..model import IngestContext
-from ..value_providers import ValueProvider
+from .interpreter_context import InterpreterContext
+from .value_providers import ValueProvider
 
 
 class RecordDecomposer(ABC):
-    """ A RecordDecomposer is responsible for looking at a record to decomposing it to subrecords to look at"""
-    
+    """A RecordDecomposer is responsible for looking at a record to decomposing it to subrecords to look at"""
+
     @abstractmethod
-    def decompose_record(self, context: IngestContext) -> Iterable[IngestContext]:
+    def decompose_record(self, context: InterpreterContext) -> Iterable[InterpreterContext]:
         ...
 
     @classmethod
     def from_iteration_arguments(cls, iteration_arguments: Optional[ValueProvider]):
         if iteration_arguments:
             return ValueProviderDecomposer(iteration_arguments)
-        
+
         return WholeRecordDecomposer()
 
 
 class WholeRecordDecomposer(RecordDecomposer):
-    """ Simply returns the original `IngestContext`.
+    """Simply returns the original `InterpreterContext`.
 
-    `decompose_record` will take the supplied `IngestContext` and return it as the only
+    `decompose_record` will take the supplied `InterpreterContext` and return it as the only
     decoposed record in the set.
     """
-    def decompose_record(self, context: IngestContext) -> Iterable[IngestContext]:
+
+    def decompose_record(self, context: InterpreterContext) -> Iterable[InterpreterContext]:
         yield context
 
 
 class ValueProviderDecomposer(RecordDecomposer):
-    """ Iterates on the values provided from a value provider from the root context.
+    """Iterates on the values provided from a value provider from the root context.
 
-    `decompose_record` will take the supplied `IngestContext` and deep copy it for each 
+    `decompose_record` will take the supplied `InterpreterContext` and deep copy it for each
     provided value from the value provider when called on the suppled context.
     """
+
     def __init__(self, value_provider: ValueProvider) -> None:
         self.value_provider = value_provider
 
-    def decompose_record(self, context: IngestContext) -> Iterable[IngestContext]:
+    def decompose_record(self, context: InterpreterContext) -> Iterable[InterpreterContext]:
         for sub_document in self.value_provider.provide_many_values_from_context(
             context
         ):
