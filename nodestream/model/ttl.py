@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from .schema import GraphObjectType
 from .ingest_strategy import IngestionStrategy
+from .schema import GraphObjectType
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,6 +14,6 @@ class TimeToLiveConfiguration:
     batch_size: int = 100
     enabled: bool = True
 
-    def ingest(self, strategy: IngestionStrategy):
+    def ingest(self, strategy: "IngestionStrategy"):
         if self.enabled:
             strategy.perform_ttl_operation(self)

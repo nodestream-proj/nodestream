@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Tuple, str, Dict, Any
+from typing import Any, Dict, Tuple
 
 
 class IngestionHook(ABC):
@@ -20,5 +20,6 @@ class IngestionHook(ABC):
 
 @dataclass(slots=True, frozen=True)
 class IngestionHookRunRequest:
+    """ An `IngestionHookRunRequest` defines what hook is meant to be run and when the hook should run. """
     hook: IngestionHook
     before_ingest: bool

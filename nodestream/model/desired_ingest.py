@@ -3,12 +3,10 @@ from enum import Enum
 from logging import getLogger
 from typing import List
 
-from .graph_objects import Node, Relationship, MatchStrategy
+from .graph_objects import Node, Relationship
+from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
 from .ingest_strategy import IngestionStrategy
-from .ingestion_hooks import IngestionHookRunRequest
 
-
-from ..model import IngestionHook
 
 LOGGER = getLogger(__name__)
 
@@ -29,10 +27,9 @@ class RelationshipWithNodes:
     match_strategy: MatchStrategy = MatchStrategy.EAGER
 
 
-
 @dataclass(slots=True)
 class DesiredIngestion:
-    source: Node = Node()
+    source: Node = field(default_factory=Node)
     relationships: List[Relationship] = field(default_factory=list)
     hook_requests: List[IngestionHookRunRequest] = field(default_factory=list)
 
@@ -40,14 +37,14 @@ class DesiredIngestion:
     def source_node_is_valid(self) -> bool:
         return self.source.is_valid
 
-    def ingest_source_node(self, strategy: IngestionStrategy):
+    def ingest_source_node(self, strategy: "IngestionStrategy"):
         strategy.ingest_source_node(self.source)
 
-    def ingest_relationships(self, strategy: IngestionStrategy):
+    def ingest_relationships(self, strategy: "IngestionStrategy"):
         for relationship in self.relationships:
             strategy.ingest_relationship(relationship)
 
-    def run_ingest_hooks(self, strategy: IngestionStrategy):
+    def run_ingest_hooks(self, strategy: "IngestionStrategy"):
         for hook_req in self.hook_requests:
             strategy.run_hook(hook_req.hook, hook_req.before_ingest)
 
@@ -69,7 +66,7 @@ class DesiredIngestion:
             return False
         return True
 
-    def ingest(self, strategy: IngestionStrategy):
+    def ingest(self, strategy: "IngestionStrategy"):
         if self.can_perform_ingest():
             self.ingest_source_node(strategy)
             self.ingest_relationships(strategy)
@@ -82,8 +79,6 @@ class DesiredIngestion:
         outbound: bool,
         match_strategy: MatchStrategy,
     ):
-        # TODO: This is not going to work right now because it is valid that a relationship 
-        #   can be rendered before we know the source node. What do we do? Delay these? 
         from_node, to_node = (
             (self.source, related_node) if outbound else (related_node, self.source)
         )

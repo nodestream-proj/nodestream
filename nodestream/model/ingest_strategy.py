@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
-from .ttl import TimeToLiveConfiguration
-from .graph_objects import Node
-from .indexes import KeyIndex, FieldIndex
-from .desired_ingest import RelationshipWithNodes
-from .ingestion_hooks import IngestionHookRunRequest
+if TYPE_CHECKING:
+    from .desired_ingest import RelationshipWithNodes
+    from .graph_objects import Node
+    from .indexes import FieldIndex, KeyIndex
+    from .ingestion_hooks import IngestionHookRunRequest
+    from .ttl import TimeToLiveConfiguration
 
 
 class IngestionStrategy(ABC):
@@ -19,27 +21,40 @@ class IngestionStrategy(ABC):
     """
 
     @abstractmethod
-    def ingest_source_node(self, source: Node):
+    def ingest_source_node(self, source: "Node"):
         """Given a provided instance of `Node`, ensure that it is commited to the GraphDatabase."""
         raise NotImplementedError
 
     @abstractmethod
-    def ingest_relationship(self, relationship: RelationshipWithNodes):
+    def ingest_relationship(self, relationship: "RelationshipWithNodes"):
         """Given a provided instance of `SourceNode`, ensure that the provided `Relationship` is commited to the database."""
         raise NotImplementedError
 
     @abstractmethod
-    def run_hook(self, request: IngestionHookRunRequest):
+    def run_hook(self, request: "IngestionHookRunRequest"):
+        """ Runs the provided request for an IngestHook given the context. """
         raise NotImplementedError
 
     @abstractmethod
     def upsert_key_index(self, index: "KeyIndex"):
+        """ Create a Key Index Immediately for a given Node Type.
+
+        See information on `KeyIndex` for more information.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def upsert_field_index(self, index: "FieldIndex"):
+        """ Create a Key Index Immediately for a Object Type.
+
+        See information on `FieldIndex` for more information.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def perform_ttl_operation(self, config: "TimeToLiveConfiguration"):
+        """ Perform a TTL Operation. 
+        
+        See Information on `TimeToLiveConfiguration` for more Information.
+        """
         raise NotImplementedError
