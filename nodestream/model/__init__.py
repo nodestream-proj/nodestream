@@ -8,7 +8,19 @@ from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
 from .interpreter_context import InterpreterContext, JsonLikeDocument
 from .record_decomposers import RecordDecomposer
 from .ttl import TimeToLiveConfiguration
-from .value_provider import ValueProvider
+from .value_provider import ValueProvider, StaticValueOrValueProvider
+from .schema import (
+    GraphObjectShape,
+    GraphObjectType,
+    TypeMarker,
+    KnownTypeMarker,
+    UnknownTypeMarker,
+    PropertyMetadataSet,
+    PropertyMetadata,
+    PropertyType,
+    IntrospectableIngestionComponent,
+    AggregatedIntrospectionMixin,
+)
 
 __all__ = (
     "DesiredIngestion",
@@ -27,4 +39,15 @@ __all__ = (
     "InterpreterContext",
     "RecordDecomposer",
     "JsonLikeDocument",
+    "GraphObjectShape",
+    "GraphObjectType",
+    "TypeMarker",
+    "KnownTypeMarker",
+    "UnknownTypeMarker",
+    "PropertyMetadataSet",
+    "PropertyMetadata",
+    "PropertyType",
+    "IntrospectableIngestionComponent",
+    "AggregatedIntrospectionMixin",
+    "StaticValueOrValueProvider",
 )

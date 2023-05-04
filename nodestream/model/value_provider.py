@@ -51,6 +51,10 @@ class ValueProvider(ABC):
         for value in self.many_values(context):
             yield self.normalize(value, **normalization_args)
 
+    @property
+    def is_static(self) -> bool:
+        return False
+
 
 class StaticValueProvider(ValueProvider):
     def __init__(self, value) -> None:
@@ -61,3 +65,7 @@ class StaticValueProvider(ValueProvider):
 
     def many_values(self, _: InterpreterContext) -> Iterable[Any]:
         return self.value if isinstance(self.value, Iterable) else [self.value]
+
+    @property
+    def is_static(self) -> bool:
+        return True
