@@ -20,6 +20,7 @@ class IngestionHook(ABC):
 
 @dataclass(slots=True, frozen=True)
 class IngestionHookRunRequest:
-    """ An `IngestionHookRunRequest` defines what hook is meant to be run and when the hook should run. """
+    """An `IngestionHookRunRequest` defines what hook is meant to be run and when the hook should run."""
+
     hook: IngestionHook
     before_ingest: bool

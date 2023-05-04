@@ -32,12 +32,12 @@ class IngestionStrategy(ABC):
 
     @abstractmethod
     def run_hook(self, request: "IngestionHookRunRequest"):
-        """ Runs the provided request for an IngestHook given the context. """
+        """Runs the provided request for an IngestHook given the context."""
         raise NotImplementedError
 
     @abstractmethod
     def upsert_key_index(self, index: "KeyIndex"):
-        """ Create a Key Index Immediately for a given Node Type.
+        """Create a Key Index Immediately for a given Node Type.
 
         See information on `KeyIndex` for more information.
         """
@@ -45,7 +45,7 @@ class IngestionStrategy(ABC):
 
     @abstractmethod
     def upsert_field_index(self, index: "FieldIndex"):
-        """ Create a Key Index Immediately for a Object Type.
+        """Create a Key Index Immediately for a Object Type.
 
         See information on `FieldIndex` for more information.
         """
@@ -53,8 +53,8 @@ class IngestionStrategy(ABC):
 
     @abstractmethod
     def perform_ttl_operation(self, config: "TimeToLiveConfiguration"):
-        """ Perform a TTL Operation. 
-        
+        """Perform a TTL Operation.
+
         See Information on `TimeToLiveConfiguration` for more Information.
         """
         raise NotImplementedError
