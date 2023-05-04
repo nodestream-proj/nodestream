@@ -1,18 +1,19 @@
 from nodestream.normalizers import RemoveTrailingDots
 
-import pytest 
+import pytest
 from hamcrest import assert_that, equal_to
 
+
 @pytest.mark.parametrize(
-    "input_value,expected_value", 
+    "input_value,expected_value",
     [
-        ("some.dots....", "some.dots"), 
+        ("some.dots....", "some.dots"),
         ("no_dots", "no_dots"),
         (".some.dots.", ".some.dots"),
         ("", ""),
         (None, None),
-        ([1, 2, 3], [1, 2, 3])
-    ]
+        ([1, 2, 3], [1, 2, 3]),
+    ],
 )
 def test_lowercase_strings_normalization(input_value, expected_value):
     subject = RemoveTrailingDots()

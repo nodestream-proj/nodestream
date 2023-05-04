@@ -7,6 +7,13 @@ from ..subclass_registry import SubclassRegistry
 NORMALIZER_REGISTRY = SubclassRegistry()
 
 
+class InvalidFlagError(ValueError):
+    def __init__(self, flag_name, *args: object) -> None:
+        super().__init__(
+            f"Normalization flag with name '{flag_name}' is not valid.`", *args
+        )
+
+
 @NORMALIZER_REGISTRY.connect_baseclass
 class Normalizer(ABC):
     """A `Normalizer` is responsible for turning objects into a consistent form.
@@ -17,8 +24,27 @@ class Normalizer(ABC):
     """
 
     @classmethod
+    def normalize_by_args(cls, value: Any, **normalizer_args) -> Any:
+        for flag_name, enabled in normalizer_args.items():
+            if enabled:
+                value = cls.by_flag_name(flag_name).normalize_value(value)
+
+        return value
+
+    @classmethod
     def arugment_flag(cls):
         return f"do_{NORMALIZER_REGISTRY.name_for(cls)}"
+
+    @classmethod
+    def by_flag_name(cls, flag_name: str) -> "Normalizer":
+        if not flag_name.startswith("do_"):
+            raise InvalidFlagError(flag_name)
+
+        normalizer_class = NORMALIZER_REGISTRY.get(flag_name.strip("do_"))
+        if not normalizer_class:
+            raise InvalidFlagError(flag_name)
+
+        return normalizer_class()
 
     @abstractmethod
     def normalize_value(self, value: Any) -> Any:

@@ -27,5 +27,6 @@ def test_raises_errors_when_invalid_named_subclass():
 
 def test_raises_errors_when_name_is_resused():
     with pytest.raises(AlreadyInRegistryError):
+
         class _(TestClass, name="child"):
             pass

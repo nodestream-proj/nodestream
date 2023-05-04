@@ -1,18 +1,19 @@
 from nodestream.normalizers import LowercaseStrings
 
-import pytest 
+import pytest
 from hamcrest import assert_that, equal_to
 
+
 @pytest.mark.parametrize(
-    "input_value,expected_value", 
+    "input_value,expected_value",
     [
-        ("SomERandomCaps", "somerandomcaps"), 
+        ("SomERandomCaps", "somerandomcaps"),
         ("ALL_CAPS", "all_caps"),
         ("123456", "123456"),
         ("", ""),
         (None, None),
-        ([1, 2, 3], [1, 2, 3])
-    ]
+        ([1, 2, 3], [1, 2, 3]),
+    ],
 )
 def test_lowercase_strings_normalization(input_value, expected_value):
     subject = LowercaseStrings()

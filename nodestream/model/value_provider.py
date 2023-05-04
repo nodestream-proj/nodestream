@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from typing import Any, Dict, Iterable, Union
 
 from .interpreter_context import InterpreterContext
+from ..normalizers import Normalizer
 
 StaticValueOrValueProvider = Union[Any, "ValueProvider"]
 
@@ -37,8 +38,7 @@ class ValueProvider(ABC):
         raise NotImplementedError
 
     def normalize(self, value, **args):
-        # TODO: Handle two lower and trailing dot removal.
-        return value
+        return Normalizer.normalize_by_args(value, **args)
 
     def normalize_single_value(
         self, context: InterpreterContext, **normalization_args
