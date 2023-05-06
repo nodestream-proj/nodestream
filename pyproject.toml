@@ -5,13 +5,15 @@ description = ""
 authors = ["Zach Probst <zprobst@resilientvitality.com>"]
 readme = "README.md"
 
+[tool.isort]
+profile = "black"
+
 [tool.poetry.dependencies]
 python = "^3.11"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
 mkdocs-material = "^9.1.8"
-
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
