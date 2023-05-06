@@ -26,6 +26,7 @@ class ValueProvider(ABC):
         return {k: cls.garuntee_value_provider(v) for k, v in maybe_providers.items()}
 
     # TODO: Change this API To take a loader that we give it.
+    @classmethod
     def install_yaml_tag_constructor(cls):
         pass
 

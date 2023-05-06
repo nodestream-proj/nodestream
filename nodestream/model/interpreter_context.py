@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
 from .desired_ingest import DesiredIngestion
+from .graph_objects import PropertySet
 
 
 JsonLikeDocument = Dict[str, Any]
@@ -22,4 +23,4 @@ class InterpreterContext:
     document: JsonLikeDocument
     desired_ingest: DesiredIngestion
     mappings: Optional[Dict[Any, Any]] = field(default_factory=dict)
-    variables: Optional[Dict[str, Any]] = field(default_factory=dict)
+    variables: PropertySet = field(default_factory=PropertySet.empty)

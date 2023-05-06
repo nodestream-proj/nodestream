@@ -43,7 +43,7 @@ class PropertySet(dict):
         provider_map: "Dict[str, ValueProvider]",
         **norm_args,
     ):
-        """For every key, provider pair provided, sets the property to the values provided.
+        """For every `(key, provider)` pair provided, sets the property to the values provided.
 
         This method can take arbitrary keyword arguments which are passed to `ValueProvider` as
         arguments for value normalization.
