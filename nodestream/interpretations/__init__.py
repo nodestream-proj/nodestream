@@ -3,6 +3,7 @@ from .interpretation import Interpretation
 from .properties_interpretation import PropertiesInterpretation
 from .relationship_interpretation import RelationshipInterpretation
 from .source_node_interpretation import SourceNodeInterpretation
+from .swtich_interpretation import SwitchInterpretation
 
 __all__ = (
     "ExtractVariablesInterpretation",
@@ -10,4 +11,5 @@ __all__ = (
     "PropertiesInterpretation",
     "RelationshipInterpretation",
     "SourceNodeInterpretation",
+    "SwitchInterpretation",
 )
