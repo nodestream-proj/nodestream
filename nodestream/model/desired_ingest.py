@@ -74,7 +74,7 @@ class DesiredIngestion:
     def add_relationship(
         self,
         related_node: Node,
-        details: Relationship,
+        relationship: Relationship,
         outbound: bool,
         match_strategy: MatchStrategy,
     ):
@@ -85,7 +85,7 @@ class DesiredIngestion:
             RelationshipWithNodes(
                 from_node=from_node,
                 to_node=to_node,
-                details=details,
+                relationship=relationship,
                 match_strategy=match_strategy,
             )
         )

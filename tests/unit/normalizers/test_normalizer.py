@@ -12,7 +12,7 @@ class Test(Normalizer, name="test"):
 
 
 def test_arugment_flag():
-    assert_that(Normalizer.arugment_flag(), equal_to("do_test"))
+    assert_that(Test.arugment_flag(), equal_to("do_test"))
 
 
 def test_by_flag_name():

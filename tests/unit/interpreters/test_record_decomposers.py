@@ -1,6 +1,8 @@
 from nodestream.model import DesiredIngestion, InterpreterContext
 from nodestream.model.record_decomposers import RecordDecomposer
 
+from hamcrest import equal_to, assert_that
+
 from ..stubs import StubbedValueProvider
 
 
@@ -11,11 +13,9 @@ def test_whole_record_iteration():
 
 
 def test_iteration_record():
+    expected_records = [1, 2, 3]
     context = InterpreterContext({}, DesiredIngestion())
-    value_provider = StubbedValueProvider(values=[1, 2, 3])
+    value_provider = StubbedValueProvider(values=expected_records)
     subject = RecordDecomposer.from_iteration_arguments(value_provider)
-    assert [
-        InterpreterContext(1, DesiredIngestion()),
-        InterpreterContext(2, DesiredIngestion()),
-        InterpreterContext(3, DesiredIngestion()),
-    ] == list(subject.decompose_record(context))
+    actual_records = [ctx.document for ctx in subject.decompose_record(context)]
+    assert_that(actual_records, equal_to(expected_records))
