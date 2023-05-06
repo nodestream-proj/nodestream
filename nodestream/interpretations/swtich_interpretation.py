@@ -17,6 +17,13 @@ class UnhandledBranchError(ValueError):
 
 
 class SwitchInterpretation(AggregatedIntrospectionMixin, Interpretation, name="switch"):
+    __slots__ = (
+        "switch_on",
+        "interpretations",
+        "default",
+        "normalization",
+    )
+
     def __init__(
         self,
         switch_on: StaticValueOrValueProvider,
