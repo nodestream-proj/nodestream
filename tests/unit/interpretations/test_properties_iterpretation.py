@@ -1,13 +1,13 @@
-from hamcrest import assert_that, has_entries, equal_to
+from hamcrest import assert_that, equal_to, has_entries
 
-from nodestream.model import (
-    UnknownTypeMarker,
-    GraphObjectType,
-    GraphObjectShape,
-    PropertyMetadataSet,
-)
 from nodestream.interpretations.properties_interpretation import (
     PropertiesInterpretation,
+)
+from nodestream.model import (
+    GraphObjectShape,
+    GraphObjectType,
+    PropertyMetadataSet,
+    UnknownTypeMarker,
 )
 
 from ..stubs import StubbedValueProvider

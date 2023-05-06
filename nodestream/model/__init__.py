@@ -1,5 +1,3 @@
-from typing import Any, Dict
-
 from .desired_ingest import DesiredIngestion, MatchStrategy, RelationshipWithNodes
 from .graph_objects import Node, PropertySet, Relationship
 from .indexes import FieldIndex, KeyIndex
@@ -7,19 +5,25 @@ from .ingest_strategy import IngestionStrategy
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
 from .interpreter_context import InterpreterContext, JsonLikeDocument
 from .record_decomposers import RecordDecomposer
-from .ttl import TimeToLiveConfiguration
-from .value_provider import ValueProvider, StaticValueOrValueProvider
 from .schema import (
+    AggregatedIntrospectionMixin,
+    Cardinality,
     GraphObjectShape,
     GraphObjectType,
-    TypeMarker,
-    KnownTypeMarker,
-    UnknownTypeMarker,
-    PropertyMetadataSet,
-    PropertyMetadata,
-    PropertyType,
     IntrospectableIngestionComponent,
-    AggregatedIntrospectionMixin,
+    KnownTypeMarker,
+    PresentRelationship,
+    PropertyMetadata,
+    PropertyMetadataSet,
+    PropertyType,
+    TypeMarker,
+    UnknownTypeMarker,
+)
+from .ttl import TimeToLiveConfiguration
+from .value_provider import (
+    StaticValueOrValueProvider,
+    StaticValueProvider,
+    ValueProvider,
 )
 
 __all__ = (
@@ -50,4 +54,7 @@ __all__ = (
     "IntrospectableIngestionComponent",
     "AggregatedIntrospectionMixin",
     "StaticValueOrValueProvider",
+    "StaticValueProvider",
+    "Cardinality",
+    "PresentRelationship",
 )

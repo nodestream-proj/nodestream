@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from hamcrest import assert_that, equal_to, instance_of
 
-from nodestream.normalizers import Normalizer, InvalidFlagError
+from nodestream.normalizers import InvalidFlagError, Normalizer
 
 
 class Test(Normalizer, name="test"):

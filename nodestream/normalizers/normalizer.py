@@ -3,7 +3,6 @@ from typing import Any
 
 from ..subclass_registry import SubclassRegistry
 
-
 NORMALIZER_REGISTRY = SubclassRegistry()
 
 

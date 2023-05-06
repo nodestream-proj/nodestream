@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from typing import Any, Dict, Iterable, Union
 
-from .interpreter_context import InterpreterContext
 from ..normalizers import Normalizer
+from .interpreter_context import InterpreterContext
 
 StaticValueOrValueProvider = Union[Any, "ValueProvider"]
 

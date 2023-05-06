@@ -1,15 +1,15 @@
 from hamcrest import assert_that, equal_to, has_entries, has_length
 
-from nodestream.model import (
-    KeyIndex,
-    FieldIndex,
-    GraphObjectType,
-    GraphObjectShape,
-    KnownTypeMarker,
-    PropertyMetadataSet,
-)
 from nodestream.interpretations.source_node_interpretation import (
     SourceNodeInterpretation,
+)
+from nodestream.model import (
+    FieldIndex,
+    GraphObjectShape,
+    GraphObjectType,
+    KeyIndex,
+    KnownTypeMarker,
+    PropertyMetadataSet,
 )
 
 from ..stubs import StubbedValueProvider

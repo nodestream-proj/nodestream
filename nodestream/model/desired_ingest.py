@@ -4,9 +4,8 @@ from logging import getLogger
 from typing import List
 
 from .graph_objects import Node, Relationship
-from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
 from .ingest_strategy import IngestionStrategy
-
+from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
 
 LOGGER = getLogger(__name__)
 

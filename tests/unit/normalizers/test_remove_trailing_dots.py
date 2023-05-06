@@ -1,7 +1,7 @@
-from nodestream.normalizers import RemoveTrailingDots
-
 import pytest
 from hamcrest import assert_that, equal_to
+
+from nodestream.normalizers import RemoveTrailingDots
 
 
 @pytest.mark.parametrize(

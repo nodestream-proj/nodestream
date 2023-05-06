@@ -1,8 +1,7 @@
 import pytest
-from hamcrest import equal_to, assert_that, none
+from hamcrest import assert_that, equal_to, none
 
-from nodestream.subclass_registry import SubclassRegistry, AlreadyInRegistryError
-
+from nodestream.subclass_registry import AlreadyInRegistryError, SubclassRegistry
 
 TEST_REGISTRY = SubclassRegistry()
 

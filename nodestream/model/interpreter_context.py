@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional
 from .desired_ingest import DesiredIngestion
 from .graph_objects import PropertySet
 
-
 JsonLikeDocument = Dict[str, Any]
 
 
