@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from ..subclass_registry import SubclassRegistry
+from ..subclass_registry import SubclassRegistry, MissingFromRegistryError
 
 NORMALIZER_REGISTRY = SubclassRegistry()
 
@@ -39,8 +39,9 @@ class Normalizer(ABC):
         if not flag_name.startswith("do_"):
             raise InvalidFlagError(flag_name)
 
-        normalizer_class = NORMALIZER_REGISTRY.get(flag_name.strip("do_"))
-        if not normalizer_class:
+        try:
+            normalizer_class = NORMALIZER_REGISTRY.get(flag_name.strip("do_"))
+        except MissingFromRegistryError:
             raise InvalidFlagError(flag_name)
 
         return normalizer_class()

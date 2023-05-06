@@ -3,10 +3,6 @@ from abc import ABC, abstractmethod
 from ..model import InterpreterContext, IntrospectableIngestionComponent
 from ..subclass_registry import SubclassRegistry
 
-# TODO: Reintroduce logic for Loading and `Interpretation` from file data.
-# TODO: Reintroduce inheriting from Schema Introspectable Component.
-
-
 INTERPRETATION_REGISTRY = SubclassRegistry()
 
 
@@ -15,6 +11,12 @@ class Interpretation(IntrospectableIngestionComponent, ABC):
     @abstractmethod
     def interpret(self, context: InterpreterContext):
         raise NotImplementedError
+
+    @classmethod
+    def from_file_arguments(cls, **arguments) -> "Interpretation":
+        name = arguments.pop("type")
+        class_to_load = INTERPRETATION_REGISTRY.get(name)
+        return class_to_load(**arguments)
 
     def gather_used_indexes(self):
         yield from []

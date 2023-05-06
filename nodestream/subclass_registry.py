@@ -6,6 +6,11 @@ class AlreadyInRegistryError(ValueError):
         super().__init__(f"{name} is already registered", *args)
 
 
+class MissingFromRegistryError(ValueError):
+    def __init__(self, name, *args: object) -> None:
+        super().__init__(f"{name} is not in the subclass registry", *args)
+
+
 class SubclassRegistry:
     __slots__ = ("registry", "linked_base")
 
@@ -39,4 +44,7 @@ class SubclassRegistry:
         return None
 
     def get(self, name):
-        return self.registry.get(name)
+        try:
+            return self.registry[name]
+        except KeyError:
+            raise MissingFromRegistryError(name)

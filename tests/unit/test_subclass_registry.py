@@ -1,7 +1,11 @@
 import pytest
 from hamcrest import assert_that, equal_to, none
 
-from nodestream.subclass_registry import AlreadyInRegistryError, SubclassRegistry
+from nodestream.subclass_registry import (
+    AlreadyInRegistryError,
+    SubclassRegistry,
+    MissingFromRegistryError,
+)
 
 TEST_REGISTRY = SubclassRegistry()
 
@@ -21,7 +25,8 @@ def test_remembers_subclasses_by_name():
 
 
 def test_raises_errors_when_invalid_named_subclass():
-    assert_that(TEST_REGISTRY.get("not_there"), none())
+    with pytest.raises(MissingFromRegistryError):
+        TEST_REGISTRY.get("not_there")
 
 
 def test_raises_errors_when_name_is_resused():
