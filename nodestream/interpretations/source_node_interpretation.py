@@ -1,11 +1,11 @@
-from typing import Any, Dict, List, Optional, Iterable, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from ..model import (
+    FieldIndex,
+    GraphObjectShape,
+    GraphObjectType,
     InterpreterContext,
     KeyIndex,
-    FieldIndex,
-    GraphObjectType,
-    GraphObjectShape,
     KnownTypeMarker,
     PropertyMetadataSet,
     StaticValueOrValueProvider,

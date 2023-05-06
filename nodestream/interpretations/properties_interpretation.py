@@ -1,13 +1,14 @@
-from typing import Any, Dict, Optional, Iterable
+from typing import Any, Dict, Iterable, Optional
 
 from ..model import (
-    InterpreterContext,
     GraphObjectShape,
-    UnknownTypeMarker,
-    PropertyMetadataSet,
     GraphObjectType,
+    InterpreterContext,
+    PropertyMetadataSet,
+    UnknownTypeMarker,
+    StaticValueOrValueProvider,
+    ValueProvider,
 )
-from ..model.value_provider import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 
