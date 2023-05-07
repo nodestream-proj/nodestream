@@ -1,16 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from ..subclass_registry import SubclassRegistry, MissingFromRegistryError
+from ..exceptions import InvalidFlagError, MissingFromRegistryError
+from ..subclass_registry import SubclassRegistry
 
 NORMALIZER_REGISTRY = SubclassRegistry()
-
-
-class InvalidFlagError(ValueError):
-    def __init__(self, flag_name, *args: object) -> None:
-        super().__init__(
-            f"Normalization flag with name '{flag_name}' is not valid.`", *args
-        )
 
 
 @NORMALIZER_REGISTRY.connect_baseclass
@@ -48,4 +42,4 @@ class Normalizer(ABC):
 
     @abstractmethod
     def normalize_value(self, value: Any) -> Any:
-        ...
+        raise NotImplementedError

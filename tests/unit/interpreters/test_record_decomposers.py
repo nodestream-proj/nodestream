@@ -1,7 +1,7 @@
+from hamcrest import assert_that, equal_to
+
 from nodestream.model import DesiredIngestion, InterpreterContext
 from nodestream.model.record_decomposers import RecordDecomposer
-
-from hamcrest import equal_to, assert_that
 
 from ..stubs import StubbedValueProvider
 

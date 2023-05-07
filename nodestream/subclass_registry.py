@@ -1,14 +1,6 @@
 from functools import wraps
 
-
-class AlreadyInRegistryError(ValueError):
-    def __init__(self, name, *args: object) -> None:
-        super().__init__(f"{name} is already registered", *args)
-
-
-class MissingFromRegistryError(ValueError):
-    def __init__(self, name, *args: object) -> None:
-        super().__init__(f"{name} is not in the subclass registry", *args)
+from .exceptions import AlreadyInRegistryError, MissingFromRegistryError
 
 
 class SubclassRegistry:
@@ -26,6 +18,8 @@ class SubclassRegistry:
         @classmethod
         @wraps(old_init_subclass)
         def init_subclass(cls, name=None, *args, **kwargs):
+            name = name or cls.__name__
+
             if name in self.registry:
                 raise AlreadyInRegistryError(name)
 
@@ -35,7 +29,6 @@ class SubclassRegistry:
         base_class.__init_subclass__ = init_subclass
         return base_class
 
-    # TODO: Implement a Bi-dict here?
     def name_for(self, cls):
         for k, v in self.registry.items():
             if v is cls:
@@ -48,3 +41,7 @@ class SubclassRegistry:
             return self.registry[name]
         except KeyError:
             raise MissingFromRegistryError(name)
+
+    @property
+    def all_subclasses(self):
+        return self.registry.values()
