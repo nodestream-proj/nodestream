@@ -1,7 +1,8 @@
 from abc import abstractmethod
 from typing import Any, AsyncGenerator, Dict, Iterable, Optional
 
-from ..model import InterpreterContext, StaticValueOrValueProvider, ValueProvider
+from ..model import InterpreterContext
+from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .step import Step
 
 

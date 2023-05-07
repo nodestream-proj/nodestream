@@ -4,7 +4,6 @@ from .indexes import FieldIndex, KeyIndex
 from .ingest_strategy import IngestionStrategy
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
 from .interpreter_context import InterpreterContext, JsonLikeDocument
-from .record_decomposers import RecordDecomposer
 from .schema import (
     AggregatedIntrospectionMixin,
     Cardinality,
@@ -20,11 +19,6 @@ from .schema import (
     UnknownTypeMarker,
 )
 from .ttl import TimeToLiveConfiguration
-from .value_provider import (
-    StaticValueOrValueProvider,
-    StaticValueProvider,
-    ValueProvider,
-)
 
 __all__ = (
     "DesiredIngestion",
@@ -39,7 +33,6 @@ __all__ = (
     "IngestionHook",
     "IngestionHookRunRequest",
     "TimeToLiveConfiguration",
-    "ValueProvider",
     "InterpreterContext",
     "RecordDecomposer",
     "JsonLikeDocument",
@@ -53,8 +46,6 @@ __all__ = (
     "PropertyType",
     "IntrospectableIngestionComponent",
     "AggregatedIntrospectionMixin",
-    "StaticValueOrValueProvider",
-    "StaticValueProvider",
     "Cardinality",
     "PresentRelationship",
 )

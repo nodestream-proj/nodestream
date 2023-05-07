@@ -4,8 +4,8 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 if TYPE_CHECKING:
+    from ..value_providers.value_provider import ValueProvider
     from .interpreter_context import InterpreterContext
-    from .value_provider import ValueProvider
 
 
 def get_pipeline_name():
