@@ -8,10 +8,9 @@ from ..model import (
     KeyIndex,
     KnownTypeMarker,
     PropertyMetadataSet,
-    StaticValueOrValueProvider,
-    ValueProvider,
 )
 from ..normalizers import LowercaseStrings
+from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 # By default, data gathered from this interpretation is lower cased when a string.

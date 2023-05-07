@@ -15,13 +15,12 @@ from ..model import (
     PresentRelationship,
     PropertyMetadataSet,
     PropertySet,
-    RecordDecomposer,
     Relationship,
-    StaticValueOrValueProvider,
     UnknownTypeMarker,
-    ValueProvider,
 )
 from ..normalizers import LowercaseStrings
+from ..record_decomposers import RecordDecomposer
+from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 DEFAULT_KEY_NORMALIZATION_ARGUMENTS = {LowercaseStrings.arugment_flag(): True}

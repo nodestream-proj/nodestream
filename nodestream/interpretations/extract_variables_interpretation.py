@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 
-from ..model import InterpreterContext, StaticValueOrValueProvider, ValueProvider
+from ..model import InterpreterContext
+from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 

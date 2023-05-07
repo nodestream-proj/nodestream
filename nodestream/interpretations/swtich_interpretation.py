@@ -1,12 +1,8 @@
 from typing import Any, Dict
 
 from ..exceptions import UnhandledBranchError
-from ..model import (
-    AggregatedIntrospectionMixin,
-    InterpreterContext,
-    StaticValueOrValueProvider,
-    ValueProvider,
-)
+from ..model import AggregatedIntrospectionMixin, InterpreterContext
+from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 

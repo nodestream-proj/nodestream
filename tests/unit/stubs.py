@@ -1,6 +1,7 @@
 from typing import Any, Iterable
 
-from nodestream.model import InterpreterContext, ValueProvider
+from nodestream.model import InterpreterContext
+from nodestream.value_providers import ValueProvider
 
 
 class StubbedValueProvider(ValueProvider):

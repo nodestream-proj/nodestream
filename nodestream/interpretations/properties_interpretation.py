@@ -5,10 +5,9 @@ from ..model import (
     GraphObjectType,
     InterpreterContext,
     PropertyMetadataSet,
-    StaticValueOrValueProvider,
     UnknownTypeMarker,
-    ValueProvider,
 )
+from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 
