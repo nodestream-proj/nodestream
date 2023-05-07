@@ -1,7 +1,7 @@
 import pytest
 from hamcrest import assert_that, equal_to, has_entries, has_length
 
-from nodestream.interpretations.relationship_interpretation import (
+from nodestream.interpreting.relationship_interpretation import (
     InvalidKeyLengthError,
     RelationshipInterpretation,
 )

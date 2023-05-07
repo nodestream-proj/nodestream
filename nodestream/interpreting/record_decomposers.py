@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Iterable, Optional
 
-from .model import InterpreterContext
-from .value_providers import ValueProvider
+from ..model import InterpreterContext
+from ..value_providers import ValueProvider
 
 
 class RecordDecomposer(ABC):

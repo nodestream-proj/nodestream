@@ -1,6 +1,6 @@
 from hamcrest import assert_that, equal_to, has_entries
 
-from nodestream.interpretations.properties_interpretation import (
+from nodestream.interpreting.properties_interpretation import (
     PropertiesInterpretation,
 )
 from nodestream.model import (

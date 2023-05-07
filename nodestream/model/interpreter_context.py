@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from .desired_ingest import DesiredIngestion
 from .graph_objects import PropertySet
@@ -21,5 +21,5 @@ class InterpreterContext:
 
     document: JsonLikeDocument
     desired_ingest: DesiredIngestion
-    mappings: Optional[Dict[Any, Any]] = field(default_factory=dict)
+    mappings: Dict[Any, Any] = field(default_factory=dict)
     variables: PropertySet = field(default_factory=PropertySet.empty)

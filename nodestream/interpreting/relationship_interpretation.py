@@ -19,9 +19,9 @@ from ..model import (
     UnknownTypeMarker,
 )
 from ..normalizers import LowercaseStrings
-from ..record_decomposers import RecordDecomposer
 from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
+from .record_decomposers import RecordDecomposer
 
 DEFAULT_KEY_NORMALIZATION_ARGUMENTS = {LowercaseStrings.arugment_flag(): True}
 

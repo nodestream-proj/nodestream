@@ -23,4 +23,6 @@ class VariableValueProvider(ValueProvider):
 
     def many_values(self, context: InterpreterContext) -> Iterable[Any]:
         value = self.single_value(context)
+        if value is None:
+            return []
         return value if isinstance(value, list) else [value]

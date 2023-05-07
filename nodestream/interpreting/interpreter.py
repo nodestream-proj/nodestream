@@ -1,6 +1,6 @@
 from typing import Any
 
-from .pipeline import Transformer
+from ..pipeline import Transformer
 
 
 class Interpreter(Transformer):

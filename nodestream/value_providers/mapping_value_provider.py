@@ -19,9 +19,6 @@ class MappingValueProvider(ValueProvider):
         self.key = ValueProvider.garuntee_value_provider(key)
 
     def single_value(self, context: InterpreterContext) -> Any:
-        if not context.mappings:
-            return
-
         mapping = context.mappings.get(self.mapping_name)
         if not mapping:
             return
@@ -34,5 +31,5 @@ class MappingValueProvider(ValueProvider):
         return value.single_value(context)
 
     def many_values(self, context: InterpreterContext) -> Iterable[Any]:
-        value = self.provide_single_value_from_context(context)
+        value = self.single_value(context)
         return [value] if value else []

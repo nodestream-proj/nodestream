@@ -17,8 +17,18 @@ class JqValueProvider(ValueProvider):
     def __init__(self, jq_program) -> None:
         self.jq_program = jq_program
 
+    def search(self, context: InterpreterContext):
+        raw_search = self.jq_program.input(context.document).all()
+        for hit in raw_search:
+            if hit is None:
+                return
+            if isinstance(hit, list):
+                yield from hit
+            else:
+                yield hit
+
     def single_value(self, context: InterpreterContext) -> Any:
-        return self.jq_program.input(context.document).first()
+        return next(self.search(context), None)
 
     def many_values(self, context: InterpreterContext) -> Iterable[Any]:
-        return self.jq_program.input(context.document).iter()
+        return list(self.search(context))

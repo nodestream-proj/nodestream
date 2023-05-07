@@ -1,6 +1,6 @@
 from hamcrest import assert_that, equal_to, has_entry
 
-from nodestream.interpretations.extract_variables_interpretation import (
+from nodestream.interpreting.extract_variables_interpretation import (
     ExtractVariablesInterpretation,
 )
 

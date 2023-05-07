@@ -1,6 +1,6 @@
 from hamcrest import assert_that, equal_to, instance_of
 
-from nodestream.interpretations import Interpretation, SourceNodeInterpretation
+from nodestream.interpreting import Interpretation, SourceNodeInterpretation
 
 
 def test_from_file_arguments_gets_right_subclass():

@@ -20,7 +20,7 @@ class JmespathValueProvider(ValueProvider):
         self.compiled_query = compiled_query
 
     def search(self, context: InterpreterContext):
-        raw_search = self.parsed_search.search(context.document)
+        raw_search = self.compiled_query.search(context.document)
         if raw_search is None:
             return
         if isinstance(raw_search, list):
