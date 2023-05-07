@@ -13,7 +13,7 @@ class RecordDecomposer(ABC):
     def decompose_record(
         self, context: InterpreterContext
     ) -> Iterable[InterpreterContext]:
-        ...
+        raise NotImplementedError
 
     @classmethod
     def from_iteration_arguments(cls, iteration_arguments: Optional[ValueProvider]):

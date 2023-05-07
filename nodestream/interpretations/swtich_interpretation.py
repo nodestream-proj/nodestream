@@ -1,19 +1,13 @@
 from typing import Any, Dict
 
-from .interpretation import Interpretation
+from ..exceptions import UnhandledBranchError
 from ..model import (
-    InterpreterContext,
     AggregatedIntrospectionMixin,
+    InterpreterContext,
     StaticValueOrValueProvider,
     ValueProvider,
 )
-
-
-class UnhandledBranchError(ValueError):
-    def __init__(self, missing_branch_value, *args: object) -> None:
-        super().__init__(
-            f"'{missing_branch_value}' was not matched in switch case", *args
-        )
+from .interpretation import Interpretation
 
 
 class SwitchInterpretation(AggregatedIntrospectionMixin, Interpretation, name="switch"):

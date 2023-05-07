@@ -1,13 +1,20 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import Any, Dict, Iterable, Union
+from typing import Any, Dict, Iterable, Type, Union
+
+from yaml import SafeLoader
 
 from ..normalizers import Normalizer
+from ..subclass_registry import SubclassRegistry
 from .interpreter_context import InterpreterContext
 
 StaticValueOrValueProvider = Union[Any, "ValueProvider"]
 
 
+VALUE_PROVIDER_REGISTRY = SubclassRegistry()
+
+
+@VALUE_PROVIDER_REGISTRY.connect_baseclass
 class ValueProvider(ABC):
     @classmethod
     def garuntee_value_provider(
@@ -25,9 +32,14 @@ class ValueProvider(ABC):
     ):
         return {k: cls.garuntee_value_provider(v) for k, v in maybe_providers.items()}
 
-    # TODO: Change this API To take a loader that we give it.
     @classmethod
-    def install_yaml_tag_constructor(cls):
+    def garuntee_provider_list(
+        cls, maybe_providers: Iterable[StaticValueOrValueProvider]
+    ):
+        return [cls.garuntee_value_provider(v) for v in maybe_providers]
+
+    @classmethod
+    def install_yaml_tag(cls, loader: Type[SafeLoader]):
         pass
 
     @abstractmethod

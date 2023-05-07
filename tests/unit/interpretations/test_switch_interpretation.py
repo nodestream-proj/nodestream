@@ -6,7 +6,6 @@ from nodestream.interpretations.swtich_interpretation import (
     UnhandledBranchError,
 )
 
-
 INTERPRETATION_USED_AS_HIT = {"type": "properties", "properties": {"success": True}}
 INTERPRETATION_FOR_RANDOM = {"type": "properties", "properties": {"random": True}}
 

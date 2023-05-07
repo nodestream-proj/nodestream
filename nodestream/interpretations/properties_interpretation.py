@@ -5,8 +5,8 @@ from ..model import (
     GraphObjectType,
     InterpreterContext,
     PropertyMetadataSet,
-    UnknownTypeMarker,
     StaticValueOrValueProvider,
+    UnknownTypeMarker,
     ValueProvider,
 )
 from .interpretation import Interpretation

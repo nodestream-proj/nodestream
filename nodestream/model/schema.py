@@ -69,11 +69,11 @@ class PropertyMetadataSet:
 class TypeMarker(ABC):
     @abstractmethod
     def resolve_type(self, other_shapes: Iterable["GraphObjectShape"]) -> Optional[str]:
-        ...
+        raise NotImplementedError
 
     @abstractmethod
     def fulfills_alias(self, desired_alias: str) -> bool:
-        ...
+        raise NotImplementedError
 
 
 class KnownTypeMarker(TypeMarker):
@@ -313,7 +313,7 @@ class AggregatedIntrospectionMixin(ABC):
 
     @abstractmethod
     def all_subordinate_components(self) -> Iterable[IntrospectableIngestionComponent]:
-        ...
+        raise NotImplementedError
 
     def gather_used_indexes(self):
         return {

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, Optional, Tuple
 
+from ..exceptions import InvalidKeyLengthError
 from ..model import (
     Cardinality,
     FieldIndex,
@@ -26,13 +27,6 @@ from .interpretation import Interpretation
 DEFAULT_KEY_NORMALIZATION_ARGUMENTS = {LowercaseStrings.arugment_flag(): True}
 
 
-class InvalidKeyLengthError(ValueError):
-    def __init__(self, district_lengths, *args: object) -> None:
-        lengths = f"({','.join((str(l) for l in district_lengths))})"
-        error = f"Node Relationships do not have a consistent key length. Lengths are: ({lengths}) "
-        super().__init__(error, *args)
-
-
 class RelatedNodeKeySearchAlgorithm(ABC):
     def __init__(
         self, key_searches: Dict[str, ValueProvider], key_normalization: Dict[str, Any]
@@ -44,7 +38,7 @@ class RelatedNodeKeySearchAlgorithm(ABC):
     def get_related_node_key_sets(
         self, context: InterpreterContext
     ) -> Iterable[Dict[str, Any]]:
-        ...
+        raise NotImplementedError
 
 
 class SingleNodeKeySearchAlgorithm(RelatedNodeKeySearchAlgorithm):

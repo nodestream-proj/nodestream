@@ -1,15 +1,15 @@
 import pytest
-from hamcrest import assert_that, equal_to, has_length, has_entries
+from hamcrest import assert_that, equal_to, has_entries, has_length
 
-from nodestream.model import (
-    PresentRelationship,
-    KnownTypeMarker,
-    UnknownTypeMarker,
-    Cardinality,
-)
 from nodestream.interpretations.relationship_interpretation import (
-    RelationshipInterpretation,
     InvalidKeyLengthError,
+    RelationshipInterpretation,
+)
+from nodestream.model import (
+    Cardinality,
+    KnownTypeMarker,
+    PresentRelationship,
+    UnknownTypeMarker,
 )
 
 from ..stubs import StubbedValueProvider
