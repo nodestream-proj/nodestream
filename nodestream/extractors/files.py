@@ -6,9 +6,9 @@ from io import StringIO
 from pathlib import Path
 from typing import Any, AsyncGenerator, Iterable
 
-from .pipeline import Extractor
-from .model import JsonLikeDocument
-from .subclass_registry import SubclassRegistry
+from ..pipeline import Extractor
+from ..model import JsonLikeDocument
+from ..subclass_registry import SubclassRegistry
 
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
