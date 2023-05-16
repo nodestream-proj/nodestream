@@ -43,6 +43,12 @@ async def test_project_runs_pipeline_in_scope_when_present(
 
 
 def test_project_from_file():
-    file_name = "tests/unit/project/fixtures/simple_project.yaml"
+    file_name = Path("tests/unit/project/fixtures/simple_project.yaml")
     result = Project.from_file(file_name)
     assert len(result.scopes_by_name) == 1
+
+
+def test_project_from_file_missing_file():
+    file_name = Path("tests/unit/project/fixtures/missing_project.yaml")
+    with pytest.raises(FileNotFoundError):
+        Project.from_file(file_name)

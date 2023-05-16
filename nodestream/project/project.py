@@ -1,15 +1,23 @@
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from yaml import safe_load
 
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
+from ..exceptions import MissingProjectFileError
+
+
+DEFAULT_PROJECT_FILE = Path("nodestream.yaml")
 
 
 class Project:
     @classmethod
-    def from_file(cls, path: Path) -> "Project":
+    def from_file(cls, path: Optional[Path]) -> "Project":
+        path = path or DEFAULT_PROJECT_FILE
+        if not path.exists:
+            raise MissingProjectFileError(path)
+
         with open(path) as fp:
             return cls.from_file_data(safe_load(fp))
 
