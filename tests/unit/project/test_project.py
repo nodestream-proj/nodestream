@@ -40,3 +40,9 @@ async def test_project_runs_pipeline_in_scope_when_present(
     )
     await project.run(request)
     scopes[0].run_request.assert_called_once_with(request)
+
+
+def test_project_from_file():
+    file_name = "tests/unit/project/fixtures/simple_project.yaml"
+    result = Project.from_file(file_name)
+    assert len(result.scopes_by_name) == 1

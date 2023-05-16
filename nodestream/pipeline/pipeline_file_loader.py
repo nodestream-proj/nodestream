@@ -59,11 +59,9 @@ class PipelineInitializationArguments:
 
 
 class PipelineFileLoader:
-    # TODO: Change the tests to take a path instead of a str.
     def __init__(self, file_path: Path):
         self.file_path = file_path
 
-    # TODO: Handle this init args being used
     def load_pipeline(
         self, init_args: Optional[PipelineInitializationArguments] = None
     ) -> Pipeline:

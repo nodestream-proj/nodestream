@@ -1,0 +1,11 @@
+scopes:
+  perpetual:
+    annotations:
+      concurrency: 1
+    pipelines:
+      - "path/to/pipeline1"
+      - path: "path/to/pipeline2"
+        name: "just a random value"
+        annotations:
+          concurrency: 2
+  
