@@ -15,7 +15,7 @@ class Pipeline:
     def __init__(self, steps: List[Step]) -> None:
         self.steps = steps
 
-    async def run(self) -> AsyncGenerator[Any, Any]:
+    def run(self) -> AsyncGenerator[Any, Any]:
         record_stream_over_all_steps = reduce(
             lambda stream, step: step.handle_async_record_stream(stream),
             self.steps,
