@@ -1,5 +1,5 @@
 - implementation: nodestream.pipeline.step:PassStep
 - implementation: nodestream.pipeline.step:PassStep
-  tags: ["bad", "indifferent"]
+  annnotations: ["bad", "indifferent"]
 - implementation: nodestream.pipeline.step:PassStep
-  tags: ["good", "indifferent"]
+  annnotations: ["good", "indifferent"]
