@@ -4,6 +4,7 @@ from typing import Any, AsyncGenerator, Dict, Iterable, Optional
 from ..model import InterpreterContext
 from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .step import Step
+from .flush import Flush
 
 
 class Filter(Step):
@@ -17,7 +18,7 @@ class Filter(Step):
         self, record_stream: AsyncGenerator[Any, Any]
     ) -> AsyncGenerator[Any, Any]:
         async for record in record_stream:
-            if not self.should_filter(record):
+            if record is Flush or not self.should_filter(record):
                 yield record
 
     @abstractmethod

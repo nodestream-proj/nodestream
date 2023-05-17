@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Any, AsyncGenerator
 
 from .step import Step
+from .flush import Flush
 
 
 class Transformer(Step):
@@ -15,7 +16,10 @@ class Transformer(Step):
         self, record_stream: AsyncGenerator[Any, Any]
     ) -> AsyncGenerator[Any, Any]:
         async for record in record_stream:
-            yield await self.transform_record(record)
+            if record is Flush:
+                yield record
+            else:
+                yield await self.transform_record(record)
 
     @abstractmethod
     async def transform_record(self, record: Any) -> Any:
