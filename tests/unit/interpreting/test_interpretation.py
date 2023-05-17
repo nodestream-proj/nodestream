@@ -1,4 +1,4 @@
-from hamcrest import assert_that, equal_to, instance_of
+from hamcrest import assert_that, instance_of
 
 from nodestream.interpreting import Interpretation, SourceNodeInterpretation
 

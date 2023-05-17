@@ -1,0 +1,4 @@
+scopes:
+  test:
+    pipelines:
+      - test.yaml

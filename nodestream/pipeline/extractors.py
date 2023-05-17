@@ -11,7 +11,7 @@ class Extractor(Step):
     stream of records. For this reason they generally should only be set at the beginning of a pipeline.
     """
 
-    async def handle_async_record_stream(
+    def handle_async_record_stream(
         self, _: AsyncGenerator[Any, Any]
     ) -> AsyncGenerator[Any, Any]:
         return self.extract_records()
@@ -22,6 +22,12 @@ class Extractor(Step):
 
 
 class IterableExtractor(Extractor):
+    """An extractor that produces records from an iterable."""
+
+    @classmethod
+    def range(cls, start=0, stop=100, step=1):
+        return cls(iterable=range(start, stop, step))
+
     def __init__(self, iterable: Iterable[Any]) -> None:
         self.iterable = iterable
 

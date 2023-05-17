@@ -25,6 +25,8 @@ def find_class(class_path):
 
 
 class ClassLoader:
+    """Loads a class from a string path and instantiates it with the given arguments."""
+
     def find_class_initializer(self, implementation, factory=None):
         class_definition = find_class(implementation)
         factory_method = factory or DECLARATIVE_INIT_METHOD_NAME

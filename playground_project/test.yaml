@@ -1,0 +1,4 @@
+- implementation: nodestream.pipeline:IterableExtractor
+  factory: range
+  arguments:
+    stop: 100000000

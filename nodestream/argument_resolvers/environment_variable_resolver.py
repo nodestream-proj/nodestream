@@ -7,6 +7,8 @@ from .arugment_resolver import ArgumentResolver
 
 
 class EnvironmentResolver(ArgumentResolver):
+    """An `EnvironmentResolver` is an `ArgumentResolver` that can resolve an environment variable into its value."""
+
     @classmethod
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(

@@ -6,6 +6,8 @@ from .arugment_resolver import ArgumentResolver
 
 
 class IncludeFileResolver(ArgumentResolver):
+    """An `IncludeFileResolver` is an `ArgumentResolver` that can resolve a file path into a file's contents."""
+
     @classmethod
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(

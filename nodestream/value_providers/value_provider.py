@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
 from typing import Any, Dict, Iterable, Type, Union
 
 from yaml import SafeLoader
@@ -16,6 +15,8 @@ VALUE_PROVIDER_REGISTRY = SubclassRegistry()
 
 @VALUE_PROVIDER_REGISTRY.connect_baseclass
 class ValueProvider(ABC):
+    """A `ValueProvider` is a class that can extract values from a document."""
+
     @classmethod
     def garuntee_value_provider(
         cls, maybe_provider: StaticValueOrValueProvider

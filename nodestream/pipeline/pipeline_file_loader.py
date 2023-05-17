@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional, List
+
 from yaml import SafeLoader, load
 
 from ..argument_resolvers import ARGUMENT_RESOLVER_REGISTRY
@@ -8,6 +12,8 @@ from .pipeline import Pipeline
 
 
 class PipelineFileSafeLoader(SafeLoader):
+    """A YAML loader that can load pipeline files.""" ""
+
     was_configured = False
 
     @classmethod
@@ -29,21 +35,56 @@ class PipelineFileSafeLoader(SafeLoader):
             return load(fp, cls)
 
 
+@dataclass(slots=True)
+class PipelineInitializationArguments:
+    """Arguments used to initialize a pipeline from a file."""
+
+    annotations: Optional[List[str]] = None
+
+    def initialize_from_file_data(self, file_data: List[dict]):
+        return Pipeline(self.load_steps(ClassLoader(), file_data))
+
+    def load_steps(self, class_loader, file_data):
+        return [
+            class_loader.load_class(**step_data)
+            for step_data in file_data
+            if self.should_load_step(step_data)
+        ]
+
+    def should_load_step(self, step):
+        return self.step_is_tagged_properly(step)
+
+    def step_is_tagged_properly(self, step):
+        if "annotations" in step and self.annotations is not None:
+            if not set(step.pop("annotations")).intersection(self.annotations):
+                return False
+
+        return True
+
+
 class PipelineFileLoader:
-    def __init__(self, file_path: str):
+    """Loads a pipeline from a YAML file."""
+
+    def __init__(self, file_path: Path):
         self.file_path = file_path
 
-    def load_pipeline(self) -> Pipeline:
-        return self.load_pipeline_from_file_data(self.load_pipeline_file_data())
+    def load_pipeline(
+        self, init_args: Optional[PipelineInitializationArguments] = None
+    ) -> Pipeline:
+        init_args = init_args or PipelineInitializationArguments()
+        return self.load_pipeline_from_file_data(
+            self.load_pipeline_file_data(), init_args
+        )
 
-    def load_pipeline_from_file_data(self, file_data):
+    def load_pipeline_from_file_data(
+        self, file_data, init_args: PipelineInitializationArguments
+    ):
         if not isinstance(file_data, list):
             raise InvalidPipelineDefinitionError(
                 "File should be a list of step classs to load"
             )
 
-        class_loader = ClassLoader()
-        return Pipeline([class_loader.load_class(**args) for args in file_data])
+        return init_args.initialize_from_file_data(file_data)
 
     def load_pipeline_file_data(self):
         return PipelineFileSafeLoader.load_file_by_path(self.file_path)

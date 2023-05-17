@@ -72,14 +72,14 @@ def test_class_loader_invalid_path_format(subject):
         subject.load_class(implementation="tests.unit.pipeline.test_class_loader")
 
 
-def test_class_loader_invalid_path_format(subject):
+def test_class_loader_invalid_path_missing_class(subject):
     with pytest.raises(InvalidClassPathError):
         subject.load_class(
             implementation="tests.unit.pipeline.test_class_loader:ClassDoesNotExist"
         )
 
 
-def test_class_loader_invalid_path_format(subject):
+def test_class_loader_invalid_path_invalid_arugment(subject):
     with pytest.raises(PipelineComponentInitilizationError):
         subject.load_class(
             implementation="tests.unit.pipeline.test_class_loader:SimpleClass",

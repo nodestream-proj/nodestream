@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from nodestream.model import DesiredIngestion, InterpreterContext
@@ -23,3 +25,13 @@ def blank_context():
 @pytest.fixture
 def blank_context_with_document():
     return InterpreterContext(DECENT_DOCUMENT, DesiredIngestion())
+
+
+@pytest.fixture
+def async_return():
+    def _async_return(value=None):
+        future = asyncio.Future()
+        future.set_result(4)
+        return future
+
+    return _async_return

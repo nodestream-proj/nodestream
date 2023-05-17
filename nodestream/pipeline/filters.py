@@ -62,6 +62,8 @@ class ValueMatcher:
 
 
 class ValuesMatchPossiblitiesFilter(Filter):
+    """A filter that checks if a given value matches any of a set of possibilities."""
+
     @classmethod
     def __declarative_init__(cls, *, fields: Iterable[Dict[str, Any]]):
         value_matchers = [ValueMatcher.from_file_arguments(**field) for field in fields]
