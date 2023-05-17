@@ -22,6 +22,10 @@ class Extractor(Step):
 
 
 class IterableExtractor(Extractor):
+    @classmethod
+    def range(cls, start=0, stop=100, step=1):
+        return cls(iterable=range(start, stop, step))
+
     def __init__(self, iterable: Iterable[Any]) -> None:
         self.iterable = iterable
 
