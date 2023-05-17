@@ -13,6 +13,7 @@ python = "^3.11"
 pyyaml = "^6.0"
 jmespath = "^1.0.1"
 jq = "^1.4.1"
+cleo = "^2.0.1"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
@@ -33,3 +34,6 @@ pytest11 = { nodestram = "nodestream.test" }
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+nodestream = 'nodestream.cli:run'
