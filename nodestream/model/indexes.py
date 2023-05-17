@@ -19,8 +19,8 @@ class KeyIndex:
     type: str
     identity_keys: frozenset
 
-    def ingest(self, strategy: IngestionStrategy):
-        strategy.upsert_key_index(self)
+    async def ingest(self, strategy: IngestionStrategy):
+        await strategy.upsert_key_index(self)
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,8 +35,8 @@ class FieldIndex:
     field: str
     object_type: GraphObjectType
 
-    def ingest(self, strategy: IngestionStrategy):
-        strategy.upsert_field_index(self)
+    async def ingest(self, strategy: IngestionStrategy):
+        await strategy.upsert_field_index(self)
 
     @classmethod
     def for_ttl_timestamp(

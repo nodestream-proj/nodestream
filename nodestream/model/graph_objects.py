@@ -78,7 +78,7 @@ class Node:
     @property
     def has_valid_id(self) -> bool:
         # Return that some of the ID values are defined.
-        return not all(value is None for value in self.source.identity_values.values())
+        return not all(value is None for value in self.key_values.values())
 
     @property
     def is_valid(self) -> bool:

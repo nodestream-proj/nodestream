@@ -21,22 +21,22 @@ class IngestionStrategy(ABC):
     """
 
     @abstractmethod
-    def ingest_source_node(self, source: "Node"):
+    async def ingest_source_node(self, source: "Node"):
         """Given a provided instance of `Node`, ensure that it is commited to the GraphDatabase."""
         raise NotImplementedError
 
     @abstractmethod
-    def ingest_relationship(self, relationship: "RelationshipWithNodes"):
+    async def ingest_relationship(self, relationship: "RelationshipWithNodes"):
         """Given a provided instance of `SourceNode`, ensure that the provided `Relationship` is commited to the database."""
         raise NotImplementedError
 
     @abstractmethod
-    def run_hook(self, request: "IngestionHookRunRequest"):
+    async def run_hook(self, request: "IngestionHookRunRequest"):
         """Runs the provided request for an IngestHook given the context."""
         raise NotImplementedError
 
     @abstractmethod
-    def upsert_key_index(self, index: "KeyIndex"):
+    async def upsert_key_index(self, index: "KeyIndex"):
         """Create a Key Index Immediately for a given Node Type.
 
         See information on `KeyIndex` for more information.
@@ -44,7 +44,7 @@ class IngestionStrategy(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def upsert_field_index(self, index: "FieldIndex"):
+    async def upsert_field_index(self, index: "FieldIndex"):
         """Create a Key Index Immediately for a Object Type.
 
         See information on `FieldIndex` for more information.
@@ -52,9 +52,13 @@ class IngestionStrategy(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def perform_ttl_operation(self, config: "TimeToLiveConfiguration"):
+    async def perform_ttl_operation(self, config: "TimeToLiveConfiguration"):
         """Perform a TTL Operation.
 
         See Information on `TimeToLiveConfiguration` for more Information.
         """
         raise NotImplementedError
+
+    async def flush(self):
+        """Flush any pending operations to the database."""
+        pass

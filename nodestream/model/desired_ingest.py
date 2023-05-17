@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from logging import getLogger
@@ -36,23 +37,31 @@ class DesiredIngestion:
     def source_node_is_valid(self) -> bool:
         return self.source.is_valid
 
-    def ingest_source_node(self, strategy: "IngestionStrategy"):
-        strategy.ingest_source_node(self.source)
+    async def ingest_source_node(self, strategy: "IngestionStrategy"):
+        await strategy.ingest_source_node(self.source)
 
-    def ingest_relationships(self, strategy: "IngestionStrategy"):
-        for relationship in self.relationships:
-            strategy.ingest_relationship(relationship)
+    async def ingest_relationships(self, strategy: "IngestionStrategy"):
+        await asyncio.gather(
+            (
+                strategy.ingest_relationship(relationship)
+                for relationship in self.relationships
+            )
+        )
 
-    def run_ingest_hooks(self, strategy: "IngestionStrategy"):
-        for hook_req in self.hook_requests:
-            strategy.run_hook(hook_req.hook, hook_req.before_ingest)
+    async def run_ingest_hooks(self, strategy: "IngestionStrategy"):
+        await asyncio.gather(
+            (
+                strategy.run_hook(hook_req.hook, hook_req.before_ingest)
+                for hook_req in self.hook_requests
+            )
+        )
 
     def can_perform_ingest(self):
         # We can do the main part of the ingest if the source node is valid.
         # If its not valid, its only an error when there are realtionships we are
         # trying to ingest as well.
         if not self.source_node_is_valid:
-            if self.total_relationships > 0:
+            if len(self.relationships) > 0:
                 LOGGER.warning(
                     "Identity value for source node was null. Skipping Ingest.",
                     extra=asdict(self),
@@ -65,11 +74,11 @@ class DesiredIngestion:
             return False
         return True
 
-    def ingest(self, strategy: "IngestionStrategy"):
+    async def ingest(self, strategy: "IngestionStrategy"):
         if self.can_perform_ingest():
-            self.ingest_source_node(strategy)
-            self.ingest_relationships(strategy)
-        self.run_ingest_hooks(strategy)
+            await self.ingest_source_node(strategy)
+            await self.ingest_relationships(strategy)
+        await self.run_ingest_hooks(strategy)
 
     def add_relationship(
         self,

@@ -14,6 +14,6 @@ class TimeToLiveConfiguration:
     batch_size: int = 100
     enabled: bool = True
 
-    def ingest(self, strategy: "IngestionStrategy"):
+    async def ingest(self, strategy: "IngestionStrategy"):
         if self.enabled:
-            strategy.perform_ttl_operation(self)
+            await strategy.perform_ttl_operation(self)
