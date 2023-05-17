@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
+from .match_strategy import MatchStrategy
+
 if TYPE_CHECKING:
     from ..value_providers.value_provider import ValueProvider
     from .interpreter_context import InterpreterContext
@@ -84,6 +86,10 @@ class Node:
     def is_valid(self) -> bool:
         return self.has_valid_id and self.type is not None
 
+    @property
+    def identity_shape(self) -> "NodeIdentityShape":
+        return NodeIdentityShape(type=self.type, keys=tuple(self.key_values.keys()))
+
 
 @dataclass(slots=True)
 class Relationship:
@@ -102,3 +108,47 @@ class Relationship:
     type: str
     key_values: PropertySet = field(default_factory=PropertySet.empty)
     properties: PropertySet = field(default_factory=PropertySet.default_properties)
+
+    @property
+    def identity_shape(self) -> "RelationshipIdentityShape":
+        return RelationshipIdentityShape(
+            type=self.type, keys=tuple(self.key_values.keys())
+        )
+
+
+@dataclass(slots=True)
+class RelationshipWithNodes:
+    """Stores information about the related node and the relationship itself."""
+
+    from_node: Node
+    to_node: Node
+    relationship: Relationship
+    match_strategy: MatchStrategy = MatchStrategy.EAGER
+
+    @property
+    def identity_shape(self) -> "RelationshipWithNodesIdentityShape":
+        return RelationshipWithNodesIdentityShape(
+            to_node_shape=self.to_node.identity_shape,
+            from_node_shape=self.from_node.identity_shape,
+            relationship_shape=self.relationship.identity_shape,
+        )
+
+
+@dataclass(slots=True, frozen=True)
+class NodeIdentityShape:
+    type: str
+    keys: Tuple[str]
+
+
+@dataclass(slots=True, frozen=True)
+class RelationshipIdentityShape:
+    type: str
+    keys: Tuple[str]
+
+
+@dataclass(slots=True, frozen=True)
+class RelationshipWithNodesIdentityShape:
+    to_node_shape: NodeIdentityShape
+    from_node_shape: NodeIdentityShape
+    relationship_shape: RelationshipIdentityShape
+    match_strategy: MatchStrategy

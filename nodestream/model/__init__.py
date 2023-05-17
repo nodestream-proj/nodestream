@@ -1,5 +1,12 @@
 from .desired_ingest import DesiredIngestion, MatchStrategy, RelationshipWithNodes
-from .graph_objects import Node, PropertySet, Relationship
+from .graph_objects import (
+    Node,
+    PropertySet,
+    Relationship,
+    RelationshipIdentityShape,
+    RelationshipWithNodesIdentityShape,
+    NodeIdentityShape,
+)
 from .indexes import FieldIndex, KeyIndex
 from .ingest_strategy import IngestionStrategy
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
@@ -48,4 +55,7 @@ __all__ = (
     "AggregatedIntrospectionMixin",
     "Cardinality",
     "PresentRelationship",
+    "RelationshipIdentityShape",
+    "RelationshipWithNodesIdentityShape",
+    "NodeIdentityShape",
 )

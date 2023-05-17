@@ -1,30 +1,14 @@
 import asyncio
 from dataclasses import asdict, dataclass, field
-from enum import Enum
 from logging import getLogger
 from typing import List
 
-from .graph_objects import Node, Relationship
+from .graph_objects import Node, Relationship, RelationshipWithNodes
 from .ingest_strategy import IngestionStrategy
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
+from .match_strategy import MatchStrategy
 
 LOGGER = getLogger(__name__)
-
-
-class MatchStrategy(str, Enum):
-    EAGER = "EAGER"
-    MATCH_ONLY = "MATCH_ONLY"
-    FUZZY = "FUZZY"
-
-
-@dataclass(slots=True)
-class RelationshipWithNodes:
-    """Stores information about the related node and the relationship itself."""
-
-    from_node: Node
-    to_node: Node
-    relationship: Relationship
-    match_strategy: MatchStrategy = MatchStrategy.EAGER
 
 
 @dataclass(slots=True)
