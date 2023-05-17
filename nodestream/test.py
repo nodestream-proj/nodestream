@@ -12,7 +12,7 @@ def snapshot_pipeline(request):
     # request: https://docs.pytest.org/en/7.3.x/reference/reference.html#request
     test_name = request.node.name
 
-    async def _snapshot_pipeline(pipeline_name, annnotations=None, project_file=None):
+    async def _snapshot_pipeline(pipeline_name, annotations=None, project_file=None):
         # Create a run request from the pipeline name and annotations with a reporting size of one.
         # The reporting size will be one so we can store a list of all records coming back from the pipeline.
         # the JSON serialize the list of returned results and store it in a snapshot file.
@@ -22,9 +22,9 @@ def snapshot_pipeline(request):
         run_request = RunRequest(
             pipeline_name,
             initialization_arguments=PipelineInitializationArguments(
-                annotations=annnotations
+                annotations=annotations
             ),
-            reporting_arguments=PipelineProgressReporter(
+            progress_reporter=PipelineProgressReporter(
                 reporting_frequency=1, callback=lambda _, x: results.append(x)
             ),
         )
