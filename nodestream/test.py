@@ -9,6 +9,8 @@ from nodestream.pipeline import PipelineInitializationArguments
 
 @pytest.fixture
 def snapshot_pipeline(request):
+    """A fixture that will snapshot the results of a pipeline run."""
+
     # request: https://docs.pytest.org/en/7.3.x/reference/reference.html#request
     test_name = request.node.name
 

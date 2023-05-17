@@ -11,6 +11,8 @@ def get_default_name(file_path: Path) -> str:
 
 @dataclass
 class PipelineDefinition:
+    """A `PipelineDefinition` represents a pipeline that can be loaded from a file."""
+
     name: str
     file_path: Path
     annotations: Dict[str, Any] = field(default_factory=dict)

@@ -26,6 +26,8 @@ class Writer(Step):
 
 
 class LoggerWriter(Writer):
+    """A `Writer` that logs the record to a logger."""
+
     def __init__(self, logger_name=None, level=INFO) -> None:
         logger_name = logger_name or self.__class__.__name__
         self.logger = getLogger(logger_name)

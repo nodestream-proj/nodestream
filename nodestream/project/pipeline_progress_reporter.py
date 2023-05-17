@@ -8,6 +8,8 @@ from ..pipeline import Pipeline
 
 @dataclass
 class PipelineProgressReporter:
+    """A `PipelineProgressReporter` is a utility that can be used to report on the progress of a pipeline."""
+
     reporting_frequency: int = 1000
     logger: Logger = field(default_factory=getLogger)
     callback: Callable[[int, Any], None] = field(default_factory=lambda: None)

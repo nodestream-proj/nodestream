@@ -16,6 +16,8 @@ VALUE_PROVIDER_REGISTRY = SubclassRegistry()
 
 @VALUE_PROVIDER_REGISTRY.connect_baseclass
 class ValueProvider(ABC):
+    """A `ValueProvider` is a class that can extract values from a document."""
+
     @classmethod
     def garuntee_value_provider(
         cls, maybe_provider: StaticValueOrValueProvider

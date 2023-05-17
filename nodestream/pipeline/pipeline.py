@@ -10,6 +10,8 @@ async def empty_asnyc_generator():
 
 
 class Pipeline:
+    """A pipeline is a series of steps that are executed in order."""
+
     __slots__ = ("steps",)
 
     def __init__(self, steps: List[Step]) -> None:

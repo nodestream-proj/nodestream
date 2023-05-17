@@ -12,6 +12,8 @@ from .pipeline import Pipeline
 
 
 class PipelineFileSafeLoader(SafeLoader):
+    """A YAML loader that can load pipeline files.""" ""
+
     was_configured = False
 
     @classmethod
@@ -35,6 +37,8 @@ class PipelineFileSafeLoader(SafeLoader):
 
 @dataclass(slots=True)
 class PipelineInitializationArguments:
+    """Arguments used to initialize a pipeline from a file."""
+
     annotations: Optional[List[str]] = None
 
     def initialize_from_file_data(self, file_data: List[dict]):
@@ -59,6 +63,8 @@ class PipelineInitializationArguments:
 
 
 class PipelineFileLoader:
+    """Loads a pipeline from a YAML file."""
+
     def __init__(self, file_path: Path):
         self.file_path = file_path
 

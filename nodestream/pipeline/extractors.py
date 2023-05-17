@@ -22,6 +22,8 @@ class Extractor(Step):
 
 
 class IterableExtractor(Extractor):
+    """An extractor that produces records from an iterable."""
+
     @classmethod
     def range(cls, start=0, stop=100, step=1):
         return cls(iterable=range(start, stop, step))

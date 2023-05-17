@@ -5,6 +5,8 @@ from .run_request import RunRequest
 
 
 class PipelineScope:
+    """A `PipelineScope` represents a collection of pipelines subordinate to a project."""
+
     def __init__(self, name: str, pipelines: List[PipelineDefinition]) -> None:
         self.name = name
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {

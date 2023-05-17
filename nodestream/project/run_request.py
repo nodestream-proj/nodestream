@@ -7,6 +7,8 @@ from ..pipeline import PipelineInitializationArguments
 
 @dataclass
 class RunRequest:
+    """A `RunRequest` represents a request to run a pipeline."""
+
     pipeline_name: str
     initialization_arguments: PipelineInitializationArguments
     progress_reporter: PipelineProgressReporter

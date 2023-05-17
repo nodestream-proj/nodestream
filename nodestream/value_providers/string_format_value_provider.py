@@ -7,6 +7,8 @@ from .value_provider import StaticValueOrValueProvider, ValueProvider
 
 
 class StringFormattingValueProvider(ValueProvider):
+    """A `ValueProvider` that uses string formatting to produce a value."""
+
     @classmethod
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(

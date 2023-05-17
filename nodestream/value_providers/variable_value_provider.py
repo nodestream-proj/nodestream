@@ -8,6 +8,8 @@ from .value_provider import ValueProvider
 
 
 class VariableValueProvider(ValueProvider):
+    """A `ValueProvider` that uses a variable to extract values from a document."""
+
     @classmethod
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(

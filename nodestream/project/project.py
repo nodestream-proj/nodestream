@@ -12,6 +12,8 @@ DEFAULT_PROJECT_FILE = Path("nodestream.yaml")
 
 
 class Project:
+    """A `Project` represents a collection of pipelines."""
+
     @classmethod
     def from_file(cls, path: Optional[Path]) -> "Project":
         path = path or DEFAULT_PROJECT_FILE

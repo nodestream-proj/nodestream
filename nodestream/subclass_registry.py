@@ -4,6 +4,8 @@ from .exceptions import AlreadyInRegistryError, MissingFromRegistryError
 
 
 class SubclassRegistry:
+    """A registry for subclasses of a base class."""
+
     __slots__ = ("registry", "linked_base")
 
     def __init__(self) -> None:
@@ -11,6 +13,8 @@ class SubclassRegistry:
         self.linked_base = None
 
     def connect_baseclass(self, base_class):
+        """Connect a base class to this registry."""
+
         old_init_subclass = base_class.__init_subclass__
         base_class.__subclass__registry__ = self
         self.linked_base = base_class
@@ -30,6 +34,8 @@ class SubclassRegistry:
         return base_class
 
     def name_for(self, cls):
+        """Get the name of a class in the registry."""
+
         for k, v in self.registry.items():
             if v is cls:
                 return k
@@ -37,6 +43,7 @@ class SubclassRegistry:
         return None
 
     def get(self, name):
+        """Get a subclass by name."""
         try:
             return self.registry[name]
         except KeyError:
