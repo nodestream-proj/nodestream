@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import assert_that, none, equal_to
+from hamcrest import assert_that, equal_to
 
 from nodestream.value_providers import VariableValueProvider
 from nodestream.model import PropertySet

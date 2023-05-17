@@ -48,7 +48,7 @@ class InvalidKeyLengthError(ValueError):
     """Raised when a related nodes have differening lengths of key parts returned from a value provider.."""
 
     def __init__(self, district_lengths, *args: object) -> None:
-        lengths = f"({','.join((str(l) for l in district_lengths))})"
+        lengths = f"({','.join((str(length) for length in district_lengths))})"
         error = f"Node Relationships do not have a consistent key length. Lengths are: ({lengths}) "
         super().__init__(error, *args)
 

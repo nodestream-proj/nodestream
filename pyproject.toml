@@ -38,3 +38,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 nodestream = 'nodestream.cli:run'
+
+[tool.ruff]
+ignore = ["E501"]
