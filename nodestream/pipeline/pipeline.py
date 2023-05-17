@@ -5,7 +5,7 @@ from .step import Step
 
 
 async def empty_asnyc_generator():
-    async for item in []:
+    for item in []:
         yield item
 
 

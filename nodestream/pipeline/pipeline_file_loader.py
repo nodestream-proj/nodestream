@@ -35,7 +35,7 @@ class PipelineFileSafeLoader(SafeLoader):
 
 @dataclass(slots=True)
 class PipelineInitializationArguments:
-    annnotations: Optional[List[str]] = None
+    annotations: Optional[List[str]] = None
 
     def initialize_from_file_data(self, file_data: List[dict]):
         return Pipeline(self.load_steps(ClassLoader(), file_data))
@@ -51,8 +51,8 @@ class PipelineInitializationArguments:
         return self.step_is_tagged_properly(step)
 
     def step_is_tagged_properly(self, step):
-        if "annnotations" in step and self.annnotations is not None:
-            if not set(step.pop("annnotations")).intersection(self.annnotations):
+        if "annotations" in step and self.annotations is not None:
+            if not set(step.pop("annotations")).intersection(self.annotations):
                 return False
 
         return True

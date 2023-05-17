@@ -9,8 +9,8 @@ from ..pipeline import PipelineInitializationArguments
 class RunRequest:
     pipeline_name: str
     initialization_arguments: PipelineInitializationArguments
-    reporting_arguments: PipelineProgressReporter
+    progress_reporter: PipelineProgressReporter
 
     async def execute_with_definition(self, definition: PipelineDefinition):
         pipeline = definition.initialize(self.initialization_arguments)
-        await self.reporting_arguments.execute_with_reporting(pipeline)
+        await self.progress_reporter.execute_with_reporting(pipeline)

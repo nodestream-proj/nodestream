@@ -34,7 +34,7 @@ async def test_pipeline_scope_runs_pipeline_when_present(
     request = RunRequest(
         pipeline_name="pipeline1",
         initialization_arguments=PipelineInitializationArguments(),
-        reporting_arguments=PipelineProgressReporter(),
+        progress_reporter=PipelineProgressReporter(),
     )
     request.execute_with_definition = mocker.Mock(return_value=async_return())
     await scope.run_request(request)
