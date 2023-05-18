@@ -10,8 +10,11 @@ from nodestream.model import (
     TimeToLiveConfiguration,
     IngestionHookRunRequest,
     GraphObjectShape,
+    NodeIdentityShape,
+    MatchStrategy,
 )
 from nodestream.databases import DebouncedIngestStrategy
+from nodestream.databases.query_executor import OperationOnNodeIdentity
 
 from hamcrest import assert_that, equal_to
 
@@ -79,12 +82,14 @@ async def test_flush_nodes(ingest_strategy):
     ingest_strategy.debouncer.drain_relationship_groups.return_value = []
     ingest_strategy.debouncer.drain_node_groups.return_value = [
         (
-            GraphObjectShape(GraphObjectType.NODE, "type", frozenset(("key",))),
+            OperationOnNodeIdentity(
+                NodeIdentityShape("type", ("key",)), MatchStrategy.EAGER
+            ),
             [Node("type", {"key": "test"})],
         )
     ]
     await ingest_strategy.flush()
-    ingest_strategy.executor.upsert_nodes_in_bulk_of_same_shape.assert_awaited_once()
+    ingest_strategy.executor.upsert_nodes_in_bulk_with_same_operation.assert_awaited_once()
 
 
 @pytest.mark.asyncio

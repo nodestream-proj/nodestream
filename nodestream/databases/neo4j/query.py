@@ -2,6 +2,17 @@ from dataclasses import dataclass
 from typing import Dict, Any, List
 
 
+COMMIT_QUERY = """
+CALL apoc.periodic.iterate(
+    "UNWIND $batched_parameter_sets as params RETURN params",
+    $batched_query,
+    {batchsize: 1000, paralell: false, retries: 3, params: {batched_parameter_sets: $batched_parameter_sets}}
+)
+YIELD batches, committedOperations, failedOperations, errorMessages
+RETURN batches, committedOperations, failedOperations, errorMessages
+"""
+
+
 @dataclass(slots=True)
 class Query:
     query_statement: str
@@ -15,4 +26,13 @@ class Query:
 @dataclass(slots=True)
 class QueryBatch:
     query_statement: str
-    batched_parameters: List[Dict[str, Any]]
+    batched_parameter_sets: List[Dict[str, Any]]
+
+    def as_query(self) -> Query:
+        return Query(
+            COMMIT_QUERY,
+            {
+                "batched_parameter_sets": self.batched_parameter_sets,
+                "batched_query": self.query_statement,
+            },
+        )

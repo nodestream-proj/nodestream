@@ -88,7 +88,17 @@ class Node:
 
     @property
     def identity_shape(self) -> "NodeIdentityShape":
-        return NodeIdentityShape(type=self.type, keys=tuple(self.key_values.keys()))
+        return NodeIdentityShape(
+            type=self.type,
+            keys=tuple(self.key_values.keys()),
+            additional_types=self.additional_types,
+        )
+
+    def has_same_key(self, other: "Node") -> bool:
+        return self.key_values == other.key_values
+
+    def update(self, other: "Relationship"):
+        self.properties.update(other.properties)
 
 
 @dataclass(slots=True)
@@ -115,6 +125,12 @@ class Relationship:
             type=self.type, keys=tuple(self.key_values.keys())
         )
 
+    def has_same_key(self, other: "Node") -> bool:
+        return self.key_values == other.key_values
+
+    def update(self, other: "Relationship"):
+        self.properties.update(other.properties)
+
 
 @dataclass(slots=True)
 class RelationshipWithNodes:
@@ -123,7 +139,9 @@ class RelationshipWithNodes:
     from_node: Node
     to_node: Node
     relationship: Relationship
-    match_strategy: MatchStrategy = MatchStrategy.EAGER
+
+    to_side_match_strategy: MatchStrategy = MatchStrategy.EAGER
+    from_side_match_strategy: MatchStrategy = MatchStrategy.EAGER
 
     @property
     def identity_shape(self) -> "RelationshipWithNodesIdentityShape":
@@ -133,11 +151,24 @@ class RelationshipWithNodes:
             relationship_shape=self.relationship.identity_shape,
         )
 
+    def has_same_keys(self, other: "RelationshipWithNodes") -> bool:
+        return (
+            self.to_node.has_same_key(other.to_node)
+            and self.from_node.has_same_key(other.from_node)
+            and self.relationship.has_same_key(other.relationship)
+        )
+
+    def update(self, other: "RelationshipWithNodes"):
+        self.to_node.properties.update(other.to_node.properties)
+        self.from_node.properties.update(other.from_node.properties)
+        self.relationship.properties.update(other.relationship.properties)
+
 
 @dataclass(slots=True, frozen=True)
 class NodeIdentityShape:
     type: str
     keys: Tuple[str]
+    additional_types: Tuple[str] = field(default_factory=tuple)
 
 
 @dataclass(slots=True, frozen=True)
@@ -151,4 +182,3 @@ class RelationshipWithNodesIdentityShape:
     to_node_shape: NodeIdentityShape
     from_node_shape: NodeIdentityShape
     relationship_shape: RelationshipIdentityShape
-    match_strategy: MatchStrategy

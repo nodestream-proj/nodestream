@@ -27,8 +27,12 @@ class DebouncedIngestStrategy(IngestionStrategy):
         self.debouncer.debounce_node(source)
 
     async def ingest_relationship(self, relationship: RelationshipWithNodes):
-        self.debouncer.debounce_node(relationship.from_node)
-        self.debouncer.debounce_node(relationship.from_node)
+        self.debouncer.debounce_node(
+            relationship.from_node, relationship.from_side_match_strategy
+        )
+        self.debouncer.debounce_node(
+            relationship.to_node, relationship.to_side_match_strategy
+        )
         self.debouncer.debounce_relationship(relationship)
 
     async def run_hook(self, request: IngestionHookRunRequest):
@@ -53,10 +57,10 @@ class DebouncedIngestStrategy(IngestionStrategy):
         self.logger.info("Executed TTL", extra=asdict(config))
 
     async def flush(self):
-        for node_shape, node_group in self.debouncer.drain_node_groups():
-            self.logger.debug("Draining Debounced Nodes", extra=asdict(node_shape))
-            await self.executor.upsert_nodes_in_bulk_of_same_shape(
-                node_shape, node_group
+        for operation, node_group in self.debouncer.drain_node_groups():
+            self.logger.debug("Debouned Nodes", extra=asdict(operation.node_identity))
+            await self.executor.upsert_nodes_in_bulk_with_same_operation(
+                operation, node_group
             )
 
         for rel_shape, rel_group in self.debouncer.drain_relationship_groups():

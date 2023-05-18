@@ -74,12 +74,18 @@ class DesiredIngestion:
         from_node, to_node = (
             (self.source, related_node) if outbound else (related_node, self.source)
         )
+        from_match, to_match = (
+            (MatchStrategy.EAGER, match_strategy)
+            if outbound
+            else (match_strategy, MatchStrategy.EAGER)
+        )
         self.relationships.append(
             RelationshipWithNodes(
                 from_node=from_node,
                 to_node=to_node,
                 relationship=relationship,
-                match_strategy=match_strategy,
+                from_side_match_strategy=from_match,
+                to_side_match_strategy=to_match,
             )
         )
 

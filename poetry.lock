@@ -265,6 +265,33 @@ files = [
 ]
 
 [[package]]
+name = "cymple"
+version = "0.8.1"
+description = "A productivity enhancer for creating Cypher queries in Python"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "cymple-0.8.1-py2.py3-none-any.whl", hash = "sha256:c92195ab909eb74a5adc52d22b1c8bfccf7ee9bb0be58509e646095b06d6ea49"},
+    {file = "cymple-0.8.1.tar.gz", hash = "sha256:7c1557b517b187b7048f70e7c92afe795f0300b2b169aeca3be16c20dfbdf49b"},
+]
+
+[[package]]
+name = "freezegun"
+version = "1.2.2"
+description = "Let your Python tests travel through time"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "freezegun-1.2.2-py3-none-any.whl", hash = "sha256:ea1b963b993cb9ea195adbd893a48d573fda951b0da64f60883d7e988b606c9f"},
+    {file = "freezegun-1.2.2.tar.gz", hash = "sha256:cd22d1ba06941384410cd967d8a99d5ae2442f57dfafeff2fda5de8dc5c05446"},
+]
+
+[package.dependencies]
+python-dateutil = ">=2.7"
+
+[[package]]
 name = "ghp-import"
 version = "2.1.0"
 description = "Copy your docs directly to the gh-pages branch."
@@ -1183,4 +1210,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "3c40631ed958682c044acae641f09d71f698b60d8c52fc095df22ddb4b4a43f4"
+content-hash = "082dce5eca45d5bf960b96cfae75b88dc6ea70236e9549a4d25c2537c5a7f158"

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Iterable
 
 from ..model import (
@@ -10,10 +11,17 @@ from ..model import (
     FieldIndex,
     TimeToLiveConfiguration,
     IngestionHook,
+    MatchStrategy,
 )
 from ..subclass_registry import SubclassRegistry
 
 QUERY_EXECUTOR_SUBCLASS_REGISTRY = SubclassRegistry()
+
+
+@dataclass(slots=True, frozen=True)
+class OperationOnNodeIdentity:
+    node_identity: NodeIdentityShape
+    match_strategy: MatchStrategy
 
 
 @QUERY_EXECUTOR_SUBCLASS_REGISTRY.connect_baseclass
@@ -30,8 +38,8 @@ class QueryExecutor(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def upsert_nodes_in_bulk_of_same_shape(
-        self, shape: NodeIdentityShape, nodes: Iterable[Node]
+    async def upsert_nodes_in_bulk_with_same_operation(
+        self, operation: OperationOnNodeIdentity, nodes: Iterable[Node]
     ):
         raise NotImplementedError
 
