@@ -40,5 +40,5 @@ class LoggerWriter(Writer):
         # see: https://docs.python.org/3/library/logging.html#logging.getLevelName
         self.level = getLevelName(level) if isinstance(level, str) else level
 
-    def write_item(self, item):
-        self.logger.log(self.level, item)
+    async def write_record(self, record):
+        self.logger.log(self.level, record)

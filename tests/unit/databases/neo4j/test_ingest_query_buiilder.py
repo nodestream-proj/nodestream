@@ -123,15 +123,6 @@ def test_node_update_generates_expected_queries(query_builder, node, expected_qu
     assert_that(query, equal_to(expected_query))
 
 
-# def test_generate_ingest_source_query_single_key():
-#     result_query, result_params = generate_ingest_source_query(node)
-#     expected_query = "WITH params MERGE (source: TestType {id : params.__source_id}) SET source += params.__source_properties"
-
-#     assert result_query == expected_query
-#     assert result_params["__source_id"] == "foo"
-#     assert result_params["__source_properties"] == node.metadata
-
-
 # def test_generate_ingest_source_query_multi_label():
 #     node =
 #     result_query, result_params = generate_ingest_source_query(node)
