@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from ..model import (
-    RelationshipWithNodesIdentityShape,
     RelationshipIdentityShape,
     NodeIdentityShape,
     Node,

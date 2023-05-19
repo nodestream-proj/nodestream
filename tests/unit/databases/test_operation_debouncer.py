@@ -1,7 +1,7 @@
 from nodestream.model import Node, Relationship, RelationshipWithNodes, MatchStrategy
 from nodestream.databases.operation_debouncer import OperationDebouncer
 
-from hamcrest import assert_that, equal_to, has_length
+from hamcrest import assert_that, has_length
 
 
 def test_debounces_updates_to_nodes_with_same_key():

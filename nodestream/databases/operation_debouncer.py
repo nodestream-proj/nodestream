@@ -4,7 +4,6 @@ from typing import Dict, List, Iterable, Tuple
 from ..model import (
     Node,
     RelationshipWithNodes,
-    RelationshipWithNodesIdentityShape,
     MatchStrategy,
 )
 
