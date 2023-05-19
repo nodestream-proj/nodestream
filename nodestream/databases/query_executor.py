@@ -4,6 +4,7 @@ from typing import Iterable
 
 from ..model import (
     RelationshipWithNodesIdentityShape,
+    RelationshipIdentityShape,
     NodeIdentityShape,
     Node,
     RelationshipWithNodes,
@@ -22,6 +23,13 @@ QUERY_EXECUTOR_SUBCLASS_REGISTRY = SubclassRegistry()
 class OperationOnNodeIdentity:
     node_identity: NodeIdentityShape
     match_strategy: MatchStrategy
+
+
+@dataclass(slots=True, frozen=True)
+class OperationOnRelationshipIdentity:
+    from_node: OperationOnNodeIdentity
+    to_node: OperationOnNodeIdentity
+    relationship_identity: RelationshipIdentityShape
 
 
 @QUERY_EXECUTOR_SUBCLASS_REGISTRY.connect_baseclass
@@ -44,9 +52,9 @@ class QueryExecutor(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def upsert_relationships_in_bulk_of_same_shape(
+    async def upsert_relationships_in_bulk_of_same_operation(
         self,
-        shape: RelationshipWithNodesIdentityShape,
+        shape: OperationOnRelationshipIdentity,
         rels: Iterable[RelationshipWithNodes],
     ):
         raise NotImplementedError

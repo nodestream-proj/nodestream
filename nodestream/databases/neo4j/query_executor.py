@@ -3,8 +3,6 @@ from logging import getLogger
 
 from neo4j import AsyncDriver, AsyncGraphDatabase
 
-from nodestream.databases.query_executor import OperationOnNodeIdentity
-from nodestream.model import Node
 
 from ...model import (
     Node,
@@ -13,7 +11,6 @@ from ...model import (
     FieldIndex,
     TimeToLiveConfiguration,
     IngestionHook,
-    RelationshipWithNodesIdentityShape,
 )
 from ..query_executor import QueryExecutor
 from .index_query_builder import (
@@ -22,6 +19,7 @@ from .index_query_builder import (
 )
 from .ingest_query_builder import Neo4jIngestQueryBuilder
 from .query import Query
+from ..query_executor import OperationOnNodeIdentity, OperationOnRelationshipIdentity
 
 
 class Neo4jQueryExecutor(QueryExecutor, name="neo4j"):
@@ -69,9 +67,9 @@ class Neo4jQueryExecutor(QueryExecutor, name="neo4j"):
         )
         await self.execute(batched_query.as_query(), log_result=True)
 
-    async def upsert_relationships_in_bulk_of_same_shape(
+    async def upsert_relationships_in_bulk_of_same_operation(
         self,
-        shape: RelationshipWithNodesIdentityShape,
+        shape: OperationOnRelationshipIdentity,
         rels: Iterable[RelationshipWithNodes],
     ):
         batched_query = (

@@ -8,7 +8,7 @@ from ..model import (
     MatchStrategy,
 )
 
-from .query_executor import OperationOnNodeIdentity
+from .query_executor import OperationOnNodeIdentity, OperationOnRelationshipIdentity
 
 
 class OperationDebouncer:
@@ -16,16 +16,38 @@ class OperationDebouncer:
         self.nodes_by_shape_operation: Dict[
             OperationOnNodeIdentity, List[Node]
         ] = defaultdict(list)
-        self.relationships_by_shape: Dict[
-            RelationshipWithNodesIdentityShape, List[RelationshipWithNodes]
+        self.relationships_by_operation: Dict[
+            OperationOnRelationshipIdentity, List[RelationshipWithNodes]
         ] = defaultdict(list)
+
+    def bucketize_node_operation(
+        self, node: Node, match_strategy: MatchStrategy
+    ) -> List[Node]:
+        return self.nodes_by_shape_operation[
+            OperationOnNodeIdentity(node.identity_shape, match_strategy)
+        ]
+
+    def bucketize_relationship_operation(
+        self, relationship: RelationshipWithNodes
+    ) -> List[RelationshipWithNodes]:
+        return self.relationships_by_operation[
+            OperationOnRelationshipIdentity(
+                from_node=OperationOnNodeIdentity(
+                    node_identity=relationship.from_node.identity_shape,
+                    match_strategy=relationship.from_side_match_strategy.prevent_creation(),
+                ),
+                to_node=OperationOnNodeIdentity(
+                    node_identity=relationship.to_node.identity_shape,
+                    match_strategy=relationship.to_side_match_strategy.prevent_creation(),
+                ),
+                relationship_identity=relationship.identity_shape,
+            )
+        ]
 
     def debounce_node_operation(
         self, node: Node, match_strategy: MatchStrategy = MatchStrategy.EAGER
     ):
-        bucket = self.nodes_by_shape_operation[
-            OperationOnNodeIdentity(node.identity_shape, match_strategy)
-        ]
+        bucket = self.bucketize_node_operation(node, match_strategy)
         for existing_node in bucket:
             if existing_node.has_same_key(node):
                 existing_node.update(node)
@@ -34,7 +56,7 @@ class OperationDebouncer:
             bucket.append(node)
 
     def debounce_relationship(self, relationship: RelationshipWithNodes):
-        bucket = self.relationships_by_shape[relationship.identity_shape]
+        bucket = self.bucketize_relationship_operation(relationship)
         for existing_rel in bucket:
             if existing_rel.has_same_keys(relationship):
                 existing_rel.update(relationship)
@@ -50,8 +72,6 @@ class OperationDebouncer:
 
     def drain_relationship_groups(
         self,
-    ) -> Iterable[
-        Tuple[RelationshipWithNodesIdentityShape, List[RelationshipWithNodes]]
-    ]:
-        yield from self.relationships_by_shape.items()
-        self.relationships_by_shape.clear()
+    ) -> Iterable[Tuple[OperationOnRelationshipIdentity, List[RelationshipWithNodes]]]:
+        yield from self.relationships_by_operation.items()
+        self.relationships_by_operation.clear()
