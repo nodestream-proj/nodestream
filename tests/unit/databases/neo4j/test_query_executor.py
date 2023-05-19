@@ -68,3 +68,38 @@ async def test_perform_ttl_op(query_executor, some_query):
     query_executor.driver.execute_query.assert_called_once_with(
         some_query.query_statement, some_query.parameters
     )
+
+
+@pytest.mark.asyncio
+async def test_upsert_key_index(query_executor, some_query):
+    query_generator = query_executor.index_query_builder.create_key_index_query
+    query_generator.return_value = some_query
+    await query_executor.upsert_key_index(None)
+    query_generator.assert_called_once_with(None)
+    query_executor.driver.execute_query.assert_called_once_with(
+        some_query.query_statement, some_query.parameters
+    )
+
+
+@pytest.mark.asyncio
+async def test_upsert_field_index(query_executor, some_query):
+    query_generator = query_executor.index_query_builder.create_field_index_query
+    query_generator.return_value = some_query
+    await query_executor.upsert_field_index(None)
+    query_generator.assert_called_once_with(None)
+    query_executor.driver.execute_query.assert_called_once_with(
+        some_query.query_statement, some_query.parameters
+    )
+
+
+@pytest.mark.asyncio
+async def test_execute_hook(query_executor, some_query, mocker):
+    hook = mocker.Mock()
+    hook.as_cypher_query_and_parameters = mocker.Mock(
+        return_value=(some_query.query_statement, some_query.parameters)
+    )
+    await query_executor.execute_hook(hook)
+    hook.as_cypher_query_and_parameters.assert_called_once()
+    query_executor.driver.execute_query.assert_called_once_with(
+        some_query.query_statement, some_query.parameters
+    )
