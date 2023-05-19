@@ -1,10 +1,11 @@
 import json
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from csv import DictReader
 from glob import glob
 from io import StringIO
 from pathlib import Path
-from typing import Any, AsyncGenerator, Iterable
+from typing import Any, AsyncGenerator, Iterable, Union
 
 from ..pipeline import Extractor
 from ..model import JsonLikeDocument
@@ -16,18 +17,31 @@ SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
 class SupportedFileFormat(ABC):
-    def __init__(self, file: Path) -> None:
+    def __init__(self, file: Union[Path, StringIO]) -> None:
         self.file = file
 
+    @contextmanager
+    def read_handle(self) -> StringIO:
+        if isinstance(self.file, Path):
+            with open(self.file, "r+") as fp:
+                yield fp
+        else:
+            yield self.file
+
     def read_file(self) -> Iterable[JsonLikeDocument]:
-        with open(self.file, "r+") as fp:
-            result = self.read_file_from_handle(fp)
-        return result
+        with self.read_handle() as fp:
+            return self.read_file_from_handle(fp)
 
     @classmethod
     def open(cls, file: Path) -> "SupportedFileFormat":
-        file_format = SUPPORTED_FILE_FORMAT_REGISTRY.get(file.suffix)
-        return file_format(file)
+        return cls.from_file_pointer_and_format(file, file.suffix)
+
+    @classmethod
+    def from_file_pointer_and_format(
+        cls, fp: StringIO, file_format: str
+    ) -> "SupportedFileFormat":
+        file_format = SUPPORTED_FILE_FORMAT_REGISTRY.get(file_format)
+        return file_format(fp)
 
     @abstractmethod
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
