@@ -28,7 +28,7 @@ def ingest_strategy(mocker):
 async def test_ingest_source_node(ingest_strategy):
     node = Node("test", "test", {"test": "test"})
     await ingest_strategy.ingest_source_node(node)
-    ingest_strategy.debouncer.debounce_node.assert_called_once_with(node)
+    ingest_strategy.debouncer.debounce_node_operation.assert_called_once_with(node, match_strategy=MatchStrategy.EAGER)
 
 
 @pytest.mark.asyncio

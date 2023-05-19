@@ -91,6 +91,17 @@ SIMPLE_NODE_EXPECTED_QUERY = QueryBatch(
     ],
 )
 
+SIMPLE_NODE_EXPECTED_QUERY_ON_MATCH = QueryBatch(
+    "MATCH (node: TestType) WHERE node.id = params.__node_id SET node += params.__node_properties",
+    [
+        {
+            "__node_id": "foo",
+            "__node_properties": SIMPLE_NODE.properties,
+            "__node_additional_labels": (),
+        }
+    ],
+)
+
 # In a more complex node case, we should still MERGE the node on the basis of its identity shape
 # but, in addition, we should add any additional labels that the node has.
 COMPLEX_NODE = Node(
@@ -109,37 +120,33 @@ COMPLEX_NODE_EXPECTED_QUERY = QueryBatch(
     ],
 )
 
+COMPLEX_NODE_TWO = Node(
+    "ComplexType", {"id_part1": "foo", "id_part2": "bar"}, additional_types=("ExtraTypeOne", "ExtraTypeTwo")
+)
+
+COMPLEX_NODE_TWO_EXPECTED_QUERY = QueryBatch(
+    "MERGE (node: ComplexType {id_part1 : params.__node_id_part1, id_part2 : params.__node_id_part2}) SET node += params.__node_properties WITH node, params CALL apoc.create.addLabels(node, params.__node_additional_labels) yield node RETURN true",
+    [
+        {
+            "__node_id_part1": "foo",
+            "__node_id_part2": "bar",
+            "__node_properties": COMPLEX_NODE_TWO.properties,
+            "__node_additional_labels": ("ExtraTypeOne", "ExtraTypeTwo"),
+        }
+    ]
+)
 
 @pytest.mark.parametrize(
-    "node,expected_query",
+    "node,expected_query,match_strategy",
     [
-        [SIMPLE_NODE, SIMPLE_NODE_EXPECTED_QUERY],
-        [COMPLEX_NODE, COMPLEX_NODE_EXPECTED_QUERY],
+        [SIMPLE_NODE, SIMPLE_NODE_EXPECTED_QUERY, MatchStrategy.EAGER],
+        [COMPLEX_NODE, COMPLEX_NODE_EXPECTED_QUERY, MatchStrategy.EAGER],
+        [COMPLEX_NODE_TWO, COMPLEX_NODE_TWO_EXPECTED_QUERY, MatchStrategy.EAGER],
+        [SIMPLE_NODE, SIMPLE_NODE_EXPECTED_QUERY_ON_MATCH, MatchStrategy.MATCH_ONLY],
     ],
 )
-def test_node_update_generates_expected_queries(query_builder, node, expected_query):
-    operation = OperationOnNodeIdentity(node.identity_shape, MatchStrategy.EAGER)
+def test_node_update_generates_expected_queries(query_builder, node, expected_query, match_strategy):
+    operation = OperationOnNodeIdentity(node.identity_shape, match_strategy)
     query = query_builder.generate_batch_update_node_operation_batch(operation, [node])
     assert_that(query, equal_to(expected_query))
 
-
-# def test_generate_ingest_source_query_multi_label():
-#     node =
-#     result_query, result_params = generate_ingest_source_query(node)
-#     expected_query = "WITH params MERGE (source: TestType {id : params.__source_id}) SET source += params.__source_properties WITH source, params CALL apoc.create.addLabels(source, params.__source_additional_labels) yield node RETURN true"
-
-#     assert result_query == expected_query
-#     assert result_params["__source_id"] == "foo"
-#     assert result_params["__source_properties"] == node.metadata
-#     assert result_params["__source_additional_labels"] == node.additional_types
-
-
-# def test_generate_ingest_source_complex_case():
-#     node = SourceNode("TestType", {"id": "foo"})
-#     node.metadata.add_metadata("meta", "value")
-#     result_query, result_params = generate_ingest_source_query(node)
-#     expected_query = "WITH params MERGE (source: TestType {id : params.__source_id}) SET source += params.__source_properties"
-
-#     assert result_query == expected_query
-#     assert result_params["__source_id"] == "foo"
-#     assert result_params["__source_properties"] == node.metadata
