@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable
 
-from ..pipeline import Extractor
 from ..model import GraphObjectType, TimeToLiveConfiguration
+from ..pipeline import Extractor
 
 
 class TimeToLiveConfigurationExtractor(Extractor):

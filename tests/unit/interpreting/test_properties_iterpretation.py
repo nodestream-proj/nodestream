@@ -1,8 +1,6 @@
 from hamcrest import assert_that, equal_to, has_entries
 
-from nodestream.interpreting.properties_interpretation import (
-    PropertiesInterpretation,
-)
+from nodestream.interpreting.properties_interpretation import PropertiesInterpretation
 from nodestream.model import (
     GraphObjectShape,
     GraphObjectType,

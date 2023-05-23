@@ -2,10 +2,10 @@ import pytest
 
 from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import (
-    PipelineScope,
     PipelineDefinition,
-    RunRequest,
     PipelineProgressReporter,
+    PipelineScope,
+    RunRequest,
 )
 
 

@@ -1,5 +1,5 @@
-from ..pipeline import Writer, Flush
 from ..model import IngestionStrategy
+from ..pipeline import Flush, Writer
 
 
 class GraphDatabaseWriter(Writer):

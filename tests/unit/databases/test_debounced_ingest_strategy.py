@@ -1,22 +1,21 @@
 import pytest
+from hamcrest import assert_that, equal_to
 
-from nodestream.model import (
-    Node,
-    Relationship,
-    RelationshipWithNodes,
-    KeyIndex,
-    FieldIndex,
-    GraphObjectType,
-    TimeToLiveConfiguration,
-    IngestionHookRunRequest,
-    GraphObjectShape,
-    NodeIdentityShape,
-    MatchStrategy,
-)
 from nodestream.databases import DebouncedIngestStrategy
 from nodestream.databases.query_executor import OperationOnNodeIdentity
-
-from hamcrest import assert_that, equal_to
+from nodestream.model import (
+    FieldIndex,
+    GraphObjectShape,
+    GraphObjectType,
+    IngestionHookRunRequest,
+    KeyIndex,
+    MatchStrategy,
+    Node,
+    NodeIdentityShape,
+    Relationship,
+    RelationshipWithNodes,
+    TimeToLiveConfiguration,
+)
 
 
 @pytest.fixture
@@ -28,7 +27,9 @@ def ingest_strategy(mocker):
 async def test_ingest_source_node(ingest_strategy):
     node = Node("test", "test", {"test": "test"})
     await ingest_strategy.ingest_source_node(node)
-    ingest_strategy.debouncer.debounce_node_operation.assert_called_once_with(node, match_strategy=MatchStrategy.EAGER)
+    ingest_strategy.debouncer.debounce_node_operation.assert_called_once_with(
+        node, match_strategy=MatchStrategy.EAGER
+    )
 
 
 @pytest.mark.asyncio

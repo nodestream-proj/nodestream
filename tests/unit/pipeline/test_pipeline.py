@@ -1,6 +1,7 @@
+import pytest
+
 from nodestream.pipeline import Pipeline
 
-import pytest
 
 @pytest.fixture
 def pipeline(mocker):

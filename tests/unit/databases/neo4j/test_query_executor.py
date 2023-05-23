@@ -1,8 +1,8 @@
 import pytest
 
-from nodestream.model import TimeToLiveConfiguration, GraphObjectType
-from nodestream.databases.neo4j.query import Query, QueryBatch, COMMIT_QUERY
 from nodestream.databases.neo4j import Neo4jQueryExecutor
+from nodestream.databases.neo4j.query import COMMIT_QUERY, Query, QueryBatch
+from nodestream.model import GraphObjectType, TimeToLiveConfiguration
 
 
 @pytest.fixture

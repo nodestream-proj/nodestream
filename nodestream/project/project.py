@@ -3,10 +3,9 @@ from typing import Dict, List, Optional
 
 from yaml import safe_load
 
+from ..exceptions import MissingProjectFileError
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
-from ..exceptions import MissingProjectFileError
-
 
 DEFAULT_PROJECT_FILE = Path("nodestream.yaml")
 

@@ -1,7 +1,7 @@
 import pytest
 
-from nodestream.project import PipelineProgressReporter
 from nodestream.pipeline import IterableExtractor, Pipeline
+from nodestream.project import PipelineProgressReporter
 
 
 @pytest.mark.asyncio

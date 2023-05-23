@@ -1,6 +1,5 @@
 import jq
-
-from hamcrest import assert_that, equal_to, none, has_length
+from hamcrest import assert_that, equal_to, has_length, none
 
 from nodestream.value_providers import JqValueProvider
 

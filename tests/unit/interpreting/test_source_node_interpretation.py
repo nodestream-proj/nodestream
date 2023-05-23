@@ -1,8 +1,6 @@
 from hamcrest import assert_that, equal_to, has_entries, has_length
 
-from nodestream.interpreting.source_node_interpretation import (
-    SourceNodeInterpretation,
-)
+from nodestream.interpreting.source_node_interpretation import SourceNodeInterpretation
 from nodestream.model import (
     FieldIndex,
     GraphObjectShape,

@@ -4,7 +4,6 @@ import pytest
 
 from nodestream.model import DesiredIngestion, InterpreterContext
 
-
 DECENT_DOCUMENT = {
     "team": {
         "name": "nodestream",

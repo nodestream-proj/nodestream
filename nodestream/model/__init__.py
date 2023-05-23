@@ -1,11 +1,11 @@
 from .desired_ingest import DesiredIngestion, MatchStrategy, RelationshipWithNodes
 from .graph_objects import (
     Node,
+    NodeIdentityShape,
     PropertySet,
     Relationship,
     RelationshipIdentityShape,
     RelationshipWithNodesIdentityShape,
-    NodeIdentityShape,
 )
 from .indexes import FieldIndex, KeyIndex
 from .ingest_strategy import IngestionStrategy

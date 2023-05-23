@@ -3,15 +3,15 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from ..model import (
-    RelationshipIdentityShape,
-    NodeIdentityShape,
-    Node,
-    RelationshipWithNodes,
-    KeyIndex,
     FieldIndex,
-    TimeToLiveConfiguration,
     IngestionHook,
+    KeyIndex,
     MatchStrategy,
+    Node,
+    NodeIdentityShape,
+    RelationshipIdentityShape,
+    RelationshipWithNodes,
+    TimeToLiveConfiguration,
 )
 from ..subclass_registry import SubclassRegistry
 
