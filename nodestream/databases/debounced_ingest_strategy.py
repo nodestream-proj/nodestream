@@ -11,7 +11,7 @@ from ..model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
-from .neo4j.query_executor import QueryExecutor
+from .query_executor import QueryExecutor
 from .operation_debouncer import OperationDebouncer
 
 
