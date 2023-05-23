@@ -1,12 +1,7 @@
 from collections import defaultdict
-from typing import Dict, List, Iterable, Tuple
+from typing import Dict, Iterable, List, Tuple
 
-from ..model import (
-    Node,
-    RelationshipWithNodes,
-    MatchStrategy,
-)
-
+from ..model import MatchStrategy, Node, RelationshipWithNodes
 from .query_executor import OperationOnNodeIdentity, OperationOnRelationshipIdentity
 
 

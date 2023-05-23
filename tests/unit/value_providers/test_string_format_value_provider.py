@@ -1,6 +1,6 @@
-from nodestream.value_providers import StringFormattingValueProvider
-
 from hamcrest import assert_that, equal_to
+
+from nodestream.value_providers import StringFormattingValueProvider
 
 from ..stubs import StubbedValueProvider
 

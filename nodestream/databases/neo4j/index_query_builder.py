@@ -1,6 +1,5 @@
-from ...model import KeyIndex, FieldIndex, GraphObjectType
+from ...model import FieldIndex, GraphObjectType, KeyIndex
 from .query import Query
-
 
 KEY_INDEX_QUERY_FORMAT = "CREATE CONSTRAINT {constraint_name} IF NOT EXISTS FOR (n:`{type}`) REQUIRE ({key_pattern}) IS UNIQUE"
 ENTERPRISE_KEY_INDEX_QUERY_FORMAT = "CREATE CONSTRAINT {constraint_name} IF NOT EXISTS FOR (n:`{type}`) REQUIRE ({key_pattern}) IS NODE KEY"

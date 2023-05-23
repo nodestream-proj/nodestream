@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
-from logging import getLogger, Logger
-from typing import Callable, Any
+from logging import Logger, getLogger
+from typing import Any, Callable
 
-from ..utilities import enumerate_async, get_max_mem_mb
 from ..pipeline import Pipeline
+from ..utilities import enumerate_async, get_max_mem_mb
 
 
 @dataclass

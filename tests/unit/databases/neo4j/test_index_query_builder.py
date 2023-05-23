@@ -1,12 +1,12 @@
-from nodestream.model import KeyIndex, FieldIndex, GraphObjectType
-from nodestream.databases.neo4j.query import Query
-from nodestream.databases.neo4j.index_query_builder import (
-    Neo4jIndexQueryBuilder,
-    Neo4jEnterpriseIndexQueryBuilder,
-)
-
 import pytest
 from hamcrest import assert_that, equal_to
+
+from nodestream.databases.neo4j.index_query_builder import (
+    Neo4jEnterpriseIndexQueryBuilder,
+    Neo4jIndexQueryBuilder,
+)
+from nodestream.databases.neo4j.query import Query
+from nodestream.model import FieldIndex, GraphObjectType, KeyIndex
 
 
 @pytest.fixture

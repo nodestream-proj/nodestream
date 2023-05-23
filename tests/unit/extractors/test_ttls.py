@@ -1,8 +1,8 @@
 import pytest
 from hamcrest import assert_that, equal_to
 
-from nodestream.model import TimeToLiveConfiguration, GraphObjectType
 from nodestream.extractors.ttls import TimeToLiveConfigurationExtractor
+from nodestream.model import GraphObjectType, TimeToLiveConfiguration
 
 
 @pytest.mark.asyncio

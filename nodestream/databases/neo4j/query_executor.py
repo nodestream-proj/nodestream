@@ -1,25 +1,27 @@
-from typing import Iterable
 from logging import getLogger
+from typing import Iterable
 
 from neo4j import AsyncDriver, AsyncGraphDatabase
 
-
 from ...model import (
+    FieldIndex,
+    IngestionHook,
+    KeyIndex,
     Node,
     RelationshipWithNodes,
-    KeyIndex,
-    FieldIndex,
     TimeToLiveConfiguration,
-    IngestionHook,
 )
-from ..query_executor import QueryExecutor
+from ..query_executor import (
+    OperationOnNodeIdentity,
+    OperationOnRelationshipIdentity,
+    QueryExecutor,
+)
 from .index_query_builder import (
-    Neo4jIndexQueryBuilder,
     Neo4jEnterpriseIndexQueryBuilder,
+    Neo4jIndexQueryBuilder,
 )
 from .ingest_query_builder import Neo4jIngestQueryBuilder
 from .query import Query
-from ..query_executor import OperationOnNodeIdentity, OperationOnRelationshipIdentity
 
 
 class Neo4jQueryExecutor(QueryExecutor, name="neo4j"):

@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List
 
 from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest

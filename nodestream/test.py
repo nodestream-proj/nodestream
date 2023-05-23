@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from nodestream.project import RunRequest, Project, PipelineProgressReporter
 from nodestream.pipeline import PipelineInitializationArguments
+from nodestream.project import PipelineProgressReporter, Project, RunRequest
 
 
 @pytest.fixture

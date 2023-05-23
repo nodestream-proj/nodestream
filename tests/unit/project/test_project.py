@@ -2,14 +2,14 @@ from pathlib import Path
 
 import pytest
 
+from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import (
-    Project,
-    RunRequest,
-    PipelineScope,
     PipelineDefinition,
     PipelineProgressReporter,
+    PipelineScope,
+    Project,
+    RunRequest,
 )
-from nodestream.pipeline import PipelineInitializationArguments
 
 
 @pytest.fixture

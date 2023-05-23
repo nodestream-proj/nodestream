@@ -1,8 +1,8 @@
 from abc import abstractmethod
 from typing import Any, AsyncGenerator
 
-from .step import Step
 from .flush import Flush
+from .step import Step
 
 
 class Transformer(Step):

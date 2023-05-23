@@ -2,14 +2,14 @@ from dataclasses import asdict
 from logging import getLogger
 
 from ..model import (
+    FieldIndex,
+    IngestionHookRunRequest,
     IngestionStrategy,
+    KeyIndex,
+    MatchStrategy,
     Node,
     RelationshipWithNodes,
-    IngestionHookRunRequest,
-    KeyIndex,
-    FieldIndex,
     TimeToLiveConfiguration,
-    MatchStrategy
 )
 from .neo4j.query_executor import QueryExecutor
 from .operation_debouncer import OperationDebouncer
@@ -25,7 +25,9 @@ class DebouncedIngestStrategy(IngestionStrategy):
         self.hooks_saved_for_after_ingest = []
 
     async def ingest_source_node(self, source: Node):
-        self.debouncer.debounce_node_operation(source, match_strategy=MatchStrategy.EAGER)
+        self.debouncer.debounce_node_operation(
+            source, match_strategy=MatchStrategy.EAGER
+        )
 
     async def ingest_relationship(self, relationship: RelationshipWithNodes):
         self.debouncer.debounce_node_operation(

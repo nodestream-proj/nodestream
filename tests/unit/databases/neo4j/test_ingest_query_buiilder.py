@@ -1,23 +1,23 @@
 from datetime import datetime
 
 import pytest
-from hamcrest import assert_that, equal_to, equal_to_ignoring_whitespace
 from freezegun import freeze_time
+from hamcrest import assert_that, equal_to, equal_to_ignoring_whitespace
 
-from nodestream.model import (
-    TimeToLiveConfiguration,
-    GraphObjectType,
-    Node,
-    MatchStrategy,
-    RelationshipWithNodes,
-    Relationship,
-)
 from nodestream.databases.neo4j import Neo4jIngestQueryBuilder
+from nodestream.databases.neo4j.query import Query, QueryBatch
 from nodestream.databases.query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
 )
-from nodestream.databases.neo4j.query import Query, QueryBatch
+from nodestream.model import (
+    GraphObjectType,
+    MatchStrategy,
+    Node,
+    Relationship,
+    RelationshipWithNodes,
+    TimeToLiveConfiguration,
+)
 
 
 @pytest.fixture

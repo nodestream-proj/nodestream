@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from nodestream.project import PipelineDefinition
 from nodestream.pipeline import PipelineInitializationArguments
+from nodestream.project import PipelineDefinition
 
 
 def test_pipeline_definition_initialize(mocker):

@@ -1,5 +1,5 @@
-import json
 import csv
+import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -7,7 +7,6 @@ import pytest
 from hamcrest import assert_that, equal_to, has_length
 
 from nodestream.extractors.files import FileExtractor
-
 
 SIMPLE_RECORD = {"record": "value"}
 

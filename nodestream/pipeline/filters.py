@@ -3,8 +3,8 @@ from typing import Any, AsyncGenerator, Dict, Iterable, Optional
 
 from ..model import InterpreterContext
 from ..value_providers import StaticValueOrValueProvider, ValueProvider
-from .step import Step
 from .flush import Flush
+from .step import Step
 
 
 class Filter(Step):

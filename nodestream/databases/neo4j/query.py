@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Any, List
-
+from typing import Any, Dict, List
 
 COMMIT_QUERY = """
 CALL apoc.periodic.iterate(

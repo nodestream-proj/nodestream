@@ -1,21 +1,21 @@
 import re
 from datetime import datetime, timedelta
-from typing import Iterable
 from functools import cache, wraps
+from typing import Iterable
 
-from cymple.builder import QueryBuilder, NodeAvailable, NodeAfterMergeAvailable
+from cymple.builder import NodeAfterMergeAvailable, NodeAvailable, QueryBuilder
 
 from ...model import (
-    Node,
-    RelationshipWithNodes,
-    TimeToLiveConfiguration,
-    MatchStrategy,
     GraphObjectType,
+    MatchStrategy,
+    Node,
     Relationship,
     RelationshipIdentityShape,
+    RelationshipWithNodes,
+    TimeToLiveConfiguration,
 )
-from .query import QueryBatch, Query
 from ..query_executor import OperationOnNodeIdentity, OperationOnRelationshipIdentity
+from .query import Query, QueryBatch
 
 PROPERTIES_PARAM_NAME = "properties"
 ADDITIONAL_LABELS_PARAM_NAME = "additional_labels"

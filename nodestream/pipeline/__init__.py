@@ -4,7 +4,7 @@ from .filters import Filter, ValuesMatchPossiblitiesFilter
 from .flush import Flush
 from .pipeline import Pipeline
 from .pipeline_file_loader import PipelineFileLoader, PipelineInitializationArguments
-from .step import Step, PassStep
+from .step import PassStep, Step
 from .transformers import Transformer
 from .writers import LoggerWriter, Writer
 

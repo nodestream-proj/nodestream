@@ -2,9 +2,9 @@ from pathlib import Path
 
 from cleo.helpers import argument, option
 
-from ...project import Project, RunRequest, PipelineProgressReporter
-from ...pipeline import PipelineInitializationArguments
 from ...logging import configure_logging_with_json_defaults
+from ...pipeline import PipelineInitializationArguments
+from ...project import PipelineProgressReporter, Project, RunRequest
 from .async_command import AsyncCommand
 
 

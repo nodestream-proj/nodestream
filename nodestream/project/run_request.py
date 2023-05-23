@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
+from ..pipeline import PipelineInitializationArguments
 from .pipeline_definition import PipelineDefinition
 from .pipeline_progress_reporter import PipelineProgressReporter
-from ..pipeline import PipelineInitializationArguments
 
 
 @dataclass
