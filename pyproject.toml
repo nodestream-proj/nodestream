@@ -17,6 +17,7 @@ neo4j = "^5.8.0"
 cleo = "^2.0.1"
 python-json-logger = "^2.0.4"
 cymple = "0.8.1"
+boto3 = "^1.26.137"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
@@ -31,6 +32,7 @@ pytest-cov = "^4.0.0"
 pytest-asyncio = "^0.21.0"
 pytest-mock = "^3.10.0"
 freezegun = "^1.2.2"
+moto = {version = "^4.1.10", extras = ["s3"]}
 
 [build-system]
 requires = ["poetry-core"]
