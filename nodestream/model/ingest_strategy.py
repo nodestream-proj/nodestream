@@ -8,7 +8,12 @@ if TYPE_CHECKING:
     from .ingestion_hooks import IngestionHookRunRequest
     from .ttl import TimeToLiveConfiguration
 
+from ..subclass_registry import SubclassRegistry
 
+INGESTION_STRATEGY_REGISTRY = SubclassRegistry()
+
+
+@INGESTION_STRATEGY_REGISTRY.connect_baseclass
 class IngestionStrategy(ABC):
     """An IngestionStrategy represents the methods taken to commit data to a Graph Database.
 

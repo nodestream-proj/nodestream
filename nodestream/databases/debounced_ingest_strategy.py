@@ -15,13 +15,11 @@ from .query_executor import QueryExecutor
 from .operation_debouncer import OperationDebouncer
 
 
-class DebouncedIngestStrategy(IngestionStrategy):
-    def __init__(
-        self, query_executor: QueryExecutor, debouncer: OperationDebouncer
-    ) -> None:
+class DebouncedIngestStrategy(IngestionStrategy, name="debounced"):
+    def __init__(self, query_executor: QueryExecutor) -> None:
         self.logger = getLogger(self.__class__.__name__)
         self.executor = query_executor
-        self.debouncer = debouncer
+        self.debouncer = OperationDebouncer()
         self.hooks_saved_for_after_ingest = []
 
     async def ingest_source_node(self, source: Node):

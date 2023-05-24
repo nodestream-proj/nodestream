@@ -20,7 +20,9 @@ from nodestream.model import (
 
 @pytest.fixture
 def ingest_strategy(mocker):
-    return DebouncedIngestStrategy(mocker.AsyncMock(), mocker.Mock())
+    debouncer = DebouncedIngestStrategy(mocker.AsyncMock())
+    debouncer.debouncer = mocker.Mock()
+    return debouncer
 
 
 @pytest.mark.asyncio
