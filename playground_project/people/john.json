@@ -1,0 +1,11 @@
+{
+    "firstName": "John",
+    "lastName": "Doe",
+    "age": 28,
+    "friends": [
+        {
+            "firstName": "Zach",
+            "lastName": "Probst"
+        }
+    ]
+}
