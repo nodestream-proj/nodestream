@@ -12,6 +12,7 @@ class SwitchInterpretation(AggregatedIntrospectionMixin, Interpretation, name="s
         "interpretations",
         "default",
         "normalization",
+        "fail_on_unhandled",
     )
 
     def __init__(
@@ -20,6 +21,7 @@ class SwitchInterpretation(AggregatedIntrospectionMixin, Interpretation, name="s
         cases: Dict[str, dict],
         default: Dict[str, Any] = None,
         normalization: Dict[str, Any] = None,
+        fail_on_unhandled: bool = True,
     ):
         self.switch_on = ValueProvider.garuntee_value_provider(switch_on)
         self.interpretations = {
@@ -30,6 +32,7 @@ class SwitchInterpretation(AggregatedIntrospectionMixin, Interpretation, name="s
             Interpretation.from_file_arguments(**default) if default else None
         )
         self.normalization = normalization or {}
+        self.fail_on_unhandled = fail_on_unhandled
 
     def all_subordinate_components(self):
         yield from self.interpretations.values()
@@ -42,6 +45,9 @@ class SwitchInterpretation(AggregatedIntrospectionMixin, Interpretation, name="s
         )
         if value_to_look_for not in self.interpretations:
             if self.default:
-                return self.default.interpret(context)
-            raise UnhandledBranchError(value_to_look_for)
+                self.default.interpret(context)
+            if self.fail_on_unhandled:
+                raise UnhandledBranchError(value_to_look_for)
+            else:
+                return
         return self.interpretations[value_to_look_for].interpret(context)
