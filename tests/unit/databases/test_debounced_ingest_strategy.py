@@ -111,7 +111,7 @@ async def test_flush_relationships(ingest_strategy):
         )
     ]
     await ingest_strategy.flush()
-    ingest_strategy.executor.upsert_relationships_in_bulk_of_same_shape.assert_awaited_once()
+    ingest_strategy.executor.upsert_relationships_in_bulk_of_same_operation.assert_awaited_once()
 
 
 @pytest.mark.asyncio

@@ -110,7 +110,7 @@ class Neo4jQueryExecutor(QueryExecutor, name="neo4j"):
             query.query_statement, query.parameters
         )
         if log_result:
-            for record in result:
+            for record in result.records:
                 self.logger.info(
                     "Gathered Query Results",
                     extra=dict(**record, query=query.query_statement),

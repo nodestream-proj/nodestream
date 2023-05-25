@@ -34,7 +34,7 @@ class OperationDebouncer:
                     node_identity=relationship.to_node.identity_shape,
                     match_strategy=relationship.to_side_match_strategy.prevent_creation(),
                 ),
-                relationship_identity=relationship.identity_shape,
+                relationship_identity=relationship.relationship.identity_shape,
             )
         ]
 

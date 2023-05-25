@@ -66,7 +66,7 @@ class DebouncedIngestStrategy(IngestionStrategy, name="debounced"):
 
         for rel_shape, rel_group in self.debouncer.drain_relationship_groups():
             self.logger.debug("Draining Debounced Nodes", extra=asdict(rel_shape))
-            await self.executor.upsert_relationships_in_bulk_of_same_shape(
+            await self.executor.upsert_relationships_in_bulk_of_same_operation(
                 rel_shape, rel_group
             )
 
