@@ -14,7 +14,7 @@ async def test_iterable_extractor():
 
 @pytest.mark.asyncio
 async def test_iterable_extractor_range_factory():
-    expected_results = [1, 3, 5]
+    expected_results = [{"index": 1}, {"index": 3}, {"index": 5}]
     subject = IterableExtractor.range(1, 6, 2)
     results = [item async for item in subject.extract_records()]
     assert_that(results, equal_to(expected_results))

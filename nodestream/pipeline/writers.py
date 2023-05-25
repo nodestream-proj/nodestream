@@ -20,9 +20,14 @@ class Writer(Step):
             await self.write_record(record)
             yield record
 
+        await self.finish()
+
     @abstractmethod
     async def write_record(self, record: Any):
         raise NotImplementedError
+
+    async def finish(self):
+        pass
 
 
 class LoggerWriter(Writer):
