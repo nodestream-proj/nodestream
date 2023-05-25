@@ -143,14 +143,6 @@ class RelationshipWithNodes:
     to_side_match_strategy: MatchStrategy = MatchStrategy.EAGER
     from_side_match_strategy: MatchStrategy = MatchStrategy.EAGER
 
-    @property
-    def identity_shape(self) -> "RelationshipWithNodesIdentityShape":
-        return RelationshipWithNodesIdentityShape(
-            to_node_shape=self.to_node.identity_shape,
-            from_node_shape=self.from_node.identity_shape,
-            relationship_shape=self.relationship.identity_shape,
-        )
-
     def has_same_keys(self, other: "RelationshipWithNodes") -> bool:
         return (
             self.to_node.has_same_key(other.to_node)
@@ -175,10 +167,3 @@ class NodeIdentityShape:
 class RelationshipIdentityShape:
     type: str
     keys: Tuple[str]
-
-
-@dataclass(slots=True, frozen=True)
-class RelationshipWithNodesIdentityShape:
-    to_node_shape: NodeIdentityShape
-    from_node_shape: NodeIdentityShape
-    relationship_shape: RelationshipIdentityShape

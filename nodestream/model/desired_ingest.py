@@ -26,7 +26,7 @@ class DesiredIngestion:
 
     async def ingest_relationships(self, strategy: "IngestionStrategy"):
         await asyncio.gather(
-            (
+            *(
                 strategy.ingest_relationship(relationship)
                 for relationship in self.relationships
             )
@@ -34,7 +34,7 @@ class DesiredIngestion:
 
     async def run_ingest_hooks(self, strategy: "IngestionStrategy"):
         await asyncio.gather(
-            (
+            *(
                 strategy.run_hook(hook_req.hook, hook_req.before_ingest)
                 for hook_req in self.hook_requests
             )

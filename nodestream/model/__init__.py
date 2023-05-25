@@ -5,7 +5,6 @@ from .graph_objects import (
     PropertySet,
     Relationship,
     RelationshipIdentityShape,
-    RelationshipWithNodesIdentityShape,
 )
 from .indexes import FieldIndex, KeyIndex
 from .ingest_strategy import IngestionStrategy
@@ -56,6 +55,5 @@ __all__ = (
     "Cardinality",
     "PresentRelationship",
     "RelationshipIdentityShape",
-    "RelationshipWithNodesIdentityShape",
     "NodeIdentityShape",
 )

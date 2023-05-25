@@ -23,3 +23,7 @@ class InterpreterContext:
     desired_ingest: DesiredIngestion
     mappings: Dict[Any, Any] = field(default_factory=dict)
     variables: PropertySet = field(default_factory=PropertySet.empty)
+
+    @classmethod
+    def fresh(cls, record):
+        return cls(record, DesiredIngestion())
