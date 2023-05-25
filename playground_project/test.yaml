@@ -9,22 +9,22 @@
       - type: source_node
         node_type: Person
         key:
-          first_name: !jmespath first_name
-          last_name: !jmespath last_name
+          first_name: !jmespath firstName
+          last_name: !jmespath lastName
         properties:
           age: !jmespath age
       - type: relationship
         node_type: Person
         relationship_type: KNOWS
         node_key:
-          first_name: !jmespath friends[*].first_name
-          last_name: !jmespath friends[*].last_name
-        can_find_many: true
+          first_name: !jmespath friends[*].firstName
+          last_name: !jmespath friends[*].lastName
+        find_many: true
 
-- implementation: nodestream.databases:Writer
+- implementation: nodestream.databases:GraphDatabaseWriter
   arguments:
     batch_size: 1000
     database: neo4j
-    url: bolt://localhost:7687
+    uri: bolt://localhost:7687
     username: neo4j
-    password: neo4j
+    password: neo4j123
