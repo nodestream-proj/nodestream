@@ -21,8 +21,13 @@ def scopes():
 
 
 @pytest.fixture
-def project(scopes):
-    return Project(scopes)
+def imports():
+    return ["module1", "module2"]
+
+
+@pytest.fixture
+def project(scopes, imports):
+    return Project(scopes, imports)
 
 
 def test_pipeline_organizes_scopes_by_name(scopes, project):
@@ -52,3 +57,11 @@ def test_project_from_file_missing_file():
     file_name = Path("tests/unit/project/fixtures/missing_project.yaml")
     with pytest.raises(FileNotFoundError):
         Project.from_file(file_name)
+
+
+def test_ensure_modules_are_imported(mocker, project):
+    importlib = mocker.patch("nodestream.project.project.importlib")
+    project.ensure_modules_are_imported()
+    importlib.import_module.assert_has_calls(
+        [mocker.call("module1"), mocker.call("module2")]
+    )

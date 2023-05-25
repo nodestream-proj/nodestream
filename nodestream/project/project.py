@@ -1,3 +1,4 @@
+import importlib
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -29,12 +30,18 @@ class Project:
             PipelineScope.from_file_data(*scope_data)
             for scope_data in scopes_data.items()
         ]
-        return cls(scopes)
+        imports = data.pop("imports", [])
+        return cls(scopes, imports)
 
-    def __init__(self, scopes: List[PipelineScope]):
+    def __init__(self, scopes: List[PipelineScope], imports: List[str]):
         self.scopes_by_name: Dict[str, PipelineScope] = {
             scope.name: scope for scope in scopes
         }
+        self.imports = imports
+
+    def ensure_modules_are_imported(self):
+        for module in self.imports:
+            importlib.import_module(module)
 
     async def run(self, request: RunRequest):
         for scope in self.scopes_by_name.values():
