@@ -72,6 +72,7 @@ class FileExtractor(Extractor):
         self.paths = paths
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
-        for path in self.paths:
+        for path_str in self.paths:
+            path = Path(path_str)
             for record in SupportedFileFormat.open(path).read_file():
                 yield record
