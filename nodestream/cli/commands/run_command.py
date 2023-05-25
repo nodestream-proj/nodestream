@@ -43,7 +43,9 @@ class RunCommand(AsyncCommand):
         self.pipeline_progress_indicator = self.get_progress_indicator()
         self.pipeline_progress_indicator.on_start()
         self.progress_callback = self.pipeline_progress_indicator.progress_callback
-        await self.get_project().run(self.make_run_request())
+        project = self.get_project()
+        project.ensure_modules_are_imported()
+        await project.run(self.make_run_request())
         self.pipeline_progress_indicator.on_finish()
 
     def get_project(self) -> Project:
