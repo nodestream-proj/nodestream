@@ -3,12 +3,15 @@ from pathlib import Path
 
 from cleo.commands.command import Command
 
-from nodestream.cli.operations.find_and_init_project import FindAndInitProject, Project
+from nodestream.cli.operations.find_and_init_project import (
+    FindAndInitializeProject,
+    Project,
+)
 
 
 @pytest.fixture
 def subject():
-    return FindAndInitProject()
+    return FindAndInitializeProject()
 
 
 @pytest.fixture
