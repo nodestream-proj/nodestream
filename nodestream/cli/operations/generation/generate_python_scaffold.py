@@ -10,17 +10,17 @@ PROJECT_MODULES_TO_CREATE = [
     {
         "module_name": "argument_resolvers",
         "import_statement": "from nodestream.argument_resolvers import ArgumentResolver",
-        "guide_reference": "See: https://zprobst.github.io/nodestream/extending-nodestream/creating-your-own-argument-resolver",
+        "guide_reference": "# See: https://zprobst.github.io/nodestream/extending-nodestream/creating-your-own-argument-resolver",
     },
     {
         "module_name": "normalizers",
         "import_statement": "from nodestream.normalizers import Normalizer",
-        "guide_reference": "See: https://zprobst.github.io/nodestream/extending-nodestream/creating-your-own-normalizer",
+        "guide_reference": "# See: https://zprobst.github.io/nodestream/extending-nodestream/creating-your-own-normalizer",
     },
     {
         "module_name": "value_providers",
         "import_statement": "from nodestream.value_providers import ValueProvider",
-        "guide_reference": "See: https://zprobst.github.io/nodestream/extending-nodestream/creating-your-own-value-provider",
+        "guide_reference": "# See: https://zprobst.github.io/nodestream/extending-nodestream/creating-your-own-value-provider",
     },
 ]
 
@@ -36,7 +36,9 @@ class GeneratePythonScaffold(Operation):
         ]
 
     def get_file_path(self, module_name) -> Path:
-        return self.project_root / self.project_root.name / f"{module_name}.py"
+        return (
+            self.project_root / self.project_root.absolute().name / f"{module_name}.py"
+        )
 
     def write_module(self, module_config) -> Path:
         path = self.get_file_path(module_config["module_name"])
@@ -48,7 +50,7 @@ class GeneratePythonScaffold(Operation):
         lines = []
         if import_statement := module_config.get("import_statement"):
             lines.append(import_statement)
-            lines.append("")
+            lines.append("\n")
 
         if guide_reference := module_config.get("guide_reference"):
             lines.append(guide_reference)

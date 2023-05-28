@@ -4,10 +4,30 @@ from pathlib import Path
 from cleo.commands.command import Command
 
 from ....utilities import pretty_print_yaml_to_file
+from ....value_providers import JmespathValueProvider
 from ..operation import Operation
 
-# TODO: Fill in basic pipeline. How do we dump the Jmespath?
-SIMPLE_PIPELINE = []
+SIMPLE_PIPELINE = [
+    {
+        "implementation": "nodestream.pipeline:IterableExtractor",
+        "factory": "range",
+        "arguments": {"stop": 100000},
+    },
+    {
+        "implementation": "nodestream.interpreting:Interpreter",
+        "arguments": {
+            "interpretations": [
+                {
+                    "type": "source_node",
+                    "node_type": "Number",
+                    "key": {
+                        "number": JmespathValueProvider.from_string_expression("index")
+                    },
+                }
+            ]
+        },
+    },
+]
 
 WRITER_CONFIG_BY_DATABASE = {
     "neo4j": {

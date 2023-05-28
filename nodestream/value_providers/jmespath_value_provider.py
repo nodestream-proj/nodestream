@@ -15,8 +15,14 @@ class JmespathValueProvider(ValueProvider):
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(
             "!jmespath",
-            lambda loader, node: cls(jmespath.compile(loader.construct_scalar(node))),
+            lambda loader, node: cls.from_string_expression(
+                loader.construct_scalar(node)
+            ),
         )
+
+    @classmethod
+    def from_string_expression(cls, expression: str):
+        return cls(jmespath.compile(expression))
 
     def __init__(self, compiled_query: ParsedResult) -> None:
         self.compiled_query = compiled_query

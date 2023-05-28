@@ -9,9 +9,9 @@ class PipelineScope:
 
     def __init__(self, name: str, pipelines: List[PipelineDefinition]) -> None:
         self.name = name
-        self.pipelines_by_name: Dict[str, PipelineDefinition] = {
-            pipeline.name: pipeline for pipeline in pipelines
-        }
+        self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
+        for pipeline in pipelines:
+            self.add_pipeline_definition(pipeline)
 
     @classmethod
     def from_file_data(cls, scope_name, file_data):
@@ -34,3 +34,13 @@ class PipelineScope:
 
     def __contains__(self, pipeline_name):
         return pipeline_name in self.pipelines_by_name
+
+    def add_pipeline_definition(self, definition: PipelineDefinition):
+        self.pipelines_by_name[definition.name] = definition
+
+    def as_dict(self):
+        return {
+            "pipelines": [
+                ppl.as_file_definition() for ppl in self.pipelines_by_name.values()
+            ]
+        }
