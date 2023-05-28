@@ -3,17 +3,12 @@
 
 _Fast, Declarative ETL for Graph Databases._
 
-
-![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png)
+TODO: Gif of basic Demo
 
 
 #### Badges
 
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
-
-## Demo
-
-TODO: Gif of basic Demo
 
 
 ## Features
@@ -30,7 +25,8 @@ Install nodestream with `pip`
 
 ```bash
   pip install nodestream
-  nodestream new --db neo4j my_project
+  nodestream new --db neo4j my_project && cd my_project
+  nodestream run sample -v
 ```
 
 
