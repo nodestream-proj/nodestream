@@ -2,7 +2,7 @@ from typing import Any, Iterable, Type
 
 import jmespath
 from jmespath.parser import ParsedResult
-from yaml import SafeLoader
+from yaml import SafeLoader, SafeDumper
 
 from ..model import InterpreterContext
 from .value_provider import ValueProvider
@@ -15,8 +15,14 @@ class JmespathValueProvider(ValueProvider):
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(
             "!jmespath",
-            lambda loader, node: cls(jmespath.compile(loader.construct_scalar(node))),
+            lambda loader, node: cls.from_string_expression(
+                loader.construct_scalar(node)
+            ),
         )
+
+    @classmethod
+    def from_string_expression(cls, expression: str):
+        return cls(jmespath.compile(expression))
 
     def __init__(self, compiled_query: ParsedResult) -> None:
         self.compiled_query = compiled_query
@@ -35,3 +41,14 @@ class JmespathValueProvider(ValueProvider):
 
     def many_values(self, context: InterpreterContext) -> Iterable[Any]:
         return list(self.search(context))
+
+
+# NOTE: This is here because the default pipeine generation includes a jmespath.
+# So we needed a way to represent this. If this becomes more of a thing, we
+# should consider doing something more robust
+SafeDumper.add_representer(
+    JmespathValueProvider,
+    lambda dumper, jmespath: dumper.represent_scalar(
+        "!jmespath", jmespath.compiled_query.expression
+    ),
+)

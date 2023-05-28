@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 
 from yaml import safe_load
 
+from ..utilities import pretty_print_yaml_to_file
 from ..exceptions import MissingProjectFileError
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
@@ -34,9 +35,9 @@ class Project:
         return cls(scopes, imports)
 
     def __init__(self, scopes: List[PipelineScope], imports: List[str]):
-        self.scopes_by_name: Dict[str, PipelineScope] = {
-            scope.name: scope for scope in scopes
-        }
+        self.scopes_by_name: Dict[str, PipelineScope] = {}
+        for scope in scopes:
+            self.add_scope(scope)
         self.imports = imports
 
     def ensure_modules_are_imported(self):
@@ -46,3 +47,17 @@ class Project:
     async def run(self, request: RunRequest):
         for scope in self.scopes_by_name.values():
             await scope.run_request(request)
+
+    def add_scope(self, scope: PipelineScope):
+        self.scopes_by_name[scope.name] = scope
+
+    def write_to_path(self, path: Path):
+        pretty_print_yaml_to_file(path, self.as_dict())
+
+    def as_dict(self):
+        return {
+            "scopes": {
+                scope.name: scope.as_dict() for scope in self.scopes_by_name.values()
+            },
+            "imports": self.imports,
+        }
