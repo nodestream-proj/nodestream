@@ -1,3 +1,5 @@
+import pytest
+
 from pathlib import Path
 
 from nodestream.pipeline import PipelineInitializationArguments
@@ -30,3 +32,34 @@ def test_from_file_data_complex_input():
     assert result.name == "test"
     assert result.file_path == Path("path/to/pipeline")
     assert result.annotations == {"foo": "bar", "baz": "qux"}
+
+
+@pytest.mark.parametrize(
+    "definition,expected_data",
+    [
+        (PipelineDefinition("test", Path("test.yaml")), "test.yaml"),
+        (
+            PipelineDefinition("test", Path("test.yaml"), {"foo": True}),
+            {"path": "test.yaml", "annotations": {"foo": True}},
+        ),
+        (
+            PipelineDefinition("baz", Path("test.yaml"), {"foo": True}),
+            {"path": "test.yaml", "annotations": {"foo": True}, "name": "baz"},
+        ),
+        (
+            PipelineDefinition("baz", Path("test.yaml")),
+            {"path": "test.yaml", "name": "baz"},
+        ),
+    ],
+)
+def test_as_file_definition(definition, expected_data):
+    assert definition.as_file_definition() == expected_data
+    assert PipelineDefinition.from_file_data(expected_data, {}) == definition
+
+
+def test_from_path():
+    path = Path("test.yaml")
+    result = PipelineDefinition.from_path(path)
+    assert result.name == "test"
+    assert result.annotations == {}
+    assert result.file_path == path

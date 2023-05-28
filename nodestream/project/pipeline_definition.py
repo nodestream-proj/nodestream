@@ -29,3 +29,20 @@ class PipelineDefinition:
 
     def initialize(self, init_args: PipelineInitializationArguments) -> Pipeline:
         return PipelineFileLoader(self.file_path).load_pipeline(init_args)
+
+    @classmethod
+    def from_path(cls, path: Path):
+        return cls(name=get_default_name(path), file_path=path)
+
+    def as_file_definition(self):
+        using_default_name = self.name == self.file_path.stem
+        if using_default_name and not self.annotations:
+            return str(self.file_path)
+
+        result = {"path": str(self.file_path)}
+        if not using_default_name:
+            result["name"] = self.name
+        if self.annotations:
+            result["annotations"] = self.annotations
+
+        return result
