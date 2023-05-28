@@ -1,3 +1,3 @@
-from .run_command import RunCommand
+from .run_command import Run
 
-__all__ = ("RunCommand",)
+__all__ = ("Run",)

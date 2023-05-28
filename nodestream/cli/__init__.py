@@ -1,4 +1,4 @@
 from .application import APPLICATION, run
-from .commands import RunCommand
+from .commands import Run
 
-__all__ = ("run", "RunCommand", "APPLICATION")
+__all__ = ("run", "Run", "APPLICATION")

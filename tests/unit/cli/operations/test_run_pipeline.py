@@ -15,7 +15,7 @@ async def test_run_pipeline_operation_perform(run_pipeline_operation, mocker):
     run_req = "run"
     run_pipeline_operation.make_run_request = mocker.Mock(return_value=run_req)
     await run_pipeline_operation.perform(mocker.Mock())
-    assert run_pipeline_operation.project.run.awaited_once_with(run_req)
+    run_pipeline_operation.project.run.assert_awaited_once_with(run_req)
 
 
 def test_make_run_request(run_pipeline_operation, mocker):
