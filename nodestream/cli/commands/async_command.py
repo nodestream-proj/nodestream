@@ -3,7 +3,6 @@ import asyncio
 from cleo.commands.command import Command
 from cleo.io.outputs.output import Verbosity
 
-
 from ..operations import Operation
 
 

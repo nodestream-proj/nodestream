@@ -1,6 +1,6 @@
-import pytest
 from pathlib import Path
 
+import pytest
 from cleo.commands.command import Command
 
 from nodestream.cli.operations.find_and_init_project import (

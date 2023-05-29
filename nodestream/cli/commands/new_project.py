@@ -2,12 +2,12 @@ from pathlib import Path
 
 from cleo.helpers import argument, option
 
-from .async_command import AsyncCommand
 from ..operations.generation import (
     GeneratePipelineScaffold,
     GenerateProjectFile,
     GeneratePythonScaffold,
 )
+from .async_command import AsyncCommand
 
 
 class NewProject(AsyncCommand):

@@ -1,7 +1,7 @@
 import pytest
 
-from nodestream.pipeline.writers import LoggerWriter
 from nodestream.pipeline.pipeline import empty_asnyc_generator
+from nodestream.pipeline.writers import LoggerWriter
 
 
 @pytest.mark.asyncio

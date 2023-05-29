@@ -4,7 +4,6 @@ import pytest
 from hamcrest import assert_that, has_items, has_length
 from moto import mock_s3
 
-
 BUCKET_NAME = "bucket"
 PREFIX = "prefix"
 NUM_OBJECTS = 1000
@@ -20,8 +19,8 @@ def s3_client():
 
 @pytest.fixture
 def subject(mocker):
-    from nodestream.extractors.stores.aws.s3_extractor import S3Extractor
     from nodestream.extractors.stores.aws.credential_utils import AwsClientFactory
+    from nodestream.extractors.stores.aws.s3_extractor import S3Extractor
 
     mocker.patch.object(AwsClientFactory, "make_client")
     return S3Extractor(

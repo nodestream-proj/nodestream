@@ -1,7 +1,7 @@
 from cleo.commands.command import Command
 
-from ...project import Project, RunRequest, PipelineProgressReporter
 from ...pipeline import PipelineInitializationArguments
+from ...project import PipelineProgressReporter, Project, RunRequest
 from .operation import Operation
 
 

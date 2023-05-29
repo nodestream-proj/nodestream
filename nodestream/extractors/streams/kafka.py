@@ -1,10 +1,9 @@
 from logging import getLogger
-from typing import Iterable, Any, Optional
+from typing import Any, Iterable, Optional
 
 from aiokafka import AIOKafkaConsumer
 
 from .extractor import StreamConnector
-
 
 DEFAULT_GROUP_ID = "nodestream"
 

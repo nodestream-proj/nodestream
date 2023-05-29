@@ -2,10 +2,9 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, Iterable
 
+from ...model import JsonLikeDocument
 from ...pipeline import Extractor, Flush
 from ...subclass_registry import SubclassRegistry
-from ...model import JsonLikeDocument
-
 
 STREAM_CONNECTOR_SUBCLASS_REGISTRY = SubclassRegistry()
 STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY = SubclassRegistry()

@@ -2,7 +2,7 @@ from typing import Any, Iterable, Type
 
 import jmespath
 from jmespath.parser import ParsedResult
-from yaml import SafeLoader, SafeDumper
+from yaml import SafeDumper, SafeLoader
 
 from ..model import InterpreterContext
 from .value_provider import ValueProvider

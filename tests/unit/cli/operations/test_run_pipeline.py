@@ -1,8 +1,8 @@
 import pytest
 
 from nodestream.cli.operations.run_pipeline import RunPipeline, SpinnerProgressIndicator
-from nodestream.project import Project
 from nodestream.pipeline import PipelineInitializationArguments
+from nodestream.project import Project
 
 
 @pytest.fixture

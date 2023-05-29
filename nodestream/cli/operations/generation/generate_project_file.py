@@ -1,10 +1,10 @@
-from typing import List
 from pathlib import Path
+from typing import List
 
 from cleo.commands.command import Command
 
+from ....project import PipelineDefinition, PipelineScope, Project
 from ..operation import Operation
-from ....project import Project, PipelineScope, PipelineDefinition
 
 
 class GenerateProjectFile(Operation):

@@ -1,7 +1,5 @@
 import re
-
 from typing import Any
-
 
 from cleo.commands.command import Command
 

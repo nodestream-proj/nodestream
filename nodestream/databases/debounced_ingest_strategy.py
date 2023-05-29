@@ -11,8 +11,8 @@ from ..model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
-from .query_executor import QueryExecutor
 from .operation_debouncer import OperationDebouncer
+from .query_executor import QueryExecutor
 
 
 class DebouncedIngestStrategy(IngestionStrategy, name="debounced"):

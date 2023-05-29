@@ -1,5 +1,5 @@
-from typing import Iterable
 from pathlib import Path
+from typing import Iterable
 
 from cleo.commands.command import Command
 

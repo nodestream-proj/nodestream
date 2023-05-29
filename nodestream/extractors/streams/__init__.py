@@ -1,4 +1,4 @@
-from .extractor import StreamConnector, StreamRecordFormat, StreamExtractor
+from .extractor import StreamConnector, StreamExtractor, StreamRecordFormat
 from .kafka import KafkaStreamConnector
 
 __all__ = (

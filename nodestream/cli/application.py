@@ -1,7 +1,7 @@
 from cleo.application import Application
 
-from .commands.run_command import Run
 from .commands.new_project import NewProject
+from .commands.run_command import Run
 
 APPLICATION = Application()
 APPLICATION.add(Run())

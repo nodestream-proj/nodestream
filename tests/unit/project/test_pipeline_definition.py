@@ -1,6 +1,6 @@
-import pytest
-
 from pathlib import Path
+
+import pytest
 
 from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import PipelineDefinition

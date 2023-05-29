@@ -1,6 +1,6 @@
 from cleo.helpers import argument, option
 
-from ..operations import FindAndInitializeProject, RunPipeline, InitializeLogger
+from ..operations import FindAndInitializeProject, InitializeLogger, RunPipeline
 from .async_command import AsyncCommand
 
 

@@ -1,8 +1,7 @@
-import pytest
-
 from decimal import Decimal
 
-from hamcrest import has_items, assert_that
+import pytest
+from hamcrest import assert_that, has_items
 
 
 @pytest.mark.parametrize(
