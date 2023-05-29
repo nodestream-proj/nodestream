@@ -54,7 +54,7 @@ class DebouncedIngestStrategy(IngestionStrategy, name="debounced"):
 
     async def perform_ttl_operation(self, config: TimeToLiveConfiguration):
         self.logger.debug("Executing TTL", extra=asdict(config))
-        await self.executor.upsert_field_index(config)
+        await self.executor.perform_ttl_op(config)
         self.logger.info("Executed TTL", extra=asdict(config))
 
     async def flush(self):

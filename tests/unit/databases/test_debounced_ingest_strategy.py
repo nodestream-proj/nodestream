@@ -77,7 +77,7 @@ async def test_upsert_field_index(ingest_strategy):
 async def test_upsert_ttl_config(ingest_strategy):
     config = TimeToLiveConfiguration(GraphObjectType.NODE, "Type")
     await ingest_strategy.perform_ttl_operation(config)
-    ingest_strategy.executor.upsert_field_index.assert_called_once_with(config)
+    ingest_strategy.executor.perform_ttl_op.assert_called_once_with(config)
 
 
 @pytest.mark.asyncio

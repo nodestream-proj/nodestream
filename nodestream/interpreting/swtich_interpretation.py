@@ -46,6 +46,7 @@ class SwitchInterpretation(AggregatedIntrospectionMixin, Interpretation, name="s
         if value_to_look_for not in self.interpretations:
             if self.default:
                 self.default.interpret(context)
+                return
             if self.fail_on_unhandled:
                 raise UnhandledBranchError(value_to_look_for)
             else:
