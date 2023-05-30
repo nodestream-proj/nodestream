@@ -17,7 +17,7 @@ You can create a python file in your project, for example `interpretations.py`. 
 ```python
 from nodestream.interpreting import Interpretation
 
-class MemoizeNegativeProperty(Interpretation, name="memoize_negative"):
+class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
     pass
 ```
 
@@ -31,7 +31,7 @@ Given that, let's consider our `MemoizeNegativeProperty` class. That implies tha
 from nodestream.interpreting import Interpretation
 from nodestream.value_providers import ValueProvider
 
-class MemoizeNegativeProperty(Interpretation, name="memoize_negative"):
+class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
     def __init__(self, positive_name: str, negative_name, value: ValueProvider):
         # set properties
 ```
@@ -47,7 +47,7 @@ A working implemention of `MemoizeNegativeProperty` could look like this:
 from nodestream.interpreting import Interpretation
 from nodestream.value_providers import ValueProvider
 
-class MemoizeNegativeProperty(Interpretation, name="memoize_negative"):
+class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
     # __init__ omitted
 
     def interpret(self, context: InterpretationContext):

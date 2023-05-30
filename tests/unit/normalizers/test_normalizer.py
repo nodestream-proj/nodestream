@@ -6,7 +6,7 @@ from hamcrest import assert_that, equal_to, instance_of
 from nodestream.normalizers import InvalidFlagError, Normalizer
 
 
-class Test(Normalizer, name="test"):
+class Test(Normalizer, alias="test"):
     def normalize_value(self, value: Any) -> Any:
         return value
 

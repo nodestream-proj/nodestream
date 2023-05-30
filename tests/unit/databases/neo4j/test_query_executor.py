@@ -1,7 +1,7 @@
 import pytest
 
 from nodestream.databases.neo4j import Neo4jQueryExecutor
-from nodestream.databases.neo4j.query import COMMIT_QUERY, Query, QueryBatch
+from nodestream.databases.neo4j.query import Query, QueryBatch
 from nodestream.model import GraphObjectType, TimeToLiveConfiguration
 
 

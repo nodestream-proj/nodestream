@@ -21,13 +21,13 @@ class SubclassRegistry:
 
         @classmethod
         @wraps(old_init_subclass)
-        def init_subclass(cls, name=None, *args, **kwargs):
-            name = name or cls.__name__
+        def init_subclass(cls, alias=None, *args, **kwargs):
+            alias = alias or cls.__name__
 
-            if name in self.registry:
-                raise AlreadyInRegistryError(name)
+            if alias in self.registry:
+                raise AlreadyInRegistryError(alias)
 
-            self.registry[name] = cls
+            self.registry[alias] = cls
             return old_init_subclass(*args, **kwargs)
 
         base_class.__init_subclass__ = init_subclass

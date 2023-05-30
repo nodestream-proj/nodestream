@@ -102,4 +102,4 @@ def test_make_client(mocker, client_without_role):
     client_without_role.assume_role_if_supplied_and_get_session = mocker.MagicMock(
         return_value=session
     )
-    result = client_without_role.make_client("s3")
+    client_without_role.make_client("s3")

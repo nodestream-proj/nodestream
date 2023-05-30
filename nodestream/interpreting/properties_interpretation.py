@@ -11,7 +11,7 @@ from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 
-class PropertiesInterpretation(Interpretation, name="properties"):
+class PropertiesInterpretation(Interpretation, alias="properties"):
     """Stores additional properties onto the source node."""
 
     __slots__ = ("properties", "norm_args")

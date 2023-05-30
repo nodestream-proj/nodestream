@@ -15,7 +15,7 @@ from typing import Iterable
 
 from nodestream.extractor.files import SupportedFileFormat
 
-class YamlFileFormat(SupportedFileFormat, name=".yaml"):
+class YamlFileFormat(SupportedFileFormat, alias=".yaml"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[dict]:
         return [yaml.safe_load(fp)]
 ```

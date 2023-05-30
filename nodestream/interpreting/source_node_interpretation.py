@@ -17,7 +17,7 @@ from .interpretation import Interpretation
 DEFAULT_NORMALIZATION_ARGUMENTS = {LowercaseStrings.arugment_flag(): True}
 
 
-class SourceNodeInterpretation(Interpretation, name="source_node"):
+class SourceNodeInterpretation(Interpretation, alias="source_node"):
     """Stores information regarding the source node.
 
     Within a Pipeline File, a simple usage may look like this:

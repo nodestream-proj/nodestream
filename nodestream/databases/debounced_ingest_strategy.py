@@ -15,7 +15,7 @@ from .operation_debouncer import OperationDebouncer
 from .query_executor import QueryExecutor
 
 
-class DebouncedIngestStrategy(IngestionStrategy, name="debounced"):
+class DebouncedIngestStrategy(IngestionStrategy, alias="debounced"):
     def __init__(self, query_executor: QueryExecutor) -> None:
         self.logger = getLogger(self.__class__.__name__)
         self.executor = query_executor

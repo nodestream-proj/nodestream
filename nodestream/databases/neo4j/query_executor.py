@@ -24,7 +24,7 @@ from .ingest_query_builder import Neo4jIngestQueryBuilder
 from .query import Query
 
 
-class Neo4jQueryExecutor(QueryExecutor, name="neo4j"):
+class Neo4jQueryExecutor(QueryExecutor, alias="neo4j"):
     @classmethod
     def from_file_arguments(
         cls,

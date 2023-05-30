@@ -1,0 +1,38 @@
+name: Continuous Integration
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Poetry
+        run: curl -sSL https://install.python-poetry.org | python -
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
+          cache-dependency-path: poetry.lock
+      - name: Install Dependenencies
+        run: |
+          poetry env use ${{ matrix.python-version }}
+          poetry install
+      - name: Run Tests
+        run: poetry run pytest --cov nodestream --cov-report term --cov-report xml
+      - name: Run Lints
+        run: |
+          poetry run ruff nodestream tests
+          poetry run black nodestream tests --check
+          poetry run isort nodestream tests --check-only
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.python-version }}

@@ -8,7 +8,7 @@ from .extractor import StreamConnector
 DEFAULT_GROUP_ID = "nodestream"
 
 
-class KafkaStreamConnector(StreamConnector, name="kafka"):
+class KafkaStreamConnector(StreamConnector, alias="kafka"):
     """A KafkaStreamConnector implements the StreamConnector interface for Kafka.
 
     The KafkaStreamConnector uses the aiokafka library to connect to a
