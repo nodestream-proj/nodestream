@@ -1,0 +1,27 @@
+name: Python package
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: poetry
+      - name: Install Dependenencies
+        run: poetry install
+      - name: Run Tests
+        run: poetry run pytest --cov nodestream --cov-report term --cov-report xml
+      - name: Run Lints
+        run: |
+          poetry run ruff nodestream tests
+          poetry run black nodestream tests --check
+          poetry run isort nodestream tests --check-only
