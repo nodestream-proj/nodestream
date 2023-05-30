@@ -74,7 +74,7 @@ class MultiNodeKeySearchAlgorithm(RelatedNodeKeySearchAlgorithm):
         ]
 
 
-class RelationshipInterpretation(Interpretation, name="relationship"):
+class RelationshipInterpretation(Interpretation, alias="relationship"):
     """Provides a generic method by which to interpret a relationship between the source node and zero-to-many related nodes."""
 
     __slots__ = (

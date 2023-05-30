@@ -32,7 +32,7 @@ class StreamRecordFormat(ABC):
         raise NotImplementedError
 
 
-class JsonStreamRecordFormat(StreamRecordFormat, name="json"):
+class JsonStreamRecordFormat(StreamRecordFormat, alias="json"):
     def parse(self, record: Any) -> JsonLikeDocument:
         return json.loads(record)
 

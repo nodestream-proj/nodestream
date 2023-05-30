@@ -6,7 +6,9 @@ from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 
-class SwitchInterpretation(AggregatedIntrospectionMixin, Interpretation, name="switch"):
+class SwitchInterpretation(
+    AggregatedIntrospectionMixin, Interpretation, alias="switch"
+):
     __slots__ = (
         "switch_on",
         "interpretations",

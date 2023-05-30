@@ -5,7 +5,7 @@ from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 
-class ExtractVariablesInterpretation(Interpretation, name="variables"):
+class ExtractVariablesInterpretation(Interpretation, alias="variables"):
     """Stores variables that can be used later in the processing of a record.
 
     You may store an arbitrary set of properties as variables that come from any value provider or statically provided.

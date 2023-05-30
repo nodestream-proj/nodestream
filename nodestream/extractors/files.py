@@ -47,17 +47,17 @@ class SupportedFileFormat(ABC):
         ...
 
 
-class JsonFileFormat(SupportedFileFormat, name=".json"):
+class JsonFileFormat(SupportedFileFormat, alias=".json"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
         return [json.load(fp)]
 
 
-class TextFileFormat(SupportedFileFormat, name=".txt"):
+class TextFileFormat(SupportedFileFormat, alias=".txt"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
         return [{"line": line} for line in fp.readlines()]
 
 
-class CommaSeperatedValuesFileFormat(SupportedFileFormat, name=".csv"):
+class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
         return list(DictReader(fp))
 

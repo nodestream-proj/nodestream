@@ -13,7 +13,7 @@ from typing import Any
 
 from nodestream.normalizers import Normalizer
 
-class RoundToWholeNumber(Normalizer, name="round_numbers"):
+class RoundToWholeNumber(Normalizer, alias="round_numbers"):
     def normalize_value(self, value: Any) -> Any:
         return int(value) if isinstance(value, float) else value
 ```
