@@ -20,7 +20,7 @@ class InterpretationPass(IntrospectableIngestionComponent, ABC):
         if args is None:
             return NullInterpretationPass()
 
-        if isinstance(args[0], list):
+        if len(args) > 0 and isinstance(args[0], list):
             return MultiSequenceInterpretationPass.from_file_arguments(args)
 
         return SingleSequenceIntepretationPass.from_file_arguments(args)
@@ -61,9 +61,10 @@ class MultiSequenceInterpretationPass(AggregatedIntrospectionMixin, Interpretati
 class SingleSequenceIntepretationPass(AggregatedIntrospectionMixin, InterpretationPass):
     @classmethod
     def from_file_arguments(cls, interpretation_arg_list):
-        interpretations = [
-            Interpretation.from_file_arguments(args) for args in interpretation_arg_list
-        ]
+        interpretations = (
+            Interpretation.from_file_arguments(**args)
+            for args in interpretation_arg_list
+        )
         return cls(*interpretations)
 
     def __init__(self, *interpretations: Interpretation):

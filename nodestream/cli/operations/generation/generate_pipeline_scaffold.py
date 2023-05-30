@@ -31,7 +31,7 @@ SIMPLE_PIPELINE = [
 
 WRITER_CONFIG_BY_DATABASE = {
     "neo4j": {
-        "implementaton": "nodestream.databases:GraphDatabaseWriter",
+        "implementation": "nodestream.databases:GraphDatabaseWriter",
         "arguments": {
             "batch_size": 1000,
             "database": "neo4j",
