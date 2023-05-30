@@ -31,3 +31,5 @@ jobs:
           poetry run ruff nodestream tests
           poetry run black nodestream tests --check
           poetry run isort nodestream tests --check-only
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
