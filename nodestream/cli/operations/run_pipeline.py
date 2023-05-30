@@ -23,9 +23,9 @@ class RunPipeline(Operation):
 
     def get_progress_indicator(self, command: Command) -> "ProgressIndicator":
         if self.has_json_logging_set(command):
-            return ProgressIndicator(self)
+            return ProgressIndicator(command)
 
-        return SpinnerProgressIndicator(self)
+        return SpinnerProgressIndicator(command)
 
     def create_progress_reporter(self, command) -> PipelineProgressReporter:
         indicator = self.get_progress_indicator(command)
