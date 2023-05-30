@@ -7,6 +7,7 @@ from .pipeline_file_loader import PipelineFileLoader, PipelineInitializationArgu
 from .step import PassStep, Step
 from .transformers import Transformer
 from .writers import LoggerWriter, Writer
+from .meta import get_pipeline_name, set_pipeline_name, UKNOWN_PIPELINE_NAME
 
 __all__ = (
     "ClassLoader",
@@ -23,4 +24,7 @@ __all__ = (
     "PipelineInitializationArguments",
     "PassStep",
     "Flush",
+    "get_pipeline_name",
+    "set_pipeline_name",
+    "UKNOWN_PIPELINE_NAME",
 )
