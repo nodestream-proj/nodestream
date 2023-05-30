@@ -11,13 +11,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install Poetry
+        run: curl -sSL https://install.python-poetry.org | python -
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: poetry
+          cache-dependency-path: poetry.lock
       - name: Install Dependenencies
-        run: poetry install
+        run: |
+          poetry env use ${{ matrix.python-version }}
+          poetry install
       - name: Run Tests
         run: poetry run pytest --cov nodestream --cov-report term --cov-report xml
       - name: Run Lints
