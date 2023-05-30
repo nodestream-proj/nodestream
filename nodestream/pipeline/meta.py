@@ -1,13 +1,13 @@
 from contextlib import contextmanager
 from contextvars import ContextVar
 
-UKNOWN_PIPELINE_NAME = "unknown"
+UNKNOWN_PIPELINE_NAME = "unknown"
 
 pipeline_name: ContextVar[str] = ContextVar("pipeline_name")
 
 
 def get_pipeline_name() -> str:
-    return pipeline_name.get(UKNOWN_PIPELINE_NAME)
+    return pipeline_name.get(UNKNOWN_PIPELINE_NAME)
 
 
 @contextmanager

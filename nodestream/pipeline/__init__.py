@@ -2,12 +2,12 @@ from .class_loader import ClassLoader
 from .extractors import Extractor, IterableExtractor
 from .filters import Filter, ValuesMatchPossiblitiesFilter
 from .flush import Flush
+from .meta import UNKNOWN_PIPELINE_NAME, get_pipeline_name, set_pipeline_name
 from .pipeline import Pipeline
 from .pipeline_file_loader import PipelineFileLoader, PipelineInitializationArguments
 from .step import PassStep, Step
 from .transformers import Transformer
 from .writers import LoggerWriter, Writer
-from .meta import get_pipeline_name, set_pipeline_name, UKNOWN_PIPELINE_NAME
 
 __all__ = (
     "ClassLoader",
@@ -26,5 +26,5 @@ __all__ = (
     "Flush",
     "get_pipeline_name",
     "set_pipeline_name",
-    "UKNOWN_PIPELINE_NAME",
+    "UNKNOWN_PIPELINE_NAME",
 )
