@@ -1,4 +1,3 @@
-import threading
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
@@ -10,16 +9,14 @@ if TYPE_CHECKING:
     from .interpreter_context import InterpreterContext
 
 
-def get_pipeline_name():
-    return threading.current_thread().name
-
-
 class PropertySet(dict):
     def set_property(self, property_key: str, property_value: Any):
         self[property_key] = property_value
 
     @classmethod
     def default_properties(cls) -> "PropertySet":
+        from ..pipeline import get_pipeline_name
+
         """Returns a default set of properties which set values.
 
         These default values indicate when the current pipeline touched the object the properties are for.
