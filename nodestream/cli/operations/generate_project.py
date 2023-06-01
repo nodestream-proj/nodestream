@@ -1,13 +1,12 @@
 from pathlib import Path
 from typing import List
 
-from cleo.commands.command import Command
+from ...project import PipelineDefinition, PipelineScope, Project
+from ..commands.nodestream_command import NodestreamCommand
+from .operation import Operation
 
-from ....project import PipelineDefinition, PipelineScope, Project
-from ..operation import Operation
 
-
-class GenerateProjectFile(Operation):
+class GenerateProject(Operation):
     def __init__(
         self,
         project_root: Path,
@@ -20,11 +19,10 @@ class GenerateProjectFile(Operation):
         self.project_root = project_root
         self.database = database
 
-    async def perform(self, _: Command):
+    async def perform(self, _: NodestreamCommand):
         imports = self.generate_import_directives()
         scope = self.generate_pipeline_scope()
-        project = Project([scope], imports)
-        project.write_to_path(self.project_root / "nodestream.yaml")
+        return Project([scope], imports)
 
     def generate_import_directives(self) -> List[str]:
         project_imports = [

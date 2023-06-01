@@ -1,11 +1,11 @@
 import pytest
 
-from nodestream.cli.commands.async_command import AsyncCommand
+from nodestream.cli.commands.nodestream_command import NodestreamCommand
 
 
 @pytest.mark.asyncio
 async def test_async_command_run_operation(mocker):
-    command, operation = AsyncCommand(), mocker.AsyncMock()
+    command, operation = NodestreamCommand(), mocker.AsyncMock()
     command.line = mocker.Mock()
     await command.run_operation(operation)
     command.line.assert_called_once()
