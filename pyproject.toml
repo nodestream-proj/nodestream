@@ -1,9 +1,28 @@
 [tool.poetry]
 name = "nodestream"
-version = "0.1.0"
-description = ""
-authors = ["Zach Probst <zprobst@resilientvitality.com>"]
+version = "0.2.0"
+description = "A Fast, Declarative ETL for Graph Databases."
+license = "GPL-3.0-only"
+authors = [
+    "Zach Probst <Zach_Probst@intuit.com>"
+]
 readme = "README.md"
+
+homepage = "https://github.com/nodestream-proj/nodestream"
+repository = "https://github.com/nodestream-proj/nodestream"
+documentation = "TODO"
+
+keywords = ["etl", "neo4j", "declarative", "data", "kafka", "ingest"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Natural Language :: English",
+    "Topic :: Database"
+]
+packages = [ { include = "nodestream" } ]
 
 [tool.isort]
 profile = "black"
