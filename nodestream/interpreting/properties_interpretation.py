@@ -18,7 +18,7 @@ class PropertiesInterpretation(Interpretation, alias="properties"):
 
     def __init__(
         self,
-        properties: Dict[str, StaticValueOrValueProvider],
+        properties: StaticValueOrValueProvider,
         normalization: Optional[Dict[str, Any]] = None,
     ):
         self.properties = ValueProvider.garuntee_provider_dictionary(properties)

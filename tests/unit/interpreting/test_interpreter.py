@@ -1,24 +1,42 @@
-import pytest
+from unittest.mock import call
 
-from nodestream.pipeline.pipeline import empty_asnyc_generator
+import pytest
+from freezegun import freeze_time
+
+from nodestream.model import InterpreterContext, DesiredIngestion
 from nodestream.interpreting import SourceNodeInterpretation
 from nodestream.interpreting.interpreter import (
-    Interpreter,
-    NullInterpretationPass,
-    MultiSequenceInterpretationPass,
-    SingleSequenceIntepretationPass,
     InterpretationPass,
+    Interpreter,
+    MultiSequenceInterpretationPass,
+    NullInterpretationPass,
+    SingleSequenceIntepretationPass,
 )
+from nodestream.interpreting.record_decomposers import (
+    WholeRecordDecomposer,
+    RecordDecomposer,
+)
+from nodestream.pipeline import IterableExtractor
+from nodestream.pipeline.pipeline import empty_asnyc_generator
+
+
+@pytest.fixture
+def stubbed_interpreter(mocker):
+    return Interpreter(
+        before_iteration=mocker.Mock(InterpretationPass),
+        interpretations=mocker.Mock(InterpretationPass),
+        decomposer=mocker.Mock(RecordDecomposer),
+    )
 
 
 @pytest.fixture
 def single_pass_interpreter():
     return Interpreter(
-        global_enrichment=NullInterpretationPass(),
+        before_iteration=NullInterpretationPass(),
         interpretations=SingleSequenceIntepretationPass(
             SourceNodeInterpretation("test", {"test": "test"})
         ),
-        iterate_on=None,
+        decomposer=WholeRecordDecomposer(),
     )
 
 
@@ -50,5 +68,47 @@ def test_interpretation_pass_passing_null_returns_null_interpretation_pass():
 
 
 def test_interpretation_pass_passing_list_of_list_returns_multi_pass():
-    multi_pass = InterpretationPass.from_file_arguments([[None], [None]])
+    multi_pass = InterpretationPass.from_file_arguments(
+        [
+            [{"type": "properties", "properties": {}}],
+            [{"type": "properties", "properties": {}}],
+        ]
+    )
     assert isinstance(multi_pass, MultiSequenceInterpretationPass)
+
+
+def test_intepret_record_iterates_through_interpretation_process(stubbed_interpreter):
+    input_record = 1
+    stubbed_interpreter.decomposer.decompose_record.return_value = [1, 2, 3]
+    stubbed_interpreter.interpretations.apply_interpretations.return_value = [
+        "a",
+        "b",
+        "c",
+    ]
+
+    results = list(stubbed_interpreter.interpret_record(input_record))
+    assert results == ["a", "b", "c"] * 3
+
+    stubbed_interpreter.decomposer.decompose_record.assert_called_once()
+    stubbed_interpreter.interpretations.apply_interpretations.assert_has_calls(
+        (call(1), call(2), call(3))
+    )
+
+
+@pytest.mark.asyncio
+@freeze_time("1998-03-25 12:00:01")
+async def test_handle_async_record_stream_returns_iteration_results(
+    stubbed_interpreter, mocker
+):
+    contexts = [[InterpreterContext.fresh(i)] for i in range(5)]
+    stubbed_interpreter.gather_used_indexes = mocker.Mock(return_value=[])
+    stubbed_interpreter.interpret_record = mocker.Mock(side_effect=contexts)
+    results = [
+        r
+        async for r in stubbed_interpreter.handle_async_record_stream(
+            IterableExtractor.range(stop=5).extract_records()
+        )
+        if isinstance(r, DesiredIngestion)
+    ]
+
+    assert results == [context[0].desired_ingest for context in contexts]

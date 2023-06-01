@@ -2,14 +2,12 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Iterable
 
-from nodestream.model.schema import IntrospectableIngestionComponent
-
-from ..pipeline import Step, Flush
 from ..model import (
+    AggregatedIntrospectionMixin,
     InterpreterContext,
     IntrospectableIngestionComponent,
-    AggregatedIntrospectionMixin,
 )
+from ..pipeline import Flush, Step
 from .interpretation import Interpretation
 from .record_decomposers import RecordDecomposer
 
@@ -81,31 +79,30 @@ class SingleSequenceIntepretationPass(AggregatedIntrospectionMixin, Interpretati
 
 class Interpreter(Step, AggregatedIntrospectionMixin, IntrospectableIngestionComponent):
     __slots__ = (
-        "global_enrichment",
+        "before_iteration",
         "interpretations",
-        "iterate_on",
+        "decomposer",
     )
 
     @classmethod
     def __declarative_init__(
-        cls, interpretations, global_enrichment=None, iterate_on=None
+        cls, interpretations, before_iteration=None, iterate_on=None
     ):
-        global_enrichment = global_enrichment or []
         return cls(
-            global_enrichment=InterpretationPass.from_file_arguments(global_enrichment),
+            before_iteration=InterpretationPass.from_file_arguments(before_iteration),
             interpretations=InterpretationPass.from_file_arguments(interpretations),
             iterate_on=RecordDecomposer.from_iteration_arguments(iterate_on),
         )
 
     def __init__(
         self,
-        global_enrichment: InterpretationPass,
+        before_iteration: InterpretationPass,
         interpretations: InterpretationPass,
-        iterate_on: RecordDecomposer,
+        decomposer: RecordDecomposer,
     ) -> None:
-        self.global_enrichment = global_enrichment
+        self.before_iteration = before_iteration
         self.interpretations = interpretations
-        self.iterate_on = iterate_on
+        self.decomposer = decomposer
 
     async def handle_async_record_stream(self, record_stream):
         # Step 1: Emit any indexes that need to be created.
@@ -124,11 +121,10 @@ class Interpreter(Step, AggregatedIntrospectionMixin, IntrospectableIngestionCom
 
     def interpret_record(self, record):
         context = InterpreterContext.fresh(record)
-        self.global_enrichment.apply_interpretations(context)
-        for sub_context in self.iterate_on.decompose_record(context):
-            for res in self.interpretations.apply_interpretations(sub_context):
-                yield res
+        self.before_iteration.apply_interpretations(context)
+        for sub_context in self.decomposer.decompose_record(context):
+            yield from self.interpretations.apply_interpretations(sub_context)
 
     def all_subordinate_components(self) -> Iterable[IntrospectableIngestionComponent]:
-        yield self.global_enrichment
+        yield self.before_iteration
         yield self.interpretations
