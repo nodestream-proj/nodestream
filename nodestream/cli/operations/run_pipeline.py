@@ -1,7 +1,6 @@
-from cleo.commands.command import Command
-
 from ...pipeline import PipelineInitializationArguments
 from ...project import PipelineProgressReporter, Project, RunRequest
+from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 
 
@@ -9,10 +8,10 @@ class RunPipeline(Operation):
     def __init__(self, project: Project) -> None:
         self.project = project
 
-    async def perform(self, command: Command):
+    async def perform(self, command: NodestreamCommand):
         await self.project.run(self.make_run_request(command))
 
-    def make_run_request(self, command: Command) -> RunRequest:
+    def make_run_request(self, command: NodestreamCommand) -> RunRequest:
         return RunRequest(
             pipeline_name=command.argument("pipeline"),
             initialization_arguments=PipelineInitializationArguments(
@@ -21,13 +20,15 @@ class RunPipeline(Operation):
             progress_reporter=self.create_progress_reporter(command),
         )
 
-    def get_progress_indicator(self, command: Command) -> "ProgressIndicator":
-        if self.has_json_logging_set(command):
+    def get_progress_indicator(self, command: NodestreamCommand) -> "ProgressIndicator":
+        if command.has_json_logging_set:
             return ProgressIndicator(command)
 
         return SpinnerProgressIndicator(command)
 
-    def create_progress_reporter(self, command) -> PipelineProgressReporter:
+    def create_progress_reporter(
+        self, command: NodestreamCommand
+    ) -> PipelineProgressReporter:
         indicator = self.get_progress_indicator(command)
         return PipelineProgressReporter(
             reporting_frequency=int(command.option("reporting-frequency")),
@@ -38,7 +39,7 @@ class RunPipeline(Operation):
 
 
 class ProgressIndicator:
-    def __init__(self, command: Command) -> None:
+    def __init__(self, command: NodestreamCommand) -> None:
         self.command = command
 
     def on_start(self):

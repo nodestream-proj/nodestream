@@ -1,6 +1,6 @@
 import pytest
 
-from nodestream.cli.commands.run_command import Run
+from nodestream.cli.commands.run import Run
 
 
 @pytest.mark.asyncio

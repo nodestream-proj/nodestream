@@ -1,11 +1,15 @@
 from cleo.application import Application
 
-from .commands.new_project import NewProject
-from .commands.run_command import Run
+from .commands.new import New
+from .commands.run import Run
+from .commands.scaffold import Scaffold
+from .commands.show import Show
 
 APPLICATION = Application()
 APPLICATION.add(Run())
-APPLICATION.add(NewProject())
+APPLICATION.add(New())
+APPLICATION.add(Show())
+APPLICATION.add(Scaffold())
 
 
 def run():

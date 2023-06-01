@@ -1,8 +1,6 @@
 import pytest
 
-from nodestream.cli.operations.generation.generate_python_scaffold import (
-    GeneratePythonScaffold,
-)
+from nodestream.cli.operations import GeneratePythonScaffold
 
 
 @pytest.mark.asyncio

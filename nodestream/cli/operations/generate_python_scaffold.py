@@ -1,9 +1,8 @@
 from pathlib import Path
 from typing import List
 
-from cleo.commands.command import Command
-
-from ..operation import Operation
+from ..commands.nodestream_command import NodestreamCommand
+from .operation import Operation
 
 PROJECT_MODULES_TO_CREATE = [
     {"module_name": "__init__"},
@@ -29,7 +28,7 @@ class GeneratePythonScaffold(Operation):
     def __init__(self, project_root: Path) -> None:
         self.project_root = project_root
 
-    async def perform(self, _: Command) -> List[Path]:
+    async def perform(self, _: NodestreamCommand) -> List[Path]:
         return [
             self.write_module(module_configuration)
             for module_configuration in PROJECT_MODULES_TO_CREATE
