@@ -1,15 +1,15 @@
 from ..operations import (
     AddPipelineToProject,
+    CommitProjectToDisk,
     GeneratePipelineScaffold,
     InitializeProject,
-    CommitProjectToDisk,
 )
 from .nodestream_command import NodestreamCommand
 from .shared_options import (
     DATABASE_NAME_OPTION,
+    PIPELINE_ARGUMENT,
     PROJECT_FILE_OPTION,
     SCOPE_NAME_OPTION,
-    PIPELINE_ARGUMENT,
 )
 
 

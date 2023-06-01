@@ -1,11 +1,11 @@
 import pytest
 
 from nodestream.cli.operations.show_pipelines import (
-    ShowPipelines,
     JsonOutputFormat,
+    ShowPipelines,
     TableOutputFormat,
 )
-from nodestream.project import PipelineScope, PipelineDefinition
+from nodestream.project import PipelineDefinition, PipelineScope
 
 
 @pytest.fixture

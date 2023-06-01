@@ -2,7 +2,7 @@ from cleo.helpers import option
 
 from ..operations import InitializeLogger, InitializeProject, RunPipeline
 from .nodestream_command import NodestreamCommand
-from .shared_options import PROJECT_FILE_OPTION, JSON_OPTION, PIPELINE_ARGUMENT
+from .shared_options import JSON_OPTION, PIPELINE_ARGUMENT, PROJECT_FILE_OPTION
 
 
 class Run(NodestreamCommand):

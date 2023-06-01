@@ -5,7 +5,6 @@ from ...project import PipelineDefinition, PipelineScope, Project
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 
-
 DEFAULT_SCOPE_NAME = "default"
 
 

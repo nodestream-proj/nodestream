@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from nodestream.project import Project, PipelineScope, PipelineDefinition
+from nodestream.project import PipelineDefinition, PipelineScope, Project
 
 
 @pytest.fixture

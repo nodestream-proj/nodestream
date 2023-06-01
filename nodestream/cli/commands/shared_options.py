@@ -1,4 +1,4 @@
-from cleo.helpers import option, argument
+from cleo.helpers import argument, option
 
 PROJECT_FILE_OPTION = option(
     "project", "p", "The project file (nodestream.yaml) to load.", flag=False

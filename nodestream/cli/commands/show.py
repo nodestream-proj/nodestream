@@ -1,6 +1,6 @@
 from ..operations import InitializeProject, ShowPipelines
 from .nodestream_command import NodestreamCommand
-from .shared_options import PROJECT_FILE_OPTION, SCOPE_NAME_OPTION, JSON_OPTION
+from .shared_options import JSON_OPTION, PROJECT_FILE_OPTION, SCOPE_NAME_OPTION
 
 
 class Show(NodestreamCommand):

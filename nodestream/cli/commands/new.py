@@ -3,10 +3,10 @@ from pathlib import Path
 from cleo.helpers import argument
 
 from ..operations import (
+    CommitProjectToDisk,
     GeneratePipelineScaffold,
     GenerateProject,
     GeneratePythonScaffold,
-    CommitProjectToDisk,
 )
 from .nodestream_command import NodestreamCommand
 from .shared_options import DATABASE_NAME_OPTION
