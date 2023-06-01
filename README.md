@@ -8,8 +8,10 @@ TODO: Gif of basic Demo
 
 #### Badges
 
+[![Continuous Integration](https://github.com/nodestream-proj/nodestream/actions/workflows/ci.yaml/badge.svg)](https://github.com/nodestream-proj/nodestream/actions/workflows/ci.yaml)
+[![codecov](https://codecov.io/gh/nodestream-proj/nodestream/branch/main/graph/badge.svg?token=HAPEVKQ6OQ)](https://codecov.io/gh/nodestream-proj/nodestream)
 [![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
-
+[![PyPI version](https://badge.fury.io/py/nodestream.svg)](https://badge.fury.io/py/nodestream)
 
 ## Features
 
