@@ -20,7 +20,7 @@ async def test_run_pipeline_operation_perform(run_pipeline_operation, mocker):
 
 def test_make_run_request(run_pipeline_operation, mocker):
     command = mocker.Mock()
-    command.option.side_effect = [["annotation1", "annotation2"], False, "10000"]
+    command.option.side_effect = [["annotation1", "annotation2"], "10000"]
     command.argument.return_value = "my_pipeline"
     result = run_pipeline_operation.make_run_request(command)
     assert result.pipeline_name == "my_pipeline"

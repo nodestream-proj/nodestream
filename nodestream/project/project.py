@@ -1,6 +1,6 @@
 import importlib
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from yaml import safe_load
 
@@ -9,15 +9,12 @@ from ..utilities import pretty_print_yaml_to_file
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
 
-DEFAULT_PROJECT_FILE = Path("nodestream.yaml")
-
 
 class Project:
     """A `Project` represents a collection of pipelines."""
 
     @classmethod
-    def from_file(cls, path: Optional[Path]) -> "Project":
-        path = path or DEFAULT_PROJECT_FILE
+    def from_file(cls, path: Path) -> "Project":
         if not path.exists:
             raise MissingProjectFileError(path)
 

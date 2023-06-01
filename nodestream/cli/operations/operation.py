@@ -1,7 +1,7 @@
 import re
 from typing import Any
 
-from cleo.commands.command import Command
+from ..commands.nodestream_command import NodestreamCommand
 
 
 class Operation:
@@ -10,8 +10,5 @@ class Operation:
         class_name = self.__class__.__name__
         return " ".join(re.findall(r"[A-Z](?:[a-z]+|[A-Z]*(?=[A-Z]|$))", class_name))
 
-    async def perform(self, command: Command) -> Any:
+    async def perform(self, command: NodestreamCommand) -> Any:
         raise NotImplementedError
-
-    def has_json_logging_set(self, command):
-        return command.option("json-logging")

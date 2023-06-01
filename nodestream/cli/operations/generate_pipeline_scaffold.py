@@ -1,11 +1,12 @@
 from pathlib import Path
 from typing import Iterable
 
-from cleo.commands.command import Command
+from ...utilities import pretty_print_yaml_to_file
+from ...value_providers import JmespathValueProvider
+from ..commands.nodestream_command import NodestreamCommand
+from .operation import Operation
 
-from ....utilities import pretty_print_yaml_to_file
-from ....value_providers import JmespathValueProvider
-from ..operation import Operation
+DEFAULT_PIPELINE_FILE_NAME = "sample.yaml"
 
 SIMPLE_PIPELINE = [
     {
@@ -44,11 +45,17 @@ WRITER_CONFIG_BY_DATABASE = {
 
 
 class GeneratePipelineScaffold(Operation):
-    def __init__(self, project_root: Path, database_name: str) -> None:
+    def __init__(
+        self,
+        project_root: Path,
+        database_name: str,
+        pipeline_file_name: str = DEFAULT_PIPELINE_FILE_NAME,
+    ) -> None:
         self.project_root = project_root
         self.database_name = database_name
+        self.pipeline_file_name = pipeline_file_name
 
-    async def perform(self, _: Command) -> Iterable[Path]:
+    async def perform(self, _: NodestreamCommand) -> Iterable[Path]:
         path = self.prepare_file_path()
         self.make_pipeline_at_path(path)
         return [path]
@@ -56,7 +63,7 @@ class GeneratePipelineScaffold(Operation):
     def prepare_file_path(self) -> Path:
         pipeline_dir = self.project_root / "pipelines"
         pipeline_dir.mkdir(parents=True, exist_ok=True)
-        return pipeline_dir / "sample.yaml"
+        return pipeline_dir / self.pipeline_file_name
 
     def make_pipeline_at_path(self, path: Path):
         steps = SIMPLE_PIPELINE.copy()
