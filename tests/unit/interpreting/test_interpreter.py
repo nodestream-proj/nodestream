@@ -3,7 +3,6 @@ from unittest.mock import call
 import pytest
 from freezegun import freeze_time
 
-from nodestream.model import InterpreterContext, DesiredIngestion
 from nodestream.interpreting import SourceNodeInterpretation
 from nodestream.interpreting.interpreter import (
     InterpretationPass,
@@ -13,9 +12,10 @@ from nodestream.interpreting.interpreter import (
     SingleSequenceIntepretationPass,
 )
 from nodestream.interpreting.record_decomposers import (
-    WholeRecordDecomposer,
     RecordDecomposer,
+    WholeRecordDecomposer,
 )
+from nodestream.model import DesiredIngestion, InterpreterContext
 from nodestream.pipeline import IterableExtractor
 from nodestream.pipeline.pipeline import empty_asnyc_generator
 
