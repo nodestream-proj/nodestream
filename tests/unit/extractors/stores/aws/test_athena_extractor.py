@@ -44,7 +44,7 @@ def athena_extractor(mocker):
         database="some_database",
         workgroup="some_workgroup",
         output_location="s3://some_bucket/some_prefix",
-        poll_interval_seconds=1,
+        poll_interval_seconds=0,
         page_size=500,
         client=mocker.Mock(),
     )
