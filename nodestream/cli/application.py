@@ -5,7 +5,7 @@ from .commands.run import Run
 from .commands.scaffold import Scaffold
 from .commands.show import Show
 
-APPLICATION = Application()
+APPLICATION = Application(name="nodestream")
 APPLICATION.add(Run())
 APPLICATION.add(New())
 APPLICATION.add(Show())

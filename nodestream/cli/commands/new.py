@@ -22,7 +22,7 @@ class New(NodestreamCommand):
 
     async def handle_async(self):
         project_root = Path(self.argument("project"))
-        db = self.option("db")
+        db = self.option("database")
         python_files = await self.run_operation(GeneratePythonScaffold(project_root))
         pipelines = await self.run_operation(GeneratePipelineScaffold(project_root, db))
         gen_project = GenerateProject(project_root, pipelines, python_files, db)

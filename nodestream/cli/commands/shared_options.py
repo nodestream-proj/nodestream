@@ -5,7 +5,7 @@ PROJECT_FILE_OPTION = option(
 )
 
 DATABASE_NAME_OPTION = option(
-    "database", "db", "The Database to Configre", flag=False, default="neo4j"
+    "database", "d", "The Database to Configre", flag=False, default="neo4j"
 )
 
 SCOPE_NAME_OPTION = option(

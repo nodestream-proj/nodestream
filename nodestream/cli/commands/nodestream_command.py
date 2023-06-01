@@ -35,7 +35,7 @@ class NodestreamCommand(Command):
 
     @property
     def has_json_logging_set(self) -> bool:
-        return self.option("json-logging")
+        return self.option("json")
 
     @property
     def scope(self) -> str:
