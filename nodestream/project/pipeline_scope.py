@@ -39,21 +39,26 @@ class PipelineScope:
     def add_pipeline_definition(self, definition: PipelineDefinition):
         self.pipelines_by_name[definition.name] = definition
 
-    def delete_pipeline_by_name(
+    def delete_pipeline(
         self,
         pipeline_name: str,
         remove_pipeline_file: bool = True,
         missing_ok: bool = True,
-    ):
+    ) -> bool:
         definition = self.pipelines_by_name.get(pipeline_name)
-        if definition is None and not missing_ok:
-            raise MissingExpectedPipelineError(
-                "Attempted to delete pipeline that did not exist"
-            )
+        if definition is None:
+            if not missing_ok:
+                raise MissingExpectedPipelineError(
+                    "Attempted to delete pipeline that did not exist"
+                )
+            else:
+                return False
 
         del self.pipelines_by_name[pipeline_name]
         if remove_pipeline_file:
             definition.remove_file(missing_ok=missing_ok)
+
+        return True
 
     def as_dict(self):
         return {

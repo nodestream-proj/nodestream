@@ -60,7 +60,7 @@ class Project:
 
         return [self.scopes_by_name[scope_name]]
 
-    def delete_pipleine(
+    def delete_pipeline(
         self,
         scope_name: Optional[str],
         pipeline_name: str,
@@ -68,7 +68,7 @@ class Project:
         missing_ok: bool = True,
     ):
         for scopes in self.get_scopes_by_name(scope_name):
-            scopes.delete_pipeline_by_name(
+            scopes.delete_pipeline(
                 pipeline_name,
                 remove_pipeline_file=remove_pipeline_file,
                 missing_ok=missing_ok,
