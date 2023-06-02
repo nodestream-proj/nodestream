@@ -65,3 +65,25 @@ def test_ensure_modules_are_imported(mocker, project):
     importlib.import_module.assert_has_calls(
         [mocker.call("module1"), mocker.call("module2")]
     )
+
+
+def test_get_scopes_by_name_none_returns_all_scopes(project, scopes):
+    assert list(project.get_scopes_by_name(None)) == scopes
+
+
+def test_get_scopes_by_name_named_scope_is_only_one_returned(project, scopes):
+    assert list(project.get_scopes_by_name("scope1")) == [scopes[0]]
+
+
+def test_get_scopes_by_name_misssing_scope_returns_nothing(project):
+    assert len(list(project.get_scopes_by_name("missing"))) == 0
+
+
+def test_delete_pipeline_forwards_deletes_to_appropriate_scope(project, scopes, mocker):
+    scopes[0].delete_pipeline = scope_delete_pipeline = mocker.Mock()
+    scopes[1].delete_pipeline = not_expected = mocker.Mock()
+    project.delete_pipeline("scope1", "test")
+    scope_delete_pipeline.assert_called_once_with(
+        "test", remove_pipeline_file=True, missing_ok=True
+    )
+    not_expected.assert_not_called()

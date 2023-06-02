@@ -77,3 +77,7 @@ class MissingProjectFileError(ValueError):
 
     def __init__(self, file: Path, *args: object) -> None:
         super().__init__(f"'{file}' does not exist", *args)
+
+
+class MissingExpectedPipelineError(ValueError):
+    pass

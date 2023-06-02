@@ -9,17 +9,17 @@ PROJECT_MODULES_TO_CREATE = [
     {
         "module_name": "argument_resolvers",
         "import_statement": "from nodestream.argument_resolvers import ArgumentResolver",
-        "guide_reference": "# See: https://zprobst.github.io/nodestream/extending-nodestream/creating-your-own-argument-resolver",
+        "guide_reference": "# See: https://nodestream-proj.github.io/nodestream/extending-nodestream/creating-your-own-argument-resolver",
     },
     {
         "module_name": "normalizers",
         "import_statement": "from nodestream.normalizers import Normalizer",
-        "guide_reference": "# See: https://zprobst.github.io/nodestream/extending-nodestream/creating-your-own-normalizer",
+        "guide_reference": "# See: https://nodestream-proj.github.io/nodestream/extending-nodestream/creating-your-own-normalizer",
     },
     {
         "module_name": "value_providers",
         "import_statement": "from nodestream.value_providers import ValueProvider",
-        "guide_reference": "# See: https://zprobst.github.io/nodestream/extending-nodestream/creating-your-own-value-provider",
+        "guide_reference": "# See: https://nodestream-proj.github.io/nodestream/extending-nodestream/creating-your-own-value-provider",
     },
 ]
 

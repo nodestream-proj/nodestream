@@ -46,3 +46,6 @@ class PipelineDefinition:
             result["annotations"] = self.annotations
 
         return result
+
+    def remove_file(self, missing_ok: bool = True):
+        self.file_path.unlink(missing_ok=missing_ok)

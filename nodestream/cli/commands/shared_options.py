@@ -9,7 +9,7 @@ DATABASE_NAME_OPTION = option(
 )
 
 SCOPE_NAME_OPTION = option(
-    "scope", "s", "Show only the pipelines in the provided scope", flag=False
+    "scope", "s", "Use the provided scope for the operation", flag=False
 )
 
 JSON_OPTION = option("json", "j", "Log output in JSON", flag=True)

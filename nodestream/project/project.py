@@ -1,6 +1,6 @@
 import importlib
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, Iterable, List, Optional
 
 from yaml import safe_load
 
@@ -50,6 +50,29 @@ class Project:
 
     def write_to_path(self, path: Path):
         pretty_print_yaml_to_file(path, self.as_dict())
+
+    def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:
+        if scope_name is None:
+            return self.scopes_by_name.values()
+
+        if scope_name not in self.scopes_by_name:
+            return []
+
+        return [self.scopes_by_name[scope_name]]
+
+    def delete_pipeline(
+        self,
+        scope_name: Optional[str],
+        pipeline_name: str,
+        remove_pipeline_file: bool = True,
+        missing_ok: bool = True,
+    ):
+        for scopes in self.get_scopes_by_name(scope_name):
+            scopes.delete_pipeline(
+                pipeline_name,
+                remove_pipeline_file=remove_pipeline_file,
+                missing_ok=missing_ok,
+            )
 
     def as_dict(self):
         return {
