@@ -2,8 +2,8 @@ from cleo.helpers import argument
 
 from ..operations import (
     CommitProjectToDisk,
-    RemovePipelineFromProject,
     InitializeProject,
+    RemovePipelineFromProject,
 )
 from .nodestream_command import NodestreamCommand
 from .shared_options import PIPELINE_ARGUMENT, PROJECT_FILE_OPTION

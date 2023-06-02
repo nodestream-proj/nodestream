@@ -1,5 +1,6 @@
-import pytest
 from pathlib import Path
+
+import pytest
 
 from nodestream.exceptions import MissingExpectedPipelineError
 from nodestream.pipeline import PipelineInitializationArguments
@@ -49,7 +50,7 @@ def test_delete_pipeline_raises_error_when_missing_not_ok(scope):
 
 
 def test_delete_pipeline_does_not_raise_an_error_when_missing_ok(scope):
-    assert scope.delete_pipeline("does_not_exist") == False
+    assert scope.delete_pipeline("does_not_exist") is False
 
 
 def test_delete_pipeline_removed_definition(scope):

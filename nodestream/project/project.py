@@ -1,6 +1,6 @@
 import importlib
 from pathlib import Path
-from typing import Dict, List, Optional, Iterable
+from typing import Dict, Iterable, List, Optional
 
 from yaml import safe_load
 
