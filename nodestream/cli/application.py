@@ -1,6 +1,7 @@
 from cleo.application import Application
 
 from .commands.new import New
+from .commands.remove import Remove
 from .commands.run import Run
 from .commands.scaffold import Scaffold
 from .commands.show import Show
@@ -10,6 +11,7 @@ APPLICATION.add(Run())
 APPLICATION.add(New())
 APPLICATION.add(Show())
 APPLICATION.add(Scaffold())
+APPLICATION.add(Remove())
 
 
 def run():

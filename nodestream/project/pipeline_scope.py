@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+from ..exceptions import MissingExpectedPipelineError
 from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest
 
@@ -37,6 +38,22 @@ class PipelineScope:
 
     def add_pipeline_definition(self, definition: PipelineDefinition):
         self.pipelines_by_name[definition.name] = definition
+
+    def delete_pipeline_by_name(
+        self,
+        pipeline_name: str,
+        remove_pipeline_file: bool = True,
+        missing_ok: bool = True,
+    ):
+        definition = self.pipelines_by_name.get(pipeline_name)
+        if definition is None and not missing_ok:
+            raise MissingExpectedPipelineError(
+                "Attempted to delete pipeline that did not exist"
+            )
+
+        del self.pipelines_by_name[pipeline_name]
+        if remove_pipeline_file:
+            definition.remove_file(missing_ok=missing_ok)
 
     def as_dict(self):
         return {
