@@ -27,14 +27,14 @@ Install nodestream with `pip`
 
 ```bash
   pip install nodestream
-  nodestream new --db neo4j my_project && cd my_project
+  nodestream new --database neo4j my_project && cd my_project
   nodestream run sample -v
 ```
 
 
 ## Documentation
 
-Visit our [Documentation](https://zprobst.github.io/nodestream) on Github Pages.
+Visit our [Documentation](https://nodestream-proj.github.io/nodestream) on Github Pages.
 
 
 ## Contributing

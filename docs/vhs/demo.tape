@@ -10,7 +10,7 @@ Sleep 250ms
 Enter
 
 # Generate a new Project
-Type "nodestream new my_graph_app --db neo4j"
+Type "nodestream new my_graph_app --database neo4j"
 Sleep 250ms
 Enter
 

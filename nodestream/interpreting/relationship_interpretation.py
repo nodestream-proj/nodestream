@@ -162,10 +162,11 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
                 type=self.node_type.single_value(context),
                 key_values=PropertySet(key_set),
             )
-            node.properties.apply_providers(
-                context, self.node_properties, **self.properties_normalization
-            )
-            yield node
+            if node.has_valid_id:
+                node.properties.apply_providers(
+                    context, self.node_properties, **self.properties_normalization
+                )
+                yield node
 
     def find_matches(
         self, context: InterpreterContext

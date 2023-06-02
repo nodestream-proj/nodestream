@@ -1,13 +1,14 @@
-# Creating Your Own Interpretation
+# Creating A New Interpretation
 
 Sometimes parsing data is extremely complex meaning its impossible to rely on the `Interpretation`
 [DSL](https://en.wikipedia.org/wiki/Domain-specific_language) to handle every possible permutation of
-different data. To handle this, the `Interpretation` system is pluggable. For more information on interpretations, see
-the reference on interpreting data, see the [Creating a Graph ETL Pipeline](../creating-a-graph-etl-pipeline.md)
+different data. To handle this, the `Interpretation` system is pluggable.
 
 Here's an example. Let's say you want to store a boolean property but also want to store the negative property.
 For instance, you want to store both an `enabled` and `disabled` property where
 the one is the opposite value of the other.
+
+For more information on interpretations see the [Tutorial](../tutorial.md) and the [Intepreter Reference](../reference/interpreter.md).
 
 ## Define Your Interpretation Class
 
@@ -22,8 +23,8 @@ class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
 ```
 
 As you might imagine, this isn't particulary interesting. But, the `name="memoize_negative"` might have caught your eye.
-`Interpretation`s are part of a unique registry. The `name` property corresponds with the `type` property that we covered in
-the [Basic Usage](#basic-usage) section. Functionally, all other keys in the object are forwarded to this classes constructor.
+`Interpretation`s are part of a unique registry. The `alias` property corresponds with the `type` property that is covered in
+the [Interpreter Reference](../reference/interpreter.md) section. Functionally, all other keys in the object are forwarded to this classes constructor.
 
 Given that, let's consider our `MemoizeNegativeProperty` class. That implies that we could write down a constructor like this:
 

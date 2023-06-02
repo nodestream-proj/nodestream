@@ -1,4 +1,4 @@
-# Creating Your Own File Format
+# Handling a File Format
 
 There are instances where you might need to support custom file formats for reading data into a nodestream pipeline's `FileExtractor`.
 This guide will walk you through the process of creating your own file format implementation for your project.

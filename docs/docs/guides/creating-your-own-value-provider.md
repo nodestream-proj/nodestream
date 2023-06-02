@@ -1,4 +1,4 @@
-# Creating your Own Value Provider
+# Creating A Value Provider
 
 There are many methods of extracting and providing data to the ETl pipeline as it operates. The various yaml tags such
 as `!jq` or `!variable` refer to an underlying `ValueProvider`. In order to introduce your own mechanism for
