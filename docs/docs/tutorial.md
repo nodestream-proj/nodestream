@@ -14,7 +14,7 @@ pip install nodestream
 After doing so, lets generate a simple project. To do so, run
 
 ```
-nodestream new --db neo4j my_first_graph
+nodestream new --database neo4j my_first_graph
 ```
 
 In this example, we are signaling that we want to use `neo4j` as the graph database and naming our
