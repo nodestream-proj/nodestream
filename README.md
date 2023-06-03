@@ -3,8 +3,7 @@
 
 _Fast, Declarative ETL for Graph Databases._
 
-TODO: Gif of basic Demo
-
+[![Demo](docs/img/demo.gif)](https://badge.fury.io/py/nodestream)
 
 #### Badges
 
