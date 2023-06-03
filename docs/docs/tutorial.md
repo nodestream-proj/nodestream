@@ -14,7 +14,7 @@ pip install nodestream
 After doing so, lets generate a simple project. To do so, run
 
 ```
-nodestream new --db neo4j my_first_graph
+nodestream new --database neo4j my_first_graph
 ```
 
 In this example, we are signaling that we want to use `neo4j` as the graph database and naming our
@@ -78,6 +78,9 @@ You can see the project status by running `nodestream show`. That should produce
 ## Managing Pipelines
 
 In order to demonstrate how one can manage pipelines in nodestream, lets remove the default pipleine and add it back.
+
+### Remove A Pipeline
+
 Start by running:
 
 ```bash
@@ -105,6 +108,8 @@ Further more you can also see that the pipeline file is removed from the project
 ├── nodestream.yaml
 └── pipelines
 ```
+
+### Generate a New Pipeline
 
 Now lets generate a new pipeline running:
 

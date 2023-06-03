@@ -9,6 +9,9 @@ from ...subclass_registry import SubclassRegistry
 STREAM_CONNECTOR_SUBCLASS_REGISTRY = SubclassRegistry()
 STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY = SubclassRegistry()
 
+DEFAULT_TIMEOUT = 60
+DEFAULT_MAX_RECORDS = 100
+
 
 @STREAM_CONNECTOR_SUBCLASS_REGISTRY.connect_baseclass
 class StreamConnector(ABC):
@@ -47,10 +50,10 @@ class StreamExtractor(Extractor):
     @classmethod
     def __declarative_init__(
         cls,
-        timeout: int,
-        max_records: int,
-        record_format: str,
         connector: str,
+        record_format: str,
+        timeout: int = DEFAULT_TIMEOUT,
+        max_records: int = DEFAULT_MAX_RECORDS,
         **connector_args
     ):
         object_format_cls = STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY.get(record_format)

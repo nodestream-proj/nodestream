@@ -7,8 +7,8 @@ they can be applied.
 
 ## Normalizer Flags
 
-| Normalizer Flag Name    | Example Input           | Example Output         |
-|-------------------------|-------------------------|------------------------|
-| do_lowercase_strings    | "dO_LoWER_cASe_strings" | "do_lowercase_strings" |
-| do_remove_trailing_dots | "my.website.com."       | "my.website.com"       |
-| do_trim_whitespace      | "  some value "         | "some value"           |
+| Normalizer Flag Name      | Example Input           | Example Output         |
+| ------------------------- | ----------------------- | ---------------------- |
+| `do_lowercase_strings`    | "dO_LoWER_cASe_strings" | "do_lowercase_strings" |
+| `do_remove_trailing_dots` | "my.website.com."       | "my.website.com"       |
+| `do_trim_whitespace`      | "  some value "         | "some value"           |
