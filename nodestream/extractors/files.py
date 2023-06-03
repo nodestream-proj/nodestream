@@ -65,14 +65,18 @@ class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
 class FileExtractor(Extractor):
     @classmethod
     def __declarative_init__(cls, globs: Iterable[str]):
-        paths = (file for glob_string in globs for file in glob(glob_string))
-        return cls(paths)
+        all_matching_paths = (
+            Path(file)
+            for glob_string in globs
+            for file in glob(glob_string, recursive=True)
+        )
+        final_paths = {p for p in all_matching_paths if p.is_file()}
+        return cls(final_paths)
 
-    def __init__(self, paths: Iterable[Iterable]) -> None:
+    def __init__(self, paths: Iterable[Path]) -> None:
         self.paths = paths
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
-        for path_str in self.paths:
-            path = Path(path_str)
+        for path in self.paths:
             for record in SupportedFileFormat.open(path).read_file():
                 yield record

@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Optional, List
 
 from aiokafka import AIOKafkaConsumer
 
@@ -16,9 +16,9 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
     """
 
     def __init__(
-        self, bootstrap_servers: str, topic: str, group_id: Optional[str] = None
+        self, bootstrap_servers: List[str], topic: str, group_id: Optional[str] = None
     ):
-        self.bootstrap_servers = bootstrap_servers
+        self.bootstrap_servers = ",".join(bootstrap_servers)
         self.topic = topic
         self.group_id = group_id or DEFAULT_GROUP_ID
         self.consumer = None

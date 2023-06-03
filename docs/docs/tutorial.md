@@ -78,6 +78,9 @@ You can see the project status by running `nodestream show`. That should produce
 ## Managing Pipelines
 
 In order to demonstrate how one can manage pipelines in nodestream, lets remove the default pipleine and add it back.
+
+### Remove A Pipeline
+
 Start by running:
 
 ```bash
@@ -105,6 +108,8 @@ Further more you can also see that the pipeline file is removed from the project
 ├── nodestream.yaml
 └── pipelines
 ```
+
+### Generate a New Pipeline
 
 Now lets generate a new pipeline running:
 

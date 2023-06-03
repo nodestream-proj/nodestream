@@ -1,5 +1,8 @@
 # Value Providers
 
+There are many methods of extracting and providing data to the ETl pipeline as it operates.
+The various yaml tags such as `!jq` or `!variable` refer to an underlying ValueProvider.
+
 ## `!jmespath`
 
 Represents a [jmespath](https://jmespath.org/) query language expression that should be executed against the input record.

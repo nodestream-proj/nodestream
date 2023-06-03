@@ -48,9 +48,9 @@ markdown_extensions:
 
 plugins:
   - search
-  # TODO: - gen-files:
-  #     scripts:
-  #       - docs/gen_ref_pages.py #
-  # - mkdocstrings:
-  #     watch:
-  #       - nodestream
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py #
+  - mkdocstrings:
+      watch:
+        - nodestream
