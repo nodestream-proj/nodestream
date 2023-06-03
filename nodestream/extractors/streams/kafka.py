@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Any, Iterable, Optional, List
+from typing import Any, Iterable, List, Optional
 
 from aiokafka import AIOKafkaConsumer
 
