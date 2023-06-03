@@ -42,6 +42,8 @@ aiokafka = "^0.8.0"
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
 mkdocs-material = "^9.1.8"
+mkdocs-gen-files = "^0.5.0"
+mkdocstrings = {version = "^0.22.0", extras = ["python"]}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"

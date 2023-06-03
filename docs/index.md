@@ -1,43 +1,42 @@
 # Nodestream
 
-Nodestream is a modern and simple framework for performing ETL into Graph Databases.
+`nodestream` is a modern and simple framework for performing ETL into Graph Databases.
 
-The key features are:
+With `nodestream` you can enjoy:
 
-1. *Fast to Build Pipelines*: By building data pipelines on a user friendly and extensible DSL, you can assemble and reuse modular
-components to go from implementation to production in an hour.
+1. **Building Fast**: with a user friendly and extensible DSL.
+2. **Fewer Bugs**: because `less code` == `less bugs`.
+3. **Robustness and Resilience**: with battlehardend and optimized components.
 
-2. *Fewer Bugs*: Less code == less bugs. Combine that with an Integration and End to End testing tools, and you can build confidence in your robust.
-
-3. *Robust and Resilient*: Based on a battlehardend and optimized components, nodestream is capable of doing a lot of work very quick while handling errors inteligently.
-
+[![Demo](./img/demo.gif)](https://badge.fury.io/py/nodestream)
 
 ## Getting Started
 
-### Installing Nodestream
+Get started with our [Tutorial](./docs/tutorial.md).
 
-```
-pip install nodestream
-```
+## Shell Completion
 
-### Generating a New Project
-
-```
-nodestream new my_graph_app --db neo4j
-```
-
-### Shell Completion
-
-BASH - Ubuntu / Debian
+### BASH - Ubuntu / Debian
+```bash
 nodestream completions bash | sudo tee /etc/bash_completion.d/nodestream.bash-completion
+```
 
-# BASH - Mac OSX (with Homebrew "bash-completion")
+### BASH - Mac OSX (with Homebrew "bash-completion")
+
+```bash
 nodestream completions bash > $(brew --prefix)/etc/bash_completion.d/nodestream.bash-completion
+```
 
-# ZSH - Config file
+### ZSH
+
+```zsh
 mkdir ~/.zfunc
 echo "fpath+=~/.zfunc" >> ~/.zshrc
 nodestream completions zsh > ~/.zfunc/_test
+```
 
-# FISH
+### FISH
+
+```bash
 nodestream completions fish > ~/.config/fish/completions/nodestream.fish
+```

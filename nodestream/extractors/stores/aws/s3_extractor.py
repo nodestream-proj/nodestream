@@ -10,7 +10,11 @@ from .credential_utils import AwsClientFactory
 class S3Extractor(Extractor):
     @classmethod
     def __declarative_init__(
-        cls, bucket: str, object_format: str, prefix: str, **aws_client_args
+        cls,
+        bucket: str,
+        prefix: Optional[str] = None,
+        object_format: Optional[str] = None,
+        **aws_client_args,
     ):
         return cls(
             bucket=bucket,

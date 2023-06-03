@@ -1,21 +1,16 @@
 site_name: Nodestream Docs
-repo_url: https://github.com/zprobst/nodestream
+repo_url: https://github.com/nodestream-proj/nodestream
 edit_uri: edit/main/docs/
 
 theme:
   name: material
-  # TODO: logo: img/brand/munchlax.png 
   icon:
     repo: fontawesome/brands/github
   features:
     - navigation.instant
     - navigation.tracking
-    - navigation.tabs
-    - navigation.tabs.sticky
     - navigation.sections
-    - navigation.expand
     - toc.follow
-    - toc.integrate
     - navigation.top
     - search.suggest
     - search.highlight
@@ -52,10 +47,10 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 plugins:
-  - search 
-  # TODO: - gen-files:
-  #     scripts:
-  #       - docs/gen_ref_pages.py #
-  # - mkdocstrings:
-  #     watch:
-  #       - munchlax
+  - search
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py #
+  - mkdocstrings:
+      watch:
+        - nodestream

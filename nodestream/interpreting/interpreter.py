@@ -91,7 +91,7 @@ class Interpreter(Step, AggregatedIntrospectionMixin, IntrospectableIngestionCom
         return cls(
             before_iteration=InterpretationPass.from_file_arguments(before_iteration),
             interpretations=InterpretationPass.from_file_arguments(interpretations),
-            iterate_on=RecordDecomposer.from_iteration_arguments(iterate_on),
+            decomposer=RecordDecomposer.from_iteration_arguments(iterate_on),
         )
 
     def __init__(

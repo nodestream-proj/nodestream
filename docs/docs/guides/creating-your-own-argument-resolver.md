@@ -1,4 +1,4 @@
-# Creating your own ArgumentResolver
+# Creating An ArgumentResolver
 
 A `ArgumentResolver` allows you to inline a value into the Pipeline file before the pipeline is initialzed. This can be
 useful for passing configuration from files, environment, secret stores, and the like.
