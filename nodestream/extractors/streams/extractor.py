@@ -85,7 +85,7 @@ class StreamExtractor(Extractor):
     async def extract_records(self):
         await self.connector.connect()
         try:
-            results = list(await self.poll())
+            results = tuple(await self.poll())
             if len(results) == 0:
                 yield Flush
             else:
