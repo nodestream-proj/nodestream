@@ -1,13 +1,13 @@
 # Argument Resolvers
 
-An `ArgumentResolver` allows you to inline a value into the Pipeline file before the pipeline is initialzed. This can be
+An `ArgumentResolver` allows you to inline a value into the Pipeline file before the pipeline is initialized. This can be
 useful for passing configuration from files, environment, secret stores, and the like. By default, nodestream ships with
 a few built in argument resolvers.
 
 ## `!include`
 
-Loads another yaml file and inlines the contents of that file into the location its supplied. For example,
-imagine you want to store the list of file globs seperate from the `FileExtractor` itself. The file path can be
+Loads another yaml file and inlined the contents of that file into the location its supplied. For example,
+imagine you want to store the list of file globs separate from the `FileExtractor` itself. The file path can be
 referenced relatively or absolutely.
 
 ### Example
@@ -25,7 +25,7 @@ referenced relatively or absolutely.
 
 ## `!env`
 
-Inlines the value of an environment variable at the current location.
+Inline the value of an environment variable at the current location.
 
 ### Example
 

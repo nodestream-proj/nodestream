@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from hamcrest import assert_that, same_instance, has_length, equal_to
 
 from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import (
@@ -31,8 +32,8 @@ def project(scopes, imports):
 
 
 def test_pipeline_organizes_scopes_by_name(scopes, project):
-    assert project.scopes_by_name["scope1"] is scopes[0]
-    assert project.scopes_by_name["scope2"] is scopes[1]
+    assert_that(project.scopes_by_name["scope1"], same_instance(scopes[0]))
+    assert_that(project.scopes_by_name["scope2"], same_instance(scopes[1]))
 
 
 @pytest.mark.asyncio
@@ -50,7 +51,7 @@ async def test_project_runs_pipeline_in_scope_when_present(
 def test_project_from_file():
     file_name = Path("tests/unit/project/fixtures/simple_project.yaml")
     result = Project.from_file(file_name)
-    assert len(result.scopes_by_name) == 1
+    assert_that(result.scopes_by_name, has_length(1))
 
 
 def test_project_from_file_missing_file():
@@ -68,15 +69,15 @@ def test_ensure_modules_are_imported(mocker, project):
 
 
 def test_get_scopes_by_name_none_returns_all_scopes(project, scopes):
-    assert list(project.get_scopes_by_name(None)) == scopes
+    assert_that(list(project.get_scopes_by_name(None)), equal_to(scopes))
 
 
 def test_get_scopes_by_name_named_scope_is_only_one_returned(project, scopes):
-    assert list(project.get_scopes_by_name("scope1")) == [scopes[0]]
+    assert_that(list(project.get_scopes_by_name("scope1")), equal_to([scopes[0]]))
 
 
 def test_get_scopes_by_name_misssing_scope_returns_nothing(project):
-    assert len(list(project.get_scopes_by_name("missing"))) == 0
+    assert_that(list(project.get_scopes_by_name("missing")), has_length(0))
 
 
 def test_delete_pipeline_forwards_deletes_to_appropriate_scope(project, scopes, mocker):

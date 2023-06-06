@@ -72,11 +72,11 @@ class Neo4jQueryExecutor(QueryExecutor, alias="neo4j"):
     async def upsert_relationships_in_bulk_of_same_operation(
         self,
         shape: OperationOnRelationshipIdentity,
-        rels: Iterable[RelationshipWithNodes],
+        relationships: Iterable[RelationshipWithNodes],
     ):
         batched_query = (
             self.ingest_query_builder.generate_batch_update_relationship_query_batch(
-                shape, rels
+                shape, relationships
             )
         )
         await self.execute(batched_query.as_query(), log_result=True)

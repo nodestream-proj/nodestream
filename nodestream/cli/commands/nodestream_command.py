@@ -20,11 +20,11 @@ class NodestreamCommand(Command):
     async def handle_async(self):
         raise NotImplementedError
 
-    async def run_operation(self, opertaion: "Operation"):
+    async def run_operation(self, operation: "Operation"):
         self.line(
-            f"<info>Running: {opertaion.name}</info>", verbosity=Verbosity.VERBOSE
+            f"<info>Running: {operation.name}</info>", verbosity=Verbosity.VERBOSE
         )
-        return await opertaion.perform(self)
+        return await operation.perform(self)
 
     def get_project_path(self) -> Path:
         path = self.option("project")

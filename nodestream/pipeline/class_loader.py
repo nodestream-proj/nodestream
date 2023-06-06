@@ -1,6 +1,6 @@
 from importlib import import_module
 
-from ..exceptions import InvalidClassPathError, PipelineComponentInitilizationError
+from ..exceptions import InvalidClassPathError, PipelineComponentInitializationError
 
 DECLARATIVE_INIT_METHOD_NAME = "__declarative_init__"
 
@@ -37,8 +37,8 @@ class ClassLoader:
 
     def load_class(self, implementation, arguments=None, factory=None):
         arguments = arguments or {}
-        initializier = self.find_class_initializer(implementation, factory)
+        initializer = self.find_class_initializer(implementation, factory)
         try:
-            return initializier(**arguments)
+            return initializer(**arguments)
         except TypeError as e:
-            raise PipelineComponentInitilizationError(initializier, arguments) from e
+            raise PipelineComponentInitializationError(initializer, arguments) from e

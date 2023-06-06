@@ -18,7 +18,7 @@ class ValueProvider(ABC):
     """A `ValueProvider` is a class that can extract values from a document."""
 
     @classmethod
-    def garuntee_value_provider(
+    def guarantee_value_provider(
         cls, maybe_provider: StaticValueOrValueProvider
     ) -> "ValueProvider":
         from .static_value_provider import StaticValueProvider
@@ -30,16 +30,16 @@ class ValueProvider(ABC):
         )
 
     @classmethod
-    def garuntee_provider_dictionary(
+    def guarantee_provider_dictionary(
         cls, maybe_providers: Dict[Any, StaticValueOrValueProvider]
     ):
-        return {k: cls.garuntee_value_provider(v) for k, v in maybe_providers.items()}
+        return {k: cls.guarantee_value_provider(v) for k, v in maybe_providers.items()}
 
     @classmethod
-    def garuntee_provider_list(
+    def guarantee_provider_list(
         cls, maybe_providers: Iterable[StaticValueOrValueProvider]
     ):
-        return [cls.garuntee_value_provider(v) for v in maybe_providers]
+        return [cls.guarantee_value_provider(v) for v in maybe_providers]
 
     @classmethod
     def install_yaml_tag(cls, loader: Type[SafeLoader]):

@@ -50,7 +50,7 @@ class HashValueProvider(ValueProvider):
 
 Now that we have implemented the hashing behavior, we'd like to use it. However, currently our `HashValueProvider` is
 not constructable in our pipelines. To accomplish this, we need to register a yaml loader that can register a tag in
-yaml that can instanitate our new value provider. Nodestream uses [`pyyaml`](TODO) to load our pipelines.
+yaml that can instantiate our new value provider. Nodestream uses [`pyyaml`](TODO) to load our pipelines.
 For our purposes, our loader can be created by doing the following:
 
 ```python

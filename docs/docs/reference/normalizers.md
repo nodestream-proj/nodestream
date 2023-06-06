@@ -1,7 +1,7 @@
 # Normalizers
 
 A `Normalizer` allows you to clean data extracted by a [`ValueProvider`](./value-providers.md).
-They are intended to provided stateless, simple transformations of data. Many different interpretaions allow you to
+They are intended to provided stateless, simple transformations of data. Many different interpretations allow you to
 enable `Normalizers` to apply these transformations. See the [`Interpretation`](./interpretations.md) reference for where
 they can be applied.
 

@@ -5,7 +5,7 @@ from hamcrest import assert_that, equal_to, none
 
 from nodestream.exceptions import (
     InvalidClassPathError,
-    PipelineComponentInitilizationError,
+    PipelineComponentInitializationError,
 )
 from nodestream.pipeline import ClassLoader
 
@@ -80,7 +80,7 @@ def test_class_loader_invalid_path_missing_class(subject):
 
 
 def test_class_loader_invalid_path_invalid_arugment(subject):
-    with pytest.raises(PipelineComponentInitilizationError):
+    with pytest.raises(PipelineComponentInitializationError):
         subject.load_class(
             implementation="tests.unit.pipeline.test_class_loader:SimpleClass",
             arguments={"not_a_valid_argument": True},

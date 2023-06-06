@@ -54,7 +54,7 @@ class QueryExecutor(ABC):
     async def upsert_relationships_in_bulk_of_same_operation(
         self,
         shape: OperationOnRelationshipIdentity,
-        rels: Iterable[RelationshipWithNodes],
+        relationships: Iterable[RelationshipWithNodes],
     ):
         raise NotImplementedError
 

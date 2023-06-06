@@ -25,7 +25,7 @@ class Normalizer(ABC):
         return value
 
     @classmethod
-    def arugment_flag(cls):
+    def argument_flag(cls):
         return f"do_{NORMALIZER_REGISTRY.name_for(cls)}"
 
     @classmethod

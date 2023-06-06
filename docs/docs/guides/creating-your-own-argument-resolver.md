@@ -1,6 +1,6 @@
 # Creating An ArgumentResolver
 
-A `ArgumentResolver` allows you to inline a value into the Pipeline file before the pipeline is initialzed. This can be
+A `ArgumentResolver` allows you to inline a value into the Pipeline file before the pipeline is initialized. This can be
 useful for passing configuration from files, environment, secret stores, and the like.
 
 For example, assume that have a database password that you would like to retrieve from a secret store, in this case,
@@ -34,7 +34,7 @@ class EnvironmentResolver(ArgumentResolver):
 Note that this implementation is pretty naive. But it's the simplest we need to demonstrate the point.
 
 In this example, we register with a yaml loader that can load a tag in
-yaml to instanitate our new value provider. Nodestream uses [`pyyaml`](https://pyyaml.org/) to load our pipelines.
+yaml to instantiate our new value provider. Nodestream uses [`pyyaml`](https://pyyaml.org/) to load our pipelines.
 
 ## Make sure your module is imported
 

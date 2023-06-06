@@ -18,7 +18,7 @@ EXPECTED_NODE_TYPE = "Person"
 def test_source_node_interpretation_sets_type_statically(blank_context):
     subject = SourceNodeInterpretation(node_type=EXPECTED_NODE_TYPE, key={})
     subject.interpret(blank_context)
-    assert blank_context.desired_ingest.source.type == EXPECTED_NODE_TYPE
+    assert_that(blank_context.desired_ingest.source.type, equal_to(EXPECTED_NODE_TYPE))
 
 
 def test_source_node_interpretation_sets_type_dynamically(blank_context):

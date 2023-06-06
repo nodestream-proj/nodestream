@@ -21,18 +21,18 @@ class IngestionStrategy(ABC):
     How that data is committed and how it is stored internally is decoupled through the `IngestionStrategy` interface.
 
     Generally, your usage of nodestream is decoupled from `IngestionStrategy` unless you intend to provide an implementation
-    of your own database writer. The writer API will give you a `DesiredIngestion` or other `Ingestable` object that needs a
+    of your own database writer. The writer API will give you a `DesiredIngestion` or other `Ingestible` object that needs a
     instance of an `IngestionStrategy` to apply operations to.
     """
 
     @abstractmethod
     async def ingest_source_node(self, source: "Node"):
-        """Given a provided instance of `Node`, ensure that it is commited to the GraphDatabase."""
+        """Given a provided instance of `Node`, ensure that it is committed to the GraphDatabase."""
         raise NotImplementedError
 
     @abstractmethod
     async def ingest_relationship(self, relationship: "RelationshipWithNodes"):
-        """Given a provided instance of `SourceNode`, ensure that the provided `Relationship` is commited to the database."""
+        """Given a provided instance of `SourceNode`, ensure that the provided `Relationship` is committed to the database."""
         raise NotImplementedError
 
     @abstractmethod

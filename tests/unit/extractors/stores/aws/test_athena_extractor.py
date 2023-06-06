@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 import pytest
-from hamcrest import assert_that, has_items
+from hamcrest import assert_that, has_items, equal_to
 
 
 @pytest.mark.parametrize(
@@ -29,10 +29,15 @@ def test_athena_row_converter(target_row_type, input_value, expected_value):
     row = {
         "Data": [{"VarCharValue": input_value}, {"VarCharValue": "some_static_value"}]
     }
-    assert converter.convert_row(row) == {
-        "test": expected_value,
-        "some_static_value": "some_static_value",
-    }
+    assert_that(
+        converter.convert_row(row),
+        equal_to(
+            {
+                "test": expected_value,
+                "some_static_value": "some_static_value",
+            }
+        ),
+    )
 
 
 @pytest.fixture
@@ -59,7 +64,7 @@ def test_athena_extractor_get_query_status(athena_extractor):
             },
         },
     }
-    assert athena_extractor.get_query_status() == "SUCCEEDED"
+    assert_that(athena_extractor.get_query_status(), equal_to("SUCCEEDED"))
     athena_extractor.client.get_query_execution.assert_called_once_with(
         QueryExecutionId="some_query_execution_id"
     )
@@ -85,7 +90,7 @@ def test_await_query_completion(athena_extractor, mocker):
         side_effect=["QUEUED", "RUNNING", "SUCCEEDED"]
     )
     athena_extractor.await_query_completion()
-    assert athena_extractor.get_query_status.call_count == 3
+    assert_that(athena_extractor.get_query_status.call_count, equal_to(3))
 
 
 def test_await_query_completion_failed(athena_extractor, mocker):
@@ -94,7 +99,7 @@ def test_await_query_completion_failed(athena_extractor, mocker):
             side_effect=["QUEUED", "RUNNING", "FAILED"]
         )
         athena_extractor.await_query_completion()
-        assert athena_extractor.get_query_status.call_count == 3
+        assert_that(athena_extractor.get_query_status.call_count, equal_to(3))
 
 
 def test_get_result_paginator(athena_extractor, mocker):

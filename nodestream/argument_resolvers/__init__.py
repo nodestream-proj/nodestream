@@ -1,4 +1,4 @@
-from .arugment_resolver import ARGUMENT_RESOLVER_REGISTRY, ArgumentResolver
+from .argument_resolver import ARGUMENT_RESOLVER_REGISTRY, ArgumentResolver
 from .environment_variable_resolver import EnvironmentResolver
 from .include_file_resolver import IncludeFileResolver
 

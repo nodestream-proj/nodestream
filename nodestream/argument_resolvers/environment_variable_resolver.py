@@ -3,7 +3,7 @@ from typing import Type
 
 from yaml import SafeLoader
 
-from .arugment_resolver import ArgumentResolver
+from .argument_resolver import ArgumentResolver
 
 
 class EnvironmentResolver(ArgumentResolver):

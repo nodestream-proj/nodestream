@@ -2,13 +2,13 @@
 
 Sometimes parsing data is extremely complex meaning its impossible to rely on the `Interpretation`
 [DSL](https://en.wikipedia.org/wiki/Domain-specific_language) to handle every possible permutation of
-different data. To handle this, the `Interpretation` system is pluggable.
+different data. To handle this, the `Interpretation` system is plug-able.
 
 Here's an example. Let's say you want to store a boolean property but also want to store the negative property.
 For instance, you want to store both an `enabled` and `disabled` property where
 the one is the opposite value of the other.
 
-For more information on interpretations see the [Tutorial](../tutorial.md) and the [Intepreter Reference](../reference/interpreter.md).
+For more information on interpretations see the [Tutorial](../tutorial.md) and the [Interpreter Reference](../reference/interpreter.md).
 
 ## Define Your Interpretation Class
 
@@ -22,7 +22,7 @@ class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
     pass
 ```
 
-As you might imagine, this isn't particulary interesting. But, the `name="memoize_negative"` might have caught your eye.
+As you might imagine, this isn't particularly interesting. But, the `name="memoize_negative"` might have caught your eye.
 `Interpretation`s are part of a unique registry. The `alias` property corresponds with the `type` property that is covered in
 the [Interpreter Reference](../reference/interpreter.md) section. Functionally, all other keys in the object are forwarded to this classes constructor.
 
@@ -42,7 +42,7 @@ This code is type annotated. As you can see, `ValueProvider` is a new concept. A
 start digging around more with extending nodestream.
 
 Let's complete our implementation. Perhaps unsurprisingly, `Interpretation` subclasses need to implement an `interpret` method.
-A working implemention of `MemoizeNegativeProperty` could look like this:
+A working implementation of `MemoizeNegativeProperty` could look like this:
 
 ```python
 from nodestream.interpreting import Interpretation

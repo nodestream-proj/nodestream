@@ -9,7 +9,7 @@ record formats.
 
 The documentation below contains information on the supported `StreamConnector` and `StreamRecordFormat` options and
 how to configure them. See the [Customizing The Stream Extractor](../guides/customizing-the-stream-extractor.md) guide
-to learn how to add your own implementions of these classes.
+to learn how to add your own implementations of these classes.
 
 #### Top Level Arguments
 
@@ -56,6 +56,24 @@ set the `record_format` to be `json` in the `StreamExtractor` configuration. For
 ```
 
 ## `AthenaExtractor`
+
+The `AthenaExtractor` issues a query to Amazon Athena, and returns yields each row as a record to the pipeline. For
+example, the following `AthenaExtractor` configuration:
+
+```yaml
+- implementation: nodestream.extractors.stores.aws:AthenaExtractor
+  arguments:
+    query: SELECT name, version FROM python_package_versions;
+    workgroup: MY_WORKGROUP_NAME
+    database: package_registry_metadata;
+    output_location: s3://my_bucket/some_path
+```
+
+produces records with the following shape:
+
+```json
+{"name": "nodestream", "version": "0.2.0"}
+```
 
 ### Arguments
 
@@ -108,4 +126,37 @@ It takes a collection of file paths as input and yields the records read from ea
 ```
 
 ## `TimeToLiveConfigurationExtractor`
+
+"Extracts" time to live configurations from the file and yields them one at a time to the graph database writer.
+
+
+One can configure a Node TTL like this:
+```yaml
+- implementation: nodestream.extractors.ttl:TimeToLiveConfigurationExtractor
+  arguments:
+    graph_object_type: NODE
+    configurations:
+      - object_type: Person
+        expiry_in_hours: 96
+      - object_type: Occupation
+        expiry_in_hours: 48
+```
+
+and one can configure a Relationship TTL like this:
+
+```yaml
+- implementation: nodestream.extractors.ttl:TimeToLiveConfigurationExtractor
+  arguments:
+    graph_object_type: RELATIONSHIP
+    configurations:
+      - object_type: REPORTS_TO
+        expiry_in_hours: 96
+      - object_type: PERFORMS
+        expiry_in_hours: 48
+```
+
+
+### Arguments
+
+Each configuration can include the following arguments:
 

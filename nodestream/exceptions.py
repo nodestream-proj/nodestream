@@ -19,15 +19,15 @@ class InvalidPipelineFileError(ValueError):
     pass
 
 
-class PipelineComponentInitilizationError(ValueError):
+class PipelineComponentInitializationError(ValueError):
     """Raised when a component fails to initialize."""
 
-    def __init__(self, initializier, init_arguments, *args: object) -> None:
+    def __init__(self, initializer, init_arguments, *args: object) -> None:
         super().__init__(
             "Failed to Initialize Component in Declarative Pipeline. Likely the arguments are incorrect.",
             *args,
         )
-        self.initializier = initializier
+        self.initializer = initializer
         self.init_arguments = init_arguments
 
 
@@ -46,7 +46,7 @@ class MissingFromRegistryError(ValueError):
 
 
 class InvalidKeyLengthError(ValueError):
-    """Raised when a related nodes have differening lengths of key parts returned from a value provider.."""
+    """Raised when a related nodes have differing lengths of key parts returned from a value provider.."""
 
     def __init__(self, district_lengths, *args: object) -> None:
         lengths = f"({','.join((str(length) for length in district_lengths))})"

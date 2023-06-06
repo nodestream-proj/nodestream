@@ -102,12 +102,12 @@ class Node:
 class Relationship:
     """A `Relationship` represents an inherent connection between two `Node`s.
 
-    Each `Relationship` follows a relatively similar model to a `Node`. There is a _single_ type for the relatioship.
+    Each `Relationship` follows a relatively similar model to a `Node`. There is a _single_ type for the relationship.
     Relationships can store properties on the relationship itself (This would be similar to a jump table in a relational database).
 
     A key for a `Relationship` can also be provided. By default, `nodestream` will assume that there should be one
-    relationship of the same type between two nodes. By providing keys, `nodestream` will create mulitple relationships between
-    two nodes and will descriminate based on the key values.
+    relationship of the same type between two nodes. By providing keys, `nodestream` will create multiple relationships between
+    two nodes and will discriminate based on the key values.
 
     This model represents the relationship itself and DOES NOT include a reference of the nodes that are stored.
     """

@@ -9,7 +9,7 @@ class KeyIndex:
     """Defines an Index that is used as a Key on a Node Type.
 
     `KeyIndex`es are created by Interpretations that attempt to create and use
-    a node reference as a Primary Key. Unusally this implies the creation of a
+    a node reference as a Primary Key. Usually this implies the creation of a
     uniqueness constraint in the database.
 
     See information on your Underlying Graph Database Adapter for information

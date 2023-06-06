@@ -59,7 +59,7 @@ class DebouncedIngestStrategy(IngestionStrategy, alias="debounced"):
 
     async def flush(self):
         for operation, node_group in self.debouncer.drain_node_groups():
-            self.logger.debug("Debouned Nodes", extra=asdict(operation.node_identity))
+            self.logger.debug("Debounced Nodes", extra=asdict(operation.node_identity))
             await self.executor.upsert_nodes_in_bulk_with_same_operation(
                 operation, node_group
             )

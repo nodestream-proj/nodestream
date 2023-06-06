@@ -1,4 +1,5 @@
 import pytest
+from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations import GenerateProject
 
@@ -22,18 +23,24 @@ def generate_project_command(project_dir, python_files, pipeline_files):
 def test_generate_project_command_generate_import_directives(
     generate_project_command: GenerateProject,
 ):
-    assert generate_project_command.generate_import_directives() == [
-        "proj.test1",
-        "proj.test2",
-        "nodestream.databases.neo4j",
-    ]
+    assert_that(
+        generate_project_command.generate_import_directives(),
+        equal_to(
+            [
+                "proj.test1",
+                "proj.test2",
+                "nodestream.databases.neo4j",
+            ]
+        ),
+    )
 
 
 def test_generate_pipeline_scope(generate_project_command, pipeline_files, project_dir):
     result = generate_project_command.generate_pipeline_scope()
-    assert result.name == "default"
-    assert result.pipelines_by_name["test"].file_path == pipeline_files[0].relative_to(
-        project_dir
+    assert_that(result.name, equal_to("default"))
+    assert_that(
+        result.pipelines_by_name["test"].file_path,
+        equal_to(pipeline_files[0].relative_to(project_dir)),
     )
 
 
@@ -48,5 +55,5 @@ async def test_generate_project_perform(
         return_value=default_scope
     )
     result = await generate_project_command.perform(None)
-    assert result.imports == ["imports"]
-    assert result.scopes_by_name == {"default": default_scope}
+    assert_that(result.imports, equal_to(["imports"]))
+    assert_that(result.scopes_by_name, equal_to({"default": default_scope}))

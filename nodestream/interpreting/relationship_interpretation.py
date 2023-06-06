@@ -23,7 +23,7 @@ from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 from .record_decomposers import RecordDecomposer
 
-DEFAULT_KEY_NORMALIZATION_ARGUMENTS = {LowercaseStrings.arugment_flag(): True}
+DEFAULT_KEY_NORMALIZATION_ARGUMENTS = {LowercaseStrings.argument_flag(): True}
 
 
 class RelatedNodeKeySearchAlgorithm(ABC):
@@ -112,18 +112,18 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         self.outbound = outbound
         self.match_strategy = MatchStrategy(match_strategy or MatchStrategy.EAGER.value)
         self.decomposer = RecordDecomposer.from_iteration_arguments(iterate_on)
-        self.node_type = ValueProvider.garuntee_value_provider(node_type)
-        self.relationship_type = ValueProvider.garuntee_value_provider(
+        self.node_type = ValueProvider.guarantee_value_provider(node_type)
+        self.relationship_type = ValueProvider.guarantee_value_provider(
             relationship_type
         )
-        self.node_key = ValueProvider.garuntee_provider_dictionary(node_key)
-        self.node_properties = ValueProvider.garuntee_provider_dictionary(
+        self.node_key = ValueProvider.guarantee_provider_dictionary(node_key)
+        self.node_properties = ValueProvider.guarantee_provider_dictionary(
             node_properties or {}
         )
-        self.relationship_key = ValueProvider.garuntee_provider_dictionary(
+        self.relationship_key = ValueProvider.guarantee_provider_dictionary(
             relationship_key or {}
         )
-        self.relationship_properties = ValueProvider.garuntee_provider_dictionary(
+        self.relationship_properties = ValueProvider.guarantee_provider_dictionary(
             relationship_properties or {}
         )
         self.key_normalization = {
@@ -176,7 +176,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
             yield relationship, related_node
 
     # NOTE: We cannot participate in introspection when we don't know the relationship
-    # or related node type until runtime. Sometimes we can partially particpate if we know
+    # or related node type until runtime. Sometimes we can partially participate if we know
     # one or the other.
 
     def gather_present_relationships(self):
@@ -188,19 +188,19 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         related_node = KnownTypeMarker(type=self.node_type.value)
         from_type = source_node if self.outbound else related_node
         to_type = related_node if self.outbound else source_node
-        forgein_cardinality = Cardinality.MANY
+        foreign_cardinality = Cardinality.MANY
         source_cardinality = (
             Cardinality.MANY if self.can_find_many else Cardinality.SINGLE
         )
 
         if self.outbound:
             to_side_cardinality, from_side_cardinality = (
-                forgein_cardinality,
+                foreign_cardinality,
                 source_cardinality,
             )
         else:
             from_side_cardinality, to_side_cardinality = (
-                forgein_cardinality,
+                foreign_cardinality,
                 source_cardinality,
             )
 

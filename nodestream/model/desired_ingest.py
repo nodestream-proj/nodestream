@@ -42,7 +42,7 @@ class DesiredIngestion:
 
     def can_perform_ingest(self):
         # We can do the main part of the ingest if the source node is valid.
-        # If its not valid, its only an error when there are realtionships we are
+        # If its not valid, its only an error when there are relationships we are
         # trying to ingest as well.
         if not self.source_node_is_valid:
             if len(self.relationships) > 0:

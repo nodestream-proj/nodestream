@@ -1,4 +1,5 @@
 import pytest
+from hamcrest import assert_that, equal_to
 
 from nodestream.extractors.streams.extractor import (
     JsonStreamRecordFormat,
@@ -20,7 +21,7 @@ def extractor(mocker):
 async def test_extract(extractor):
     extractor.connector.poll.side_effect = [['{"key": "test-value"}'], ValueError]
     result = [record async for record in extractor.extract_records()]
-    assert result == [{"key": "test-value"}]
+    assert_that(result, equal_to([{"key": "test-value"}]))
     extractor.connector.poll.assert_called_once_with(timeout=1, max_records=1)
     extractor.connector.connect.assert_called_once()
     extractor.connector.disconnect.assert_called_once()

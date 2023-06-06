@@ -5,14 +5,14 @@ from typing import Iterable
 from ..model import (
     AggregatedIntrospectionMixin,
     InterpreterContext,
-    IntrospectableIngestionComponent,
+    IntrospectiveIngestionComponent,
 )
 from ..pipeline import Flush, Step
 from .interpretation import Interpretation
 from .record_decomposers import RecordDecomposer
 
 
-class InterpretationPass(IntrospectableIngestionComponent, ABC):
+class InterpretationPass(IntrospectiveIngestionComponent, ABC):
     @classmethod
     def from_file_arguments(self, args):
         if args is None:
@@ -21,7 +21,7 @@ class InterpretationPass(IntrospectableIngestionComponent, ABC):
         if len(args) > 0 and isinstance(args[0], list):
             return MultiSequenceInterpretationPass.from_file_arguments(args)
 
-        return SingleSequenceIntepretationPass.from_file_arguments(args)
+        return SingleSequenceInterpretationPass.from_file_arguments(args)
 
     @abstractmethod
     def apply_interpretations(self, context: InterpreterContext):
@@ -34,7 +34,7 @@ class NullInterpretationPass(AggregatedIntrospectionMixin, InterpretationPass):
 
     def all_subordinate_components(
         self,
-    ) -> Iterable[IntrospectableIngestionComponent]:
+    ) -> Iterable[IntrospectiveIngestionComponent]:
         return []
 
 
@@ -52,11 +52,13 @@ class MultiSequenceInterpretationPass(AggregatedIntrospectionMixin, Interpretati
             for res in interpretation_pass.apply_interpretations(provided_subcontext):
                 yield res
 
-    def all_subordinate_components(self) -> Iterable[IntrospectableIngestionComponent]:
+    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         yield from self.passes
 
 
-class SingleSequenceIntepretationPass(AggregatedIntrospectionMixin, InterpretationPass):
+class SingleSequenceInterpretationPass(
+    AggregatedIntrospectionMixin, InterpretationPass
+):
     @classmethod
     def from_file_arguments(cls, interpretation_arg_list):
         interpretations = (
@@ -73,11 +75,11 @@ class SingleSequenceIntepretationPass(AggregatedIntrospectionMixin, Interpretati
             interpretation.interpret(context)
         yield context
 
-    def all_subordinate_components(self) -> Iterable[IntrospectableIngestionComponent]:
+    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         yield from self.interpretations
 
 
-class Interpreter(Step, AggregatedIntrospectionMixin, IntrospectableIngestionComponent):
+class Interpreter(Step, AggregatedIntrospectionMixin, IntrospectiveIngestionComponent):
     __slots__ = (
         "before_iteration",
         "interpretations",
@@ -106,7 +108,7 @@ class Interpreter(Step, AggregatedIntrospectionMixin, IntrospectableIngestionCom
 
     async def handle_async_record_stream(self, record_stream):
         # Step 1: Emit any indexes that need to be created.
-        # Step 2: Iterate through the stream and emit the appropriate ingestable objects.
+        # Step 2: Iterate through the stream and emit the appropriate ingestible objects.
         # NOTE: If any record is a flush, do nothing and pass it down stream.
         for index in self.gather_used_indexes():
             yield index
@@ -125,6 +127,6 @@ class Interpreter(Step, AggregatedIntrospectionMixin, IntrospectableIngestionCom
         for sub_context in self.decomposer.decompose_record(context):
             yield from self.interpretations.apply_interpretations(sub_context)
 
-    def all_subordinate_components(self) -> Iterable[IntrospectableIngestionComponent]:
+    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         yield self.before_iteration
         yield self.interpretations

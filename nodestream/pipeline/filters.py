@@ -35,8 +35,8 @@ class ValueMatcher:
         normalization: Optional[Dict[str, Any]] = None,
     ):
         return cls(
-            value_provider=ValueProvider.garuntee_value_provider(value),
-            possibilities=ValueProvider.garuntee_provider_list(possibilities),
+            value_provider=ValueProvider.guarantee_value_provider(value),
+            possibilities=ValueProvider.guarantee_provider_list(possibilities),
             normalization=(normalization or {}),
         )
 
@@ -56,13 +56,13 @@ class ValueMatcher:
         )
 
         return any(
-            possiblity_provider.normalize_single_value(context, **self.normalization)
+            possibility_provider.normalize_single_value(context, **self.normalization)
             == actual_value
-            for possiblity_provider in self.possibilities
+            for possibility_provider in self.possibilities
         )
 
 
-class ValuesMatchPossiblitiesFilter(Filter):
+class ValuesMatchPossibilitiesFilter(Filter):
     """A filter that checks if a given value matches any of a set of possibilities."""
 
     @classmethod

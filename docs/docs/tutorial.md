@@ -77,7 +77,7 @@ You can see the project status by running `nodestream show`. That should produce
 
 ## Managing Pipelines
 
-In order to demonstrate how one can manage pipelines in nodestream, lets remove the default pipleine and add it back.
+In order to demonstrate how one can manage pipelines in nodestream, lets remove the default pipeline and add it back.
 
 ### Remove A Pipeline
 
@@ -151,7 +151,7 @@ mkdir data
 
 Now, lets examine our data. In this example, we are building an org chart. Let's take a look at a couple records:
 
-```json
+```json title="data/jdoe.json"
 {
     "employee_id": "jdoe",
     "first_name": "Jane",
@@ -161,7 +161,7 @@ Now, lets examine our data. In this example, we are building an org chart. Let's
 }
 ```
 
-```json
+```json title="data/bsmith.json"
 {
     "employee_id": "bsmith",
     "first_name": "Bob",
@@ -192,7 +192,7 @@ approximately like this:
 
 ## Implement the Pipeline
 
-*Cracks Figers*...
+*Cracks Fingers*...
 
 Alright, now lets get down to building out the pipeline. If you open the `pipelines/org-chart.yaml` file it should look
 like this:
@@ -317,7 +317,7 @@ model the org chart, so we need to draw the relationship to the employee's boss.
 
 Here we tell the interpreter that we want to relate to an `Employee` node with a relationship labels `REPORTS_TO`. For
 nodestream to know which `Employee` node to relate to, we need to specify the key of the related node. In our case,
-we can do that by extrating the value of `reports_to`  and mapping it to the `employee_id` key.
+we can do that by extracting the value of `reports_to`  and mapping it to the `employee_id` key.
 
 ## Testing it Out
 

@@ -2,6 +2,8 @@ import pytest
 
 from nodestream.extractors.streams import KafkaStreamConnector
 
+from hamcrest import assert_that, equal_to, not_
+
 
 @pytest.fixture
 def connector():
@@ -13,7 +15,7 @@ async def test_connect(connector, mocker):
     mocker.patch("nodestream.extractors.streams.kafka.AIOKafkaConsumer.start")
 
     await connector.connect()
-    assert connector.consumer is not None
+    assert_that(connector.consumer, not_(equal_to(None)))
     connector.consumer.start.assert_called_once()
 
 
@@ -31,5 +33,5 @@ async def test_poll(connector, mocker):
         mocker.Mock(topic="test-topic", partition=0): [mocker.Mock(value="test-value")]
     }
     result = [record async for record in connector.poll(1, 1)]
-    assert result == ["test-value"]
+    assert_that(result, equal_to(["test-value"]))
     connector.consumer.getmany.assert_called_once_with(max_records=1, timeout_ms=1000)

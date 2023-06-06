@@ -271,7 +271,7 @@ def _merge_overlapping_items(unmerged_items, shapes):
     return distinct_items
 
 
-class IntrospectableIngestionComponent(ABC):
+class IntrospectiveIngestionComponent(ABC):
     """An IntrospectableIngestionComponent is a componet that can be interrogated what it contributes the Graph Database Schema.
 
     Nearly all components in the transformation part of the ingestion stack (Interpreters, Interpretations, and Pipelines) are
@@ -312,7 +312,7 @@ class AggregatedIntrospectionMixin(ABC):
     """
 
     @abstractmethod
-    def all_subordinate_components(self) -> Iterable[IntrospectableIngestionComponent]:
+    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         raise NotImplementedError
 
     def gather_used_indexes(self):

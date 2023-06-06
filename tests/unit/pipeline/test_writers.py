@@ -1,6 +1,6 @@
 import pytest
 
-from nodestream.pipeline.pipeline import empty_asnyc_generator
+from nodestream.pipeline.pipeline import empty_async_generator
 from nodestream.pipeline.writers import LoggerWriter
 
 
@@ -17,5 +17,5 @@ async def test_write_item(mocker):
 async def test_finish_is_called(mocker):
     writer = LoggerWriter()
     writer.finish = mocker.AsyncMock()
-    [item async for item in writer.handle_async_record_stream(empty_asnyc_generator())]
+    [item async for item in writer.handle_async_record_stream(empty_async_generator())]
     writer.finish.assert_awaited_once()

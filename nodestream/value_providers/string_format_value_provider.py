@@ -20,8 +20,8 @@ class StringFormattingValueProvider(ValueProvider):
         fmt: StaticValueOrValueProvider,
         **subs: Dict[str, StaticValueOrValueProvider],
     ) -> None:
-        self.fmt = ValueProvider.garuntee_value_provider(fmt)
-        self.subs = ValueProvider.garuntee_provider_dictionary(subs)
+        self.fmt = ValueProvider.guarantee_value_provider(fmt)
+        self.subs = ValueProvider.guarantee_provider_dictionary(subs)
 
     def single_value(self, context: InterpreterContext) -> Any:
         if (fmt := self.fmt.single_value(context)) is None:

@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 
-from ..model import InterpreterContext, IntrospectableIngestionComponent
+from ..model import InterpreterContext, IntrospectiveIngestionComponent
 from ..subclass_registry import SubclassRegistry
 
 INTERPRETATION_REGISTRY = SubclassRegistry()
 
 
 @INTERPRETATION_REGISTRY.connect_baseclass
-class Interpretation(IntrospectableIngestionComponent, ABC):
+class Interpretation(IntrospectiveIngestionComponent, ABC):
     @abstractmethod
     def interpret(self, context: InterpreterContext):
         raise NotImplementedError

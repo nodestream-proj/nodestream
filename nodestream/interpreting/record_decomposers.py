@@ -7,7 +7,7 @@ from ..value_providers import ValueProvider
 
 
 class RecordDecomposer(ABC):
-    """A RecordDecomposer is responsible for looking at a record to decomposing it to subrecords to look at"""
+    """A RecordDecomposer is responsible for looking at a record to decomposing it to sub-records to look at"""
 
     @abstractmethod
     def decompose_record(
@@ -27,7 +27,7 @@ class WholeRecordDecomposer(RecordDecomposer):
     """Simply returns the original `InterpreterContext`.
 
     `decompose_record` will take the supplied `InterpreterContext` and return it as the only
-    decoposed record in the set.
+    decomposed record in the set.
     """
 
     def decompose_record(
@@ -40,7 +40,7 @@ class ValueProviderDecomposer(RecordDecomposer):
     """Iterates on the values provided from a value provider from the root context.
 
     `decompose_record` will take the supplied `InterpreterContext` and deep copy it for each
-    provided value from the value provider when called on the suppled context.
+    provided value from the value provider when called on the supplied context.
     """
 
     def __init__(self, value_provider: ValueProvider) -> None:

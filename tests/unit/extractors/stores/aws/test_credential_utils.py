@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from hamcrest import assert_that, not_, has_key, equal_to, instance_of
 
 
 @pytest.fixture
@@ -21,21 +22,21 @@ def test_init_extra_args_profile():
     from nodestream.extractors.stores.aws.credential_utils import AwsClientFactory
 
     extra_args = AwsClientFactory._init_session_args(profile_name="test")
-    assert "profile_name" in extra_args
+    assert_that(extra_args, has_key("profile_name"))
 
 
 def test_init_extra_args_empty_profile():
     from nodestream.extractors.stores.aws.credential_utils import AwsClientFactory
 
     extra_args = AwsClientFactory._init_session_args(profile_name="")
-    assert "profile_name" not in extra_args
+    assert_that(extra_args, not_(has_key("profile_name")))
 
 
 def test_init_extra_args_no_profile():
     from nodestream.extractors.stores.aws.credential_utils import AwsClientFactory
 
     extra_args = AwsClientFactory._init_session_args()
-    assert "profile_name" not in extra_args
+    assert_that(extra_args, not_(has_key("profile_name")))
 
 
 def test_assume_role_and_get_credentials(mocker, client_with_role):
@@ -51,7 +52,7 @@ def test_assume_role_and_get_credentials(mocker, client_with_role):
         }
     }
     credentials = client_with_role.assume_role_and_get_credentials()
-    assert credentials["access_key"] == "test_access_key"
+    assert_that(credentials["access_key"], equal_to("test_access_key"))
 
 
 def test_get_boto_session_with_refreshable_credentials(mocker, client_with_role):
@@ -65,7 +66,7 @@ def test_get_boto_session_with_refreshable_credentials(mocker, client_with_role)
         }
     )
     session = client_with_role.get_boto_session_with_refreshable_credentials()
-    assert session._credentials.method == "sts-assume-role"
+    assert_that(session._credentials.method, equal_to("sts-assume-role"))
 
 
 def test_assume_role_if_supplied_and_get_session(mocker, client_with_role):
@@ -75,7 +76,7 @@ def test_assume_role_if_supplied_and_get_session(mocker, client_with_role):
         return_value="test_session"
     )
     session = client_with_role.assume_role_if_supplied_and_get_session()
-    assert session == "test_session"
+    assert_that(session, equal_to("test_session"))
 
 
 def test_assume_role_if_supplied_and_get_session_no_role_arn(
@@ -90,7 +91,7 @@ def test_assume_role_if_supplied_and_get_session_no_role_arn(
     )
     session = client_without_role.assume_role_if_supplied_and_get_session()
     client_without_role.get_boto_session_with_refreshable_credentials.assert_not_called()
-    assert isinstance(session, Session)
+    assert_that(session, instance_of(Session))
 
 
 def test_make_client(mocker, client_without_role):

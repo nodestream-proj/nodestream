@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import PipelineDefinition
@@ -20,8 +21,8 @@ def test_pipeline_definition_initialize(mocker):
 
 def test_from_file_data_string_input():
     result = PipelineDefinition.from_file_data("path/to/pipeline", {})
-    assert result.name == "pipeline"
-    assert result.file_path == Path("path/to/pipeline")
+    assert_that(result.name, equal_to("pipeline"))
+    assert_that(result.file_path, equal_to(Path("path/to/pipeline")))
 
 
 def test_from_file_data_complex_input():
@@ -29,9 +30,9 @@ def test_from_file_data_complex_input():
         {"path": "path/to/pipeline", "name": "test", "annotations": {"foo": "bar"}},
         {"baz": "qux"},
     )
-    assert result.name == "test"
-    assert result.file_path == Path("path/to/pipeline")
-    assert result.annotations == {"foo": "bar", "baz": "qux"}
+    assert_that(result.name, equal_to("test"))
+    assert_that(result.file_path, equal_to(Path("path/to/pipeline")))
+    assert_that(result.annotations, equal_to({"foo": "bar", "baz": "qux"}))
 
 
 @pytest.mark.parametrize(
@@ -53,13 +54,15 @@ def test_from_file_data_complex_input():
     ],
 )
 def test_as_file_definition(definition, expected_data):
-    assert definition.as_file_definition() == expected_data
-    assert PipelineDefinition.from_file_data(expected_data, {}) == definition
+    assert_that(definition.as_file_definition(), equal_to(expected_data))
+    assert_that(
+        PipelineDefinition.from_file_data(expected_data, {}), equal_to(definition)
+    )
 
 
 def test_from_path():
     path = Path("test.yaml")
     result = PipelineDefinition.from_path(path)
-    assert result.name == "test"
-    assert result.annotations == {}
-    assert result.file_path == path
+    assert_that(result.name, equal_to("test"))
+    assert_that(result.annotations, equal_to({}))
+    assert_that(result.file_path, equal_to(path))

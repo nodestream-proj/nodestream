@@ -7,7 +7,7 @@ from .schema import GraphObjectType
 
 @dataclass(frozen=True, slots=True)
 class TimeToLiveConfiguration:
-    graph_type: GraphObjectType
+    graph_object_type: GraphObjectType
     object_type: str
     expiry_in_hours: Optional[int] = 24
     custom_query: Optional[str] = None

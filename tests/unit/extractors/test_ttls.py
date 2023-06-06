@@ -16,7 +16,7 @@ async def test_ttls_node_object_type():
         equal_to(
             [
                 TimeToLiveConfiguration(
-                    graph_type=GraphObjectType.NODE,
+                    graph_object_type=GraphObjectType.NODE,
                     object_type="MyNodeType",
                     expiry_in_hours=48,
                 )
@@ -37,7 +37,7 @@ async def test_ttls_relationship_object_type():
         equal_to(
             [
                 TimeToLiveConfiguration(
-                    graph_type=GraphObjectType.RELATIONSHIP,
+                    graph_object_type=GraphObjectType.RELATIONSHIP,
                     object_type="MY_REL_TYPE",
                     expiry_in_hours=48,
                 )

@@ -14,7 +14,7 @@ from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 # By default, data gathered from this interpretation is lower cased when a string.
-DEFAULT_NORMALIZATION_ARGUMENTS = {LowercaseStrings.arugment_flag(): True}
+DEFAULT_NORMALIZATION_ARGUMENTS = {LowercaseStrings.argument_flag(): True}
 
 
 class SourceNodeInterpretation(Interpretation, alias="source_node"):
@@ -92,9 +92,9 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         additional_types: Optional[List[str]] = None,
         normalization: Optional[Dict[str, Any]] = None,
     ):
-        self.node_type = ValueProvider.garuntee_value_provider(node_type)
-        self.key = ValueProvider.garuntee_provider_dictionary(key)
-        self.properties = ValueProvider.garuntee_provider_dictionary(properties or {})
+        self.node_type = ValueProvider.guarantee_value_provider(node_type)
+        self.key = ValueProvider.guarantee_provider_dictionary(key)
+        self.properties = ValueProvider.guarantee_provider_dictionary(properties or {})
         self.additional_indexes = additional_indexes or []
         self.additional_types = tuple(additional_types or [])
         self.norm_args = {**DEFAULT_NORMALIZATION_ARGUMENTS, **(normalization or {})}

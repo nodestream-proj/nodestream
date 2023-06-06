@@ -25,7 +25,7 @@ class SwitchInterpretation(
         normalization: Dict[str, Any] = None,
         fail_on_unhandled: bool = True,
     ):
-        self.switch_on = ValueProvider.garuntee_value_provider(switch_on)
+        self.switch_on = ValueProvider.guarantee_value_provider(switch_on)
         self.interpretations = {
             field_value: Interpretation.from_file_arguments(**interpretation)
             for field_value, interpretation in cases.items()

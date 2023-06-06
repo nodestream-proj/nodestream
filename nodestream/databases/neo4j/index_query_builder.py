@@ -31,7 +31,7 @@ class Neo4jIndexQueryBuilder:
         return key_index_from_format(key_index, KEY_INDEX_QUERY_FORMAT)
 
     def create_field_index_query(self, field_index: FieldIndex) -> Query:
-        """Creates a filed index using a 'Range Index' or equilvant.
+        """Creates a filed index using a 'Range Index' or equivalent.
 
         see: https://neo4j.com/docs/cypher-manual/current/indexes-for-search-performance/#indexes-create-indexes
         """

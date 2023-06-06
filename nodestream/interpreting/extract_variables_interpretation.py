@@ -37,7 +37,7 @@ class ExtractVariablesInterpretation(Interpretation, alias="variables"):
         variables: Dict[str, StaticValueOrValueProvider],
         normalization: Optional[Dict[str, Any]] = None,
     ):
-        self.variables = ValueProvider.garuntee_provider_dictionary(variables)
+        self.variables = ValueProvider.guarantee_provider_dictionary(variables)
         self.norm_args = normalization or {}
 
     def interpret(self, context: InterpreterContext):

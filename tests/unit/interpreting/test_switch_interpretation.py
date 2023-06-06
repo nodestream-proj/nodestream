@@ -1,7 +1,7 @@
 import pytest
 from hamcrest import assert_that, has_entry, not_
 
-from nodestream.interpreting.swtich_interpretation import (
+from nodestream.interpreting.switch_interpretation import (
     SwitchInterpretation,
     UnhandledBranchError,
 )

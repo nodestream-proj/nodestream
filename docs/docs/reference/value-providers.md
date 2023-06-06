@@ -20,7 +20,7 @@ provided after the `!jmespath` tag will be parsed and loaded as one. Another gui
 
 ## `!jq`
 
-Represents a [jq](https://jqlang.github.io/jq/) query language expression that should be executed agains the input record.
+Represents a [jq](https://jqlang.github.io/jq/) query language expression that should be executed against the input record.
 
 For example, if you want to get extract all of the `name` fields from the list of people provided in a document like this:
 
@@ -49,10 +49,10 @@ You are then able to use the `!variable` provided in a later interpretation. For
 
 ```yaml
 interpretations:
-    # other interpretations are ommitted.
+    # other interpretations are omitted.
     - type: source_node
       node_type: Person
-         name: !variable namee
+         name: !variable name
 ```
 
 This is particularly helpful when using the `before_iteration` and `iterate_on` clause in an `Interpreter`. For example,

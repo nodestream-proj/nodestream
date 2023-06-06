@@ -11,8 +11,8 @@ class Test(Normalizer, alias="test"):
         return value
 
 
-def test_arugment_flag():
-    assert_that(Test.arugment_flag(), equal_to("do_test"))
+def test_argument_flag():
+    assert_that(Test.argument_flag(), equal_to("do_test"))
 
 
 def test_by_flag_name():

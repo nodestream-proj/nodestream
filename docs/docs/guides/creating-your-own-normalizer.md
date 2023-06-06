@@ -45,4 +45,4 @@ interpretations:
       do_round_numbers: true
 ```
 
-Note that the key for the flag is simply the concatination of `round_numbers` from the `Normalizer` name and `do_`
+Note that the key for the flag is simply the concatenation of `round_numbers` from the `Normalizer` name and `do_`

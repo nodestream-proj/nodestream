@@ -7,7 +7,7 @@ from .shared_options import JSON_OPTION, PIPELINE_ARGUMENT, PROJECT_FILE_OPTION
 
 class Run(NodestreamCommand):
     name = "run"
-    description = "run a pipleine in the current project"
+    description = "run a pipeline in the current project"
     arguments = [PIPELINE_ARGUMENT]
     options = [
         PROJECT_FILE_OPTION,
@@ -15,7 +15,7 @@ class Run(NodestreamCommand):
         option(
             "annotations",
             "a",
-            "An annotation to apply to the pipeline during initalization. Steps without one of these annotations will be skipped.",
+            "An annotation to apply to the pipeline during initialization. Steps without one of these annotations will be skipped.",
             multiple=True,
             flag=False,
         ),

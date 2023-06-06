@@ -9,7 +9,7 @@ from ..stubs import StubbedValueProvider
 def test_whole_record_iteration():
     context = InterpreterContext({}, DesiredIngestion())
     subject = RecordDecomposer.from_iteration_arguments(None)
-    assert context == next(subject.decompose_record(context))
+    assert_that(context, equal_to(next(subject.decompose_record(context))))
 
 
 def test_iteration_record():

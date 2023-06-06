@@ -4,7 +4,7 @@ from typing import Any, AsyncGenerator, List
 from .step import Step
 
 
-async def empty_asnyc_generator():
+async def empty_async_generator():
     for item in []:
         yield item
 
@@ -21,6 +21,6 @@ class Pipeline:
         record_stream_over_all_steps = reduce(
             lambda stream, step: step.handle_async_record_stream(stream),
             self.steps,
-            empty_asnyc_generator(),
+            empty_async_generator(),
         )
         return record_stream_over_all_steps

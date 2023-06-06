@@ -28,7 +28,9 @@ def query_builder():
 GREATEST_DAY = datetime(1998, 3, 25, 2, 0, 1)
 
 BASIC_NODE_TTL = TimeToLiveConfiguration(
-    graph_type=GraphObjectType.NODE, object_type="TestNodeType", expiry_in_hours=10
+    graph_object_type=GraphObjectType.NODE,
+    object_type="TestNodeType",
+    expiry_in_hours=10,
 )
 BASIC_NODE_TTL_EXPECTED_QUERY = Query(
     "MATCH (x: TestNodeType) WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
@@ -36,7 +38,7 @@ BASIC_NODE_TTL_EXPECTED_QUERY = Query(
 )
 
 NODE_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
-    graph_type=GraphObjectType.NODE,
+    graph_object_type=GraphObjectType.NODE,
     object_type="TestNodeType",
     custom_query="MATCH (n:TestNodeType) RETURN n",
     expiry_in_hours=10,
@@ -46,7 +48,7 @@ NODE_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
 )
 
 BASIC_REL_TTL = TimeToLiveConfiguration(
-    graph_type=GraphObjectType.RELATIONSHIP,
+    graph_object_type=GraphObjectType.RELATIONSHIP,
     object_type="IS_RELATED_TO",
     expiry_in_hours=10,
 )
@@ -56,7 +58,7 @@ BASIC_REL_TTL_EXPECTED_QUERY = Query(
 )
 
 REL_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
-    graph_type=GraphObjectType.RELATIONSHIP,
+    graph_object_type=GraphObjectType.RELATIONSHIP,
     object_type="IS_RELATED_TO",
     custom_query="MATCH ()-[x: IS_RELATED_TO]->() RETURN x",
     expiry_in_hours=10,
@@ -168,7 +170,7 @@ RELATIONSHIP_BETWEEN_TWO_NODES = RelationshipWithNodes(
 )
 
 RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY = QueryBatch(
-    """MATCH (from_node: TestType) WHERE from_node.id = params.__from_node_id MATCH (to_node: ComplexType) WHERE to_node.id = params.__to_node_id 
+    """MATCH (from_node: TestType) WHERE from_node.id = params.__from_node_id MATCH (to_node: ComplexType) WHERE to_node.id = params.__to_node_id
     OPTIONAL MATCH  (from_node)-[rel: RELATED_TO]->(to_node)
     FOREACH (x IN CASE WHEN rel IS NULL THEN [1] ELSE [] END |
         CREATE (from_node)-[rel: RELATED_TO]->(to_node) SET rel += params.__rel_properties)

@@ -36,12 +36,12 @@ class GraphDatabaseWriter(Writer):
         await self.ingest_strategy.flush()
         self.pending_records = 0
 
-    async def write_record(self, ingestable):
-        if ingestable is Flush:
+    async def write_record(self, ingestible):
+        if ingestible is Flush:
             await self.flush()
             return
 
-        await ingestable.ingest(self.ingest_strategy)
+        await ingestible.ingest(self.ingest_strategy)
         self.pending_records += 1
         if self.pending_records >= self.batch_size:
             await self.flush()

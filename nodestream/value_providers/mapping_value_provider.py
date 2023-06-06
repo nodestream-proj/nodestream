@@ -18,7 +18,7 @@ class MappingValueProvider(ValueProvider):
 
     def __init__(self, mapping_name: str, key: StaticValueOrValueProvider) -> None:
         self.mapping_name = mapping_name
-        self.key = ValueProvider.garuntee_value_provider(key)
+        self.key = ValueProvider.guarantee_value_provider(key)
 
     def single_value(self, context: InterpreterContext) -> Any:
         mapping = context.mappings.get(self.mapping_name)
@@ -29,7 +29,7 @@ class MappingValueProvider(ValueProvider):
         if not key:
             return
 
-        value = ValueProvider.garuntee_value_provider(mapping.get(key))
+        value = ValueProvider.guarantee_value_provider(mapping.get(key))
         return value.single_value(context)
 
     def many_values(self, context: InterpreterContext) -> Iterable[Any]:

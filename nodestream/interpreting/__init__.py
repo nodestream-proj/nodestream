@@ -4,7 +4,7 @@ from .interpreter import Interpreter
 from .properties_interpretation import PropertiesInterpretation
 from .relationship_interpretation import RelationshipInterpretation
 from .source_node_interpretation import SourceNodeInterpretation
-from .swtich_interpretation import SwitchInterpretation
+from .switch_interpretation import SwitchInterpretation
 
 __all__ = (
     "ExtractVariablesInterpretation",

@@ -21,7 +21,7 @@ class PropertiesInterpretation(Interpretation, alias="properties"):
         properties: StaticValueOrValueProvider,
         normalization: Optional[Dict[str, Any]] = None,
     ):
-        self.properties = ValueProvider.garuntee_provider_dictionary(properties)
+        self.properties = ValueProvider.guarantee_provider_dictionary(properties)
         self.norm_args = normalization or {}
 
     def interpret(self, context: InterpreterContext):

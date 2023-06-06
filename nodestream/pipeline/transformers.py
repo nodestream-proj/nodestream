@@ -9,7 +9,7 @@ class Transformer(Step):
     """A `Transformer` takes a given record and mutates into a new record.
 
     `Transformer` steps generally make up the middle of an ETL pipeline and are responsible
-    for reshaping an object so its more ingestable by the downstream sink.
+    for reshaping an object so its more ingestible by the downstream sink.
     """
 
     async def handle_async_record_stream(

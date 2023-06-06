@@ -81,7 +81,7 @@ class PipelineFileLoader:
     ):
         if not isinstance(file_data, list):
             raise InvalidPipelineDefinitionError(
-                "File should be a list of step classs to load"
+                "File should be a list of step class to load"
             )
 
         return init_args.initialize_from_file_data(file_data)

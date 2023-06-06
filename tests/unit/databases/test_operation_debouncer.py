@@ -12,8 +12,8 @@ def test_debounces_updates_to_nodes_with_same_key():
     debouncer.debounce_node_operation(node2)
 
     result = list(debouncer.drain_node_groups())
-    assert len(result) == 1
-    assert len(result[0][1]) == 1
+    assert_that(result, has_length(1))
+    assert_that(result[0][1], has_length(1))
 
 
 def test_debounces_updates_to_nodes_with_same_key_mixed_input():
@@ -82,9 +82,9 @@ def test_debounces_nodes_with_different_match_strategies():
     debouncer.debounce_node_operation(node2, match_strategy=MatchStrategy.FUZZY)
 
     result = list(debouncer.drain_node_groups())
-    assert len(result) == 2
-    assert len(result[0][1]) == 1
-    assert len(result[1][1]) == 1
+    assert_that(result, has_length(2))
+    assert_that(result[0][1], has_length(1))
+    assert_that(result[1][1], has_length(1))
 
 
 def test_debounced_relationships_with_different_match_strategies():
