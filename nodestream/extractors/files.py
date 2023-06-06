@@ -59,7 +59,7 @@ class TextFileFormat(SupportedFileFormat, alias=".txt"):
 
 class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
-        return list(DictReader(fp))
+        return tuple(DictReader(fp))
 
 
 class FileExtractor(Extractor):

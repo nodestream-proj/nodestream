@@ -29,7 +29,7 @@ def test_multiple_values_missing(blank_context_with_document):
 
 def test_multiple_values_returns_one_value(blank_context_with_document):
     subject = JmespathValueProvider(jmespath.compile("team.name"))
-    result = subject.many_values(blank_context_with_document)
+    result = list(subject.many_values(blank_context_with_document))
     assert_that(result, has_length(1))
     assert_that(result[0], equal_to("nodestream"))
 
@@ -37,4 +37,4 @@ def test_multiple_values_returns_one_value(blank_context_with_document):
 def test_multiple_values_hit(blank_context_with_document):
     subject = JmespathValueProvider(jmespath.compile("project.tags"))
     result = subject.many_values(blank_context_with_document)
-    assert_that(result, equal_to(["graphdb", "python"]))
+    assert_that(list(result), equal_to(["graphdb", "python"]))

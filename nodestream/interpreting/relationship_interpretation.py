@@ -57,7 +57,7 @@ class MultiNodeKeySearchAlgorithm(RelatedNodeKeySearchAlgorithm):
         # If we do not have the same length, then there is an error because
         # we do not have pairs to create keys for each node based off of.
         all_values_by_key_property = {
-            k: list(v.normalize_many_values(context, **self.key_normalization))
+            k: tuple(v.normalize_many_values(context, **self.key_normalization))
             for k, v in self.node_key.items()
         }
         distinct_lengths = {len(vals) for vals in all_values_by_key_property.values()}

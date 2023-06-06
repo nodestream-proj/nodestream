@@ -40,7 +40,7 @@ class JmespathValueProvider(ValueProvider):
         return next(self.search(context), None)
 
     def many_values(self, context: InterpreterContext) -> Iterable[Any]:
-        return list(self.search(context))
+        return self.search(context)
 
 
 # NOTE: This is here because the default pipeline generation includes a jmespath.
