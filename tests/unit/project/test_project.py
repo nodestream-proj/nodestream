@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from hamcrest import assert_that, same_instance, has_length, equal_to
+from hamcrest import assert_that, equal_to, has_length, same_instance
 
 from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import (

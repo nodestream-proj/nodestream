@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 import pytest
-from hamcrest import assert_that, has_items, equal_to
+from hamcrest import assert_that, equal_to, has_items
 
 
 @pytest.mark.parametrize(

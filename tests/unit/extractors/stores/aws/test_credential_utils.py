@@ -1,7 +1,7 @@
 import datetime
 
 import pytest
-from hamcrest import assert_that, not_, has_key, equal_to, instance_of
+from hamcrest import assert_that, equal_to, has_key, instance_of, not_
 
 
 @pytest.fixture

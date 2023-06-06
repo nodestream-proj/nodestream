@@ -1,8 +1,7 @@
 import pytest
+from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations import GeneratePipelineScaffold
-
-from hamcrest import assert_that, equal_to
 
 
 @pytest.mark.asyncio

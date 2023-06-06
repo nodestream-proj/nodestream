@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import assert_that, has_length, equal_to, instance_of
+from hamcrest import assert_that, equal_to, has_length, instance_of
 
 from nodestream.cli.operations.show_pipelines import (
     JsonOutputFormat,

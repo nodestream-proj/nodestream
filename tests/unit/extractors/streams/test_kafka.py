@@ -1,8 +1,7 @@
 import pytest
+from hamcrest import assert_that, equal_to, not_
 
 from nodestream.extractors.streams import KafkaStreamConnector
-
-from hamcrest import assert_that, equal_to, not_
 
 
 @pytest.fixture

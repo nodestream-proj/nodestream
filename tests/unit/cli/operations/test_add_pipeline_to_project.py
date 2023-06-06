@@ -1,9 +1,8 @@
 import pytest
+from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations import AddPipelineToProject
 from nodestream.project import PipelineScope
-
-from hamcrest import assert_that, equal_to
 
 
 def test_get_scope_no_scope_name_provided(

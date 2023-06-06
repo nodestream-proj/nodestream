@@ -1,8 +1,8 @@
 from unittest.mock import call
 
 import pytest
-from hamcrest import assert_that, has_length, equal_to, instance_of
 from freezegun import freeze_time
+from hamcrest import assert_that, equal_to, has_length, instance_of
 
 from nodestream.interpreting import SourceNodeInterpretation
 from nodestream.interpreting.interpreter import (

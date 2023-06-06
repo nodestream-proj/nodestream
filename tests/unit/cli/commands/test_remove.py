@@ -1,9 +1,8 @@
 import pytest
+from hamcrest import assert_that, equal_to
 
 from nodestream.cli.commands import Remove
 from nodestream.project import Project
-
-from hamcrest import assert_that, equal_to
 
 
 @pytest.mark.asyncio

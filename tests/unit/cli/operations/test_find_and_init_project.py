@@ -1,10 +1,9 @@
 import pytest
+from hamcrest import assert_that, equal_to
 
 from nodestream.cli.commands import NodestreamCommand
 from nodestream.cli.operations import InitializeProject
 from nodestream.project import Project
-
-from hamcrest import assert_that, equal_to
 
 
 @pytest.fixture

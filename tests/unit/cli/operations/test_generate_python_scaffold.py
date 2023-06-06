@@ -2,7 +2,6 @@ import pytest
 from hamcrest import assert_that
 
 from nodestream.cli.operations import GeneratePythonScaffold
-
 from tests.unit.matchers import exists
 
 
