@@ -45,4 +45,10 @@
 
 ## Switch Interpretation
 
-TODO
+The switch interpretation allows you to define multiple interpretations that will be applied. The interpretations that will be applied is determined by the value of the `switch_on` parameter. The value of the `switch_on` parameter is a value provider that will be evaluated for each source node. The value of the value provider will be used to determine which interpretation to apply. The interpretation that will be applied is the one that has the same value as the value of the `switch_on` parameter. If no interpretation has the same value as the value of the `switch_on` parameter, the default interpretation will be applied. If no default interpretation is defined, the source node will be ignored.
+
+| Parameter Name 	| Required? 	| Type       	| Description                                                                                                                                                                                                	|
+|----------------	|-----------	|------------	|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| switch_on     	| Yes       	| ValueProvider 	| The value provider that will be evaluated for each source node. The value of the value provider will be used to determine which interpretation to apply.        	|
+| interpretations  	| Yes        	| Dictionary 	| Contains the interpretations that will be applied. The keys represent the values of the `switch_on` parameter. The values represent the interpretations that will be applied. 	|
+| default  	| No        	| Dictionary 	| Contains the default interpretation that will be applied if no interpretation has the same value as the value of the `switch_on` parameter. 	|

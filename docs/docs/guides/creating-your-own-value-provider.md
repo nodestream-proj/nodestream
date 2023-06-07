@@ -86,13 +86,13 @@ imports:
 This allows us to construct a value provider like so:
 
 
-TODO: Check that this is right
 ```yaml
 some:
   place:
     in:
       the:
-        pipeline: !hash hash_value: !variable foo
+        pipeline: !hash 
+            hash_value: !variable foo
 ```
 
 

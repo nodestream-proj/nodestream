@@ -160,3 +160,10 @@ and one can configure a Relationship TTL like this:
 
 Each configuration can include the following arguments:
 
+| Parameter Name          	| Type   	| Description                                                                                                                                                                               	|
+|-------------------------	|--------	|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| object_type             	| String 	| The object type to apply the TTL to.                                                                                                                                                      	|
+| expiry_in_hours         	| Integer 	| The number of hours after which the object should be deleted.                                                                                                                              	|
+| enabled                 	| Boolean 	| Whether or not the TTL is enabled. Defaults to `True`.                                                                                                                                     	|
+| batch_size              	| Integer 	| The number of objects to delete in a single batch. Defaults to `100`.                                                                                                                     	|
+| custom_query            	| String 	| A custom query to use to delete the objects. If not provided, the default query will be used. The custom query is database implmentation specific.                                                                                             	|

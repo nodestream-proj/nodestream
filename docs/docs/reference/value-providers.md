@@ -95,4 +95,28 @@ On way to ingest this data would be to do the following:
 
 ## `!format`
 
-TODO
+The `!format` value provider allows you to format a string using the `format` method. For example, if you wanted to create a hello world
+node based on a name field in the record, you could do the following:
+
+```json
+{
+    "name": "Joe",
+    "age": 25
+}
+```
+
+The following interpretation would create a node with the key `Hello, Joe!`:
+
+```yaml
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: source_node
+        node_type: HelloNode
+        key:
+          name: !format 
+            fmt: "Hello, {name}!"
+            name: !jmespath name
+        properties:
+          age: !jmespath age
+```
