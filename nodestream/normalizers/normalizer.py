@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from functools import cache
 from typing import Any
 
 from ..exceptions import InvalidFlagError, MissingFromRegistryError
@@ -29,6 +30,7 @@ class Normalizer(ABC):
         return f"do_{NORMALIZER_REGISTRY.name_for(cls)}"
 
     @classmethod
+    @cache
     def by_flag_name(cls, flag_name: str) -> "Normalizer":
         if not flag_name.startswith("do_"):
             raise InvalidFlagError(flag_name)
