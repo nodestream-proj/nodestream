@@ -10,7 +10,7 @@ readme = "README.md"
 
 homepage = "https://github.com/nodestream-proj/nodestream"
 repository = "https://github.com/nodestream-proj/nodestream"
-documentation = "TODO"
+documentation = "https://nodestream-proj.github.io/nodestream"
 
 keywords = ["etl", "neo4j", "declarative", "data", "kafka", "ingest"]
 classifiers = [
