@@ -23,6 +23,7 @@ from .schema import (
     PropertyType,
     TypeMarker,
     UnknownTypeMarker,
+    GraphSchema,
 )
 from .ttl import TimeToLiveConfiguration
 
@@ -56,4 +57,5 @@ __all__ = (
     "PresentRelationship",
     "RelationshipIdentityShape",
     "NodeIdentityShape",
+    "GraphSchema",
 )

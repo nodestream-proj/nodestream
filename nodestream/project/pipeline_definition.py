@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict
 
+from ..model import IntrospectiveIngestionComponent
 from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
 
 
@@ -10,7 +11,7 @@ def get_default_name(file_path: Path) -> str:
 
 
 @dataclass
-class PipelineDefinition:
+class PipelineDefinition(IntrospectiveIngestionComponent):
     """A `PipelineDefinition` represents a pipeline that can be loaded from a file."""
 
     name: str
@@ -49,3 +50,15 @@ class PipelineDefinition:
 
     def remove_file(self, missing_ok: bool = True):
         self.file_path.unlink(missing_ok=missing_ok)
+
+    def intialize_for_introspection(self) -> Pipeline:
+        return self.initialize(PipelineInitializationArguments.for_introspection())
+
+    def gather_object_shapes(self):
+        return self.intialize_for_introspection().gather_object_shapes()
+
+    def gather_present_relationships(self):
+        return self.intialize_for_introspection().gather_present_relationships()
+
+    def gather_used_indexes(self):
+        return self.intialize_for_introspection().gather_used_indexes()

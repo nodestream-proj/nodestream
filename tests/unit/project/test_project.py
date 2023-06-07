@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from hamcrest import assert_that, equal_to, has_length, same_instance
 
+from nodestream.model import GraphSchema
 from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import (
     PipelineDefinition,
@@ -88,3 +89,19 @@ def test_delete_pipeline_forwards_deletes_to_appropriate_scope(project, scopes, 
         "test", remove_pipeline_file=True, missing_ok=True
     )
     not_expected.assert_not_called()
+
+
+def test_get_schema_no_overrides(project, mocker):
+    project.generate_graph_schema = mocker.Mock(GraphSchema)
+    project.get_schema()
+    project.generate_graph_schema.assert_called_once()
+    project.generate_graph_schema.return_value.apply_overrides.assert_not_called()
+
+
+def test_get_schema_with_overrides(project, mocker):
+    project.generate_graph_schema = mocker.Mock(GraphSchema)
+    project.get_schema("some/path")
+    project.generate_graph_schema.assert_called_once()
+    project.generate_graph_schema.return_value.apply_type_overrides_from_file.assert_called_once_with(
+        "some/path"
+    )

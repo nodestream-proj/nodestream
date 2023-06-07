@@ -9,6 +9,7 @@ from .operation import Operation
 from .remove_pipeline_from_project import RemovePipelineFromProject
 from .run_pipeline import RunPipeline
 from .show_pipelines import ShowPipelines
+from .print_project_schema import PrintProjectSchema
 
 __all__ = (
     "AddPipelineToProject",
@@ -22,4 +23,5 @@ __all__ = (
     "RemovePipelineFromProject",
     "RunPipeline",
     "ShowPipelines",
+    "PrintProjectSchema",
 )
