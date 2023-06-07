@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Dict, Iterable, List, Optional
+
+import yaml
 
 SOURCE_ALIAS = "__SOURCE_NODE__"
 
@@ -132,7 +135,7 @@ class UnknownTypeMarker(TypeMarker):
         return cls(alias=SOURCE_ALIAS)
 
 
-@dataclass
+@dataclass(slots=True)
 class GraphObjectShape:
     """Defines the shape of an object in the graph.
 
@@ -179,7 +182,7 @@ class GraphObjectShape:
         return f"[{self.graph_object_type}] {self.object_type}:\n\t{self.properties}"
 
 
-@dataclass
+@dataclass(slots=True)
 class PresentRelationship:
     """Indicates that a relationship of a specifc type exissts between two nodes with a certain cardinality.
 
@@ -221,7 +224,7 @@ class PresentRelationship:
         self.relationship_type = self.relationship_type.resolve_type(shapes)
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class GraphSchema:
     """Defines the Schema of a graph by specifiying the node and relationship types and how they interconnect.
 
@@ -252,6 +255,69 @@ class GraphSchema:
         for shape in self.object_shapes:
             if shape.is_relationship and shape.has_known_type:
                 yield shape
+
+    def apply_type_overrides_from_file(self, file_path: Path):
+        overrides = GraphSchemaOverrides.from_file(file_path)
+        self.apply_overrides(overrides)
+
+    def apply_overrides(self, overrides: "GraphSchemaOverrides"):
+        overrides.apply_to(self)
+
+
+@dataclass(frozen=True, slots=True)
+class PropertyOverride:
+    type: Optional[PropertyType]
+
+    @classmethod
+    def from_file_data(cls, file_data) -> "GraphSchemaOverrides":
+        type_str = file_data.get("type")
+        type = None if type_str is None else PropertyType(type_str)
+        return cls(type=type)
+
+    def apply_to(self, property_metadata: PropertyMetadata):
+        if self.type:
+            property_metadata.type = self.type
+
+
+@dataclass(frozen=True, slots=True)
+class PropertyOverrides:
+    properties: Dict[str, PropertyOverride]
+
+    @classmethod
+    def from_file_data(cls, file_data) -> "GraphSchemaOverrides":
+        properties = {
+            key: PropertyOverride.from_file_data(value)
+            for key, value in file_data.items()
+        }
+        return cls(properties=properties)
+
+    def apply_to(self, graph_object_shape: GraphObjectShape):
+        for property_name, override in self.properties.items():
+            if property_name in graph_object_shape.properties.properties:
+                override.apply_to(
+                    graph_object_shape.properties.properties[property_name]
+                )
+
+
+@dataclass(frozen=True, slots=True)
+class GraphSchemaOverrides:
+    property_overrides: Dict[str, PropertyOverrides]
+
+    @classmethod
+    def from_file(cls, file_path: Path) -> "GraphSchemaOverrides":
+        with open(file_path) as f:
+            overrides_data = yaml.safe_load(f)
+            property_overrides = {
+                key: PropertyOverrides.from_file_data(value)
+                for key, value in overrides_data.get("properties", {}).items()
+            }
+            return cls(property_overrides=property_overrides)
+
+    def apply_to(self, schema: GraphSchema):
+        for type_name, overrides in self.property_overrides.items():
+            for shape in schema.known_node_types():
+                if shape.object_type.type == type_name:
+                    overrides.apply_to(shape)
 
 
 def _merge_overlapping_items(unmerged_items, shapes):

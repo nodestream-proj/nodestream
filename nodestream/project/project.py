@@ -5,12 +5,17 @@ from typing import Dict, Iterable, List, Optional
 from yaml import safe_load
 
 from ..exceptions import MissingProjectFileError
+from ..model import (
+    AggregatedIntrospectionMixin,
+    GraphSchema,
+    IntrospectiveIngestionComponent,
+)
 from ..utilities import pretty_print_yaml_to_file
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
 
 
-class Project:
+class Project(AggregatedIntrospectionMixin, IntrospectiveIngestionComponent):
     """A `Project` represents a collection of pipelines."""
 
     @classmethod
@@ -81,3 +86,12 @@ class Project:
             },
             "imports": self.imports,
         }
+
+    def get_schema(self, type_overrides_file: Optional[Path] = None) -> GraphSchema:
+        schema = self.generate_graph_schema()
+        if type_overrides_file is not None:
+            schema.apply_type_overrides_from_file(type_overrides_file)
+        return schema
+
+    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
+        return self.scopes_by_name.values()

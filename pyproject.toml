@@ -38,6 +38,7 @@ python-json-logger = "^2.0.4"
 cymple = "0.8.1"
 boto3 = "^1.26.137"
 aiokafka = "^0.8.0"
+Jinja2 = "^3"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
@@ -60,6 +61,7 @@ ruff = "^0.0.270"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
 
 [tool.poetry.scripts]
 nodestream = 'nodestream.cli:run'

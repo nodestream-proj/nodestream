@@ -6,6 +6,7 @@ from .generate_python_scaffold import GeneratePythonScaffold
 from .initialize_logger import InitializeLogger
 from .initialize_project import InitializeProject
 from .operation import Operation
+from .print_project_schema import PrintProjectSchema
 from .remove_pipeline_from_project import RemovePipelineFromProject
 from .run_pipeline import RunPipeline
 from .show_pipelines import ShowPipelines
@@ -22,4 +23,5 @@ __all__ = (
     "RemovePipelineFromProject",
     "RunPipeline",
     "ShowPipelines",
+    "PrintProjectSchema",
 )

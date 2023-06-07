@@ -41,6 +41,10 @@ class PipelineInitializationArguments:
 
     annotations: Optional[List[str]] = None
 
+    @classmethod
+    def for_introspection(cls):
+        return cls(annotations=["introspection"])
+
     def initialize_from_file_data(self, file_data: List[dict]):
         return Pipeline(self.load_steps(ClassLoader(), file_data))
 

@@ -15,6 +15,7 @@ from .schema import (
     Cardinality,
     GraphObjectShape,
     GraphObjectType,
+    GraphSchema,
     IntrospectiveIngestionComponent,
     KnownTypeMarker,
     PresentRelationship,
@@ -56,4 +57,5 @@ __all__ = (
     "PresentRelationship",
     "RelationshipIdentityShape",
     "NodeIdentityShape",
+    "GraphSchema",
 )

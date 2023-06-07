@@ -4,6 +4,7 @@ import sys
 from cleo.application import Application
 
 from .commands.new import New
+from .commands.print_schema import PrintSchema
 from .commands.remove import Remove
 from .commands.run import Run
 from .commands.scaffold import Scaffold
@@ -15,6 +16,7 @@ APPLICATION.add(New())
 APPLICATION.add(Show())
 APPLICATION.add(Scaffold())
 APPLICATION.add(Remove())
+APPLICATION.add(PrintSchema())
 
 
 def run():
