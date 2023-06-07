@@ -2,7 +2,6 @@ from hamcrest import assert_that, equal_to_ignoring_whitespace
 
 from nodestream.cli.schema_printers import PlainTestSchemaPrinter
 
-
 EXPECTED_OUTPUT = """
 [NODE] Person:
     name: STRING

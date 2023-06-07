@@ -15,6 +15,7 @@ from .schema import (
     Cardinality,
     GraphObjectShape,
     GraphObjectType,
+    GraphSchema,
     IntrospectiveIngestionComponent,
     KnownTypeMarker,
     PresentRelationship,
@@ -23,7 +24,6 @@ from .schema import (
     PropertyType,
     TypeMarker,
     UnknownTypeMarker,
-    GraphSchema,
 )
 from .ttl import TimeToLiveConfiguration
 

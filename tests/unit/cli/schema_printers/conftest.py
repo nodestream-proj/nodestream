@@ -1,16 +1,16 @@
-from nodestream.model import (
-    GraphSchema,
-    GraphObjectShape,
-    PresentRelationship,
-    GraphObjectType,
-    KnownTypeMarker,
-    PropertyMetadataSet,
-    PropertyMetadata,
-    PropertyType,
-    Cardinality,
-)
-
 import pytest
+
+from nodestream.model import (
+    Cardinality,
+    GraphObjectShape,
+    GraphObjectType,
+    GraphSchema,
+    KnownTypeMarker,
+    PresentRelationship,
+    PropertyMetadata,
+    PropertyMetadataSet,
+    PropertyType,
+)
 
 
 @pytest.fixture

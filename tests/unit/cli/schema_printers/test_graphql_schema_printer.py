@@ -2,7 +2,6 @@ from hamcrest import assert_that, equal_to_ignoring_whitespace
 
 from nodestream.cli.schema_printers import GraphQLSchemaPrinter
 
-
 EXPECTED_GRAPHQL_SCHEMA = """
 type Organization @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
     # Node Properties

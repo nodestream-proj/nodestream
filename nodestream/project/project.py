@@ -4,12 +4,12 @@ from typing import Dict, Iterable, List, Optional
 
 from yaml import safe_load
 
+from ..exceptions import MissingProjectFileError
 from ..model import (
+    AggregatedIntrospectionMixin,
     GraphSchema,
     IntrospectiveIngestionComponent,
-    AggregatedIntrospectionMixin,
 )
-from ..exceptions import MissingProjectFileError
 from ..utilities import pretty_print_yaml_to_file
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest

@@ -1,9 +1,7 @@
 from typing import Dict, Iterable, List
 
-from nodestream.model.schema import IntrospectiveIngestionComponent
-
-from ..model import IntrospectiveIngestionComponent, AggregatedIntrospectionMixin
 from ..exceptions import MissingExpectedPipelineError
+from ..model import AggregatedIntrospectionMixin, IntrospectiveIngestionComponent
 from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest
 

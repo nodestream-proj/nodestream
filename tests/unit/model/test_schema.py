@@ -1,25 +1,26 @@
 from typing import Iterable
+
 import pytest
 from hamcrest import assert_that, equal_to, is_, none, same_instance
 
 from nodestream.model import (
-    UnknownTypeMarker,
-    KnownTypeMarker,
+    AggregatedIntrospectionMixin,
+    Cardinality,
     GraphObjectShape,
     GraphObjectType,
-    PropertyMetadataSet,
-    PropertyMetadata,
-    PresentRelationship,
-    Cardinality,
     GraphSchema,
-    AggregatedIntrospectionMixin,
     IntrospectiveIngestionComponent,
+    KnownTypeMarker,
+    PresentRelationship,
+    PropertyMetadata,
+    PropertyMetadataSet,
     PropertyType,
+    UnknownTypeMarker,
 )
 from nodestream.model.schema import (
+    GraphSchemaOverrides,
     PropertyOverride,
     PropertyOverrides,
-    GraphSchemaOverrides,
 )
 
 

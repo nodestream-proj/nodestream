@@ -1,7 +1,7 @@
 from functools import reduce
 from typing import Any, AsyncGenerator, Iterable, List
 
-from ..model import IntrospectiveIngestionComponent, AggregatedIntrospectionMixin
+from ..model import AggregatedIntrospectionMixin, IntrospectiveIngestionComponent
 from .step import Step
 
 

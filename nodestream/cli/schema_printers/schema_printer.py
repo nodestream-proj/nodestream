@@ -3,7 +3,6 @@ from pathlib import Path
 from ...model import GraphSchema
 from ...subclass_registry import SubclassRegistry
 
-
 SCHEMA_PRINTER_SUBCLASS_REGISTRY = SubclassRegistry()
 
 

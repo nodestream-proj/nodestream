@@ -1,8 +1,8 @@
 from cleo.helpers import option
 
+from ..operations import InitializeProject, PrintProjectSchema
 from .nodestream_command import NodestreamCommand
 from .shared_options import PROJECT_FILE_OPTION
-from ..operations import InitializeProject, PrintProjectSchema
 
 
 class PrintSchema(NodestreamCommand):

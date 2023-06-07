@@ -9,8 +9,7 @@ from ...model import (
     PresentRelationship,
     PropertyType,
 )
-from .schema_printer import SchemaPrinter, GraphSchema
-
+from .schema_printer import SchemaPrinter
 
 NODE_TYPE_DEF_TEMPLATE = """
 {% set node_type = ensure_camel_case(shape.object_type.type) %}
@@ -113,8 +112,9 @@ class GraphQLSchemaPrinter(SchemaPrinter, alias="graphql"):
 
     def render_node_schema(self, schema: GraphSchema) -> str:
         representation = ""
-        sort_by_node_type = lambda k: k.object_type.type
-        for node_shape in sorted(schema.known_node_types(), key=sort_by_node_type):
+        for node_shape in sorted(
+            schema.known_node_types(), key=lambda k: k.object_type.type
+        ):
             all_inbound_rels = [
                 r
                 for r in schema.relationships
