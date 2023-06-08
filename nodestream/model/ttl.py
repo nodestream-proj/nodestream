@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from .ingest_strategy import IngestionStrategy
-from .schema import GraphObjectType
+from .schema import GraphObjectShape, GraphObjectType, KnownTypeMarker
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,3 +17,9 @@ class TimeToLiveConfiguration:
     async def ingest(self, strategy: "IngestionStrategy"):
         if self.enabled:
             await strategy.perform_ttl_operation(self)
+
+    def is_for_shape(self, shape: GraphObjectShape):
+        return (
+            self.graph_object_type == shape.graph_object_type
+            and KnownTypeMarker(self.object_type) == shape.object_type
+        )

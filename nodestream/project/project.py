@@ -1,9 +1,10 @@
 import importlib
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, TypeVar, Type, Tuple
 
 from yaml import safe_load
 
+from ..pipeline import Step
 from ..exceptions import MissingProjectFileError
 from ..model import (
     AggregatedIntrospectionMixin,
@@ -12,7 +13,11 @@ from ..model import (
 )
 from ..utilities import pretty_print_yaml_to_file
 from .pipeline_scope import PipelineScope
+from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest
+
+
+T = TypeVar("T", bound=Step)
 
 
 class Project(AggregatedIntrospectionMixin, IntrospectiveIngestionComponent):
@@ -95,3 +100,13 @@ class Project(AggregatedIntrospectionMixin, IntrospectiveIngestionComponent):
 
     def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         return self.scopes_by_name.values()
+
+    def dig_for_step_of_type(
+        self, step_type: Type[T]
+    ) -> Iterable[Tuple[PipelineDefinition, int, T]]:
+        for scope in self.scopes_by_name.values():
+            for pipeline_definition in scope.pipelines_by_name.values():
+                pipeline_steps = pipeline_definition.intialize_for_introspection().steps
+                for idx, step in enumerate(pipeline_steps):
+                    if isinstance(step, step_type):
+                        yield pipeline_definition, idx, step
