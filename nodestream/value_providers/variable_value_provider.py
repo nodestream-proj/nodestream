@@ -1,6 +1,5 @@
 from typing import Any, Iterable, Type
 
-import jq
 from yaml import SafeLoader
 
 from ..model import InterpreterContext
@@ -14,7 +13,7 @@ class VariableValueProvider(ValueProvider):
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(
             "!variable",
-            lambda loader, node: cls(jq.compile(loader.construct_scalar(node))),
+            lambda loader, node: cls(loader.construct_scalar(node)),
         )
 
     def __init__(self, variable_name: str) -> None:
