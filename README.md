@@ -51,4 +51,5 @@ Please adhere to this project's `code of conduct`.
 - Chad Cloes ([@ccloes](https://www.github.com/ccloes))
 - Oshri Rozenberg([@orozen](https://www.github.com/orozen))
 - Kevin Neal ([@khneal](https://www.github.com/khneal))
+- Grant Hoffman ([@grantleehoffman](https://www.github.com/grantleehoffman))
 
