@@ -17,4 +17,4 @@ Sleep 500ms
 # Run the Pipeline
 Type "nodestream run sample -v"
 Enter
-Sleep 20000ms
+Sleep 10000ms
