@@ -15,7 +15,7 @@ DEFAULT_PROJECT_FILE = Path("nodestream.yaml")
 
 class NodestreamCommand(Command):
     def handle(self):
-        asyncio.run(self.handle_async())
+        return asyncio.run(self.handle_async())
 
     async def handle_async(self):
         raise NotImplementedError

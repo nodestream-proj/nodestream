@@ -215,8 +215,13 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
     def gather_used_indexes(self):
         if self.node_type.is_static:
             related_node_type = self.node_type.value
-            yield KeyIndex(related_node_type, frozenset(self.node_key.keys()))
             yield FieldIndex.for_ttl_timestamp(related_node_type)
+
+            # If we are matching fuzzy or MATCH_ONLY, we cannot rely on the key index
+            # to find the related node.
+            # TODO: Perhaps in the future we can do a FieldIndex instead?
+            if self.match_strategy == MatchStrategy.EAGER:
+                yield KeyIndex(related_node_type, frozenset(self.node_key.keys()))
 
         if self.relationship_type.is_static:
             relationship_type = self.relationship_type.value
