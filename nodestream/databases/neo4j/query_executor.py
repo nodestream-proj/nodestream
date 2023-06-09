@@ -1,7 +1,7 @@
 from logging import getLogger
 from typing import Iterable
 
-from neo4j import AsyncDriver, AsyncGraphDatabase, Result
+from neo4j import AsyncDriver, AsyncGraphDatabase
 
 from ...model import (
     FieldIndex,

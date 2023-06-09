@@ -2,10 +2,10 @@ from collections import defaultdict
 from typing import Dict, Iterable, Tuple
 
 from ..model.graph_objects import (
+    DeduplicatableObject,
     MatchStrategy,
     Node,
     RelationshipWithNodes,
-    DeduplicatableObject,
 )
 from .query_executor import OperationOnNodeIdentity, OperationOnRelationshipIdentity
 
