@@ -12,7 +12,7 @@ RETURN batches, committedOperations, failedOperations, errorMessages
 """
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class Query:
     query_statement: str
     parameters: Dict[str, Any]
@@ -22,7 +22,7 @@ class Query:
         return cls(query_statement=statement, parameters={})
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class QueryBatch:
     query_statement: str
     batched_parameter_sets: List[Dict[str, Any]]

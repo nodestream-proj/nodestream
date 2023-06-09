@@ -1,7 +1,7 @@
 from logging import getLogger
 from typing import Iterable
 
-from neo4j import AsyncDriver, AsyncGraphDatabase
+from neo4j import AsyncDriver, AsyncGraphDatabase, Result
 
 from ...model import (
     FieldIndex,
@@ -107,7 +107,9 @@ class Neo4jQueryExecutor(QueryExecutor, alias="neo4j"):
         )
         await self.driver.verify_connectivity()
         result = await self.driver.execute_query(
-            query.query_statement, query.parameters
+            query.query_statement,
+            query.parameters,
+            database_=self.database_name,
         )
         if log_result:
             for record in result.records:
