@@ -1,3 +1,4 @@
+import importlib.metadata
 import os
 import sys
 
@@ -12,7 +13,9 @@ from .commands.run import Run
 from .commands.scaffold import Scaffold
 from .commands.show import Show
 
-APPLICATION = Application(name="nodestream")
+APPLICATION = Application(
+    name="nodestream", version=importlib.metadata.version("nodestream")
+)
 APPLICATION.add(Run())
 APPLICATION.add(New())
 APPLICATION.add(Show())
