@@ -23,7 +23,7 @@ class AuditReferencialIntegrity(Audit):
                         self.failure(
                             f"Regarding the type '{index.type}':\n"
                             f"\tthe Interpreter in '{definition.file_path}' step '{step_index}' wants to use an index on the fields '{current_index_fields}' WHILE\n"
-                            f"\tthe interpreter in '{existing_definition.file_path}' step '{existing_step_index}' wants to use an index on the fields '{existing_index_fields}'"
+                            f"\tthe Interpreter in '{existing_definition.file_path}' step '{existing_step_index}' wants to use an index on the fields '{existing_index_fields}'"
                         )
                 else:
                     node_types_so_far[index.type] = (index, definition, step_index)
