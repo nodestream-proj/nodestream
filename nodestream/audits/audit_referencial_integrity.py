@@ -1,6 +1,6 @@
 from ..interpreting import Interpreter
-from ..project import Project
 from ..model import KeyIndex
+from ..project import Project
 from .audit import Audit
 
 

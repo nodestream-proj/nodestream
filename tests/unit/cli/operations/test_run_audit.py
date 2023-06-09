@@ -1,6 +1,6 @@
 import pytest
 
-from nodestream.cli.operations.run_audit import RunAudit, CommandAuditPrinter
+from nodestream.cli.operations.run_audit import CommandAuditPrinter, RunAudit
 
 
 def test_command_printer_prints_success_message(mocker):

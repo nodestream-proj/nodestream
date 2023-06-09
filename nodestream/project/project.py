@@ -1,21 +1,20 @@
 import importlib
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, TypeVar, Type, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from yaml import safe_load
 
-from ..pipeline import Step
 from ..exceptions import MissingProjectFileError
 from ..model import (
     AggregatedIntrospectionMixin,
     GraphSchema,
     IntrospectiveIngestionComponent,
 )
+from ..pipeline import Step
 from ..utilities import pretty_print_yaml_to_file
-from .pipeline_scope import PipelineScope
 from .pipeline_definition import PipelineDefinition
+from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
-
 
 T = TypeVar("T", bound=Step)
 

@@ -3,8 +3,8 @@ import sys
 
 from cleo.application import Application
 
-from .commands.audit_ttls import AuditTTLs
 from .commands.audit_refs import AuditRefs
+from .commands.audit_ttls import AuditTTLs
 from .commands.new import New
 from .commands.print_schema import PrintSchema
 from .commands.remove import Remove

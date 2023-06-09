@@ -4,10 +4,10 @@ from hamcrest import assert_that, equal_to
 from nodestream.audits import AuditPrinter, TTLAudit
 from nodestream.model import (
     GraphObjectShape,
-    KnownTypeMarker,
     GraphObjectType,
-    PropertyMetadataSet,
     GraphSchema,
+    KnownTypeMarker,
+    PropertyMetadataSet,
     TimeToLiveConfiguration,
 )
 

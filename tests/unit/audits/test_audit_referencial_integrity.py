@@ -1,7 +1,7 @@
 import pytest
 from hamcrest import assert_that, equal_to
 
-from nodestream.audits import AuditReferencialIntegrity, AuditPrinter
+from nodestream.audits import AuditPrinter, AuditReferencialIntegrity
 from nodestream.interpreting import Interpreter
 from nodestream.model import KeyIndex
 
