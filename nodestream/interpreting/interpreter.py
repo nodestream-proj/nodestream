@@ -39,6 +39,8 @@ class NullInterpretationPass(AggregatedIntrospectionMixin, InterpretationPass):
 
 
 class MultiSequenceInterpretationPass(AggregatedIntrospectionMixin, InterpretationPass):
+    __slots__ = ("passes",)
+
     @classmethod
     def from_file_arguments(cls, args):
         return cls(*(InterpretationPass.from_file_arguments(arg) for arg in args))
@@ -59,6 +61,8 @@ class MultiSequenceInterpretationPass(AggregatedIntrospectionMixin, Interpretati
 class SingleSequenceInterpretationPass(
     AggregatedIntrospectionMixin, InterpretationPass
 ):
+    __slots__ = ("interpretations",)
+
     @classmethod
     def from_file_arguments(cls, interpretation_arg_list):
         interpretations = (

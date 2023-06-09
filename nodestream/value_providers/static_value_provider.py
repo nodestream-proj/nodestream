@@ -7,6 +7,8 @@ from .value_provider import ValueProvider
 class StaticValueProvider(ValueProvider):
     """A `ValueProvider` that always returns the same value."""
 
+    __slots__ = ("value",)
+
     def __init__(self, value) -> None:
         self.value = value
 
