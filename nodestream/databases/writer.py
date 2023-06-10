@@ -4,6 +4,7 @@ from ..model.ingest_strategy import INGESTION_STRATEGY_REGISTRY, IngestionStrate
 from ..pipeline import Flush, Writer
 from .debounced_ingest_strategy import DebouncedIngestStrategy
 from .query_executor import QUERY_EXECUTOR_SUBCLASS_REGISTRY
+from .query_executor_with_statistics import QueryExecutorWithStatistics
 
 
 class GraphDatabaseWriter(Writer):
@@ -13,18 +14,24 @@ class GraphDatabaseWriter(Writer):
         batch_size: int,
         database: str,
         ingest_strategy_name: Optional[str] = None,
+        collect_stats: bool = True,
         **database_args
     ):
+        executor_class = QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database)
+        executor = executor_class.from_file_arguments(**database_args)
+        if collect_stats:
+            executor = QueryExecutorWithStatistics(executor)
+
         ingest_strategy_name = (
             ingest_strategy_name
             or INGESTION_STRATEGY_REGISTRY.name_for(DebouncedIngestStrategy)
         )
-        ingest_strategy = INGESTION_STRATEGY_REGISTRY.get(ingest_strategy_name)
-        executor_class = QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database)
-        executor = executor_class.from_file_arguments(**database_args)
+        ingest_strategy_cls = INGESTION_STRATEGY_REGISTRY.get(ingest_strategy_name)
+        ingest_strategy = ingest_strategy_cls(executor)
+
         return cls(
             batch_size=batch_size,
-            ingest_strategy=ingest_strategy(executor),
+            ingest_strategy=ingest_strategy,
         )
 
     def __init__(self, batch_size: int, ingest_strategy: IngestionStrategy) -> None:

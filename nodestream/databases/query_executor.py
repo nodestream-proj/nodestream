@@ -40,9 +40,8 @@ class QueryExecutor(ABC):
         )
 
     @classmethod
-    @abstractmethod
     def from_file_arguments(cls, **kwargs):
-        raise NotImplementedError
+        return cls(**kwargs)
 
     @abstractmethod
     async def upsert_nodes_in_bulk_with_same_operation(

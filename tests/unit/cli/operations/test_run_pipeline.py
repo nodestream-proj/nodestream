@@ -3,6 +3,7 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations.run_pipeline import RunPipeline, SpinnerProgressIndicator
 from nodestream.pipeline import PipelineInitializationArguments
+from nodestream.pipeline.meta import PipelineContext
 from nodestream.project import Project
 
 
@@ -44,7 +45,7 @@ def test_spinner_on_start(mocker):
 def test_spinner_on_finish(mocker):
     spinner = SpinnerProgressIndicator(mocker.Mock())
     spinner.on_start()
-    spinner.on_finish()
+    spinner.on_finish(PipelineContext())
     spinner.progress.finish.assert_called_once()
 
 
