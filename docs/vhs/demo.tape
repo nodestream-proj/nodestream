@@ -7,12 +7,12 @@ Set Height 600
 # Generate a new Project
 Type "nodestream new my_graph_app --database neo4j"
 Enter
-Sleep 500ms
+Sleep 1000ms
 
 # Enter the Project
 Type "cd my_graph_app"
 Enter
-Sleep 500ms
+Sleep 1000ms
 
 # Run the Pipeline
 Type "nodestream run sample -v"
