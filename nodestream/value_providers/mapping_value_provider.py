@@ -9,6 +9,8 @@ from .value_provider import StaticValueOrValueProvider, ValueProvider
 class MappingValueProvider(ValueProvider):
     """A `ValueProvider` that uses a mapping to extract values from a document."""
 
+    __slots__ = ("mapping_name", "key")
+
     @classmethod
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(

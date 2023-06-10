@@ -1,12 +1,22 @@
+from abc import ABC
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+
+from pandas import Timestamp
 
 from .match_strategy import MatchStrategy
 
 if TYPE_CHECKING:
     from ..value_providers.value_provider import ValueProvider
     from .interpreter_context import InterpreterContext
+
+
+class DeduplicatableObject(ABC):
+    def get_dedup_key(self) -> tuple:
+        raise NotImplementedError
+
+    def update(self, other: "DeduplicatableObject"):
+        raise NotImplementedError
 
 
 class PropertySet(dict):
@@ -22,7 +32,7 @@ class PropertySet(dict):
         These default values indicate when the current pipeline touched the object the properties are for.
         """
         pipeline_name = get_pipeline_name()
-        now = datetime.utcnow()
+        now = Timestamp.utcnow()
         return cls(
             {
                 "last_ingested_at": now,
@@ -53,7 +63,7 @@ class PropertySet(dict):
 
 
 @dataclass(slots=True)
-class Node:
+class Node(DeduplicatableObject):
     """A `Node` is a entity that has a distinct identity.
 
     Each `Node` represents an entity (a person, place, thing, category or other piece of data) that has a distinct
@@ -97,9 +107,12 @@ class Node:
     def update(self, other: "Relationship"):
         self.properties.update(other.properties)
 
+    def get_dedup_key(self) -> tuple:
+        return tuple(sorted(self.key_values.values()))
 
-@dataclass(slots=True)
-class Relationship:
+
+@dataclass(slots=True, frozen=True)
+class Relationship(DeduplicatableObject):
     """A `Relationship` represents an inherent connection between two `Node`s.
 
     Each `Relationship` follows a relatively similar model to a `Node`. There is a _single_ type for the relationship.
@@ -128,9 +141,12 @@ class Relationship:
     def update(self, other: "Relationship"):
         self.properties.update(other.properties)
 
+    def get_dedup_key(self) -> tuple:
+        return tuple(sorted(self.key_values.values()))
+
 
 @dataclass(slots=True)
-class RelationshipWithNodes:
+class RelationshipWithNodes(DeduplicatableObject):
     """Stores information about the related node and the relationship itself."""
 
     from_node: Node
@@ -151,6 +167,13 @@ class RelationshipWithNodes:
         self.to_node.properties.update(other.to_node.properties)
         self.from_node.properties.update(other.from_node.properties)
         self.relationship.properties.update(other.relationship.properties)
+
+    def get_dedup_key(self) -> tuple:
+        return (
+            self.to_node.get_dedup_key(),
+            self.from_node.get_dedup_key(),
+            self.relationship.get_dedup_key(),
+        )
 
 
 @dataclass(slots=True, frozen=True)

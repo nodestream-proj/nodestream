@@ -39,6 +39,7 @@ cymple = "0.8.1"
 boto3 = "^1.26.137"
 aiokafka = "^0.8.0"
 Jinja2 = "^3"
+pandas = "^2"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"

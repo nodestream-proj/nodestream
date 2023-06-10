@@ -11,6 +11,8 @@ from .value_provider import ValueProvider
 class JmespathValueProvider(ValueProvider):
     """A `ValueProvider` that uses JMESPath to extract values from a document."""
 
+    __slots__ = ("compiled_query",)
+
     @classmethod
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(

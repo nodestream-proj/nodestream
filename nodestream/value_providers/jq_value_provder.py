@@ -10,6 +10,8 @@ from .value_provider import ValueProvider
 class JqValueProvider(ValueProvider):
     """A `ValueProvider` that uses Jq to extract values from a document."""
 
+    __slots__ = ("jq_program",)
+
     @classmethod
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(

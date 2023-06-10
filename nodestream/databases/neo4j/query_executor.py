@@ -107,7 +107,9 @@ class Neo4jQueryExecutor(QueryExecutor, alias="neo4j"):
         )
         await self.driver.verify_connectivity()
         result = await self.driver.execute_query(
-            query.query_statement, query.parameters
+            query.query_statement,
+            query.parameters,
+            database_=self.database_name,
         )
         if log_result:
             for record in result.records:
