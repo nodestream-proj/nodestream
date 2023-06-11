@@ -15,6 +15,9 @@ class Step(ABC):
     ) -> AsyncGenerator[Any, Any]:
         raise NotImplementedError
 
+    async def finish(self):
+        pass
+
 
 class PassStep(Step):
     """A `PassStep` is a step that does nothing."""

@@ -1,3 +1,4 @@
+import asyncio
 from functools import reduce
 from typing import Any, AsyncGenerator, Iterable, List
 
@@ -18,13 +19,19 @@ class Pipeline(AggregatedIntrospectionMixin, IntrospectiveIngestionComponent):
     def __init__(self, steps: List[Step]) -> None:
         self.steps = steps
 
-    def run(self) -> AsyncGenerator[Any, Any]:
+    async def run(self) -> AsyncGenerator[Any, Any]:
         record_stream_over_all_steps = reduce(
             lambda stream, step: step.handle_async_record_stream(stream),
             self.steps,
             empty_async_generator(),
         )
-        return record_stream_over_all_steps
+        async for record in record_stream_over_all_steps:
+            yield record
+
+        await self.finish()
+
+    async def finish(self):
+        await asyncio.gather(*(step.finish() for step in self.steps))
 
     def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         return (s for s in self.steps if isinstance(s, IntrospectiveIngestionComponent))
