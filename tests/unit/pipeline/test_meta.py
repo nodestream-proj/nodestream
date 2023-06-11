@@ -1,10 +1,6 @@
 from hamcrest import assert_that, equal_to
 
-from nodestream.pipeline.meta import (
-    UNKNOWN_PIPELINE_NAME,
-    get_context,
-    start_context,
-)
+from nodestream.pipeline.meta import UNKNOWN_PIPELINE_NAME, get_context, start_context
 
 
 def test_get_pipeline_name_unset():

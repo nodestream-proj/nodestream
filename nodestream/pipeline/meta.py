@@ -2,7 +2,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
-from typing import Dict, Any
+from typing import Any, Dict
 
 UNKNOWN_PIPELINE_NAME = "unknown"
 

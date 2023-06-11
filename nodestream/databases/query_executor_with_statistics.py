@@ -1,19 +1,19 @@
 from typing import Iterable
 
 from ..model import (
+    FieldIndex,
+    IngestionHook,
+    KeyIndex,
     Node,
     RelationshipWithNodes,
-    KeyIndex,
-    FieldIndex,
     TimeToLiveConfiguration,
-    IngestionHook,
-)
-from .query_executor import (
-    QueryExecutor,
-    OperationOnNodeIdentity,
-    OperationOnRelationshipIdentity,
 )
 from ..pipeline.meta import get_context
+from .query_executor import (
+    OperationOnNodeIdentity,
+    OperationOnRelationshipIdentity,
+    QueryExecutor,
+)
 
 NODE_STAT = "Node Upsert Operations"
 RELATIONSHIP_STAT = "Relationship Upsert Operations"
