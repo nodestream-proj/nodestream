@@ -25,13 +25,13 @@ class PropertySet(dict):
 
     @classmethod
     def default_properties(cls) -> "PropertySet":
-        from ..pipeline import get_pipeline_name
+        from ..pipeline.meta import get_context
 
         """Returns a default set of properties which set values.
 
         These default values indicate when the current pipeline touched the object the properties are for.
         """
-        pipeline_name = get_pipeline_name()
+        pipeline_name = get_context().name
         now = Timestamp.utcnow()
         return cls(
             {
