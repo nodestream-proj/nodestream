@@ -78,3 +78,16 @@ class ValuesMatchPossibilitiesFilter(Filter):
         return not all(
             matcher.does_match(context_from_record) for matcher in self.value_matchers
         )
+
+
+class ExcludeWhenValuesMatchPossibilities(Filter):
+    @classmethod
+    def __declarative_init__(cls, **kwargs):
+        inner = ValuesMatchPossibilitiesFilter.__declarative_init__(**kwargs)
+        return cls(inner)
+
+    def __init__(self, inner: ValuesMatchPossibilitiesFilter) -> None:
+        self.inner = inner
+
+    async def filter_record(self, record: Any) -> bool:
+        return not await self.inner.filter_record(record)

@@ -1,6 +1,10 @@
 from .class_loader import ClassLoader
 from .extractors import Extractor, IterableExtractor
-from .filters import Filter, ValuesMatchPossibilitiesFilter
+from .filters import (
+    Filter,
+    ValuesMatchPossibilitiesFilter,
+    ExcludeWhenValuesMatchPossibilities,
+)
 from .flush import Flush
 from .meta import UNKNOWN_PIPELINE_NAME
 from .pipeline import Pipeline
@@ -15,6 +19,7 @@ __all__ = (
     "IterableExtractor",
     "Filter",
     "ValuesMatchPossibilitiesFilter",
+    "ExcludeWhenValuesMatchPossibilities",
     "PipelineFileLoader",
     "Pipeline",
     "Step",
