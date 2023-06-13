@@ -1,9 +1,9 @@
 from .class_loader import ClassLoader
 from .extractors import Extractor, IterableExtractor
 from .filters import (
+    ExcludeWhenValuesMatchPossibilities,
     Filter,
     ValuesMatchPossibilitiesFilter,
-    ExcludeWhenValuesMatchPossibilities,
 )
 from .flush import Flush
 from .meta import UNKNOWN_PIPELINE_NAME

@@ -2,8 +2,8 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline import (
-    ValuesMatchPossibilitiesFilter,
     ExcludeWhenValuesMatchPossibilities,
+    ValuesMatchPossibilitiesFilter,
 )
 
 from ..stubs import StubbedValueProvider
