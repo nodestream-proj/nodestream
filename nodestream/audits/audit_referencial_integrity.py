@@ -4,7 +4,7 @@ from ..project import Project
 from .audit import Audit
 
 
-class AuditReferencialIntegrity(Audit):
+class AuditReferentialIntegrity(Audit):
     async def run(self, project: Project):
         all_interpreters = project.dig_for_step_of_type(Interpreter)
         node_types_so_far = {}
@@ -29,4 +29,4 @@ class AuditReferencialIntegrity(Audit):
                     node_types_so_far[index.type] = (index, definition, step_index)
 
         if self.failure_count == 0:
-            self.success("All Object Types Have Consistent Referencial Integrty")
+            self.success("All Object Types Have Consistent Referential Integrity")

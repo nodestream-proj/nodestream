@@ -1,7 +1,7 @@
 import pytest
 from hamcrest import assert_that, equal_to
 
-from nodestream.audits import AuditPrinter, AuditReferencialIntegrity
+from nodestream.audits import AuditPrinter, AuditReferentialIntegrity
 from nodestream.interpreting import Interpreter
 from nodestream.model import KeyIndex
 
@@ -24,7 +24,7 @@ async def test_audit_referencial_integrity_fails_when_there_is_two_interpreters_
         [mocker.Mock(), 1, interpreter_two],
     ]
 
-    audit = AuditReferencialIntegrity(AuditPrinter())
+    audit = AuditReferentialIntegrity(AuditPrinter())
     await audit.run(project)
 
     assert_that(audit.failure_count, equal_to(1))
@@ -49,7 +49,7 @@ async def test_audit_referencial_integrity_succeeds_when_there_is_two_interprete
         [mocker.Mock(), 1, interpreter_two],
     ]
 
-    audit = AuditReferencialIntegrity(AuditPrinter())
+    audit = AuditReferentialIntegrity(AuditPrinter())
     await audit.run(project)
 
     assert_that(audit.failure_count, equal_to(0))
