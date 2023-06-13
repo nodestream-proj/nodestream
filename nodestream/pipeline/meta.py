@@ -1,19 +1,35 @@
+from collections import defaultdict
 from contextlib import contextmanager
 from contextvars import ContextVar
+from dataclasses import dataclass, field
+from typing import Any, Dict
 
 UNKNOWN_PIPELINE_NAME = "unknown"
 
-pipeline_name: ContextVar[str] = ContextVar("pipeline_name")
+
+@dataclass(frozen=True, slots=True)
+class PipelineContext:
+    name: str = UNKNOWN_PIPELINE_NAME
+    stats: Dict[str, Any] = field(default_factory=lambda: defaultdict(int))
+
+    def increment_stat(self, stat_name: str, amount: int = 1):
+        self.stats[stat_name] += amount
 
 
-def get_pipeline_name() -> str:
-    return pipeline_name.get(UNKNOWN_PIPELINE_NAME)
+context: ContextVar[PipelineContext] = ContextVar("context")
+
+
+def get_context() -> PipelineContext:
+    try:
+        return context.get()
+    except LookupError:
+        return PipelineContext()
 
 
 @contextmanager
-def set_pipeline_name(name: str):
-    token = pipeline_name.set(name)
+def start_context(pipeline_name: str):
+    token = context.set(PipelineContext(pipeline_name))
     try:
         yield
     finally:
-        pipeline_name.reset(token)
+        context.reset(token)

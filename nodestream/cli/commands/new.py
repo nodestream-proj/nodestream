@@ -29,3 +29,4 @@ class New(NodestreamCommand):
         project = await self.run_operation(gen_project)
         commit_to_disk = CommitProjectToDisk(project, project_root / "nodestream.yaml")
         await self.run_operation(commit_to_disk)
+        self.line(f"<info>Created new project at '{project_root}'</info>")

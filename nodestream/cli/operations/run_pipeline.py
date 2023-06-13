@@ -1,7 +1,10 @@
 from ...pipeline import PipelineInitializationArguments
+from ...pipeline.meta import PipelineContext
 from ...project import PipelineProgressReporter, Project, RunRequest
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
+
+STATS_TABLE_COLS = ["Statistic", "Value"]
 
 
 class RunPipeline(Operation):
@@ -48,7 +51,7 @@ class ProgressIndicator:
     def progress_callback(self, _, __):
         pass
 
-    def on_finish(self):
+    def on_finish(self, context: PipelineContext):
         pass
 
     @property
@@ -66,5 +69,9 @@ class SpinnerProgressIndicator(ProgressIndicator):
             f"Currently processing record at index: <info>{index}</info>"
         )
 
-    def on_finish(self):
+    def on_finish(self, context: PipelineContext):
         self.progress.finish(f"Finished running pipeline: '{self.pipeline_name}'")
+
+        stats = ((k, str(v)) for k, v in context.stats.items())
+        table = self.command.table(STATS_TABLE_COLS, stats)
+        table.render()
