@@ -48,7 +48,7 @@ class StreamExtractor(Extractor):
     """
 
     @classmethod
-    def __declarative_init__(
+    def from_file_data(
         cls,
         connector: str,
         record_format: str,

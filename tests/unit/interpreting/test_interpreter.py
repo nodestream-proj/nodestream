@@ -64,12 +64,12 @@ def test_single_sequence_interpretation_pass_returns_passed_context(mocker):
 
 
 def test_interpretation_pass_passing_null_returns_null_interpretation_pass():
-    null_pass = InterpretationPass.from_file_arguments(None)
+    null_pass = InterpretationPass.from_file_data(None)
     assert_that(null_pass, instance_of(NullInterpretationPass))
 
 
 def test_interpretation_pass_passing_list_of_list_returns_multi_pass():
-    multi_pass = InterpretationPass.from_file_arguments(
+    multi_pass = InterpretationPass.from_file_data(
         [
             [{"type": "properties", "properties": {}}],
             [{"type": "properties", "properties": {}}],

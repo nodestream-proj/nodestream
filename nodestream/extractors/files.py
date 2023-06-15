@@ -64,7 +64,7 @@ class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
 
 class FileExtractor(Extractor):
     @classmethod
-    def __declarative_init__(cls, globs: Iterable[str]):
+    def from_file_data(cls, globs: Iterable[str]):
         all_matching_paths = (
             Path(file)
             for glob_string in globs

@@ -28,7 +28,7 @@ class Filter(Step):
 
 class ValueMatcher:
     @classmethod
-    def from_file_arguments(
+    def from_file_data(
         cls,
         value: StaticValueOrValueProvider,
         possibilities: Iterable[StaticValueOrValueProvider],
@@ -66,8 +66,8 @@ class ValuesMatchPossibilitiesFilter(Filter):
     """A filter that checks if a given value matches any of a set of possibilities."""
 
     @classmethod
-    def __declarative_init__(cls, *, fields: Iterable[Dict[str, Any]]):
-        value_matchers = [ValueMatcher.from_file_arguments(**field) for field in fields]
+    def from_file_data(cls, *, fields: Iterable[Dict[str, Any]]):
+        value_matchers = [ValueMatcher.from_file_data(**field) for field in fields]
         return cls(value_matchers=value_matchers)
 
     def __init__(self, value_matchers: Iterable[ValueMatcher]):
@@ -82,8 +82,8 @@ class ValuesMatchPossibilitiesFilter(Filter):
 
 class ExcludeWhenValuesMatchPossibilities(Filter):
     @classmethod
-    def __declarative_init__(cls, **kwargs):
-        inner = ValuesMatchPossibilitiesFilter.__declarative_init__(**kwargs)
+    def from_file_data(cls, **kwargs):
+        inner = ValuesMatchPossibilitiesFilter.from_file_data(**kwargs)
         return cls(inner)
 
     def __init__(self, inner: ValuesMatchPossibilitiesFilter) -> None:

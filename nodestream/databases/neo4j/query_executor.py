@@ -26,7 +26,7 @@ from .query import Query
 
 class Neo4jQueryExecutor(QueryExecutor, alias="neo4j"):
     @classmethod
-    def from_file_arguments(
+    def from_file_data(
         cls,
         uri: str,
         username: str,

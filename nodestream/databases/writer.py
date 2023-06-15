@@ -9,7 +9,7 @@ from .query_executor_with_statistics import QueryExecutorWithStatistics
 
 class GraphDatabaseWriter(Writer):
     @classmethod
-    def __declarative_init__(
+    def from_file_data(
         cls,
         batch_size: int,
         database: str,
@@ -18,7 +18,7 @@ class GraphDatabaseWriter(Writer):
         **database_args
     ):
         executor_class = QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database)
-        executor = executor_class.from_file_arguments(**database_args)
+        executor = executor_class.from_file_data(**database_args)
         if collect_stats:
             executor = QueryExecutorWithStatistics(executor)
 

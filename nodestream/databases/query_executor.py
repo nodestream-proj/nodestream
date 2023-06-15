@@ -35,12 +35,12 @@ class OperationOnRelationshipIdentity:
 class QueryExecutor(ABC):
     @classmethod
     def from_database_args(cls, database: str = "neo4j", **database_args):
-        return QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database).from_file_arguments(
+        return QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database).from_file_data(
             **database_args
         )
 
     @classmethod
-    def from_file_arguments(cls, **kwargs):
+    def from_file_data(cls, **kwargs):
         return cls(**kwargs)
 
     @abstractmethod

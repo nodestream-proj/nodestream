@@ -48,7 +48,7 @@ class AthenaRowConverter:
 
 class AthenaExtractor(Extractor):
     @classmethod
-    def __declarative_init__(
+    def from_file_data(
         cls,
         query: str,
         database: str,

@@ -65,5 +65,5 @@ async def test_txt_formatting(txt_file):
 
 
 def test_declarative_init(fixture_directory, csv_file, json_file, txt_file):
-    subject = FileExtractor.__declarative_init__(globs=[f"{fixture_directory}/**"])
+    subject = FileExtractor.from_file_data(globs=[f"{fixture_directory}/**"])
     assert_that(list(subject.paths), has_length(3))

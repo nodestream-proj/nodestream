@@ -13,7 +13,7 @@ class Interpretation(IntrospectiveIngestionComponent, ABC):
         raise NotImplementedError
 
     @classmethod
-    def from_file_arguments(cls, **arguments) -> "Interpretation":
+    def from_file_data(cls, **arguments) -> "Interpretation":
         name = arguments.pop("type")
         class_to_load = INTERPRETATION_REGISTRY.get(name)
         return class_to_load(**arguments)

@@ -2,7 +2,7 @@ from importlib import import_module
 
 from ..exceptions import InvalidClassPathError, PipelineComponentInitializationError
 
-DECLARATIVE_INIT_METHOD_NAME = "__declarative_init__"
+DECLARATIVE_INIT_METHOD_NAME = "from_file_data"
 
 
 def find_class(class_path):

@@ -26,7 +26,7 @@ FAILING_FILTER_CONFIGURATION = [
 
 @pytest.mark.asyncio
 async def test_match_possibilities_successful():
-    subject = ValuesMatchPossibilitiesFilter.__declarative_init__(
+    subject = ValuesMatchPossibilitiesFilter.from_file_data(
         fields=PASSING_FILTER_CONFIGURATION
     )
     result = await subject.filter_record({})
@@ -35,7 +35,7 @@ async def test_match_possibilities_successful():
 
 @pytest.mark.asyncio
 async def test_match_possibilities_failing():
-    subject = ValuesMatchPossibilitiesFilter.__declarative_init__(
+    subject = ValuesMatchPossibilitiesFilter.from_file_data(
         fields=FAILING_FILTER_CONFIGURATION
     )
     result = await subject.filter_record({})
@@ -44,7 +44,7 @@ async def test_match_possibilities_failing():
 
 @pytest.mark.asyncio
 async def test_exclude_possibilities_successful():
-    subject = ExcludeWhenValuesMatchPossibilities.__declarative_init__(
+    subject = ExcludeWhenValuesMatchPossibilities.from_file_data(
         fields=PASSING_FILTER_CONFIGURATION
     )
     result = await subject.filter_record({})
@@ -53,7 +53,7 @@ async def test_exclude_possibilities_successful():
 
 @pytest.mark.asyncio
 async def test_exclude_possibilities__failing():
-    subject = ExcludeWhenValuesMatchPossibilities.__declarative_init__(
+    subject = ExcludeWhenValuesMatchPossibilities.from_file_data(
         fields=FAILING_FILTER_CONFIGURATION
     )
     result = await subject.filter_record({})

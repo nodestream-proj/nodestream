@@ -27,12 +27,10 @@ class SwitchInterpretation(
     ):
         self.switch_on = ValueProvider.guarantee_value_provider(switch_on)
         self.interpretations = {
-            field_value: Interpretation.from_file_arguments(**interpretation)
+            field_value: Interpretation.from_file_data(**interpretation)
             for field_value, interpretation in cases.items()
         }
-        self.default = (
-            Interpretation.from_file_arguments(**default) if default else None
-        )
+        self.default = Interpretation.from_file_data(**default) if default else None
         self.normalization = normalization or {}
         self.fail_on_unhandled = fail_on_unhandled
 

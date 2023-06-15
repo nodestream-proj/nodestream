@@ -18,8 +18,8 @@ class SimpleClass:
 
 class SimpleClassWithFactories(SimpleClass):
     @classmethod
-    def __declarative_init__(cls, argument: str):
-        return cls(argument=argument, from_factory="__declarative_init__")
+    def from_file_data(cls, argument: str):
+        return cls(argument=argument, from_factory="from_file_data")
 
     @classmethod
     def another_factory(cls, argument: str):
@@ -48,7 +48,7 @@ def test_class_loader_declartive_init(subject):
     )
     assert_that(result.__class__.__name__, equal_to("SimpleClassWithFactories"))
     assert_that(result.argument, equal_to("test"))
-    assert_that(result.from_factory, equal_to("__declarative_init__"))
+    assert_that(result.from_factory, equal_to("from_file_data"))
 
 
 def test_class_loader_another_factory(subject):

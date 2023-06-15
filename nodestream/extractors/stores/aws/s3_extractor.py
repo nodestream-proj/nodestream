@@ -9,7 +9,7 @@ from .credential_utils import AwsClientFactory
 
 class S3Extractor(Extractor):
     @classmethod
-    def __declarative_init__(
+    def from_file_data(
         cls,
         bucket: str,
         prefix: Optional[str] = None,

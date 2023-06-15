@@ -14,14 +14,14 @@ from .record_decomposers import RecordDecomposer
 
 class InterpretationPass(IntrospectiveIngestionComponent, ABC):
     @classmethod
-    def from_file_arguments(self, args):
+    def from_file_data(self, args):
         if args is None:
             return NullInterpretationPass()
 
         if len(args) > 0 and isinstance(args[0], list):
-            return MultiSequenceInterpretationPass.from_file_arguments(args)
+            return MultiSequenceInterpretationPass.from_file_data(args)
 
-        return SingleSequenceInterpretationPass.from_file_arguments(args)
+        return SingleSequenceInterpretationPass.from_file_data(args)
 
     @abstractmethod
     def apply_interpretations(self, context: InterpreterContext):
@@ -42,8 +42,8 @@ class MultiSequenceInterpretationPass(AggregatedIntrospectionMixin, Interpretati
     __slots__ = ("passes",)
 
     @classmethod
-    def from_file_arguments(cls, args):
-        return cls(*(InterpretationPass.from_file_arguments(arg) for arg in args))
+    def from_file_data(cls, args):
+        return cls(*(InterpretationPass.from_file_data(arg) for arg in args))
 
     def __init__(self, *passes: InterpretationPass) -> None:
         self.passes = passes
@@ -64,10 +64,9 @@ class SingleSequenceInterpretationPass(
     __slots__ = ("interpretations",)
 
     @classmethod
-    def from_file_arguments(cls, interpretation_arg_list):
+    def from_file_data(cls, interpretation_arg_list):
         interpretations = (
-            Interpretation.from_file_arguments(**args)
-            for args in interpretation_arg_list
+            Interpretation.from_file_data(**args) for args in interpretation_arg_list
         )
         return cls(*interpretations)
 
@@ -91,12 +90,10 @@ class Interpreter(Step, AggregatedIntrospectionMixin, IntrospectiveIngestionComp
     )
 
     @classmethod
-    def __declarative_init__(
-        cls, interpretations, before_iteration=None, iterate_on=None
-    ):
+    def from_file_data(cls, interpretations, before_iteration=None, iterate_on=None):
         return cls(
-            before_iteration=InterpretationPass.from_file_arguments(before_iteration),
-            interpretations=InterpretationPass.from_file_arguments(interpretations),
+            before_iteration=InterpretationPass.from_file_data(before_iteration),
+            interpretations=InterpretationPass.from_file_data(interpretations),
             decomposer=RecordDecomposer.from_iteration_arguments(iterate_on),
         )
 
