@@ -1,7 +1,7 @@
 from typing import Dict, Iterable, List
 
 from ..exceptions import MissingExpectedPipelineError
-from ..file_io import DescribesYamlSchema
+from ..file_io import LoadsFromYaml, SavesToYaml
 from ..model import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
@@ -10,7 +10,9 @@ from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest
 
 
-class PipelineScope(AggregatedIntrospectiveIngestionComponent, DescribesYamlSchema):
+class PipelineScope(
+    AggregatedIntrospectiveIngestionComponent, LoadsFromYaml, SavesToYaml
+):
     """A `PipelineScope` represents a collection of pipelines subordinate to a project."""
 
     def __init__(self, name: str, pipelines: List[PipelineDefinition]) -> None:

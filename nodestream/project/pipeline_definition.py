@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict
 
-from ..file_io import DescribesYamlSchema
+from ..file_io import SavesToYaml, LoadsFromYaml
 from ..model import IntrospectiveIngestionComponent
 from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
 
@@ -12,7 +12,7 @@ def get_default_name(file_path: Path) -> str:
 
 
 @dataclass
-class PipelineDefinition(IntrospectiveIngestionComponent, DescribesYamlSchema):
+class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFromYaml):
     """A `PipelineDefinition` represents a pipeline that can be loaded from a file."""
 
     name: str

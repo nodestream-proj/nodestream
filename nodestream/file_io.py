@@ -15,7 +15,7 @@ class DescribesYamlSchema(ABC):
 
 
 class LoadsFromYaml(DescribesYamlSchema):
-    """A mixin for classes that can be read from a YAML file."""
+    """A mixin for classes that can be read from YAML."""
 
     @abstractclassmethod
     def from_file_data(cls, data):
@@ -28,6 +28,26 @@ class LoadsFromYaml(DescribesYamlSchema):
             An instance of this class.
         """
         raise NotImplementedError
+
+    @classmethod
+    def validate_and_load(cls, data):
+        """Validate the given data against the YAML schema and load it into an instance of this class.
+
+        Args:
+            data: The data to validate and load.
+
+        Raises:
+            SchemaError: If the data does not match the YAML schema.
+
+        Returns:
+            An instance of this class.
+        """
+        validated_data = cls.describe_yaml_schema().validate(data)
+        return cls.from_file_data(validated_data)
+
+
+class LoadsFromYamlFile(LoadsFromYaml):
+    """A mixin for classes that can be read from a YAML file."""
 
     @classmethod
     def get_loader(cls) -> Type[SafeLoader]:
@@ -56,12 +76,11 @@ class LoadsFromYaml(DescribesYamlSchema):
 
         with file_path.open("r") as f:
             file_data = load(f, Loader=cls.get_loader())
-            validated_file_data = cls.describe_yaml_schema().validate(file_data)
-            return cls.from_file_data(validated_file_data)
+            return cls.validate_and_load(file_data)
 
 
 class SavesToYaml(DescribesYamlSchema):
-    """A mixin for classes that can be written to a YAML file."""
+    """A mixin for classes that can be written to as YAML."""
 
     @abstractmethod
     def to_file_data(self):
@@ -71,6 +90,10 @@ class SavesToYaml(DescribesYamlSchema):
             The data to write to a YAML file.
         """
         raise NotImplementedError
+
+
+class SavesToYamlFile(SavesToYaml):
+    """A mixin for classes that can be written to a YAML file."""
 
     @classmethod
     def get_dumper(cls) -> Type[SafeDumper]:

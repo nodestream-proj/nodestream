@@ -2,7 +2,7 @@ import importlib
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
-from ..file_io import LoadsFromYaml, SavesToYaml
+from ..file_io import LoadsFromYamlFile, SavesToYamlFile
 from ..model import (
     AggregatedIntrospectiveIngestionComponent,
     GraphSchema,
@@ -17,7 +17,9 @@ from .run_request import RunRequest
 T = TypeVar("T", bound=Step)
 
 
-class Project(AggregatedIntrospectiveIngestionComponent, LoadsFromYaml, SavesToYaml):
+class Project(
+    AggregatedIntrospectiveIngestionComponent, LoadsFromYamlFile, SavesToYamlFile
+):
     """A `Project` represents a collection of pipelines."""
 
     @classmethod
