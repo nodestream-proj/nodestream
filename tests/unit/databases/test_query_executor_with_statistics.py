@@ -1,15 +1,15 @@
 import pytest
 
-from nodestream.pipeline.meta import start_context, get_context
 from nodestream.databases.query_executor_with_statistics import (
-    QueryExecutorWithStatistics,
+    FIELD_INDEX_STAT,
+    HOOK_STAT,
+    KEY_INDEX_STAT,
     NODE_STAT,
     RELATIONSHIP_STAT,
-    KEY_INDEX_STAT,
-    FIELD_INDEX_STAT,
     TTL_STAT,
-    HOOK_STAT,
+    QueryExecutorWithStatistics,
 )
+from nodestream.pipeline.meta import get_context, start_context
 
 
 @pytest.fixture
