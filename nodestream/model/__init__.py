@@ -11,7 +11,7 @@ from .ingest_strategy import IngestionStrategy
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
 from .interpreter_context import InterpreterContext, JsonLikeDocument
 from .schema import (
-    AggregatedIntrospectionMixin,
+    AggregatedIntrospectiveIngestionComponent,
     Cardinality,
     GraphObjectShape,
     GraphObjectType,
@@ -52,7 +52,7 @@ __all__ = (
     "PropertyMetadata",
     "PropertyType",
     "IntrospectiveIngestionComponent",
-    "AggregatedIntrospectionMixin",
+    "AggregatedIntrospectiveIngestionComponent",
     "Cardinality",
     "PresentRelationship",
     "RelationshipIdentityShape",

@@ -6,7 +6,7 @@ from yaml import safe_load
 
 from ..exceptions import MissingProjectFileError
 from ..model import (
-    AggregatedIntrospectionMixin,
+    AggregatedIntrospectiveIngestionComponent,
     GraphSchema,
     IntrospectiveIngestionComponent,
 )
@@ -19,7 +19,7 @@ from .run_request import RunRequest
 T = TypeVar("T", bound=Step)
 
 
-class Project(AggregatedIntrospectionMixin, IntrospectiveIngestionComponent):
+class Project(AggregatedIntrospectiveIngestionComponent):
     """A `Project` represents a collection of pipelines."""
 
     @classmethod

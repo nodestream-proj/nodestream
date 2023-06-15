@@ -2,7 +2,10 @@ import asyncio
 from functools import reduce
 from typing import Any, AsyncGenerator, Iterable, List
 
-from ..model import AggregatedIntrospectionMixin, IntrospectiveIngestionComponent
+from ..model import (
+    AggregatedIntrospectiveIngestionComponent,
+    IntrospectiveIngestionComponent,
+)
 from .step import Step
 
 
@@ -11,7 +14,7 @@ async def empty_async_generator():
         yield item
 
 
-class Pipeline(AggregatedIntrospectionMixin, IntrospectiveIngestionComponent):
+class Pipeline(AggregatedIntrospectiveIngestionComponent):
     """A pipeline is a series of steps that are executed in order."""
 
     __slots__ = ("steps",)

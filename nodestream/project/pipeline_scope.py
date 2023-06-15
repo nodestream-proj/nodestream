@@ -1,12 +1,15 @@
 from typing import Dict, Iterable, List
 
 from ..exceptions import MissingExpectedPipelineError
-from ..model import AggregatedIntrospectionMixin, IntrospectiveIngestionComponent
+from ..model import (
+    AggregatedIntrospectiveIngestionComponent,
+    IntrospectiveIngestionComponent,
+)
 from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest
 
 
-class PipelineScope(AggregatedIntrospectionMixin, IntrospectiveIngestionComponent):
+class PipelineScope(AggregatedIntrospectiveIngestionComponent):
     """A `PipelineScope` represents a collection of pipelines subordinate to a project."""
 
     def __init__(self, name: str, pipelines: List[PipelineDefinition]) -> None:

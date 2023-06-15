@@ -343,7 +343,7 @@ class IntrospectiveIngestionComponent(ABC):
     Nearly all components in the transformation part of the ingestion stack (Interpreters, Interpretations, and Pipelines) are
     `IntrospectableIngestionComponent`s. Leaf components like Interpretations provide a relatively local scope as to what it knows
     about the schema. As is the hierarchy grows, more and more data is is combined and aggregated together until an entire schema
-    is produced. For more information on aggregation, see `AggregatedIntrospectionMixin`.
+    is produced. For more information on aggregation, see `AggregatedIntrospectiveIngestionComponent`.
     """
 
     @abstractmethod
@@ -367,7 +367,7 @@ class IntrospectiveIngestionComponent(ABC):
         )
 
 
-class AggregatedIntrospectionMixin(ABC):
+class AggregatedIntrospectiveIngestionComponent(IntrospectiveIngestionComponent):
     """A mixin to provide utilities for `IntrospectableIngestionComponent`s that are aggregations of others.
 
     For many types in our ingestion hierarchy, they are aggregations of subordinate components that each

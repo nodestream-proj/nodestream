@@ -3,7 +3,7 @@ from copy import deepcopy
 from typing import Iterable
 
 from ..model import (
-    AggregatedIntrospectionMixin,
+    AggregatedIntrospectiveIngestionComponent,
     InterpreterContext,
     IntrospectiveIngestionComponent,
 )
@@ -28,7 +28,9 @@ class InterpretationPass(IntrospectiveIngestionComponent, ABC):
         pass
 
 
-class NullInterpretationPass(AggregatedIntrospectionMixin, InterpretationPass):
+class NullInterpretationPass(
+    AggregatedIntrospectiveIngestionComponent, InterpretationPass
+):
     def apply_interpretations(self, context: InterpreterContext):
         yield context
 
@@ -38,7 +40,9 @@ class NullInterpretationPass(AggregatedIntrospectionMixin, InterpretationPass):
         return []
 
 
-class MultiSequenceInterpretationPass(AggregatedIntrospectionMixin, InterpretationPass):
+class MultiSequenceInterpretationPass(
+    AggregatedIntrospectiveIngestionComponent, InterpretationPass
+):
     __slots__ = ("passes",)
 
     @classmethod
@@ -59,7 +63,7 @@ class MultiSequenceInterpretationPass(AggregatedIntrospectionMixin, Interpretati
 
 
 class SingleSequenceInterpretationPass(
-    AggregatedIntrospectionMixin, InterpretationPass
+    AggregatedIntrospectiveIngestionComponent, InterpretationPass
 ):
     __slots__ = ("interpretations",)
 
@@ -82,7 +86,7 @@ class SingleSequenceInterpretationPass(
         yield from self.interpretations
 
 
-class Interpreter(Step, AggregatedIntrospectionMixin, IntrospectiveIngestionComponent):
+class Interpreter(Step, AggregatedIntrospectiveIngestionComponent):
     __slots__ = (
         "before_iteration",
         "interpretations",

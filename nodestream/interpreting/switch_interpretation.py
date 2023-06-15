@@ -1,13 +1,13 @@
 from typing import Any, Dict
 
 from ..exceptions import UnhandledBranchError
-from ..model import AggregatedIntrospectionMixin, InterpreterContext
+from ..model import AggregatedIntrospectiveIngestionComponent, InterpreterContext
 from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .interpretation import Interpretation
 
 
 class SwitchInterpretation(
-    AggregatedIntrospectionMixin, Interpretation, alias="switch"
+    AggregatedIntrospectiveIngestionComponent, Interpretation, alias="switch"
 ):
     __slots__ = (
         "switch_on",
