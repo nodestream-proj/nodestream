@@ -53,8 +53,8 @@ def test_from_file_data_complex_input():
         ),
     ],
 )
-def test_as_file_definition(definition, expected_data):
-    assert_that(definition.as_file_definition(), equal_to(expected_data))
+def test_to_file_data(definition, expected_data):
+    assert_that(definition.to_file_data(), equal_to(expected_data))
     assert_that(
         PipelineDefinition.from_file_data(expected_data, {}), equal_to(definition)
     )
