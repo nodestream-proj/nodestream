@@ -16,7 +16,7 @@ _Fast, Declarative ETL for Graph Databases._
 
 - Flexible and extensible YAML based DSL for ETL jobs
 - Connect to data sources like Kafka, AWS Athena, flat files, and more.
-- Developer friendly features such as snapshot testing
+- Developer friendly
 - Highly optimized with async and tuned query generation
 
 
