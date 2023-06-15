@@ -4,7 +4,7 @@ import pytest
 from hamcrest import assert_that, equal_to, is_, none, same_instance
 
 from nodestream.model import (
-    AggregatedIntrospectionMixin,
+    AggregatedIntrospectiveIngestionComponent,
     Cardinality,
     GraphObjectShape,
     GraphObjectType,
@@ -314,8 +314,8 @@ def test_graph_schema_merge_two_non_empty_schemas():
     assert_that(left.merge(right), equal_to(expected))
 
 
-class DummyAggregatedIntrospectionMixin(
-    AggregatedIntrospectionMixin, IntrospectiveIngestionComponent
+class DummyAggregateIntrospectiveIngestionComponent(
+    AggregatedIntrospectiveIngestionComponent
 ):
     def __init__(self, components) -> None:
         self.components = components
@@ -332,7 +332,7 @@ def test_aggregated_introspection_mixin_gather_object_shapes(
     two = mocker.Mock(IntrospectiveIngestionComponent)
     two.gather_object_shapes.return_value = [uknown_source_node_shape]
 
-    subject = DummyAggregatedIntrospectionMixin([one, two])
+    subject = DummyAggregateIntrospectiveIngestionComponent([one, two])
     assert_that(subject.gather_object_shapes(), equal_to([simple_source_node_shape]))
 
 
@@ -359,7 +359,7 @@ def test_aggregated_introspection_mixin_gather_present_relationships(mocker):
             Cardinality.SINGLE,
         )
     ]
-    subject = DummyAggregatedIntrospectionMixin([one, two])
+    subject = DummyAggregateIntrospectiveIngestionComponent([one, two])
     assert_that(
         subject.gather_present_relationships(),
         equal_to(
