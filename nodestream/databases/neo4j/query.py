@@ -5,7 +5,7 @@ COMMIT_QUERY = """
 CALL apoc.periodic.iterate(
     "UNWIND $batched_parameter_sets as params RETURN params",
     $batched_query,
-    {batchsize: 1000, paralell: false, retries: 3, params: {batched_parameter_sets: $batched_parameter_sets}}
+    {batchsize: 1000, parallel: false, retries: 3, params: {batched_parameter_sets: $batched_parameter_sets}}
 )
 YIELD batches, committedOperations, failedOperations, errorMessages
 RETURN batches, committedOperations, failedOperations, errorMessages
