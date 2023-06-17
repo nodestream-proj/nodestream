@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict
 
-from ..file_io import SavesToYaml, LoadsFromYaml
+from ..file_io import LoadsFromYaml, SavesToYaml
 from ..model import IntrospectiveIngestionComponent
 from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
 
