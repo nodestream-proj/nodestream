@@ -1,5 +1,3 @@
-
-
 class InvalidClassPathError(ValueError):
     """Raised when a class path is invalid."""
 
