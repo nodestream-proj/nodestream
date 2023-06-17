@@ -9,7 +9,6 @@ from ..model import (
     IntrospectiveIngestionComponent,
 )
 from ..pipeline import Step
-from ..utilities import pretty_print_yaml_to_file
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
@@ -70,9 +69,6 @@ class Project(
 
     def add_scope(self, scope: PipelineScope):
         self.scopes_by_name[scope.name] = scope
-
-    def write_to_path(self, path: Path):
-        pretty_print_yaml_to_file(path, self.as_dict())
 
     def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:
         if scope_name is None:
