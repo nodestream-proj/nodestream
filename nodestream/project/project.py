@@ -107,7 +107,9 @@ class Project(
     ) -> Iterable[Tuple[PipelineDefinition, int, T]]:
         for scope in self.scopes_by_name.values():
             for pipeline_definition in scope.pipelines_by_name.values():
-                pipeline_steps = pipeline_definition.intialize_for_introspection().steps
+                pipeline_steps = (
+                    pipeline_definition.initialize_for_introspection().steps
+                )
                 for idx, step in enumerate(pipeline_steps):
                     if isinstance(step, step_type):
                         yield pipeline_definition, idx, step
