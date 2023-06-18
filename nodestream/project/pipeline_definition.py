@@ -51,14 +51,14 @@ class PipelineDefinition(IntrospectiveIngestionComponent):
     def remove_file(self, missing_ok: bool = True):
         self.file_path.unlink(missing_ok=missing_ok)
 
-    def intialize_for_introspection(self) -> Pipeline:
+    def initialize_for_introspection(self) -> Pipeline:
         return self.initialize(PipelineInitializationArguments.for_introspection())
 
     def gather_object_shapes(self):
-        return self.intialize_for_introspection().gather_object_shapes()
+        return self.initialize_for_introspection().gather_object_shapes()
 
     def gather_present_relationships(self):
-        return self.intialize_for_introspection().gather_present_relationships()
+        return self.initialize_for_introspection().gather_present_relationships()
 
     def gather_used_indexes(self):
-        return self.intialize_for_introspection().gather_used_indexes()
+        return self.initialize_for_introspection().gather_used_indexes()
