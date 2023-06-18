@@ -6,5 +6,3 @@ scopes:
     pipelines:
       - test.yaml
       - test2.yaml
-      - path: fifa_2021_player_data.yaml
-        name: fifa
