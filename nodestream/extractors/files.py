@@ -22,7 +22,7 @@ class SupportedFileFormat(ABC):
     @contextmanager
     def read_handle(self) -> StringIO:
         if isinstance(self.file, Path):
-            with open(self.file, "r+") as fp:
+            with open(self.file, "r") as fp:
                 yield fp
         else:
             yield self.file
