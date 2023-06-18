@@ -31,7 +31,7 @@ class NodestreamCommand(Command):
         return DEFAULT_PROJECT_FILE if path is None else Path(path)
 
     def get_project(self) -> Project:
-        return Project.from_file(self.get_project_path())
+        return Project.read_from_file(self.get_project_path())
 
     @property
     def has_json_logging_set(self) -> bool:
