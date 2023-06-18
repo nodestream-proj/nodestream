@@ -26,7 +26,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     @classmethod
     def describe_yaml_schema(cls):
-        from schema import Optional, Or, Schema, And
+        from schema import Optional, Or, Schema
 
         return Schema(
             Or(
