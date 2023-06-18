@@ -1,3 +1,4 @@
+import os.path
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict
@@ -25,14 +26,14 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     @classmethod
     def describe_yaml_schema(cls):
-        from schema import Optional, Or, Schema
+        from schema import Optional, Or, Schema, And
 
         return Schema(
             Or(
                 str,
                 {
                     Optional("name"): str,
-                    "path": str,
+                    "path": os.path.exists,
                     Optional("annotations"): {str: Or(str, int, float, bool)},
                 },
             )
