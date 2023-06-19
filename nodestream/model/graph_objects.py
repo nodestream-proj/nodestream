@@ -2,8 +2,6 @@ from abc import ABC
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
-from pandas import Timestamp
-
 from .match_strategy import MatchStrategy
 
 if TYPE_CHECKING:
@@ -25,6 +23,7 @@ class PropertySet(dict):
 
     @classmethod
     def default_properties(cls) -> "PropertySet":
+        from pandas import Timestamp
         from ..pipeline.meta import get_context
 
         """Returns a default set of properties which set values.

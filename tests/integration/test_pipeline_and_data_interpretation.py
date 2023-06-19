@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from pandas import Timestamp
 
+from nodestream.model import DesiredIngestion
 from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import PipelineDefinition
 
@@ -26,22 +27,26 @@ def drive_definition_to_completion():
     async def _drive_definition_to_completion(definition, **init_kwargs):
         init_args = PipelineInitializationArguments(**init_kwargs)
         pipeline = definition.initialize(init_args)
-        return [r async for r in pipeline.run()]
+        return [r async for r in pipeline.run() if isinstance(r, DesiredIngestion)]
 
     return _drive_definition_to_completion
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-@pytest.mark.parametrize("pipeline_name", [["fifa_2021_player_data.yaml"]])
+@pytest.mark.parametrize("pipeline_name", ["fifa_2021_player_data.yaml"])
 async def test_pipeline_interpretation_snapshot(
-    snapshot, drive_definition_to_completion, pipeline_name
+    snapshot, drive_definition_to_completion, pipeline_name, mocker
 ):
+    from pandas import Timestamp
+
+    mocked_ts = mocker.patch("pandas.Timestamp.utcnow")
+    mocked_ts.return_value = Timestamp("2021-06-18")
     snapshot.snapshot_dir = "tests/integration/snapshots"
     pipeline_file = get_pipeline_fixture_file_by_name(pipeline_name)
     definition = PipelineDefinition.from_path(pipeline_file)
     results_as_json = json.dumps(
-        [asdict(r) for r in drive_definition_to_completion(definition)],
+        [asdict(r) for r in (await drive_definition_to_completion(definition))],
         default=set_default,
         indent=4,
         sort_keys=True,
