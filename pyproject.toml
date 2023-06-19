@@ -59,11 +59,17 @@ pytest-mock = "^3.10.0"
 freezegun = "^1.2.2"
 moto = {version = "^4.1.10", extras = ["s3"]}
 ruff = "^0.0.270"
+pytest-snapshot = "^0.9.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks the test as an integration test (deselect with '-m \"not integration\"')",
+    "e2e: marks the test as an end-to-end test (deselect with '-m \"not e2e\"')",
+]
 
 [tool.poetry.scripts]
 nodestream = 'nodestream.cli:run'
