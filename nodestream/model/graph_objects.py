@@ -24,6 +24,7 @@ class PropertySet(dict):
     @classmethod
     def default_properties(cls) -> "PropertySet":
         from pandas import Timestamp
+
         from ..pipeline.meta import get_context
 
         """Returns a default set of properties which set values.
