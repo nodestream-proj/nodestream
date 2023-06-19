@@ -1,7 +1,9 @@
+import os.path
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict
 
+from ..file_io import LoadsFromYaml, SavesToYaml
 from ..model import IntrospectiveIngestionComponent
 from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
 
@@ -11,12 +13,31 @@ def get_default_name(file_path: Path) -> str:
 
 
 @dataclass
-class PipelineDefinition(IntrospectiveIngestionComponent):
+class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFromYaml):
     """A `PipelineDefinition` represents a pipeline that can be loaded from a file."""
 
     name: str
     file_path: Path
     annotations: Dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_path(cls, file_path: Path):
+        return cls(get_default_name(file_path), file_path)
+
+    @classmethod
+    def describe_yaml_schema(cls):
+        from schema import Optional, Or, Schema
+
+        return Schema(
+            Or(
+                str,
+                {
+                    Optional("name"): str,
+                    "path": os.path.exists,
+                    Optional("annotations"): {str: Or(str, int, float, bool)},
+                },
+            )
+        )
 
     @classmethod
     def from_file_data(cls, data, parent_annotations):
@@ -28,14 +49,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent):
         annotations = data.pop("annotations", {})
         return cls(name, file_path, {**parent_annotations, **annotations})
 
-    def initialize(self, init_args: PipelineInitializationArguments) -> Pipeline:
-        return PipelineFileLoader(self.file_path).load_pipeline(init_args)
-
-    @classmethod
-    def from_path(cls, path: Path):
-        return cls(name=get_default_name(path), file_path=path)
-
-    def as_file_definition(self):
+    def to_file_data(self):
         using_default_name = self.name == self.file_path.stem
         if using_default_name and not self.annotations:
             return str(self.file_path)
@@ -47,6 +61,9 @@ class PipelineDefinition(IntrospectiveIngestionComponent):
             result["annotations"] = self.annotations
 
         return result
+
+    def initialize(self, init_args: PipelineInitializationArguments) -> Pipeline:
+        return PipelineFileLoader(self.file_path).load_pipeline(init_args)
 
     def remove_file(self, missing_ok: bool = True):
         self.file_path.unlink(missing_ok=missing_ok)

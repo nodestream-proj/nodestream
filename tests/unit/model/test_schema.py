@@ -314,7 +314,7 @@ def test_graph_schema_merge_two_non_empty_schemas():
     assert_that(left.merge(right), equal_to(expected))
 
 
-class DummyAggregateIntrospectiveIngestionComponent(
+class DummyAggregatedIntrospectiveIngestionComponent(
     AggregatedIntrospectiveIngestionComponent
 ):
     def __init__(self, components) -> None:
@@ -332,7 +332,7 @@ def test_aggregated_introspection_mixin_gather_object_shapes(
     two = mocker.Mock(IntrospectiveIngestionComponent)
     two.gather_object_shapes.return_value = [uknown_source_node_shape]
 
-    subject = DummyAggregateIntrospectiveIngestionComponent([one, two])
+    subject = DummyAggregatedIntrospectiveIngestionComponent([one, two])
     assert_that(subject.gather_object_shapes(), equal_to([simple_source_node_shape]))
 
 
@@ -359,7 +359,7 @@ def test_aggregated_introspection_mixin_gather_present_relationships(mocker):
             Cardinality.SINGLE,
         )
     ]
-    subject = DummyAggregateIntrospectiveIngestionComponent([one, two])
+    subject = DummyAggregatedIntrospectiveIngestionComponent([one, two])
     assert_that(
         subject.gather_present_relationships(),
         equal_to(

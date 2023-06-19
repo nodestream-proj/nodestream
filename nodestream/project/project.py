@@ -2,16 +2,13 @@ import importlib
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
-from yaml import safe_load
-
-from ..exceptions import MissingProjectFileError
+from ..file_io import LoadsFromYamlFile, SavesToYamlFile
 from ..model import (
     AggregatedIntrospectiveIngestionComponent,
     GraphSchema,
     IntrospectiveIngestionComponent,
 )
 from ..pipeline import Step
-from ..utilities import pretty_print_yaml_to_file
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
@@ -19,16 +16,23 @@ from .run_request import RunRequest
 T = TypeVar("T", bound=Step)
 
 
-class Project(AggregatedIntrospectiveIngestionComponent):
+class Project(
+    AggregatedIntrospectiveIngestionComponent, LoadsFromYamlFile, SavesToYamlFile
+):
     """A `Project` represents a collection of pipelines."""
 
     @classmethod
-    def from_file(cls, path: Path) -> "Project":
-        if not path.exists:
-            raise MissingProjectFileError(path)
+    def describe_yaml_schema(cls):
+        from schema import Optional, Schema
 
-        with open(path) as fp:
-            return cls.from_file_data(safe_load(fp))
+        return Schema(
+            {
+                Optional("scopes"): {
+                    str: PipelineScope.describe_yaml_schema(),
+                },
+                Optional("imports"): [str],
+            }
+        )
 
     @classmethod
     def from_file_data(cls, data) -> "Project":
@@ -39,6 +43,15 @@ class Project(AggregatedIntrospectiveIngestionComponent):
         ]
         imports = data.pop("imports", [])
         return cls(scopes, imports)
+
+    def to_file_data(self):
+        return {
+            "scopes": {
+                scope.name: scope.to_file_data()
+                for scope in self.scopes_by_name.values()
+            },
+            "imports": self.imports,
+        }
 
     def __init__(self, scopes: List[PipelineScope], imports: List[str]):
         self.scopes_by_name: Dict[str, PipelineScope] = {}
@@ -56,9 +69,6 @@ class Project(AggregatedIntrospectiveIngestionComponent):
 
     def add_scope(self, scope: PipelineScope):
         self.scopes_by_name[scope.name] = scope
-
-    def write_to_path(self, path: Path):
-        pretty_print_yaml_to_file(path, self.as_dict())
 
     def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:
         if scope_name is None:
@@ -82,14 +92,6 @@ class Project(AggregatedIntrospectiveIngestionComponent):
                 remove_pipeline_file=remove_pipeline_file,
                 missing_ok=missing_ok,
             )
-
-    def as_dict(self):
-        return {
-            "scopes": {
-                scope.name: scope.as_dict() for scope in self.scopes_by_name.values()
-            },
-            "imports": self.imports,
-        }
 
     def get_schema(self, type_overrides_file: Optional[Path] = None) -> GraphSchema:
         schema = self.generate_graph_schema()

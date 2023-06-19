@@ -1,6 +1,7 @@
 from typing import Dict, Iterable, List
 
 from ..exceptions import MissingExpectedPipelineError
+from ..file_io import LoadsFromYaml, SavesToYaml
 from ..model import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
@@ -9,7 +10,9 @@ from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest
 
 
-class PipelineScope(AggregatedIntrospectiveIngestionComponent):
+class PipelineScope(
+    AggregatedIntrospectiveIngestionComponent, LoadsFromYaml, SavesToYaml
+):
     """A `PipelineScope` represents a collection of pipelines subordinate to a project."""
 
     def __init__(self, name: str, pipelines: List[PipelineDefinition]) -> None:
@@ -27,6 +30,26 @@ class PipelineScope(AggregatedIntrospectiveIngestionComponent):
             for pipeline_data in pipelines_data
         ]
         return cls(scope_name, pipelines)
+
+    @classmethod
+    def describe_yaml_schema(cls):
+        from schema import Optional, Or, Schema
+
+        return Schema(
+            {
+                Optional("pipelines"): [
+                    PipelineDefinition.describe_yaml_schema(),
+                ],
+                Optional("annotations"): {
+                    str: Or(str, int, float, bool),
+                },
+            }
+        )
+
+    def to_file_data(self):
+        return {
+            "pipelines": [ppl.to_file_data() for ppl in self.pipelines_by_name.values()]
+        }
 
     async def run_request(self, run_request: "RunRequest"):
         if (name := run_request.pipeline_name) not in self:
@@ -63,13 +86,6 @@ class PipelineScope(AggregatedIntrospectiveIngestionComponent):
             definition.remove_file(missing_ok=missing_ok)
 
         return True
-
-    def as_dict(self):
-        return {
-            "pipelines": [
-                ppl.as_file_definition() for ppl in self.pipelines_by_name.values()
-            ]
-        }
 
     def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         return self.pipelines_by_name.values()

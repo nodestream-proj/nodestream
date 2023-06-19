@@ -1,6 +1,3 @@
-from pathlib import Path
-
-
 class InvalidClassPathError(ValueError):
     """Raised when a class path is invalid."""
 
@@ -70,13 +67,6 @@ class UnhandledBranchError(ValueError):
         super().__init__(
             f"'{missing_branch_value}' was not matched in switch case", *args
         )
-
-
-class MissingProjectFileError(ValueError):
-    """Raised when a project file is missing."""
-
-    def __init__(self, file: Path, *args: object) -> None:
-        super().__init__(f"'{file}' does not exist", *args)
 
 
 class MissingExpectedPipelineError(ValueError):
