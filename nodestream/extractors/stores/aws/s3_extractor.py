@@ -14,18 +14,21 @@ class S3Extractor(Extractor):
         bucket: str,
         prefix: Optional[str] = None,
         object_format: Optional[str] = None,
+        archive_dir: str = None,
         **aws_client_args,
     ):
         return cls(
             bucket=bucket,
             object_format=object_format,
             prefix=prefix,
+            archive_dir=archive_dir,
             s3_client=AwsClientFactory(**aws_client_args).make_client("s3"),
         )
 
     def __init__(
         self,
         bucket: str,
+        archive_dir: str,
         s3_client,
         object_format: Optional[str] = None,
         prefix: Optional[str] = None,
@@ -33,10 +36,22 @@ class S3Extractor(Extractor):
         self.object_format = object_format
         self.prefix = prefix or ""
         self.bucket = bucket
+        self.archive_dir = archive_dir
         self.s3_client = s3_client
 
     def get_object_as_io(self, key: str) -> StringIO:
         return self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"]
+
+    def archive_s3_object(self, key: str):
+        if self.archive_dir:
+            self.logger.info("Archiving S3 Object", extra=dict(key=key))
+            filename = Path(key).name
+            self.s3_client.copy_object(
+                Bucket=self.bucket,
+                Key=f"{self.archive_dir}/{filename}",
+                CopySource={"Bucket": self.bucket, "Key": key},
+            )
+            self.s3_client.delete_object(Bucket=self.bucket, Key=key)
 
     def infer_object_format(self, key: str) -> str:
         object_format = self.object_format or Path(key).suffix
@@ -55,10 +70,17 @@ class S3Extractor(Extractor):
         paginator = self.s3_client.get_paginator("list_objects_v2")
         page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
         for page in page_iterator:
-            for obj in page["Contents"]:
-                yield obj["Key"]
+            if page["KeyCount"] > 0:
+                for obj in page["Contents"]:
+                    if self.archive_dir is not None:
+                        if obj["Key"].startswith(self.archive_dir):
+                            continue
+                    yield obj["Key"]
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for key in self.find_keys_in_bucket():
             for record in self.get_object_as_file(key).read_file():
-                yield record
+                try:
+                    yield record
+                finally:
+                    self.archive_s3_object(key)
