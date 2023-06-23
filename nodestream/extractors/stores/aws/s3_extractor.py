@@ -1,4 +1,5 @@
 from io import StringIO
+from logging import getLogger
 from pathlib import Path
 from typing import Any, AsyncGenerator, Optional
 
@@ -13,8 +14,8 @@ class S3Extractor(Extractor):
         cls,
         bucket: str,
         prefix: Optional[str] = None,
+        archive_dir: Optional[str] = None,
         object_format: Optional[str] = None,
-        archive_dir: str = None,
         **aws_client_args,
     ):
         return cls(
@@ -28,8 +29,8 @@ class S3Extractor(Extractor):
     def __init__(
         self,
         bucket: str,
-        archive_dir: str,
         s3_client,
+        archive_dir: Optional[str] = None,
         object_format: Optional[str] = None,
         prefix: Optional[str] = None,
     ) -> None:
@@ -38,6 +39,7 @@ class S3Extractor(Extractor):
         self.bucket = bucket
         self.archive_dir = archive_dir
         self.s3_client = s3_client
+        self.logger = getLogger(__name__)
 
     def get_object_as_io(self, key: str) -> StringIO:
         return self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"]
@@ -79,8 +81,8 @@ class S3Extractor(Extractor):
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for key in self.find_keys_in_bucket():
-            for record in self.get_object_as_file(key).read_file():
-                try:
+            try: 
+                for record in self.get_object_as_file(key).read_file():
                     yield record
-                finally:
-                    self.archive_s3_object(key)
+            finally:
+                self.archive_s3_object(key)
