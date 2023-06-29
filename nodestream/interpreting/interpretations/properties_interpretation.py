@@ -1,15 +1,15 @@
 from typing import Any, Dict, Iterable, Optional
 
+from ...pipeline.value_providers import (
+    ProviderContext,
+    StaticValueOrValueProvider,
+    ValueProvider,
+)
 from ...schema.schema import (
     GraphObjectShape,
     GraphObjectType,
     PropertyMetadataSet,
     UnknownTypeMarker,
-)
-from ...pipeline.value_providers import (
-    StaticValueOrValueProvider,
-    ValueProvider,
-    ProviderContext,
 )
 from .interpretation import Interpretation
 

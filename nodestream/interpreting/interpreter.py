@@ -2,12 +2,12 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Iterable
 
+from ..pipeline import Flush, Step
+from ..pipeline.value_providers import ProviderContext
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
 )
-from ..pipeline import Flush, Step
-from ..pipeline.value_providers import ProviderContext
 from .interpretations import Interpretation
 from .record_decomposers import RecordDecomposer
 

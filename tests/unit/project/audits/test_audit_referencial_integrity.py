@@ -1,8 +1,8 @@
 import pytest
 from hamcrest import assert_that, equal_to
 
-from nodestream.project.audits import AuditPrinter, AuditReferentialIntegrity
 from nodestream.interpreting import Interpreter
+from nodestream.project.audits import AuditPrinter, AuditReferentialIntegrity
 from nodestream.schema.indexes import KeyIndex
 
 

@@ -9,16 +9,16 @@ from nodestream.schema.schema import (
     GraphObjectShape,
     GraphObjectType,
     GraphSchema,
+    GraphSchemaOverrides,
     IntrospectiveIngestionComponent,
     KnownTypeMarker,
     PresentRelationship,
     PropertyMetadata,
     PropertyMetadataSet,
-    PropertyType,
-    UnknownTypeMarker,
-    GraphSchemaOverrides,
     PropertyOverride,
     PropertyOverrides,
+    PropertyType,
+    UnknownTypeMarker,
 )
 
 

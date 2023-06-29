@@ -1,17 +1,17 @@
 from typing import Any, Dict, Iterable, List, Optional, Union
 
+from ...pipeline.normalizers import LowercaseStrings
+from ...pipeline.value_providers import (
+    ProviderContext,
+    StaticValueOrValueProvider,
+    ValueProvider,
+)
 from ...schema.indexes import FieldIndex, KeyIndex
 from ...schema.schema import (
     GraphObjectShape,
     GraphObjectType,
     KnownTypeMarker,
     PropertyMetadataSet,
-)
-from ...pipeline.normalizers import LowercaseStrings
-from ...pipeline.value_providers import (
-    StaticValueOrValueProvider,
-    ValueProvider,
-    ProviderContext,
 )
 from .interpretation import Interpretation
 

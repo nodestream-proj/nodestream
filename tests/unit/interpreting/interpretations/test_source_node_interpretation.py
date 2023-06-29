@@ -1,13 +1,13 @@
 from hamcrest import assert_that, equal_to, has_entries, has_length
 
 from nodestream.interpreting.interpretations import SourceNodeInterpretation
+from nodestream.schema.indexes import FieldIndex, KeyIndex
 from nodestream.schema.schema import (
     GraphObjectShape,
     GraphObjectType,
     KnownTypeMarker,
     PropertyMetadataSet,
 )
-from nodestream.schema.indexes import KeyIndex, FieldIndex
 
 from ...stubs import StubbedValueProvider
 

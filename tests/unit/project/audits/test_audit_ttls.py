@@ -1,8 +1,8 @@
 import pytest
 from hamcrest import assert_that, equal_to
 
-from nodestream.project.audits import AuditPrinter, TTLAudit
 from nodestream.model import TimeToLiveConfiguration
+from nodestream.project.audits import AuditPrinter, TTLAudit
 from nodestream.schema.schema import (
     GraphObjectShape,
     GraphObjectType,

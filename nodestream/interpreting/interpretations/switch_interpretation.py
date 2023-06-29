@@ -1,11 +1,11 @@
 from typing import Any, Dict
 
-from ...schema.schema import AggregatedIntrospectiveIngestionComponent
 from ...pipeline.value_providers import (
+    ProviderContext,
     StaticValueOrValueProvider,
     ValueProvider,
-    ProviderContext,
 )
+from ...schema.schema import AggregatedIntrospectiveIngestionComponent
 from .interpretation import Interpretation
 
 

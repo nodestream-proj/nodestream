@@ -1,6 +1,5 @@
 from pathlib import Path
-from typing import Iterable
-from typing import Any
+from typing import Any, Iterable
 
 import yaml
 

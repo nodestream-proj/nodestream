@@ -2,6 +2,12 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, Optional, Tuple
 
 from ...model import MatchStrategy, Node, PropertySet, Relationship
+from ...pipeline.normalizers import LowercaseStrings
+from ...pipeline.value_providers import (
+    ProviderContext,
+    StaticValueOrValueProvider,
+    ValueProvider,
+)
 from ...schema.indexes import FieldIndex, KeyIndex
 from ...schema.schema import (
     Cardinality,
@@ -11,12 +17,6 @@ from ...schema.schema import (
     PresentRelationship,
     PropertyMetadataSet,
     UnknownTypeMarker,
-)
-from ...pipeline.normalizers import LowercaseStrings
-from ...pipeline.value_providers import (
-    StaticValueOrValueProvider,
-    ValueProvider,
-    ProviderContext,
 )
 from ..record_decomposers import RecordDecomposer
 from .interpretation import Interpretation

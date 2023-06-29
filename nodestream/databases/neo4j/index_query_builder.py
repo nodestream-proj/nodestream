@@ -1,5 +1,5 @@
-from ...schema.schema import GraphObjectType
 from ...schema.indexes import FieldIndex, KeyIndex
+from ...schema.schema import GraphObjectType
 from .query import Query
 
 KEY_INDEX_QUERY_FORMAT = "CREATE CONSTRAINT {constraint_name} IF NOT EXISTS FOR (n:`{type}`) REQUIRE ({key_pattern}) IS UNIQUE"

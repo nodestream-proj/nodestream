@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any, Dict
 
 from .desired_ingestion import DesiredIngestion, RelationshipWithNodes
 from .graph_objects import (
@@ -8,9 +8,8 @@ from .graph_objects import (
     Relationship,
     RelationshipIdentityShape,
 )
-from .match_strategy import MatchStrategy
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
-
+from .match_strategy import MatchStrategy
 from .ttl import TimeToLiveConfiguration
 
 JsonLikeDocument = Dict[str, Any]

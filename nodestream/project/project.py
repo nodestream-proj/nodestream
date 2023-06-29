@@ -3,12 +3,12 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from ..file_io import LoadsFromYamlFile, SavesToYamlFile
+from ..pipeline import Step
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     GraphSchema,
     IntrospectiveIngestionComponent,
 )
-from ..pipeline import Step
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest

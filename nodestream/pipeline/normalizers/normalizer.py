@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from functools import cache
 from typing import Any
 
-from ...subclass_registry import SubclassRegistry, MissingFromRegistryError
+from ...subclass_registry import MissingFromRegistryError, SubclassRegistry
 
 NORMALIZER_REGISTRY = SubclassRegistry()
 

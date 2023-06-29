@@ -1,7 +1,7 @@
 import asyncio
 from dataclasses import asdict, dataclass, field
 from logging import getLogger
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from .graph_objects import Node, Relationship, RelationshipWithNodes
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest

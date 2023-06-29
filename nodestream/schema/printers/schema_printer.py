@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from ..schema import GraphSchema
 from ...subclass_registry import SubclassRegistry
+from ..schema import GraphSchema
 
 SCHEMA_PRINTER_SUBCLASS_REGISTRY = SubclassRegistry()
 

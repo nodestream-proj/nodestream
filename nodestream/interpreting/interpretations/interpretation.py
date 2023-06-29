@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from ...schema.schema import IntrospectiveIngestionComponent
 from ...pipeline.value_providers import ProviderContext
+from ...schema.schema import IntrospectiveIngestionComponent
 from ...subclass_registry import SubclassRegistry
 
 INTERPRETATION_REGISTRY = SubclassRegistry()

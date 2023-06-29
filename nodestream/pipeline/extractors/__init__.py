@@ -1,6 +1,6 @@
 from .extractor import Extractor
-from .iterable import IterableExtractor
 from .files import FileExtractor
+from .iterable import IterableExtractor
 from .ttls import TimeToLiveConfigurationExtractor
 
 __all__ = (

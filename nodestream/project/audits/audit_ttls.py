@@ -2,9 +2,7 @@ from itertools import chain
 from typing import List
 
 from ...model import TimeToLiveConfiguration
-from ...pipeline.extractors.ttls import (
-    TimeToLiveConfigurationExtractor,
-)
+from ...pipeline.extractors.ttls import TimeToLiveConfigurationExtractor
 from ..project import Project
 from .audit import Audit
 

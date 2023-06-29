@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any, AsyncGenerator, Iterable, Union
 
 from ...model import JsonLikeDocument
-from .extractor import Extractor
 from ...subclass_registry import SubclassRegistry
+from .extractor import Extractor
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 

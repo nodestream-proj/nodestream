@@ -2,8 +2,8 @@ import pytest
 
 from nodestream.databases.neo4j import Neo4jQueryExecutor
 from nodestream.databases.neo4j.query import Query, QueryBatch
-from nodestream.schema.schema import GraphObjectType
 from nodestream.model import TimeToLiveConfiguration
+from nodestream.schema.schema import GraphObjectType
 
 
 @pytest.fixture

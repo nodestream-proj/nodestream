@@ -18,8 +18,8 @@ from nodestream.interpreting.record_decomposers import (
 )
 from nodestream.model import DesiredIngestion
 from nodestream.pipeline import IterableExtractor
-from nodestream.pipeline.value_providers import ProviderContext
 from nodestream.pipeline.pipeline import empty_async_generator
+from nodestream.pipeline.value_providers import ProviderContext
 
 
 @pytest.fixture

@@ -3,7 +3,6 @@ from typing import Optional
 import pytest
 from hamcrest import assert_that, equal_to, none
 
-
 from nodestream.pipeline.class_loader import (
     ClassLoader,
     InvalidClassPathError,

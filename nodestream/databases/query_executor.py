@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Iterable
 
-from ..schema.indexes import FieldIndex, KeyIndex
 from ..model import (
     IngestionHook,
     MatchStrategy,
@@ -12,6 +11,7 @@ from ..model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
+from ..schema.indexes import FieldIndex, KeyIndex
 from ..subclass_registry import SubclassRegistry
 
 QUERY_EXECUTOR_SUBCLASS_REGISTRY = SubclassRegistry()

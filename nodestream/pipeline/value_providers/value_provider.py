@@ -3,9 +3,9 @@ from typing import Any, Dict, Iterable, Type, Union
 
 from yaml import SafeLoader
 
-from .context import ProviderContext
-from ..normalizers import Normalizer
 from ...subclass_registry import SubclassRegistry
+from ..normalizers import Normalizer
+from .context import ProviderContext
 
 StaticValueOrValueProvider = Union[Any, "ValueProvider"]
 

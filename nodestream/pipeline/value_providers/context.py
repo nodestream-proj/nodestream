@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict
 
-from ...model import DesiredIngestion, PropertySet, JsonLikeDocument
+from ...model import DesiredIngestion, JsonLikeDocument, PropertySet
 
 
 @dataclass(slots=True)

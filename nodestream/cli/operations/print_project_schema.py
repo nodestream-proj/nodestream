@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import Optional
 
 from ...project import Project
-from ..commands.nodestream_command import NodestreamCommand
 from ...schema.printers import SCHEMA_PRINTER_SUBCLASS_REGISTRY
+from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 
 

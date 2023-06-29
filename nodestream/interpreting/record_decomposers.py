@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Iterable, Optional
 
-from ..pipeline.value_providers import ValueProvider, ProviderContext
+from ..pipeline.value_providers import ProviderContext, ValueProvider
 
 
 class RecordDecomposer(ABC):

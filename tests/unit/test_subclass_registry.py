@@ -2,9 +2,9 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.subclass_registry import (
-    SubclassRegistry,
     AlreadyInRegistryError,
     MissingFromRegistryError,
+    SubclassRegistry,
 )
 
 TEST_REGISTRY = SubclassRegistry()

@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 from .schema import GraphObjectType
 
-
 if TYPE_CHECKING:
     from ..databases.ingest_strategy import IngestionStrategy
 

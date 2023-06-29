@@ -1,9 +1,9 @@
 from typing import Any, Dict, Optional
 
 from ...pipeline.value_providers import (
+    ProviderContext,
     StaticValueOrValueProvider,
     ValueProvider,
-    ProviderContext,
 )
 from .interpretation import Interpretation
 

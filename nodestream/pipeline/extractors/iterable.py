@@ -1,4 +1,4 @@
-from typing import Iterable, Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Iterable
 
 from .extractor import Extractor
 

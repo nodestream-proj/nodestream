@@ -12,9 +12,9 @@ class InvalidPipelineDefinitionError(ValueError):
 
 
 from .argument_resolvers import ARGUMENT_RESOLVER_REGISTRY
-from .value_providers import VALUE_PROVIDER_REGISTRY
 from .class_loader import ClassLoader
 from .pipeline import Pipeline
+from .value_providers import VALUE_PROVIDER_REGISTRY
 
 
 class PipelineFileSafeLoader(SafeLoader):

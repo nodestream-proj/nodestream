@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any, Dict
 
 from ..file_io import LoadsFromYaml, SavesToYaml
-from ..schema.schema import IntrospectiveIngestionComponent
 from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
+from ..schema.schema import IntrospectiveIngestionComponent
 
 
 def get_default_name(file_path: Path) -> str:

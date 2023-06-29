@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from typing import Any, AsyncGenerator, Dict, Iterable, Optional
 
-from .value_providers import StaticValueOrValueProvider, ValueProvider, ProviderContext
 from .flush import Flush
 from .step import Step
+from .value_providers import ProviderContext, StaticValueOrValueProvider, ValueProvider
 
 
 class Filter(Step):

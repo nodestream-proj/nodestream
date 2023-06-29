@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 from .match_strategy import MatchStrategy
 
 if TYPE_CHECKING:
-    from ..interpreting.value_providers import ValueProvider
     from ..interpreting.context import ProviderContext
+    from ..interpreting.value_providers import ValueProvider
 
 
 class DeduplicatableObject(ABC):

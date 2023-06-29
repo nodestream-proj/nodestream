@@ -5,9 +5,9 @@ from ..subclass_registry import SubclassRegistry
 
 if TYPE_CHECKING:
     from ..model import (
-        RelationshipWithNodes,
-        Node,
         IngestionHookRunRequest,
+        Node,
+        RelationshipWithNodes,
         TimeToLiveConfiguration,
     )
     from ..schema.indexes import FieldIndex, KeyIndex

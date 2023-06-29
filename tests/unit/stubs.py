@@ -1,6 +1,6 @@
 from typing import Any, Iterable
 
-from nodestream.pipeline.value_providers import ValueProvider, ProviderContext
+from nodestream.pipeline.value_providers import ProviderContext, ValueProvider
 
 
 class StubbedValueProvider(ValueProvider):

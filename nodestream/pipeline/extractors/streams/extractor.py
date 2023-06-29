@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 from typing import Any, Iterable
 
 from ....model import JsonLikeDocument
+from ....subclass_registry import SubclassRegistry
 from ...flush import Flush
 from ..extractor import Extractor
-from ....subclass_registry import SubclassRegistry
 
 STREAM_CONNECTOR_SUBCLASS_REGISTRY = SubclassRegistry()
 STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY = SubclassRegistry()

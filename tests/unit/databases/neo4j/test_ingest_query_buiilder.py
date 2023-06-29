@@ -10,7 +10,6 @@ from nodestream.databases.query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
 )
-from nodestream.schema.schema import GraphObjectType
 from nodestream.model import (
     MatchStrategy,
     Node,
@@ -18,6 +17,7 @@ from nodestream.model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
+from nodestream.schema.schema import GraphObjectType
 
 
 @pytest.fixture
