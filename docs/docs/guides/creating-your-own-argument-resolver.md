@@ -13,7 +13,7 @@ from typing import Any
 
 import boto3
 
-from nodestream.argument_resolvers import ArgumentResolver
+from nodestream.pipeline.argument_resolvers import ArgumentResolver
 
 
 class EnvironmentResolver(ArgumentResolver):

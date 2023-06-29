@@ -15,8 +15,7 @@ class HashValueProvider(ValueProvider):
 
 
 ```python
-from nodestream.model import ProviderContext
-from nodestream.pipeline.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider, ProviderContext
 
 class HashValueProvider(ValueProvider):
     def single_value(self, context: ProviderContext) -> Any:
@@ -31,8 +30,7 @@ class HashValueProvider(ValueProvider):
 ```python
 from typing import Any, Iterable
 
-from nodestream.model import ProviderContext
-from nodestream.pipeline.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider, ProviderContext
 from some_hashing_library import hash_value
 
 

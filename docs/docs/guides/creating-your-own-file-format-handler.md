@@ -13,7 +13,7 @@ import yaml
 from io import StringIO
 from typing import Iterable
 
-from nodestream.extractor.files import SupportedFileFormat
+from nodestream.extractors.files import SupportedFileFormat
 
 class YamlFileFormat(SupportedFileFormat, alias=".yaml"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[dict]:

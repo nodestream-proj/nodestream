@@ -8,7 +8,7 @@ PROJECT_MODULES_TO_CREATE = [
     {"module_name": "__init__"},
     {
         "module_name": "argument_resolvers",
-        "import_statement": "from nodestream.argument_resolvers import ArgumentResolver",
+        "import_statement": "from nodestream.pipeline.argument_resolvers import ArgumentResolver",
         "guide_reference": "# See: https://nodestream-proj.github.io/nodestream/extending-nodestream/creating-your-own-argument-resolver",
     },
     {
