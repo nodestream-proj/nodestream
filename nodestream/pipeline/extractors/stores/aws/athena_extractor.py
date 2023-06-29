@@ -3,7 +3,7 @@ from decimal import Decimal
 from logging import getLogger
 from typing import Any, AsyncGenerator
 
-from ....pipeline import Extractor
+from ...extractor import Extractor
 from .credential_utils import AwsClientFactory
 
 ATHENA_STATE_RUNNING = "RUNNING"

@@ -2,7 +2,7 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline.transformers import ValueProjection
-from nodestream.interpreting.value_providers import JmespathValueProvider
+from nodestream.pipeline.value_providers import JmespathValueProvider
 
 
 @pytest.mark.asyncio

@@ -3,12 +3,10 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.databases import DebouncedIngestStrategy
 from nodestream.databases.query_executor import OperationOnNodeIdentity
+from nodestream.schema.schema import GraphObjectShape, GraphObjectType
+from nodestream.schema.indexes import FieldIndex, KeyIndex
 from nodestream.model import (
-    FieldIndex,
-    GraphObjectShape,
-    GraphObjectType,
     IngestionHookRunRequest,
-    KeyIndex,
     MatchStrategy,
     Node,
     NodeIdentityShape,

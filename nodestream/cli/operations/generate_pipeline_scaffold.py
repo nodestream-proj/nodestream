@@ -4,7 +4,7 @@ from typing import Any
 
 import yaml
 
-from ...interpreting.value_providers import JmespathValueProvider
+from ...pipeline.value_providers import JmespathValueProvider
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 

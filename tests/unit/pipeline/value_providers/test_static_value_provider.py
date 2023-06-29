@@ -1,6 +1,6 @@
 from hamcrest import assert_that, equal_to
 
-from nodestream.value_providers import StaticValueProvider
+from nodestream.pipeline.value_providers import StaticValueProvider
 
 
 def test_single_value(blank_context):

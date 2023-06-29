@@ -4,9 +4,7 @@ from logging import getLogger
 
 from ..schema.indexes import FieldIndex, KeyIndex
 from ..model import (
-    FieldIndex,
     IngestionHookRunRequest,
-    KeyIndex,
     MatchStrategy,
     Node,
     RelationshipWithNodes,

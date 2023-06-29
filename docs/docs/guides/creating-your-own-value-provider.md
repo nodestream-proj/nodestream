@@ -6,7 +6,7 @@ providing values you can create your own subclass of `ValueProvider`.
 
 
 ```python
-from nodestream.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider
 
 class HashValueProvider(ValueProvider):
     pass
@@ -16,7 +16,7 @@ class HashValueProvider(ValueProvider):
 
 ```python
 from nodestream.model import ProviderContext
-from nodestream.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider
 
 class HashValueProvider(ValueProvider):
     def single_value(self, context: ProviderContext) -> Any:
@@ -32,7 +32,7 @@ class HashValueProvider(ValueProvider):
 from typing import Any, Iterable
 
 from nodestream.model import ProviderContext
-from nodestream.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider
 from some_hashing_library import hash_value
 
 

@@ -11,7 +11,7 @@ def connector():
 
 @pytest.mark.asyncio
 async def test_connect(connector, mocker):
-    mocker.patch("nodestream.extractors.streams.kafka.AIOKafkaConsumer.start")
+    mocker.patch("nodestream.pipeline.extractors.streams.kafka.AIOKafkaConsumer.start")
 
     await connector.connect()
     assert_that(connector.consumer, not_(equal_to(None)))

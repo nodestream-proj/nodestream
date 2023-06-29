@@ -30,7 +30,7 @@ Given that, let's consider our `MemoizeNegativeProperty` class. That implies tha
 
 ```python
 from nodestream.interpreting import Interpretation
-from nodestream.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider
 
 class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
     def __init__(self, positive_name: str, negative_name, value: ValueProvider):
@@ -46,7 +46,7 @@ A working implementation of `MemoizeNegativeProperty` could look like this:
 
 ```python
 from nodestream.interpreting import Interpretation
-from nodestream.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider
 
 class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
     # __init__ omitted

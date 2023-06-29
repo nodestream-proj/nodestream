@@ -5,8 +5,8 @@ from typing import Iterable
 
 from cymple.builder import NodeAfterMergeAvailable, NodeAvailable, QueryBuilder
 
+from ...schema.schema import GraphObjectType
 from ...model import (
-    GraphObjectType,
     MatchStrategy,
     Node,
     Relationship,

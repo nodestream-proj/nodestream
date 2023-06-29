@@ -7,7 +7,7 @@ If you want to connect to a different stream source, you can create a new `Strea
 For example, the following `StreamConnector` subclass polls data from a file (as a trivial example):
 
 ```python
-from nodestream.extractors.streams import StreamConnector
+from nodestream.pipeline.extractors.streams import StreamConnector
 
 class FileConnector(StreamConnector, alias="file"):
     def __init__(self, file_path):
@@ -28,7 +28,7 @@ If your stream data comes in a different format, you can create a new `RecordFor
 For example, the following `RecordFormat` subclass parses data as yaml:
 
 ```python
-from nodestream.extractors.streams import RecordFormat
+from nodestream.pipeline.extractors.streams import RecordFormat
 
 class YamlFormat(RecordFormat, alias="yaml"):
     def parse(self, data):

@@ -2,7 +2,7 @@ from io import StringIO
 from pathlib import Path
 from typing import Any, AsyncGenerator, Optional
 
-from ....pipeline import Extractor
+from ...extractor import Extractor
 from ...files import SupportedFileFormat
 from .credential_utils import AwsClientFactory
 

@@ -3,10 +3,9 @@ from typing import Iterable
 
 from neo4j import AsyncDriver, AsyncGraphDatabase
 
+from ...schema.indexes import FieldIndex, KeyIndex
 from ...model import (
-    FieldIndex,
     IngestionHook,
-    KeyIndex,
     Node,
     RelationshipWithNodes,
     TimeToLiveConfiguration,

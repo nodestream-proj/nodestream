@@ -21,7 +21,9 @@ from hamcrest import assert_that, equal_to, has_items
     ],
 )
 def test_athena_row_converter(target_row_type, input_value, expected_value):
-    from nodestream.extractors.stores.aws.athena_extractor import AthenaRowConverter
+    from nodestream.pipeline.extractors.stores.aws.athena_extractor import (
+        AthenaRowConverter,
+    )
 
     metadata = {"Name": "test", "Type": target_row_type}
     always_the_same_metadata = {"Name": "some_static_value", "Type": "string"}
@@ -42,7 +44,9 @@ def test_athena_row_converter(target_row_type, input_value, expected_value):
 
 @pytest.fixture
 def athena_extractor(mocker):
-    from nodestream.extractors.stores.aws.athena_extractor import AthenaExtractor
+    from nodestream.pipeline.extractors.stores.aws.athena_extractor import (
+        AthenaExtractor,
+    )
 
     return AthenaExtractor(
         query="select * from some_table",

@@ -1,8 +1,8 @@
 from hamcrest import assert_that, equal_to
 
-from nodestream.value_providers import StringFormattingValueProvider
+from nodestream.pipeline.value_providers import StringFormattingValueProvider
 
-from ..stubs import StubbedValueProvider
+from ...stubs import StubbedValueProvider
 
 
 def test_string_format(blank_context):

@@ -2,10 +2,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Iterable
 
+from ..schema.indexes import FieldIndex, KeyIndex
 from ..model import (
-    FieldIndex,
     IngestionHook,
-    KeyIndex,
     MatchStrategy,
     Node,
     NodeIdentityShape,

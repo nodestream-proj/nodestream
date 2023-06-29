@@ -1,9 +1,9 @@
 import pytest
 from hamcrest import assert_that, equal_to, none
 
-from nodestream.value_providers import MappingValueProvider
+from nodestream.pipeline.value_providers import MappingValueProvider
 
-from ..stubs import StubbedValueProvider
+from ...stubs import StubbedValueProvider
 
 MAPPINGS = {"MAP_A": {"static": "hello", "dynamic": StubbedValueProvider(["world"])}}
 

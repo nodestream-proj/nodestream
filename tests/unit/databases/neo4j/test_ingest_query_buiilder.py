@@ -10,8 +10,8 @@ from nodestream.databases.query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
 )
+from nodestream.schema.schema import GraphObjectType
 from nodestream.model import (
-    GraphObjectType,
     MatchStrategy,
     Node,
     Relationship,

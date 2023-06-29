@@ -1,9 +1,8 @@
 from typing import Iterable
 
+from ..schema.indexes import FieldIndex, KeyIndex
 from ..model import (
-    FieldIndex,
     IngestionHook,
-    KeyIndex,
     Node,
     RelationshipWithNodes,
     TimeToLiveConfiguration,

@@ -6,34 +6,44 @@ from hamcrest import assert_that, equal_to, has_key, instance_of, not_
 
 @pytest.fixture
 def client_with_role():
-    from nodestream.extractors.stores.aws.credential_utils import AwsClientFactory
+    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+        AwsClientFactory,
+    )
 
     return AwsClientFactory(assume_role_arn="arn:aws:iam::123456789012:role/test")
 
 
 @pytest.fixture
 def client_without_role():
-    from nodestream.extractors.stores.aws.credential_utils import AwsClientFactory
+    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+        AwsClientFactory,
+    )
 
     return AwsClientFactory()
 
 
 def test_init_extra_args_profile():
-    from nodestream.extractors.stores.aws.credential_utils import AwsClientFactory
+    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+        AwsClientFactory,
+    )
 
     extra_args = AwsClientFactory._init_session_args(profile_name="test")
     assert_that(extra_args, has_key("profile_name"))
 
 
 def test_init_extra_args_empty_profile():
-    from nodestream.extractors.stores.aws.credential_utils import AwsClientFactory
+    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+        AwsClientFactory,
+    )
 
     extra_args = AwsClientFactory._init_session_args(profile_name="")
     assert_that(extra_args, not_(has_key("profile_name")))
 
 
 def test_init_extra_args_no_profile():
-    from nodestream.extractors.stores.aws.credential_utils import AwsClientFactory
+    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+        AwsClientFactory,
+    )
 
     extra_args = AwsClientFactory._init_session_args()
     assert_that(extra_args, not_(has_key("profile_name")))
@@ -41,7 +51,7 @@ def test_init_extra_args_no_profile():
 
 def test_assume_role_and_get_credentials(mocker, client_with_role):
     mock_sts_client = mocker.patch(
-        "nodestream.extractors.stores.aws.credential_utils.boto3.client"
+        "nodestream.pipeline.extractors.stores.aws.credential_utils.boto3.client"
     )
     mock_sts_client.return_value.assume_role.return_value = {
         "Credentials": {

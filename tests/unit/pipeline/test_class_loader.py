@@ -3,11 +3,12 @@ from typing import Optional
 import pytest
 from hamcrest import assert_that, equal_to, none
 
-from nodestream.exceptions import (
+
+from nodestream.pipeline.class_loader import (
+    ClassLoader,
     InvalidClassPathError,
     PipelineComponentInitializationError,
 )
-from nodestream.pipeline import ClassLoader
 
 
 class SimpleClass:
