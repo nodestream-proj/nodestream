@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from hamcrest import assert_that, equal_to, has_length, same_instance
 
-from nodestream.model import GraphSchema
+from nodestream.schema.schema import GraphSchema
 from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import (
     PipelineDefinition,

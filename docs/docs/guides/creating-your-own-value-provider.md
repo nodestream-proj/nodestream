@@ -15,14 +15,14 @@ class HashValueProvider(ValueProvider):
 
 
 ```python
-from nodestream.model import InterpreterContext
+from nodestream.model import ProviderContext
 from nodestream.value_providers import ValueProvider
 
 class HashValueProvider(ValueProvider):
-    def single_value(self, context: InterpreterContext) -> Any:
+    def single_value(self, context: ProviderContext) -> Any:
         ...
 
-    def many_values(self, context: InterpreterContext) -> Iterable[Any]:
+    def many_values(self, context: ProviderContext) -> Iterable[Any]:
         ....
 ```
 
@@ -31,7 +31,7 @@ class HashValueProvider(ValueProvider):
 ```python
 from typing import Any, Iterable
 
-from nodestream.model import InterpreterContext
+from nodestream.model import ProviderContext
 from nodestream.value_providers import ValueProvider
 from some_hashing_library import hash_value
 
@@ -40,10 +40,10 @@ class HashValueProvider(ValueProvider):
     def __init__(self, value_provider_to_hash: ValueProvider):
         self.value_provider_to_hash = value_provider_to_hash
 
-    def single_value(self, context: InterpreterContext) -> Any:
+    def single_value(self, context: ProviderContext) -> Any:
         return hash_value(self.value_provider_to_hash.single_value(context))
 
-    def many_values(self, context: InterpreterContext) -> Iterable[Any]:
+    def many_values(self, context: ProviderContext) -> Iterable[Any]:
         for value in self.value_provider_to_hash.many_values(context):
             yield hash_value(value)
 ```
@@ -91,7 +91,7 @@ some:
   place:
     in:
       the:
-        pipeline: !hash 
+        pipeline: !hash
             hash_value: !variable foo
 ```
 

@@ -2,7 +2,7 @@ import asyncio
 from functools import reduce
 from typing import Any, AsyncGenerator, Iterable, List
 
-from ..model import (
+from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
 )

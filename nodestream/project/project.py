@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from ..file_io import LoadsFromYamlFile, SavesToYamlFile
-from ..model import (
+from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     GraphSchema,
     IntrospectiveIngestionComponent,

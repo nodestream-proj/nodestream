@@ -1,6 +1,6 @@
 from typing import Type
 
-from ...audits import Audit
+from ...project.audits import Audit
 from ..operations import InitializeProject, RunAudit
 from .nodestream_command import NodestreamCommand
 from .shared_options import PROJECT_FILE_OPTION

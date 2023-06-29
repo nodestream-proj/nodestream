@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 from .match_strategy import MatchStrategy
 
 if TYPE_CHECKING:
-    from ..value_providers.value_provider import ValueProvider
-    from .interpreter_context import InterpreterContext
+    from ..interpreting.value_providers import ValueProvider
+    from ..interpreting.context import ProviderContext
 
 
 class DeduplicatableObject(ABC):
@@ -48,7 +48,7 @@ class PropertySet(dict):
 
     def apply_providers(
         self,
-        context: "InterpreterContext",
+        context: "ProviderContext",
         provider_map: "Dict[str, ValueProvider]",
         **norm_args,
     ):

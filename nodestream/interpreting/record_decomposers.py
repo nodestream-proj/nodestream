@@ -2,17 +2,14 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Iterable, Optional
 
-from ..model import InterpreterContext
-from ..value_providers import ValueProvider
+from ..pipeline.value_providers import ValueProvider, ProviderContext
 
 
 class RecordDecomposer(ABC):
     """A RecordDecomposer is responsible for looking at a record to decomposing it to sub-records to look at"""
 
     @abstractmethod
-    def decompose_record(
-        self, context: InterpreterContext
-    ) -> Iterable[InterpreterContext]:
+    def decompose_record(self, context: ProviderContext) -> Iterable[ProviderContext]:
         raise NotImplementedError
 
     @classmethod
@@ -24,31 +21,27 @@ class RecordDecomposer(ABC):
 
 
 class WholeRecordDecomposer(RecordDecomposer):
-    """Simply returns the original `InterpreterContext`.
+    """Simply returns the original `ProviderContext`.
 
-    `decompose_record` will take the supplied `InterpreterContext` and return it as the only
+    `decompose_record` will take the supplied `ProviderContext` and return it as the only
     decomposed record in the set.
     """
 
-    def decompose_record(
-        self, context: InterpreterContext
-    ) -> Iterable[InterpreterContext]:
+    def decompose_record(self, context: ProviderContext) -> Iterable[ProviderContext]:
         yield context
 
 
 class ValueProviderDecomposer(RecordDecomposer):
     """Iterates on the values provided from a value provider from the root context.
 
-    `decompose_record` will take the supplied `InterpreterContext` and deep copy it for each
+    `decompose_record` will take the supplied `ProviderContext` and deep copy it for each
     provided value from the value provider when called on the supplied context.
     """
 
     def __init__(self, value_provider: ValueProvider) -> None:
         self.value_provider = value_provider
 
-    def decompose_record(
-        self, context: InterpreterContext
-    ) -> Iterable[InterpreterContext]:
+    def decompose_record(self, context: ProviderContext) -> Iterable[ProviderContext]:
         for sub_document in self.value_provider.many_values(context):
             sub_context = deepcopy(context)
             sub_context.document = sub_document

@@ -1,6 +1,6 @@
 from typing import Type
 
-from ...audits import Audit, AuditPrinter
+from ...project.audits import Audit, AuditPrinter
 from ...project import Project
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation

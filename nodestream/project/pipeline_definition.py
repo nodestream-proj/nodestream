@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from ..file_io import LoadsFromYaml, SavesToYaml
-from ..model import IntrospectiveIngestionComponent
+from ..schema.schema import IntrospectiveIngestionComponent
 from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
 
 

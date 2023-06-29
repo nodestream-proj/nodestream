@@ -1,4 +1,4 @@
-from ...audits import TTLAudit
+from ...project.audits import TTLAudit
 from .audit_command import AuditCommand
 
 

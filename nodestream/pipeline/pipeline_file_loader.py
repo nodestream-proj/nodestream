@@ -4,9 +4,15 @@ from typing import List, Optional
 
 from yaml import SafeLoader, load
 
-from ..argument_resolvers import ARGUMENT_RESOLVER_REGISTRY
-from ..exceptions import InvalidPipelineDefinitionError
-from ..value_providers import VALUE_PROVIDER_REGISTRY
+
+class InvalidPipelineDefinitionError(ValueError):
+    """Raised when a pipeline definition is invalid."""
+
+    pass
+
+
+from .argument_resolvers import ARGUMENT_RESOLVER_REGISTRY
+from .value_providers import VALUE_PROVIDER_REGISTRY
 from .class_loader import ClassLoader
 from .pipeline import Pipeline
 

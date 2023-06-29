@@ -1,4 +1,6 @@
-from .desired_ingest import DesiredIngestion, MatchStrategy, RelationshipWithNodes
+from typing import Dict, Any
+
+from .desired_ingestion import DesiredIngestion, RelationshipWithNodes
 from .graph_objects import (
     Node,
     NodeIdentityShape,
@@ -6,56 +8,25 @@ from .graph_objects import (
     Relationship,
     RelationshipIdentityShape,
 )
-from .indexes import FieldIndex, KeyIndex
-from .ingest_strategy import IngestionStrategy
+from .match_strategy import MatchStrategy
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
-from .interpreter_context import InterpreterContext, JsonLikeDocument
-from .schema import (
-    AggregatedIntrospectiveIngestionComponent,
-    Cardinality,
-    GraphObjectShape,
-    GraphObjectType,
-    GraphSchema,
-    IntrospectiveIngestionComponent,
-    KnownTypeMarker,
-    PresentRelationship,
-    PropertyMetadata,
-    PropertyMetadataSet,
-    PropertyType,
-    TypeMarker,
-    UnknownTypeMarker,
-)
+
 from .ttl import TimeToLiveConfiguration
+
+JsonLikeDocument = Dict[str, Any]
+
 
 __all__ = (
     "DesiredIngestion",
     "RelationshipWithNodes",
-    "MatchStrategy",
-    "PropertySet",
     "Node",
+    "NodeIdentityShape",
+    "PropertySet",
     "Relationship",
-    "KeyIndex",
-    "FieldIndex",
-    "IngestionStrategy",
+    "RelationshipIdentityShape",
+    "MatchStrategy",
     "IngestionHook",
     "IngestionHookRunRequest",
     "TimeToLiveConfiguration",
-    "InterpreterContext",
-    "RecordDecomposer",
     "JsonLikeDocument",
-    "GraphObjectShape",
-    "GraphObjectType",
-    "TypeMarker",
-    "KnownTypeMarker",
-    "UnknownTypeMarker",
-    "PropertyMetadataSet",
-    "PropertyMetadata",
-    "PropertyType",
-    "IntrospectiveIngestionComponent",
-    "AggregatedIntrospectiveIngestionComponent",
-    "Cardinality",
-    "PresentRelationship",
-    "RelationshipIdentityShape",
-    "NodeIdentityShape",
-    "GraphSchema",
 )

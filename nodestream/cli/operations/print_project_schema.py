@@ -3,7 +3,7 @@ from typing import Optional
 
 from ...project import Project
 from ..commands.nodestream_command import NodestreamCommand
-from ..schema_printers import SCHEMA_PRINTER_SUBCLASS_REGISTRY
+from ...schema.printers import SCHEMA_PRINTER_SUBCLASS_REGISTRY
 from .operation import Operation
 
 

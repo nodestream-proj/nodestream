@@ -1,14 +1,31 @@
+import platform
+import resource
 from dataclasses import dataclass, field
 from logging import Logger, getLogger
 from typing import Any, Callable
 
 from ..pipeline import Pipeline
 from ..pipeline.meta import PipelineContext, get_context
-from ..utilities import enumerate_async, get_max_mem_mb
 
 
 def no_op(*_, **__):
     pass
+
+
+def get_max_mem_mb():
+    max_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    max_mem /= 1024
+    if platform.system() == "Darwin":
+        max_mem /= 1024
+    return int(max_mem)
+
+
+async def enumerate_async(iterable):
+    count = 0
+
+    async for item in iterable:
+        yield count, item
+        count += 1
 
 
 @dataclass
