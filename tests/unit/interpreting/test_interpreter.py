@@ -4,7 +4,7 @@ import pytest
 from freezegun import freeze_time
 from hamcrest import assert_that, equal_to, has_length, instance_of
 
-from nodestream.interpreting import SourceNodeInterpretation
+from nodestream.interpreting.interpretations import SourceNodeInterpretation
 from nodestream.interpreting.interpreter import (
     InterpretationPass,
     Interpreter,
@@ -16,9 +16,10 @@ from nodestream.interpreting.record_decomposers import (
     RecordDecomposer,
     WholeRecordDecomposer,
 )
-from nodestream.model import DesiredIngestion, InterpreterContext
+from nodestream.model import DesiredIngestion
 from nodestream.pipeline import IterableExtractor
 from nodestream.pipeline.pipeline import empty_async_generator
+from nodestream.pipeline.value_providers import ProviderContext
 
 
 @pytest.fixture
@@ -101,7 +102,7 @@ def test_intepret_record_iterates_through_interpretation_process(stubbed_interpr
 async def test_handle_async_record_stream_returns_iteration_results(
     stubbed_interpreter, mocker
 ):
-    contexts = [[InterpreterContext.fresh(i)] for i in range(5)]
+    contexts = [[ProviderContext.fresh(i)] for i in range(5)]
     stubbed_interpreter.gather_used_indexes = mocker.Mock(return_value=[])
     stubbed_interpreter.interpret_record = mocker.Mock(side_effect=contexts)
     results = [

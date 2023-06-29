@@ -1,8 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from .ingest_strategy import IngestionStrategy
-from .schema import GraphObjectShape, GraphObjectType, KnownTypeMarker
+from ..schema.schema import GraphObjectShape, GraphObjectType, KnownTypeMarker
+
+if TYPE_CHECKING:
+    from ..databases.ingest_strategy import IngestionStrategy
 
 
 @dataclass(frozen=True, slots=True)

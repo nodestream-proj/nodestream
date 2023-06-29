@@ -6,10 +6,10 @@ from nodestream.cli.operations import PrintProjectSchema
 @pytest.fixture
 def ran_print_project_schema_operation(mocker, project_with_default_scope):
     std_out = mocker.patch(
-        "nodestream.cli.schema_printers.SchemaPrinter.print_schema_to_stdout"
+        "nodestream.schema.printers.SchemaPrinter.print_schema_to_stdout"
     )
     file_out = mocker.patch(
-        "nodestream.cli.schema_printers.SchemaPrinter.print_schema_to_file"
+        "nodestream.schema.printers.SchemaPrinter.print_schema_to_file"
     )
     project_with_default_scope.get_schema = mocker.Mock(return_value="schema")
 

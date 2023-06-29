@@ -11,7 +11,7 @@ Let's build a normalizer that does this for us.
 ```python
 from typing import Any
 
-from nodestream.normalizers import Normalizer
+from nodestream.pipeline.normalizers import Normalizer
 
 class RoundToWholeNumber(Normalizer, alias="round_numbers"):
     def normalize_value(self, value: Any) -> Any:

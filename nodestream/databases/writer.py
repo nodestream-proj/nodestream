@@ -1,8 +1,8 @@
 from typing import Optional
 
-from ..model.ingest_strategy import INGESTION_STRATEGY_REGISTRY, IngestionStrategy
 from ..pipeline import Flush, Writer
 from .debounced_ingest_strategy import DebouncedIngestStrategy
+from .ingest_strategy import INGESTION_STRATEGY_REGISTRY, IngestionStrategy
 from .query_executor import QUERY_EXECUTOR_SUBCLASS_REGISTRY
 from .query_executor_with_statistics import QueryExecutorWithStatistics
 

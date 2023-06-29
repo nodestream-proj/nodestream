@@ -1,13 +1,16 @@
 from typing import Dict, Iterable, List
 
-from ..exceptions import MissingExpectedPipelineError
 from ..file_io import LoadsFromYaml, SavesToYaml
-from ..model import (
+from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
 )
 from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest
+
+
+class MissingExpectedPipelineError(ValueError):
+    pass
 
 
 class PipelineScope(

@@ -1,4 +1,4 @@
-- implementation: nodestream.extractors:FileExtractor
+- implementation: nodestream.pipeline.extractors:FileExtractor
   arguments:
     globs:
       - people/*.json

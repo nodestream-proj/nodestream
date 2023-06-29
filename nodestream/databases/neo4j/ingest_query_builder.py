@@ -6,7 +6,6 @@ from typing import Iterable
 from cymple.builder import NodeAfterMergeAvailable, NodeAvailable, QueryBuilder
 
 from ...model import (
-    GraphObjectType,
     MatchStrategy,
     Node,
     Relationship,
@@ -14,6 +13,7 @@ from ...model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
+from ...schema.schema import GraphObjectType
 from ..query_executor import OperationOnNodeIdentity, OperationOnRelationshipIdentity
 from .query import Query, QueryBatch
 

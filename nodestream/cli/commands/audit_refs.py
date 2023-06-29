@@ -1,4 +1,4 @@
-from ...audits import AuditReferentialIntegrity
+from ...project.audits import AuditReferentialIntegrity
 from .audit_command import AuditCommand
 
 
