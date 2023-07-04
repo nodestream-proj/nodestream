@@ -5,6 +5,9 @@ from .audit import Audit
 
 
 class AuditReferentialIntegrity(Audit):
+    name = "refs"
+    description = "Audit the correctness of references between nodes of the project"
+
     async def run(self, project: Project):
         all_interpreters = project.dig_for_step_of_type(Interpreter)
         node_types_so_far = {}

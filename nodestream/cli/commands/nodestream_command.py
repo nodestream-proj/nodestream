@@ -1,4 +1,5 @@
 import asyncio
+from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -30,8 +31,11 @@ class NodestreamCommand(Command):
         path = self.option("project")
         return DEFAULT_PROJECT_FILE if path is None else Path(path)
 
+    @cache
     def get_project(self) -> Project:
-        return Project.read_from_file(self.get_project_path())
+        from ...application import Nodestream
+
+        return Nodestream.instance().get_project(self.get_project_path())
 
     @property
     def has_json_logging_set(self) -> bool:

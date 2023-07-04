@@ -72,7 +72,7 @@ markers = [
 ]
 
 [tool.poetry.scripts]
-nodestream = 'nodestream.cli:run'
+nodestream = 'nodestream.application:run'
 
 [tool.ruff]
 ignore = ["E501"]

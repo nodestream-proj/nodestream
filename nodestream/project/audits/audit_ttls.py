@@ -7,7 +7,10 @@ from ..project import Project
 from .audit import Audit
 
 
-class TTLAudit(Audit):
+class AuditTimeToLiveConfigurations(Audit):
+    name = "ttls"
+    description = "Audit the project for missing TTLs"
+
     async def get_all_ttl_configurations(
         self, project: Project
     ) -> List[TimeToLiveConfiguration]:

@@ -3,6 +3,9 @@ from .audit_printer import AuditPrinter
 
 
 class Audit:
+    name = "unnamed"
+    description = "Checks something about a project"
+
     def __init__(self, printer: AuditPrinter) -> None:
         self.printer = printer
         self.success_count = 0
