@@ -1,10 +1,12 @@
+from ...pluggable import Pluggable
 from ..project import Project
 from .audit_printer import AuditPrinter
 
 
-class Audit:
+class Audit(Pluggable):
     name = "unnamed"
     description = "Checks something about a project"
+    entrypoint_name = "audits"
 
     def __init__(self, printer: AuditPrinter) -> None:
         self.printer = printer

@@ -1,11 +1,11 @@
 import asyncio
-from functools import cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from cleo.commands.command import Command
 from cleo.io.outputs.output import Verbosity
 
+from ...pluggable import Pluggable
 from ...project import Project
 
 if TYPE_CHECKING:
@@ -14,7 +14,9 @@ if TYPE_CHECKING:
 DEFAULT_PROJECT_FILE = Path("nodestream.yaml")
 
 
-class NodestreamCommand(Command):
+class NodestreamCommand(Command, Pluggable):
+    entrypoint_name = "commands"
+
     def handle(self):
         return asyncio.run(self.handle_async())
 
@@ -31,11 +33,8 @@ class NodestreamCommand(Command):
         path = self.option("project")
         return DEFAULT_PROJECT_FILE if path is None else Path(path)
 
-    @cache
     def get_project(self) -> Project:
-        from ...application import Nodestream
-
-        return Nodestream.instance().get_project(self.get_project_path())
+        return Project.read_from_file(self.get_project_path())
 
     @property
     def has_json_logging_set(self) -> bool:

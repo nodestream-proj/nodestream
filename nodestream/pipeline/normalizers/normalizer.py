@@ -3,6 +3,7 @@ from functools import cache
 from typing import Any
 
 from ...subclass_registry import MissingFromRegistryError, SubclassRegistry
+from ...pluggable import Pluggable
 
 NORMALIZER_REGISTRY = SubclassRegistry()
 
@@ -17,13 +18,19 @@ class InvalidFlagError(ValueError):
 
 
 @NORMALIZER_REGISTRY.connect_baseclass
-class Normalizer(ABC):
+class Normalizer(Pluggable, ABC):
     """A `Normalizer` is responsible for turning objects into a consistent form.
 
     When data is extracted from pipeline records from a value provider, the `Normalizer`
     is responsible for "cleaning up" the raw data such that is consistent. Often this comes
     in with regard to strings.
     """
+
+    entrypoint_name = "normalizers"
+
+    @classmethod
+    def setup(cls):
+        pass
 
     @classmethod
     def normalize_by_args(cls, value: Any, **normalizer_args) -> Any:

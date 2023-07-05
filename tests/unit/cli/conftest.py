@@ -24,4 +24,4 @@ def default_scope(pipeline_definition):
 
 @pytest.fixture
 def project_with_default_scope(default_scope):
-    return Project([default_scope], [])
+    return Project([default_scope])

@@ -20,9 +20,7 @@ class GenerateProject(Operation):
         self.database = database
 
     async def perform(self, _: NodestreamCommand):
-        imports = self.generate_import_directives()
-        scope = self.generate_pipeline_scope()
-        return Project([scope], imports)
+        return Project([self.generate_pipeline_scope()])
 
     def generate_import_directives(self) -> List[str]:
         project_imports = [

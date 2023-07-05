@@ -9,13 +9,14 @@ from typing import Any, AsyncGenerator, Iterable, Union
 
 from ...model import JsonLikeDocument
 from ...subclass_registry import SubclassRegistry
+from ...pluggable import Pluggable
 from .extractor import Extractor
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
-class SupportedFileFormat(ABC):
+class SupportedFileFormat(Pluggable, ABC):
     def __init__(self, file: Union[Path, StringIO]) -> None:
         self.file = file
 

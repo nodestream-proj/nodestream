@@ -4,6 +4,7 @@ from typing import Any, Iterable
 
 from ....model import JsonLikeDocument
 from ....subclass_registry import SubclassRegistry
+from ....pluggable import Pluggable
 from ...flush import Flush
 from ..extractor import Extractor
 
@@ -15,7 +16,9 @@ DEFAULT_MAX_RECORDS = 100
 
 
 @STREAM_CONNECTOR_SUBCLASS_REGISTRY.connect_baseclass
-class StreamConnector(ABC):
+class StreamConnector(Pluggable, ABC):
+    entrypoint_name = "stream_connectors"
+
     @abstractmethod
     async def connect(self):
         raise NotImplementedError
@@ -30,7 +33,9 @@ class StreamConnector(ABC):
 
 
 @STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY.connect_baseclass
-class StreamRecordFormat(ABC):
+class StreamRecordFormat(Pluggable, ABC):
+    entrypoint_name = "record_formats"
+
     @abstractmethod
     def parse(self, record: Any) -> JsonLikeDocument:
         raise NotImplementedError

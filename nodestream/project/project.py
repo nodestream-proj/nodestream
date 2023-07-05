@@ -1,7 +1,7 @@
-import importlib
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
+from ..pluggable import Pluggable
 from ..file_io import LoadsFromYamlFile, SavesToYamlFile
 from ..pipeline import Step
 from ..schema.schema import (
@@ -30,7 +30,6 @@ class Project(
                 Optional("scopes"): {
                     str: PipelineScope.describe_yaml_schema(),
                 },
-                Optional("imports"): [str],
             }
         )
 
@@ -42,7 +41,10 @@ class Project(
             for scope_data in scopes_data.items()
         ]
         imports = data.pop("imports", [])
-        return cls(scopes, imports)
+        project = cls(scopes, imports)
+        for plugin in ProjectPlugin.all():
+            plugin.activate(project)
+        return project
 
     def to_file_data(self):
         return {
@@ -50,18 +52,12 @@ class Project(
                 scope.name: scope.to_file_data()
                 for scope in self.scopes_by_name.values()
             },
-            "imports": self.imports,
         }
 
-    def __init__(self, scopes: List[PipelineScope], imports: List[str]):
+    def __init__(self, scopes: List[PipelineScope]):
         self.scopes_by_name: Dict[str, PipelineScope] = {}
         for scope in scopes:
             self.add_scope(scope)
-        self.imports = imports
-
-    def ensure_modules_are_imported(self):
-        for module in self.imports:
-            importlib.import_module(module)
 
     async def run(self, request: RunRequest):
         for scope in self.scopes_by_name.values():
@@ -113,3 +109,10 @@ class Project(
                 for idx, step in enumerate(pipeline_steps):
                     if isinstance(step, step_type):
                         yield pipeline_definition, idx, step
+
+
+class ProjectPlugin(Pluggable):
+    entrypoint_name = "project"
+
+    def activate(self, project: Project):
+        raise NotImplementedError

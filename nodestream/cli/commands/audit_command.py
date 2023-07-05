@@ -9,6 +9,7 @@ from .shared_options import PROJECT_FILE_OPTION
 class AuditCommand(NodestreamCommand):
     audit: Type[Audit] = Audit
     options = [PROJECT_FILE_OPTION]
+    skip_registration = True
 
     async def handle_async(self):
         project = await self.run_operation(InitializeProject())

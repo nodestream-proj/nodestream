@@ -4,10 +4,11 @@ from typing import List, Optional
 
 from yaml import SafeLoader, load
 
-from .argument_resolvers import ARGUMENT_RESOLVER_REGISTRY
+from .argument_resolvers import ArgumentResolver
 from .class_loader import ClassLoader
 from .pipeline import Pipeline
-from .value_providers import VALUE_PROVIDER_REGISTRY
+from .normalizers import Normalizer
+from .value_providers import ValueProvider
 
 
 class InvalidPipelineDefinitionError(ValueError):
@@ -26,9 +27,11 @@ class PipelineFileSafeLoader(SafeLoader):
         if cls.was_configured:
             return
 
-        for value_provider in VALUE_PROVIDER_REGISTRY.all_subclasses:
+        for normalizer in Normalizer.all():
+            normalizer.setup()
+        for value_provider in ValueProvider.all():
             value_provider.install_yaml_tag(cls)
-        for argument_resolver in ARGUMENT_RESOLVER_REGISTRY.all_subclasses:
+        for argument_resolver in ArgumentResolver.all():
             argument_resolver.install_yaml_tag(cls)
 
         cls.was_configured = True
