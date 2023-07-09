@@ -228,14 +228,14 @@ Not exactly the most interesting. Lets get to work wiring this up to use our new
 Replace the first block with the following:
 
 ```yaml
-- implementation: nodestream.extractors:FileExtractor
+- implementation: nodestream.pipeline.extractors:FileExtractor
   arguments:
     globs:
       - data/*.json
 # remainder of the pipeline unchanged.
 ```
 
-This block tells nodestream to initialize the `FileExtractor` class in the `nodestream.extractors` module to handle
+This block tells nodestream to initialize the `FileExtractor` class in the `nodestream.pipeline.extractors` module to handle
 the first step of the pipeline. To initialize it, it passes the `arguments` provided. In this case, the `FileExtractor`
 expects a list of [glob strings](https://en.wikipedia.org/wiki/Glob_(programming)). Every file that matches these glob
 strings is loaded and passed as a record in the pipeline.

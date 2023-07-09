@@ -6,7 +6,8 @@ from nodestream.databases.neo4j.index_query_builder import (
     Neo4jIndexQueryBuilder,
 )
 from nodestream.databases.neo4j.query import Query
-from nodestream.model import FieldIndex, GraphObjectType, KeyIndex
+from nodestream.schema.indexes import FieldIndex, KeyIndex
+from nodestream.schema.schema import GraphObjectType
 
 
 @pytest.fixture

@@ -18,7 +18,7 @@ referenced relatively or absolutely.
 ```
 
 ```yaml title="pipelines/ingest_files.yaml"
-- implementation: nodestream.extractors:FileExtractor
+- implementation: nodestream.pipeline.extractors:FileExtractor
   arguments:
     globs: !include file_targets.yaml
 ```

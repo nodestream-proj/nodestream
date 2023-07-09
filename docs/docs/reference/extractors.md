@@ -14,7 +14,7 @@ to learn how to add your own implementations of these classes.
 #### Top Level Arguments
 
 ```yaml
-- implementation: nodestream.extractors.streams:StreamExtractor
+- implementation: nodestream.pipeline.extractors.streams:StreamExtractor
   arguments:
      # rest of the stream extractor format arguments
      timeout: 10 # default 60. Number of seconds to await records.
@@ -28,7 +28,7 @@ The `StreamConnector` describes how to poll data from the underlying streaming m
 #### `Kafka`
 
 ```yaml
-- implementation: nodestream.extractors.streams:StreamExtractor
+- implementation: nodestream.pipeline.extractors.streams:StreamExtractor
   arguments:
      # rest of the stream extractor format arguments
      connector: kafka
@@ -49,7 +49,7 @@ The `json` format simply calls `json.loads` on the data provided from the `Strea
 set the `record_format` to be `json` in the `StreamExtractor` configuration. For example:
 
 ```yaml
-- implementation: nodestream.extractors.streams:StreamExtractor
+- implementation: nodestream.pipeline.extractors.streams:StreamExtractor
   arguments:
      # rest of the stream extractor format
      record_format: json
@@ -61,7 +61,7 @@ The `AthenaExtractor` issues a query to Amazon Athena, and returns yields each r
 example, the following `AthenaExtractor` configuration:
 
 ```yaml
-- implementation: nodestream.extractors.stores.aws:AthenaExtractor
+- implementation: nodestream.pipeline.extractors.stores.aws:AthenaExtractor
   arguments:
     query: SELECT name, version FROM python_package_versions;
     workgroup: MY_WORKGROUP_NAME
@@ -93,7 +93,7 @@ The `S3Extractor` pulls files down from S3 and yields the records read from each
 [appropriate file format parser](./file-formats.md). A simple example would look like this:
 
 ```yaml
-- implementation: nodestream.extractors.stores.aws:S3Extractor
+- implementation: nodestream.pipeline.extractors.stores.aws:S3Extractor
   arguments:
     bucket: my-awesome-bucket
 ```
@@ -118,7 +118,7 @@ It takes a collection of file paths as input and yields the records read from ea
 [appropriate file format parser](./file-formats.md).
 
 ```yaml
-- implementation: nodestream.extractors:FileExtractor
+- implementation: nodestream.pipeline.extractors:FileExtractor
   arguments:
     globs:
       - people/*.json
@@ -132,7 +132,7 @@ It takes a collection of file paths as input and yields the records read from ea
 
 One can configure a Node TTL like this:
 ```yaml
-- implementation: nodestream.extractors.ttl:TimeToLiveConfigurationExtractor
+- implementation: nodestream.pipeline.extractors.ttl:TimeToLiveConfigurationExtractor
   arguments:
     graph_object_type: NODE
     configurations:
@@ -145,7 +145,7 @@ One can configure a Node TTL like this:
 and one can configure a Relationship TTL like this:
 
 ```yaml
-- implementation: nodestream.extractors.ttl:TimeToLiveConfigurationExtractor
+- implementation: nodestream.pipeline.extractors.ttl:TimeToLiveConfigurationExtractor
   arguments:
     graph_object_type: RELATIONSHIP
     configurations:

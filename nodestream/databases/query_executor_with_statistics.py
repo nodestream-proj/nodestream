@@ -1,14 +1,8 @@
 from typing import Iterable
 
-from ..model import (
-    FieldIndex,
-    IngestionHook,
-    KeyIndex,
-    Node,
-    RelationshipWithNodes,
-    TimeToLiveConfiguration,
-)
+from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from ..pipeline.meta import get_context
+from ..schema.indexes import FieldIndex, KeyIndex
 from .query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,

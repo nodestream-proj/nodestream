@@ -2,10 +2,11 @@ import asyncio
 from functools import reduce
 from typing import Any, AsyncGenerator, Iterable, List
 
-from ..model import (
+from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
 )
+from .flush import Flush
 from .step import Step
 
 
@@ -29,7 +30,8 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
             empty_async_generator(),
         )
         async for record in record_stream_over_all_steps:
-            yield record
+            if record is not Flush:
+                yield record
 
         await self.finish()
 

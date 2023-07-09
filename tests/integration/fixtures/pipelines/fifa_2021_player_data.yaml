@@ -1,4 +1,4 @@
-- implementation: nodestream.extractors.files:FileExtractor
+- implementation: nodestream.pipeline.extractors.files:FileExtractor
   arguments:
     globs:
       - tests/integration/fixtures/data/fifa_2021_player_data.csv

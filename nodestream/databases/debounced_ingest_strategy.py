@@ -3,15 +3,14 @@ from dataclasses import asdict
 from logging import getLogger
 
 from ..model import (
-    FieldIndex,
     IngestionHookRunRequest,
-    IngestionStrategy,
-    KeyIndex,
     MatchStrategy,
     Node,
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
+from ..schema.indexes import FieldIndex, KeyIndex
+from .ingest_strategy import IngestionStrategy
 from .operation_debouncer import OperationDebouncer
 from .query_executor import QueryExecutor
 

@@ -18,7 +18,7 @@ The node evictor pipeline will delete nodes that have expired. The pipeline will
 The node TTL configuration extractor will read the node TTL configurations from the pipeline. The extractor will be implemented by using the `TimeToLiveConfigurationExtractor` class. The extractor will be configured to read the node TTL configurations from the database.
 
 ```yaml title="pipelines/node-ttl-evictor.yaml"
-- implementation: nodestream.extractors:TimeToLiveConfigurationExtractor
+- implementation: nodestream.pipeline.extractors:TimeToLiveConfigurationExtractor
   arguments:
     graph_object_type: NODE
     configurations:
@@ -40,7 +40,7 @@ The relationship TTL Evictor is implemented in the same way as the node TTL Evic
 
 
 ```yaml title="pipelines/relationship-ttl-evictor.yaml"
-- implementation: nodestream.extractors:TimeToLiveConfigurationExtractor
+- implementation: nodestream.pipeline.extractors:TimeToLiveConfigurationExtractor
   arguments:
     graph_object_type: RELATIONSHIP
     configurations:

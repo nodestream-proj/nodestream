@@ -3,14 +3,8 @@ from typing import Iterable
 
 from neo4j import AsyncDriver, AsyncGraphDatabase
 
-from ...model import (
-    FieldIndex,
-    IngestionHook,
-    KeyIndex,
-    Node,
-    RelationshipWithNodes,
-    TimeToLiveConfiguration,
-)
+from ...model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
+from ...schema.indexes import FieldIndex, KeyIndex
 from ..query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,

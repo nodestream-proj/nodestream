@@ -8,17 +8,17 @@ PROJECT_MODULES_TO_CREATE = [
     {"module_name": "__init__"},
     {
         "module_name": "argument_resolvers",
-        "import_statement": "from nodestream.argument_resolvers import ArgumentResolver",
+        "import_statement": "from nodestream.pipeline.argument_resolvers import ArgumentResolver",
         "guide_reference": "# See: https://nodestream-proj.github.io/nodestream/extending-nodestream/creating-your-own-argument-resolver",
     },
     {
         "module_name": "normalizers",
-        "import_statement": "from nodestream.normalizers import Normalizer",
+        "import_statement": "from nodestream.pipeline.normalizers import Normalizer",
         "guide_reference": "# See: https://nodestream-proj.github.io/nodestream/extending-nodestream/creating-your-own-normalizer",
     },
     {
         "module_name": "value_providers",
-        "import_statement": "from nodestream.value_providers import ValueProvider",
+        "import_statement": "from nodestream.pipeline.value_providers import ValueProvider",
         "guide_reference": "# See: https://nodestream-proj.github.io/nodestream/extending-nodestream/creating-your-own-value-provider",
     },
 ]
