@@ -1,7 +1,7 @@
 import pytest
 from hamcrest import assert_that, equal_to
 
-from nodestream.transformers import ExpandJsonField
+from nodestream.pipeline.transformers import ExpandJsonField
 
 SIMPLE_INPUT = {"a": 1, "b": '{"hello": "world"}'}
 SIMPLE_OUTPUT = {"a": 1, "b": {"hello": "world"}}
