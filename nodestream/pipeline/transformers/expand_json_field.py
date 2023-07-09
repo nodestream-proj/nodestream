@@ -1,8 +1,8 @@
 import json
 from typing import List, Union
 
-from ..model import JsonLikeDocument
-from ..pipeline import Transformer
+from ...model import JsonLikeDocument
+from .transformer import Transformer
 
 
 class ExpandJsonField(Transformer):
