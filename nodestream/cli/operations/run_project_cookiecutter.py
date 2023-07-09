@@ -13,6 +13,8 @@ class RunProjectCookiecutter(Operation):
         self.database = database
 
     async def perform(self, _: NodestreamCommand):
+        from ..application import get_version
+
         cookiecutter(
             PROJECT_COOKIECUTTER_URL,
             no_input=True,
@@ -20,5 +22,6 @@ class RunProjectCookiecutter(Operation):
             extra_context={
                 "project_name": self.project_name,
                 "database": self.database,
+                "nodestream_version": get_version(),
             },
         )

@@ -10,12 +10,17 @@ from .commands import AuditCommand, NodestreamCommand
 PACKAGE_NAME = "nodestream"
 
 
+def get_version() -> str:
+    return importlib.metadata.version(PACKAGE_NAME)
+
+
 def get_application() -> Application:
-    app = Application(PACKAGE_NAME, importlib.metadata.version(PACKAGE_NAME))
+    app = Application(PACKAGE_NAME, get_version())
     for audit in Audit.all():
         app.add(AuditCommand.for_audit(audit)())
     for command in NodestreamCommand.all():
-        app.add(command())
+        if command not in (AuditCommand, NodestreamCommand):
+            app.add(command())
     return app
 
 
