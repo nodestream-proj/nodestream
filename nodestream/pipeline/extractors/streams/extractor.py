@@ -62,6 +62,10 @@ class StreamExtractor(Extractor):
         max_records: int = DEFAULT_MAX_RECORDS,
         **connector_args
     ):
+        # Import all plugins so that they can register themselves
+        StreamRecordFormat.import_all()
+        StreamConnector.import_all()
+
         object_format_cls = STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY.get(record_format)
         connector_cls = STREAM_CONNECTOR_SUBCLASS_REGISTRY.get(connector)
         return cls(

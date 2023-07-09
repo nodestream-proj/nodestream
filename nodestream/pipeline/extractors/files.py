@@ -40,6 +40,8 @@ class SupportedFileFormat(Pluggable, ABC):
     def from_file_pointer_and_format(
         cls, fp: StringIO, file_format: str
     ) -> "SupportedFileFormat":
+        # Import all file formats so that they can register themselves
+        cls.import_all()
         file_format = SUPPORTED_FILE_FORMAT_REGISTRY.get(file_format)
         return file_format(fp)
 

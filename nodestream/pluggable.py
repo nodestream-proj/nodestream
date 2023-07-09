@@ -1,6 +1,6 @@
-from importlib.metadata import entry_points
 from functools import cache
-from inspect import getmembers
+from importlib.metadata import entry_points
+from inspect import getmembers, isclass
 
 NODESTREAM_PLUGINS_ENTRYPOINT_GROUP = "nodestream.plugins"
 
@@ -9,15 +9,23 @@ class Pluggable:
     entrypoint_name: str = "plugin"
 
     @classmethod
-    @cache
-    def all_entrypoints(cls):
-        return entry_points(group=NODESTREAM_PLUGINS_ENTRYPOINT_GROUP)
+    def entrypoints(cls):
+        return entry_points(
+            group=NODESTREAM_PLUGINS_ENTRYPOINT_GROUP, name=cls.entrypoint_name
+        )
 
     @classmethod
+    @cache
     def all(cls):
-        for entrypoint in cls.all_entrypoints():
-            try:
-                plugin_module = entrypoint[cls.entrypoint_name].load()
-                yield from getmembers(plugin_module, lambda member: issubclass(member, cls))
-            except KeyError:
-                pass
+        def is_plugin(member):
+            return isclass(member) and issubclass(member, cls)
+
+        for entrypoint in cls.entrypoints():
+            plugin_module = entrypoint.load()
+            for _, member in getmembers(plugin_module, is_plugin):
+                yield member
+
+    @classmethod
+    def import_all(cls):
+        for _ in cls.all():
+            pass
