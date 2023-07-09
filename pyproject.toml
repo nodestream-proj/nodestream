@@ -41,6 +41,7 @@ aiokafka = "^0.8.0"
 Jinja2 = "^3"
 pandas = "^2"
 schema = "^0.7.5"
+cookiecutter = "^2.1.1"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
@@ -81,11 +82,11 @@ nodestream = 'nodestream.cli.application:run'
 "file_formats" = "nodestream.pipeline.extractor.files"
 "interpretations" = "nodestream.interpreting.interpretations"
 "normalizers" = "nodestream.pipeline.normalizers"
-"value_providers" = "nodestream.pipeline.value_providers"
+"value_providers" = "nodestream.pipeline.value_providers"   
 "record_formats" = "nodestream.extractors.streams"
 "stream_connectors" = "nodestream.extractors.streams"
-"commands" = "nodestream.cli.commands"
-"audits" = "nodestream.project.audits"
+"commands" = "nodestream.cli.commands"                      
+"audits" = "nodestream.project.audits"                      
 "schema_printers" = "nodestream.schema.printers"
 "databases" = "nodestream.databases.neo4j"
 
