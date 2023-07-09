@@ -41,6 +41,20 @@ class Project(
 
     @classmethod
     def from_file_data(cls, data) -> "Project":
+        """Creates a project from file data.
+
+        The file data should be a dictionary containing a "scopes" key,
+        which should be a dictionary mapping scope names to scope file data and
+        should be validated by the schema returned by `describe_yaml_schema`.
+
+        This method should not be called directly. Instead, use `LoadsFromYamlFile.load_from_yaml_file`.
+
+        Args:
+            data (Dict): The file data to create the project from.
+
+        Returns:
+            Project: The project created from the file data.
+        """
         scopes_data = data.pop("scopes", {})
         scopes = [
             PipelineScope.from_file_data(*scope_data)
@@ -51,7 +65,14 @@ class Project(
             plugin().activate(project)
         return project
 
-    def to_file_data(self):
+    def to_file_data(self) -> dict:
+        """Returns the file data for the project.
+
+        This method should not be called directly. Instead, use `SavesToYamlFile.save_to_yaml_file`.
+
+        Returns:
+            Dict: The file data for the project.
+        """
         return {
             "scopes": {
                 scope.name: scope.to_file_data()

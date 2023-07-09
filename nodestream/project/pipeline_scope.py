@@ -59,6 +59,15 @@ class PipelineScope(
         return self.pipelines_by_name.values()
 
     async def run_request(self, run_request: "RunRequest"):
+        """Execute a run request.
+
+        If the pipeline does not exist, this is a no-op. Otherwise, the run request
+        will be executed with the pipeline's definition. The run request will be
+        executed asynchronously via its `execute_with_definition` method.
+
+        Args:
+            run_request: The run request to execute.
+        """
         if (name := run_request.pipeline_name) not in self:
             return
 
