@@ -11,4 +11,4 @@ class CommitProjectToDisk(Operation):
         self.project_path = project_path
 
     async def perform(self, _: NodestreamCommand):
-        self.project.write_to_path(self.project_path)
+        self.project.write_to_file(self.project_path)
