@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
 from ...pipeline.value_providers import ProviderContext
+from ...pluggable import Pluggable
 from ...schema.schema import IntrospectiveIngestionComponent
 from ...subclass_registry import SubclassRegistry
-from ...pluggable import Pluggable
 
 INTERPRETATION_REGISTRY = SubclassRegistry()
 

@@ -3,8 +3,8 @@ from typing import Type
 
 from yaml import SafeLoader
 
-from ...subclass_registry import SubclassRegistry
 from ...pluggable import Pluggable
+from ...subclass_registry import SubclassRegistry
 
 ARGUMENT_RESOLVER_REGISTRY = SubclassRegistry()
 

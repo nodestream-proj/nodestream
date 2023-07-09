@@ -1,8 +1,8 @@
 from ..operations import (
     AddPipelineToProject,
     CommitProjectToDisk,
-    InitializeProject,
     GeneratePipelineScaffold,
+    InitializeProject,
 )
 from .nodestream_command import NodestreamCommand
 from .shared_options import (

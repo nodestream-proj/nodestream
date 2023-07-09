@@ -6,8 +6,8 @@ from yaml import SafeLoader, load
 
 from .argument_resolvers import ArgumentResolver
 from .class_loader import ClassLoader
-from .pipeline import Pipeline
 from .normalizers import Normalizer
+from .pipeline import Pipeline
 from .value_providers import ValueProvider
 
 

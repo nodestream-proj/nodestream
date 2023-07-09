@@ -11,9 +11,9 @@ from ..model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
+from ..pluggable import Pluggable
 from ..schema.indexes import FieldIndex, KeyIndex
 from ..subclass_registry import SubclassRegistry
-from ..pluggable import Pluggable
 
 QUERY_EXECUTOR_SUBCLASS_REGISTRY = SubclassRegistry()
 

@@ -3,7 +3,6 @@ from cookiecutter.main import cookiecutter
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 
-
 PROJECT_COOKIECUTTER_URL = "gh:nodestream-proj/nodestream-project-cookiecutter"
 
 

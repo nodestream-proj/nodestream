@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
-from ..pluggable import Pluggable
 from ..file_io import LoadsFromYamlFile, SavesToYamlFile
 from ..pipeline import Step
+from ..pluggable import Pluggable
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     GraphSchema,

@@ -1,13 +1,14 @@
+import importlib.metadata
 import os
 import sys
-import importlib.metadata
 
 from cleo.application import Application
 
-from .commands import NodestreamCommand, AuditCommand
 from ..project.audits import Audit
+from .commands import AuditCommand, NodestreamCommand
 
 PACKAGE_NAME = "nodestream"
+
 
 def get_application() -> Application:
     app = Application(PACKAGE_NAME, importlib.metadata.version(PACKAGE_NAME))
@@ -16,6 +17,7 @@ def get_application() -> Application:
     for command in NodestreamCommand.all():
         app.add(command())
     return app
+
 
 def run():
     sys.path.append(os.getcwd())
