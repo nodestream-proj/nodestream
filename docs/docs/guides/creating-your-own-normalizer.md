@@ -18,16 +18,39 @@ class RoundToWholeNumber(Normalizer, alias="round_numbers"):
         return int(value) if isinstance(value, float) else value
 ```
 
-## Make sure your module is imported
+## Registering your Normalizer
 
-Wherever you have your class defined, nodestream needs to know that its something that should be imported. To do
-so, add your module to the imports section of your `nodestream.yaml` file. For example:
+Normalizers are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `normalizers` inside of the `nodestream.plugins` group is loaded. Every Value Provider is expected to be a subclass of `nodestream.pipeline.normalizers:Normalizer` as directed above. 
 
-```yaml
-imports:
-  - nodestream.databases.neo4j # an existing import
-  - my_project.some_sub_package.normalizers
-```
+The `entry_point` should be a module that contains at least one Value Provider class. At runtime, the module will be loaded and all classes that inherit from `nodestream.pipeline.normalizers:Normalizer` will be registered.
+
+Depending on how you are building your package, you can register your Value Provider plugin in one of the following ways:
+
+=== "pyproject.toml"
+    ```toml
+    [project.entry-points."nodestream.plugins"]
+    normalizers = "nodestream_plugin_cool.normalizers"
+    ```
+
+=== "setup.cfg"
+    ```ini
+    [options.entry_points]
+    nodestream.plugins =
+        normalizers = nodestream_plugin_cool.normalizers
+    ```
+
+=== "setup.py"
+    ```python
+    setup(
+        ...
+        entry_points={
+            "nodestream.plugins": [
+                "normalizers = nodestream_plugin_cool.normalizers"
+            ]
+        },
+        ...
+    )
+    ```
 
 ## Using your Normalizer
 

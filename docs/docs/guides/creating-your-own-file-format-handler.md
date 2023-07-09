@@ -27,13 +27,43 @@ implement the method `read_file_from_handle`. This method reads the file and ret
 The method signature should match the expected behavior of the project or the specific module you're working with.
 In our example, the `read_file_from_handle` method takes a `StringIO` file handle and returns an iterable of dictionaries.
 
-## Make sure your module is imported
+## Register Your File Format
 
-Wherever you have your class defined, nodestream needs to know that its something that should be imported. To do
-so, add your module to the imports section of your `nodestream.yaml` file. For example:
+File Formats are registered via the `entry_points` API of a Python Package. Specifically, the `entry_point` named
+`file_formats` inside of the `nodestream.plugins` group is loaded. It is expected to be a subclass of
+`nodestream.extractors.files:SupportedFileFormat` as directed above.
 
-```yaml
-imports:
-  - nodestream.databases.neo4j # an existing import
-  - my_project.some_sub_package.file_formats
-```
+The `entry_point` should be a module that contains at least one file format class. At runtime, the module will be loaded
+and all classes that inherit from `nodestream.extractors.files:SupportedFileFormat` will be registered. The `alias`
+attribute of the class will be used as the name of the file format. For example, the `YamlFileFormat` class above has
+an `alias` of `.yaml`. This means that the file format can be referenced in the `format` configuration option of the
+`FileExtractor` as `.yaml`. Additionally, files that end with `.yaml` will automatically be detected as files that
+should be parsed with the `YamlFileFormat`.
+
+Depending on how you are building your package, you can register your file format plugin in one of the following ways:
+
+=== "pyproject.toml"
+    ```toml
+    [project.entry-points."nodestream.plugins"]
+    file_formats = "nodestream_plugin_cool.file_formats"
+    ```
+
+=== "setup.cfg"
+    ```ini
+    [options.entry_points]
+    nodestream.plugins =
+        file_formats = nodestream_plugin_cool.file_formats
+    ```
+
+=== "setup.py"
+    ```python
+    setup(
+        ...
+        entry_points={
+            "nodestream.plugins": [
+                "file_formats = nodestream_plugin_cool.file_formats"
+            ]
+        },
+        ...
+    )
+    ```

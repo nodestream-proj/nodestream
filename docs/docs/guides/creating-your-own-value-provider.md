@@ -1,9 +1,10 @@
 # Creating A Value Provider
 
 There are many methods of extracting and providing data to the ETl pipeline as it operates. The various yaml tags such
-as `!jq` or `!variable` refer to an underlying `ValueProvider`. In order to introduce your own mechanism for
-providing values you can create your own subclass of `ValueProvider`.
+as `!jq` or `!variable` refer to an underlying `ValueProvider`. 
 
+## Creating a Value Provider
+In order to introduce your own mechanism for providing values you can create your own subclass of `ValueProvider`.
 
 ```python
 from nodestream.pipeline.value_providers import ValueProvider
@@ -69,28 +70,36 @@ class HashValueProvider(ValueProvider):
         )
 ```
 
-## Make sure your module is imported
+## Registering the Value Provider
 
+ValueProviders are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `value_providers` inside of the `nodestream.plugins` group is loaded. Every Value Provider is expected to be a subclass of `nodestream.pipeline.value_providers:ValueProvider` as directed above. 
 
-```yaml
-imports:
-  - nodestream.databases.neo4j # an existing import
-  - my_project.some_sub_package.value_providers
-```
+The `entry_point` should be a module that contains at least one Value Provider class. At runtime, the module will be loaded and all classes that inherit from `nodestream.pipeline.value_providers:ValueProvider` will be registered. 
 
+Depending on how you are building your package, you can register your Value Provider plugin in one of the following ways:
 
-## Using your ValueProvider
+=== "pyproject.toml"
+    ```toml
+    [project.entry-points."nodestream.plugins"]
+    value_providers = "nodestream_plugin_cool.value_providers"
+    ```
 
-This allows us to construct a value provider like so:
+=== "setup.cfg"
+    ```ini
+    [options.entry_points]
+    nodestream.plugins =
+        value_providers = nodestream_plugin_cool.value_providers
+    ```
 
-
-```yaml
-some:
-  place:
-    in:
-      the:
-        pipeline: !hash
-            hash_value: !variable foo
-```
-
-
+=== "setup.py"
+    ```python
+    setup(
+        ...
+        entry_points={
+            "nodestream.plugins": [
+                "value_providers = nodestream_plugin_cool.value_providers"
+            ]
+        },
+        ...
+    )
+    ```
