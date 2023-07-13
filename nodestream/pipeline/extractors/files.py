@@ -32,8 +32,10 @@ class SupportedFileFormat(ABC):
             return self.read_file_from_handle(fp)
 
     @classmethod
+    @contextmanager
     def open(cls, file: Path) -> "SupportedFileFormat":
-        return cls.from_file_pointer_and_format(file, file.suffix)
+        with open(file, "r") as fp:
+            yield cls.from_file_pointer_and_format(fp, file.suffix)
 
     @classmethod
     def from_file_pointer_and_format(
@@ -54,12 +56,12 @@ class JsonFileFormat(SupportedFileFormat, alias=".json"):
 
 class TextFileFormat(SupportedFileFormat, alias=".txt"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
-        return [{"line": line} for line in fp.readlines()]
+        return ({"line": line} for line in fp)
 
 
 class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
-        return tuple(DictReader(fp))
+        return DictReader(fp)
 
 
 class FileExtractor(Extractor):
@@ -78,5 +80,6 @@ class FileExtractor(Extractor):
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for path in self.paths:
-            for record in SupportedFileFormat.open(path).read_file():
-                yield record
+            with SupportedFileFormat.open(path) as file:
+                for record in file.read_file():
+                    yield record
