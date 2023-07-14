@@ -49,15 +49,15 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         annotations = data.pop("annotations", {})
         return cls(name, file_path, {**parent_annotations, **annotations})
 
-    def to_file_data(self):
+    def to_file_data(self, verbose: bool = False):
         using_default_name = self.name == self.file_path.stem
-        if using_default_name and not self.annotations:
+        if using_default_name and not self.annotations and not verbose:
             return str(self.file_path)
 
         result = {"path": str(self.file_path)}
-        if not using_default_name:
+        if not using_default_name or verbose:
             result["name"] = self.name
-        if self.annotations:
+        if self.annotations or verbose:
             result["annotations"] = self.annotations
 
         return result
