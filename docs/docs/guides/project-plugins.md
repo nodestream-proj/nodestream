@@ -56,7 +56,7 @@ class MyProjectPlugin(ProjectPlugin):
 Project plugins are registered via 
 the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package.
 Specifically, the `entry_point` named `project` inside of the `nodestream.plugins` group is loaded.
-All project plugins are expected tobe a subclass of `nodestream.project:ProjectPlugin` as directed above.
+All project plugins are expected to be a subclass of `nodestream.project:ProjectPlugin` as directed above.
 An instance of the class is created and the `activate` method is called with an instance of `nodestream.project:Project`.
 
 The `entry_point` should be a module that contains at least one `ProjectPlugin` class. At runtime, the module will be loaded and all classes that inherit from `nodestream.project:ProjectPlugin` will be registered.

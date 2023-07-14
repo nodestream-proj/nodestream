@@ -38,7 +38,7 @@ yaml to instantiate our new value provider. Nodestream uses [`pyyaml`](https://p
 
 ## Registering your ArgumentResolver
 
-ArgumentResolvers are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `argument_resolvers` inside of the `nodestream.plugins` group is loaded. It is expected to be a subclass of `nodestream.pipeline.argument_resolvers:ArgumentResolver` as directed above. A
+ArgumentResolvers are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `argument_resolvers` inside of the `nodestream.plugins` group is loaded. It is expected to be a subclass of `nodestream.pipeline.argument_resolvers:ArgumentResolver` as directed above. 
 
 The `entry_point` should be a module that contains at least one argument resolver class. At runtime, the module will be loaded and all classes that inherit from `nodestream.pipeline.argument_resolvers:ArgumentResolver` will be registered. 
 
