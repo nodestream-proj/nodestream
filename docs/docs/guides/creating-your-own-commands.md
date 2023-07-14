@@ -4,7 +4,7 @@ Commands are used to interact with nodestream from the command line.
 
 ## Creating your own command
 
-Commands are implemented as [cleo](https://cleo.readthedocs.io/en/latest/usage.html) commands via a subclass of `nodestream.cli.commands:NodestreamCommand`. 
+Commands are implemented as [cleo](https://cleo.readthedocs.io/en/latest/usage.html) commands via a subclass of `nodestream.cli.commands:NodestreamCommand`.
 
 ```python
 from nodestream.cli.commands import NodestreamCommand
@@ -17,9 +17,9 @@ class MyCommand(NodestreamCommand):
         self.line("Hello World!")
 ```
 
-### Operations 
+### Operations
 
-Commands are typically executed as a series of operations. Operations are defined as seperate classes that from `nodestream.cli.operations:Operation`. 
+Commands are typically executed as a series of operations. Operations are defined as seperate classes that from `nodestream.cli.operations:Operation`.
 
 ```python
 from nodestream.cli.command import NodestreamCommand
@@ -46,7 +46,7 @@ class MyCommand(NodestreamCommand):
 
 ### Command Arguments
 
-Commands can take arguments and options from the command line. These are defined as class attributes on the command class. 
+Commands can take arguments and options from the command line. These are defined as class attributes on the command class.
 
 ```python
 from cleo.helpers import argument, option
@@ -73,9 +73,9 @@ class MyCommand(NodestreamCommand):
 ```
 
 
-### Registering the Audit
+### Registering the Command
 
-Commands are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `commands` inside of the `nodestream.plugins` group is loaded. All commands are expected to be a subclass of `nodestream.cli.commands:NodestreamCommand` as directed above. 
+Commands are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `commands` inside of the `nodestream.plugins` group is loaded. All commands are expected to be a subclass of `nodestream.cli.commands:NodestreamCommand` as directed above.
 
 The `entry_point` should be a module that contains at least one command class. At runtime, the module will be loaded and all classes that inherit from `nodestream.cli.commands:NodestreamCommand` will be registered. The `name` and `description` attributes of the class will be used as as the came and description of the command used in the command line and its help output.
 
@@ -110,7 +110,7 @@ Depending on how you are building your package, you can register your command pl
 
 ## Running a command
 
-Commands are then run via the `nodestream` command line tool. 
+Commands are then run via the `nodestream` command line tool.
 
 ```bash
 $ nodestream my-command
