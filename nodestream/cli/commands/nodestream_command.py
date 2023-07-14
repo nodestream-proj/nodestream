@@ -43,3 +43,7 @@ class NodestreamCommand(Command, Pluggable):
     @property
     def scope(self) -> str:
         return self.option("scope")
+
+    @property
+    def is_verbose(self) -> bool:
+        return self.io.output.is_verbose()
