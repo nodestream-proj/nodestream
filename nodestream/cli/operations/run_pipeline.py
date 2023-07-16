@@ -1,8 +1,10 @@
 from ...pipeline import PipelineInitializationArguments
-from ...pipeline.meta import PipelineContext
+from ...pipeline.meta import PipelineContext, listen, STAT_INCREMENTED
 from ...project import PipelineProgressReporter, Project, RunRequest
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
+
+from prometheus_client import start_http_server, Summary, REGISTRY
 
 STATS_TABLE_COLS = ["Statistic", "Value"]
 
@@ -10,9 +12,27 @@ STATS_TABLE_COLS = ["Statistic", "Value"]
 class RunPipeline(Operation):
     def __init__(self, project: Project) -> None:
         self.project = project
+        self.metric_summaries = {}
 
     async def perform(self, command: NodestreamCommand):
+        self.init_prometheus_server_if_needed(command)
         await self.project.run(self.make_run_request(command))
+
+    def init_prometheus_server_if_needed(self, command: NodestreamCommand):
+        if not command.option("prometheus"):
+            return
+
+        port = int(command.option("prometheus-server-port"))
+        addr = command.option("prometheus-server-addr")
+        start_http_server(port, addr)
+
+        @listen(STAT_INCREMENTED)
+        def _(metric_name, increment):
+            if metric_name not in self.metric_summaries:
+                name = metric_name.replace(" ", "_").lower()
+                self.metric_summaries[metric_name] = Summary(name, metric_name)
+
+            self.metric_summaries[metric_name].observe(increment)
 
     def make_run_request(self, command: NodestreamCommand) -> RunRequest:
         return RunRequest(

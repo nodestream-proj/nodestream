@@ -26,6 +26,21 @@ class Run(NodestreamCommand):
             default=1000,
             flag=False,
         ),
+        option("prometheus", None, "Weather or not to expose a prometheus server"),
+        option(
+            "prometheus-server-addr",
+            None,
+            "What address to listen on for the prometheus server",
+            flag=False,
+            default="0.0.0.0",
+        ),
+        option(
+            "prometheus-server-port",
+            None,
+            "What port to listen on for the prometheus server",
+            flag=False,
+            default=8080,
+        ),
     ]
 
     async def handle_async(self):

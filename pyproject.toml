@@ -41,6 +41,7 @@ aiokafka = "^0.8.0"
 Jinja2 = "^3"
 pandas = "^2"
 schema = "^0.7.5"
+prometheus-client = "^0.17.1"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
