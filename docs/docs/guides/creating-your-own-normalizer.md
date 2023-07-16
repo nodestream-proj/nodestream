@@ -20,11 +20,11 @@ class RoundToWholeNumber(Normalizer, alias="round_numbers"):
 
 ## Registering your Normalizer
 
-Normalizers are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `normalizers` inside of the `nodestream.plugins` group is loaded. Every Value Provider is expected to be a subclass of `nodestream.pipeline.normalizers:Normalizer` as directed above. 
+Normalizers are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `normalizers` inside of the `nodestream.plugins` group is loaded. Every Value Provider is expected to be a subclass of `nodestream.pipeline.normalizers:Normalizer` as directed above.
 
-The `entry_point` should be a module that contains at least one Value Provider class. At runtime, the module will be loaded and all classes that inherit from `nodestream.pipeline.normalizers:Normalizer` will be registered.
+The `entry_point` should be a module that contains at least one `Normalizer` class. At runtime, the module will be loaded and all classes that inherit from `nodestream.pipeline.normalizers:Normalizer` will be registered.
 
-Depending on how you are building your package, you can register your Value Provider plugin in one of the following ways:
+Depending on how you are building your package, you can register your `Normalizer` plugin in one of the following ways:
 
 === "pyproject.toml"
     ```toml

@@ -34,13 +34,13 @@ class EnvironmentResolver(ArgumentResolver):
 Note that this implementation is pretty naive. But it's the simplest we need to demonstrate the point.
 
 In this example, we register with a yaml loader that can load a tag in
-yaml to instantiate our new value provider. Nodestream uses [`pyyaml`](https://pyyaml.org/) to load our pipelines.
+yaml to utilize our new `ArgumentResolver`. Nodestream uses [`pyyaml`](https://pyyaml.org/) to load our pipelines.
 
 ## Registering your ArgumentResolver
 
-ArgumentResolvers are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `argument_resolvers` inside of the `nodestream.plugins` group is loaded. It is expected to be a subclass of `nodestream.pipeline.argument_resolvers:ArgumentResolver` as directed above. 
+ArgumentResolvers are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `argument_resolvers` inside of the `nodestream.plugins` group is loaded. It is expected to be a subclass of `nodestream.pipeline.argument_resolvers:ArgumentResolver` as directed above.
 
-The `entry_point` should be a module that contains at least one argument resolver class. At runtime, the module will be loaded and all classes that inherit from `nodestream.pipeline.argument_resolvers:ArgumentResolver` will be registered. 
+The `entry_point` should be a module that contains at least one argument resolver class. At runtime, the module will be loaded and all classes that inherit from `nodestream.pipeline.argument_resolvers:ArgumentResolver` will be registered.
 
 Depending on how you are building your package, you can register your Argument Resolver plugin in one of the following ways:
 

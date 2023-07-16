@@ -64,11 +64,11 @@ The above code leverages the aforementioned `InterpretationContext` as well as `
 ## Register Your Interpretation
 
 
-Interpretations are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `interpretations` inside of the `nodestream.plugins` group is loaded. Every Value Provider is expected to be a subclass of `nodestream.interpreting:Interpretation` as directed above. 
+Interpretations are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `interpretations` inside of the `nodestream.plugins` group is loaded. Every `Interpretation`  is expected to be a subclass of `nodestream.interpreting:Interpretation` as directed above.
 
-The `entry_point` should be a module that contains at least one Value Provider class. At runtime, the module will be loaded and all classes that inherit from `nodestream.interpreting:Interpretation` will be registered. The `alias` attribute of the class will be used as as the name of the tag used in the yaml pipeline.
+The `entry_point` should be a module that contains at least one `Interpretation` class. At runtime, the module will be loaded and all classes that inherit from `nodestream.interpreting:Interpretation` will be registered. The `alias` attribute of the class will be used as as the name of the tag used in the yaml pipeline.
 
-Depending on how you are building your package, you can register your Value Provider plugin in one of the following ways:
+Depending on how you are building your package, you can register your `Interpretation` plugin in one of the following ways:
 
 === "pyproject.toml"
     ```toml
