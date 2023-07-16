@@ -7,11 +7,7 @@ from nodestream.pipeline import (
     PipelineInitializationArguments,
     PipelineProgressReporter,
 )
-from nodestream.project import (
-    PipelineDefinition,
-    PipelineScope,
-    RunRequest,
-)
+from nodestream.project import PipelineDefinition, PipelineScope, RunRequest
 from nodestream.project.pipeline_scope import MissingExpectedPipelineError
 
 

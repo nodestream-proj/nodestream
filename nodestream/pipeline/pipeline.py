@@ -5,9 +5,9 @@ from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
 )
-from .step import Step
-from .progress_reporter import PipelineProgressReporter
 from .meta import get_context
+from .progress_reporter import PipelineProgressReporter
+from .step import Step
 
 
 async def empty_async_generator():
