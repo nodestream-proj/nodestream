@@ -77,6 +77,7 @@ class Project(
             "scopes": {
                 scope.name: scope.to_file_data()
                 for scope in self.scopes_by_name.values()
+                if scope.persist
             },
         }
 

@@ -19,7 +19,10 @@ class PipelineScope(
 ):
     """A `PipelineScope` represents a collection of pipelines subordinate to a project."""
 
-    def __init__(self, name: str, pipelines: List[PipelineDefinition]) -> None:
+    def __init__(
+        self, name: str, pipelines: List[PipelineDefinition], persist: bool = True
+    ) -> None:
+        self.persist = persist
         self.name = name
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
         for pipeline in pipelines:
@@ -119,7 +122,9 @@ class PipelineScope(
         return True
 
     @classmethod
-    def from_resources(cls, name: str, package: resources.Package) -> "PipelineScope":
+    def from_resources(
+        cls, name: str, package: resources.Package, persist: bool = False
+    ) -> "PipelineScope":
         """Load a `PipelineScope` from a package's resources.
 
         Each `.yaml` file in the package's resources will be loaded as a pipeline.
@@ -130,6 +135,7 @@ class PipelineScope(
         Args:
             name: The name of the scope.
             package: The name of the package to load from.
+            persist: Whether or not to save the scope when the project is saved.
 
         Returns:
             A `PipelineScope` instance with the pipelines defined in the package.
@@ -139,4 +145,4 @@ class PipelineScope(
             for f in resources.files(package).iterdir()
             if f.suffix == ".yaml"
         ]
-        return cls(name, pipelines)
+        return cls(name, pipelines, persist=persist)
