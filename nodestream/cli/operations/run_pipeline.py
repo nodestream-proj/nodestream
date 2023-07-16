@@ -1,10 +1,10 @@
+from prometheus_client import Summary, start_http_server
+
 from ...pipeline import PipelineInitializationArguments
-from ...pipeline.meta import PipelineContext, listen, STAT_INCREMENTED
+from ...pipeline.meta import STAT_INCREMENTED, PipelineContext, listen
 from ...project import PipelineProgressReporter, Project, RunRequest
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
-
-from prometheus_client import start_http_server, Summary, REGISTRY
 
 STATS_TABLE_COLS = ["Statistic", "Value"]
 

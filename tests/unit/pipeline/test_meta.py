@@ -1,11 +1,11 @@
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline.meta import (
+    STAT_INCREMENTED,
     UNKNOWN_PIPELINE_NAME,
     get_context,
-    start_context,
-    STAT_INCREMENTED,
     listen,
+    start_context,
 )
 
 

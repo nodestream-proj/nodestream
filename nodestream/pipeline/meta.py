@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from functools import wraps
-from typing import Any, Dict, List, Callable
+from typing import Any, Callable, Dict, List
 
 UNKNOWN_PIPELINE_NAME = "unknown"
 STAT_INCREMENTED = "STAT_INCREMENTED"
