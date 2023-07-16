@@ -16,13 +16,11 @@ DEFAULT_MAX_RECORDS = 100
 
 @STREAM_CONNECTOR_SUBCLASS_REGISTRY.connect_baseclass
 class StreamConnector(ABC):
-    @abstractmethod
     async def connect(self):
-        raise NotImplementedError
+        pass
 
-    @abstractmethod
     async def disconnect(self):
-        raise NotImplementedError
+        pass
 
     @abstractmethod
     async def poll(self, timeout: int, max_records: int) -> Iterable[Any]:

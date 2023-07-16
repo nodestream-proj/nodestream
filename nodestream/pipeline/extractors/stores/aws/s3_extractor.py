@@ -4,7 +4,7 @@ from typing import Any, AsyncGenerator, Optional
 
 from ...extractor import Extractor
 from ...files import SupportedFileFormat
-from .credential_utils import AwsClientFactory
+from ...credential_utils import AwsClientFactory
 
 
 class S3Extractor(Extractor):
