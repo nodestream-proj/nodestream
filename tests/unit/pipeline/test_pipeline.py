@@ -15,7 +15,7 @@ def pipeline(mocker):
 
 @pytest.mark.asyncio
 async def test_pipeline_run(pipeline):
-    _ = [r async for r in pipeline.run()]
+    await pipeline.run()
     for step in pipeline.steps:
         step.handle_async_record_stream.assert_called_once()
         step.finish.assert_awaited_once()

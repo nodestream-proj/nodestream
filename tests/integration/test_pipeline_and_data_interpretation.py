@@ -6,7 +6,10 @@ import pytest
 from pandas import Timestamp
 
 from nodestream.model import DesiredIngestion
-from nodestream.pipeline import PipelineInitializationArguments
+from nodestream.pipeline import (
+    PipelineInitializationArguments,
+    PipelineProgressReporter,
+)
 from nodestream.project import PipelineDefinition
 
 
@@ -25,9 +28,14 @@ def get_pipeline_fixture_file_by_name(name: str) -> Path:
 @pytest.fixture
 def drive_definition_to_completion():
     async def _drive_definition_to_completion(definition, **init_kwargs):
+        results = []
         init_args = PipelineInitializationArguments(**init_kwargs)
         pipeline = definition.initialize(init_args)
-        return [r async for r in pipeline.run() if isinstance(r, DesiredIngestion)]
+        reporter = PipelineProgressReporter(
+            reporting_frequency=1, callback=lambda _, record: results.append(record)
+        )
+        await pipeline.run(reporter)
+        return [r for r in results if isinstance(r, DesiredIngestion)]
 
     return _drive_definition_to_completion
 

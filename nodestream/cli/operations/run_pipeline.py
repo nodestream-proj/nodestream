@@ -1,6 +1,6 @@
-from ...pipeline import PipelineInitializationArguments
+from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
 from ...pipeline.meta import PipelineContext
-from ...project import PipelineProgressReporter, Project, RunRequest
+from ...project import Project, RunRequest
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 

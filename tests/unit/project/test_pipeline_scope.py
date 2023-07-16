@@ -3,10 +3,12 @@ from pathlib import Path
 import pytest
 from hamcrest import assert_that, has_key, is_, not_, same_instance
 
-from nodestream.pipeline import PipelineInitializationArguments
+from nodestream.pipeline import (
+    PipelineInitializationArguments,
+    PipelineProgressReporter,
+)
 from nodestream.project import (
     PipelineDefinition,
-    PipelineProgressReporter,
     PipelineScope,
     RunRequest,
 )
