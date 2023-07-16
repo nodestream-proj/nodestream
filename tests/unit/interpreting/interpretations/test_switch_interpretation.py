@@ -42,3 +42,15 @@ def test_missing_without_default_without_error(blank_context):
     properties = blank_context.desired_ingest.source.properties
     assert_that(properties, not_(has_entry("success", True)))
     assert_that(properties, not_(has_entry("random", True)))
+
+
+def test_switch_with_multiple_interpretations(blank_context):
+    subject = SwitchInterpretation(
+        switch_on="foo",
+        cases={"foo": [INTERPRETATION_USED_AS_HIT, INTERPRETATION_FOR_RANDOM]},
+        fail_on_unhandled=False,
+    )
+    subject.interpret(blank_context)
+    properties = blank_context.desired_ingest.source.properties
+    assert_that(properties, has_entry("success", True))
+    assert_that(properties, has_entry("random", True))
