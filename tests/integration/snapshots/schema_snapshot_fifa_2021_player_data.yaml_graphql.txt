@@ -1,0 +1,108 @@
+
+
+type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    playerOriginatesFrom: [Player!]!
+        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
+    
+
+    # Outbound Relationships
+
+}
+
+type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    player_id: String
+
+    name: String
+
+    overall: String
+
+    hits: String
+
+    age: String
+
+    potential: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    originatesFromCountry: Country
+        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
+    
+
+    
+    linesUpAtPosition: Position
+        @relationship(type: "LINES_UP_AT", direction: OUT, properties: "LinesUpAt")
+    
+
+    
+    playsForTeam: Team
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+}
+
+type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    playerLinesUpAt: [Player!]!
+        @relationship(type: "LINES_UP_AT", direction: IN, properties: "LinesUpAt")
+    
+
+    # Outbound Relationships
+
+}
+
+type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    playerPlaysFor: [Player!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    # Outbound Relationships
+
+}
+interface OriginatesFrom @relationshipProperties {
+
+    last_ingested_at: LocalDateTime
+
+}
+interface LinesUpAt @relationshipProperties {
+
+    last_ingested_at: LocalDateTime
+
+}
+interface PlaysFor @relationshipProperties {
+
+    last_ingested_at: LocalDateTime
+
+}
