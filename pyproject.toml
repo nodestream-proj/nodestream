@@ -41,6 +41,7 @@ aiokafka = "^0.8.0"
 Jinja2 = "^3"
 pandas = "^2"
 schema = "^0.7.5"
+cookiecutter = "^2.1.1"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
@@ -72,7 +73,22 @@ markers = [
 ]
 
 [tool.poetry.scripts]
-nodestream = 'nodestream.cli:run'
+nodestream = 'nodestream.cli.application:run'
+
+# To prevent the "builin" stuff being a special case of plugins,
+# nodestream just considers itself a plugin for all of the things that are pluggable.
+[tool.poetry.plugins."nodestream.plugins"]
+"argument_resolvers" = "nodestream.pipeline.argument_resolvers"
+"file_formats" = "nodestream.pipeline.extractor.files"
+"interpretations" = "nodestream.interpreting.interpretations"
+"normalizers" = "nodestream.pipeline.normalizers"
+"value_providers" = "nodestream.pipeline.value_providers"   
+"record_formats" = "nodestream.extractors.streams"
+"stream_connectors" = "nodestream.extractors.streams"
+"commands" = "nodestream.cli.commands"                      
+"audits" = "nodestream.project.audits"                      
+"schema_printers" = "nodestream.schema.printers"
+"databases" = "nodestream.databases.neo4j"
 
 [tool.ruff]
 ignore = ["E501"]
