@@ -11,6 +11,7 @@ from ..model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
+from ..pluggable import Pluggable
 from ..schema.indexes import FieldIndex, KeyIndex
 from ..subclass_registry import SubclassRegistry
 
@@ -31,7 +32,9 @@ class OperationOnRelationshipIdentity:
 
 
 @QUERY_EXECUTOR_SUBCLASS_REGISTRY.connect_baseclass
-class QueryExecutor(ABC):
+class QueryExecutor(ABC, Pluggable):
+    entrypoint_name = "databases"
+
     @classmethod
     def from_database_args(cls, database: str = "neo4j", **database_args):
         return QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database).from_file_data(
