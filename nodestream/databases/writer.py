@@ -1,5 +1,3 @@
-from typing import Optional
-
 from ..pipeline import Flush, Writer
 from .database_connector import DatabaseConnector
 from .debounced_ingest_strategy import DebouncedIngestStrategy
