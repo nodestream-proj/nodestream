@@ -25,6 +25,9 @@ class PrintProjectSchema(Operation):
             Path(self.type_overrides_file) if self.type_overrides_file else None
         )
         schema = self.project.get_schema(type_overrides_file=type_overrides_file)
+
+        # Import all schema printers so that they can register themselves
+        SchemaPrinter.import_all()
         printer = SchemaPrinter.from_name(self.format_string)
         if self.output_file:
             printer.print_schema_to_file(schema, Path(self.output_file))

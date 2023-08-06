@@ -95,6 +95,9 @@ class Interpreter(Step, AggregatedIntrospectiveIngestionComponent):
 
     @classmethod
     def from_file_data(cls, interpretations, before_iteration=None, iterate_on=None):
+        # Import all interpretation plugins before we try to load any interpretations.
+        Interpretation.import_all()
+
         return cls(
             before_iteration=InterpretationPass.from_file_data(before_iteration),
             interpretations=InterpretationPass.from_file_data(interpretations),

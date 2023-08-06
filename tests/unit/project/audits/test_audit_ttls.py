@@ -2,7 +2,7 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.model import TimeToLiveConfiguration
-from nodestream.project.audits import AuditPrinter, TTLAudit
+from nodestream.project.audits import AuditPrinter, AuditTimeToLiveConfigurations
 from nodestream.schema.schema import (
     GraphObjectShape,
     GraphObjectType,
@@ -27,7 +27,7 @@ async def test_audit_ttls_fails_when_there_is_no_ttl_for_a_node_type(mocker):
         [],
     )
 
-    audit = TTLAudit(AuditPrinter())
+    audit = AuditTimeToLiveConfigurations(AuditPrinter())
     await audit.run(project)
 
     assert_that(audit.failure_count, equal_to(1))
@@ -49,7 +49,7 @@ async def test_audit_ttls_fails_when_there_is_no_ttl_for_a_relationship_type(moc
         [],
     )
 
-    audit = TTLAudit(AuditPrinter())
+    audit = AuditTimeToLiveConfigurations(AuditPrinter())
     await audit.run(project)
 
     assert_that(audit.failure_count, equal_to(1))
@@ -77,7 +77,7 @@ async def test_audit_ttls_succeeds_when_there_is_a_ttl_for_a_node_type(mocker):
         [],
     )
 
-    audit = TTLAudit(AuditPrinter())
+    audit = AuditTimeToLiveConfigurations(AuditPrinter())
     await audit.run(project)
 
     assert_that(audit.failure_count, equal_to(0))
@@ -105,7 +105,7 @@ async def test_audit_ttls_succeeds_when_there_is_a_ttl_for_a_relationship_type(m
         [],
     )
 
-    audit = TTLAudit(AuditPrinter())
+    audit = AuditTimeToLiveConfigurations(AuditPrinter())
     await audit.run(project)
 
     assert_that(audit.failure_count, equal_to(0))
