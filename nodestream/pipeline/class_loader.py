@@ -1,8 +1,24 @@
 from importlib import import_module
 
-from ..exceptions import InvalidClassPathError, PipelineComponentInitilizationError
+DECLARATIVE_INIT_METHOD_NAME = "from_file_data"
 
-DECLARATIVE_INIT_METHOD_NAME = "__declarative_init__"
+
+class InvalidClassPathError(ValueError):
+    """Raised when a class path is invalid."""
+
+    pass
+
+
+class PipelineComponentInitializationError(ValueError):
+    """Raised when a component fails to initialize."""
+
+    def __init__(self, initializer, init_arguments, *args: object) -> None:
+        super().__init__(
+            "Failed to Initialize Component in Declarative Pipeline. Likely the arguments are incorrect.",
+            *args,
+        )
+        self.initializer = initializer
+        self.init_arguments = init_arguments
 
 
 def find_class(class_path):
@@ -37,8 +53,8 @@ class ClassLoader:
 
     def load_class(self, implementation, arguments=None, factory=None):
         arguments = arguments or {}
-        initializier = self.find_class_initializer(implementation, factory)
+        initializer = self.find_class_initializer(implementation, factory)
         try:
-            return initializier(**arguments)
+            return initializer(**arguments)
         except TypeError as e:
-            raise PipelineComponentInitilizationError(initializier, arguments) from e
+            raise PipelineComponentInitializationError(initializer, arguments) from e

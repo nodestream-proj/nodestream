@@ -6,7 +6,6 @@ from typing import Iterable
 from cymple.builder import NodeAfterMergeAvailable, NodeAvailable, QueryBuilder
 
 from ...model import (
-    GraphObjectType,
     MatchStrategy,
     Node,
     Relationship,
@@ -14,6 +13,7 @@ from ...model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
+from ...schema.schema import GraphObjectType
 from ..query_executor import OperationOnNodeIdentity, OperationOnRelationshipIdentity
 from .query import Query, QueryBatch
 
@@ -161,12 +161,10 @@ class Neo4jIngestQueryBuilder:
     ) -> str:
         """Generate a query to update a relationship in the database given a relationship operation."""
 
-        match_from_node_segement = _match_node(operation.from_node, FROM_NODE_REF_NAME)
-        match_to_node_segement = _match_node(operation.to_node, TO_NODE_REF_NAME)
+        match_from_node_segment = _match_node(operation.from_node, FROM_NODE_REF_NAME)
+        match_to_node_segment = _match_node(operation.to_node, TO_NODE_REF_NAME)
         merge_rel_segment = _merge_relationship(operation.relationship_identity)
-        return (
-            f"{match_from_node_segement} {match_to_node_segement} {merge_rel_segment}"
-        )
+        return f"{match_from_node_segment} {match_to_node_segment} {merge_rel_segment}"
 
     def generate_update_rel_params(self, rel: Relationship) -> dict:
         """Generate the parameters for a query to update a relationship in the database."""
@@ -205,12 +203,14 @@ class Neo4jIngestQueryBuilder:
     def generate_batch_update_relationship_query_batch(
         self,
         operation: OperationOnRelationshipIdentity,
-        rels: Iterable[RelationshipWithNodes],
+        relationships: Iterable[RelationshipWithNodes],
     ) -> QueryBatch:
         """Generate a batch of queries to update relationships in the database in the same way of the same type."""
 
         query = self.generate_update_relationship_operation_query_statement(operation)
-        params = [self.generate_update_rel_between_nodes_params(rel) for rel in rels]
+        params = [
+            self.generate_update_rel_between_nodes_params(rel) for rel in relationships
+        ]
         return QueryBatch(query, params)
 
     def generate_ttl_query_from_configuration(
@@ -226,7 +226,7 @@ class Neo4jIngestQueryBuilder:
         query_builder = QueryBuilder()
         ref_name = "x"
 
-        if config.graph_type == GraphObjectType.NODE:
+        if config.graph_object_type == GraphObjectType.NODE:
             query_builder = query_builder.match().node(
                 labels=config.object_type, ref_name=ref_name
             )

@@ -1,7 +1,9 @@
 import pytest
+from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations.run_pipeline import RunPipeline, SpinnerProgressIndicator
 from nodestream.pipeline import PipelineInitializationArguments
+from nodestream.pipeline.meta import PipelineContext
 from nodestream.project import Project
 
 
@@ -23,11 +25,14 @@ def test_make_run_request(run_pipeline_operation, mocker):
     command.option.side_effect = [["annotation1", "annotation2"], "10000"]
     command.argument.return_value = "my_pipeline"
     result = run_pipeline_operation.make_run_request(command)
-    assert result.pipeline_name == "my_pipeline"
-    assert result.initialization_arguments == PipelineInitializationArguments(
-        annotations=["annotation1", "annotation2"]
+    assert_that(result.pipeline_name, equal_to("my_pipeline"))
+    assert_that(
+        result.initialization_arguments,
+        equal_to(
+            PipelineInitializationArguments(annotations=["annotation1", "annotation2"])
+        ),
     )
-    assert result.progress_reporter.reporting_frequency == 10000
+    assert_that(result.progress_reporter.reporting_frequency, equal_to(10000))
 
 
 def test_spinner_on_start(mocker):
@@ -40,7 +45,7 @@ def test_spinner_on_start(mocker):
 def test_spinner_on_finish(mocker):
     spinner = SpinnerProgressIndicator(mocker.Mock())
     spinner.on_start()
-    spinner.on_finish()
+    spinner.on_finish(PipelineContext())
     spinner.progress.finish.assert_called_once()
 
 

@@ -1,16 +1,16 @@
+import asyncio
 from dataclasses import asdict
 from logging import getLogger
 
 from ..model import (
-    FieldIndex,
     IngestionHookRunRequest,
-    IngestionStrategy,
-    KeyIndex,
     MatchStrategy,
     Node,
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
+from ..schema.indexes import FieldIndex, KeyIndex
+from .ingest_strategy import IngestionStrategy
 from .operation_debouncer import OperationDebouncer
 from .query_executor import QueryExecutor
 
@@ -57,18 +57,30 @@ class DebouncedIngestStrategy(IngestionStrategy, alias="debounced"):
         await self.executor.perform_ttl_op(config)
         self.logger.info("Executed TTL", extra=asdict(config))
 
-    async def flush(self):
-        for operation, node_group in self.debouncer.drain_node_groups():
-            self.logger.debug("Debouned Nodes", extra=asdict(operation.node_identity))
-            await self.executor.upsert_nodes_in_bulk_with_same_operation(
+    def flush_nodes_updates(self):
+        update_coroutines = (
+            self.executor.upsert_nodes_in_bulk_with_same_operation(
                 operation, node_group
             )
+            for operation, node_group in self.debouncer.drain_node_groups()
+        )
+        return asyncio.gather(*update_coroutines)
 
-        for rel_shape, rel_group in self.debouncer.drain_relationship_groups():
-            self.logger.debug("Draining Debounced Nodes", extra=asdict(rel_shape))
-            await self.executor.upsert_relationships_in_bulk_of_same_operation(
+    def flush_relationship_updates(self):
+        update_coroutines = (
+            self.executor.upsert_relationships_in_bulk_of_same_operation(
                 rel_shape, rel_group
             )
+            for rel_shape, rel_group in self.debouncer.drain_relationship_groups()
+        )
+        return asyncio.gather(*update_coroutines)
 
+    async def flush(self):
+        await self.flush_nodes_updates()
+        await self.flush_relationship_updates()
+
+        # Because we don't know what exactly the hooks do, we can't reliably parallelize
+        # them because we could overwhelm the database so we are going to do them one at
+        # a time.
         for hook in self.hooks_saved_for_after_ingest:
             await self.executor.execute_hook(hook)

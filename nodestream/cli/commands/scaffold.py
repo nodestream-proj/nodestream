@@ -32,6 +32,7 @@ class Scaffold(NodestreamCommand):
             )
         )
         for generated_pipeline in generated_pipelines:
+            self.line(f"<info>Generated pipeline at '{generated_pipeline}'</info>")
             await self.run_operation(
                 AddPipelineToProject(project, generated_pipeline, desired_scope)
             )

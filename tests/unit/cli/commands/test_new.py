@@ -1,4 +1,5 @@
 import pytest
+from hamcrest import assert_that, equal_to
 
 from nodestream.cli.commands.new import New
 
@@ -9,5 +10,6 @@ async def test_handle_async(mocker):
     run.option = mocker.Mock()
     run.argument = mocker.Mock(return_value="some/path")
     run.run_operation = mocker.AsyncMock()
+    run.line = mocker.Mock()
     await run.handle_async()
-    assert run.run_operation.await_count == 4
+    assert_that(run.run_operation.await_count, equal_to(1))

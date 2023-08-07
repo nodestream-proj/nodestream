@@ -1,12 +1,13 @@
 # Creating A Value Provider
 
 There are many methods of extracting and providing data to the ETl pipeline as it operates. The various yaml tags such
-as `!jq` or `!variable` refer to an underlying `ValueProvider`. In order to introduce your own mechanism for
-providing values you can create your own subclass of `ValueProvider`.
+as `!jq` or `!variable` refer to an underlying `ValueProvider`. 
 
+## Creating a Value Provider
+In order to introduce your own mechanism for providing values you can create your own subclass of `ValueProvider`.
 
 ```python
-from nodestream.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider
 
 class HashValueProvider(ValueProvider):
     pass
@@ -15,14 +16,13 @@ class HashValueProvider(ValueProvider):
 
 
 ```python
-from nodestream.model import InterpreterContext
-from nodestream.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider, ProviderContext
 
 class HashValueProvider(ValueProvider):
-    def single_value(self, context: InterpreterContext) -> Any:
+    def single_value(self, context: ProviderContext) -> Any:
         ...
 
-    def many_values(self, context: InterpreterContext) -> Iterable[Any]:
+    def many_values(self, context: ProviderContext) -> Iterable[Any]:
         ....
 ```
 
@@ -31,8 +31,7 @@ class HashValueProvider(ValueProvider):
 ```python
 from typing import Any, Iterable
 
-from nodestream.model import InterpreterContext
-from nodestream.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider, ProviderContext
 from some_hashing_library import hash_value
 
 
@@ -40,17 +39,17 @@ class HashValueProvider(ValueProvider):
     def __init__(self, value_provider_to_hash: ValueProvider):
         self.value_provider_to_hash = value_provider_to_hash
 
-    def single_value(self, context: InterpreterContext) -> Any:
+    def single_value(self, context: ProviderContext) -> Any:
         return hash_value(self.value_provider_to_hash.single_value(context))
 
-    def many_values(self, context: InterpreterContext) -> Iterable[Any]:
+    def many_values(self, context: ProviderContext) -> Iterable[Any]:
         for value in self.value_provider_to_hash.many_values(context):
             yield hash_value(value)
 ```
 
 Now that we have implemented the hashing behavior, we'd like to use it. However, currently our `HashValueProvider` is
 not constructable in our pipelines. To accomplish this, we need to register a yaml loader that can register a tag in
-yaml that can instanitate our new value provider. Nodestream uses [`pyyaml`](TODO) to load our pipelines.
+yaml that can instantiate our new value provider. Nodestream uses [`pyyaml`](https://pyyaml.org/) to load our pipelines.
 For our purposes, our loader can be created by doing the following:
 
 ```python
@@ -71,28 +70,36 @@ class HashValueProvider(ValueProvider):
         )
 ```
 
-## Make sure your module is imported
+## Registering the Value Provider
 
+ValueProviders are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `value_providers` inside of the `nodestream.plugins` group is loaded. Every Value Provider is expected to be a subclass of `nodestream.pipeline.value_providers:ValueProvider` as directed above. 
 
-```yaml
-imports:
-  - nodestream.databases.neo4j # an existing import
-  - my_project.some_sub_package.value_providers
-```
+The `entry_point` should be a module that contains at least one Value Provider class. At runtime, the module will be loaded and all classes that inherit from `nodestream.pipeline.value_providers:ValueProvider` will be registered. 
 
+Depending on how you are building your package, you can register your Value Provider plugin in one of the following ways:
 
-## Using your ValueProvider
+=== "pyproject.toml"
+    ```toml
+    [project.entry-points."nodestream.plugins"]
+    value_providers = "nodestream_plugin_cool.value_providers"
+    ```
 
-This allows us to construct a value provider like so:
+=== "setup.cfg"
+    ```ini
+    [options.entry_points]
+    nodestream.plugins =
+        value_providers = nodestream_plugin_cool.value_providers
+    ```
 
-
-TODO: Check that this is right
-```yaml
-some:
-  place:
-    in:
-      the:
-        pipeline: !hash hash_value: !variable foo
-```
-
-
+=== "setup.py"
+    ```python
+    setup(
+        ...
+        entry_points={
+            "nodestream.plugins": [
+                "value_providers = nodestream_plugin_cool.value_providers"
+            ]
+        },
+        ...
+    )
+    ```

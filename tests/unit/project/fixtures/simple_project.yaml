@@ -3,9 +3,8 @@ scopes:
     annotations:
       concurrency: 1
     pipelines:
-      - "path/to/pipeline1"
-      - path: "path/to/pipeline2"
+      - "tests/unit/project/fixtures/pipelines/pipeline_one.yaml"
+      - path: "tests/unit/project/fixtures/pipelines/pipeline_two.yaml"
         name: "just a random value"
         annotations:
           concurrency: 2
-  

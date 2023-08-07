@@ -3,9 +3,7 @@ from dataclasses import dataclass
 from typing import Iterable
 
 from ..model import (
-    FieldIndex,
     IngestionHook,
-    KeyIndex,
     MatchStrategy,
     Node,
     NodeIdentityShape,
@@ -13,6 +11,8 @@ from ..model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
+from ..pluggable import Pluggable
+from ..schema.indexes import FieldIndex, KeyIndex
 from ..subclass_registry import SubclassRegistry
 
 QUERY_EXECUTOR_SUBCLASS_REGISTRY = SubclassRegistry()
@@ -32,17 +32,18 @@ class OperationOnRelationshipIdentity:
 
 
 @QUERY_EXECUTOR_SUBCLASS_REGISTRY.connect_baseclass
-class QueryExecutor(ABC):
+class QueryExecutor(ABC, Pluggable):
+    entrypoint_name = "databases"
+
     @classmethod
     def from_database_args(cls, database: str = "neo4j", **database_args):
-        return QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database).from_file_arguments(
+        return QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database).from_file_data(
             **database_args
         )
 
     @classmethod
-    @abstractmethod
-    def from_file_arguments(cls, **kwargs):
-        raise NotImplementedError
+    def from_file_data(cls, **kwargs):
+        return cls(**kwargs)
 
     @abstractmethod
     async def upsert_nodes_in_bulk_with_same_operation(
@@ -54,7 +55,7 @@ class QueryExecutor(ABC):
     async def upsert_relationships_in_bulk_of_same_operation(
         self,
         shape: OperationOnRelationshipIdentity,
-        rels: Iterable[RelationshipWithNodes],
+        relationships: Iterable[RelationshipWithNodes],
     ):
         raise NotImplementedError
 

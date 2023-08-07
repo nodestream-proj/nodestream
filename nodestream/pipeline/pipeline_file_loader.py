@@ -4,11 +4,17 @@ from typing import List, Optional
 
 from yaml import SafeLoader, load
 
-from ..argument_resolvers import ARGUMENT_RESOLVER_REGISTRY
-from ..exceptions import InvalidPipelineDefinitionError
-from ..value_providers import VALUE_PROVIDER_REGISTRY
+from .argument_resolvers import ArgumentResolver
 from .class_loader import ClassLoader
+from .normalizers import Normalizer
 from .pipeline import Pipeline
+from .value_providers import ValueProvider
+
+
+class InvalidPipelineDefinitionError(ValueError):
+    """Raised when a pipeline definition is invalid."""
+
+    pass
 
 
 class PipelineFileSafeLoader(SafeLoader):
@@ -21,9 +27,11 @@ class PipelineFileSafeLoader(SafeLoader):
         if cls.was_configured:
             return
 
-        for value_provider in VALUE_PROVIDER_REGISTRY.all_subclasses:
+        for normalizer in Normalizer.all():
+            normalizer.setup()
+        for value_provider in ValueProvider.all():
             value_provider.install_yaml_tag(cls)
-        for argument_resolver in ARGUMENT_RESOLVER_REGISTRY.all_subclasses:
+        for argument_resolver in ArgumentResolver.all():
             argument_resolver.install_yaml_tag(cls)
 
         cls.was_configured = True
@@ -40,6 +48,10 @@ class PipelineInitializationArguments:
     """Arguments used to initialize a pipeline from a file."""
 
     annotations: Optional[List[str]] = None
+
+    @classmethod
+    def for_introspection(cls):
+        return cls(annotations=["introspection"])
 
     def initialize_from_file_data(self, file_data: List[dict]):
         return Pipeline(self.load_steps(ClassLoader(), file_data))
@@ -81,7 +93,7 @@ class PipelineFileLoader:
     ):
         if not isinstance(file_data, list):
             raise InvalidPipelineDefinitionError(
-                "File should be a list of step classs to load"
+                "File should be a list of step class to load"
             )
 
         return init_args.initialize_from_file_data(file_data)

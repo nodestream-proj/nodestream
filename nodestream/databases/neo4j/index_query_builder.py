@@ -1,4 +1,5 @@
-from ...model import FieldIndex, GraphObjectType, KeyIndex
+from ...schema.indexes import FieldIndex, KeyIndex
+from ...schema.schema import GraphObjectType
 from .query import Query
 
 KEY_INDEX_QUERY_FORMAT = "CREATE CONSTRAINT {constraint_name} IF NOT EXISTS FOR (n:`{type}`) REQUIRE ({key_pattern}) IS UNIQUE"
@@ -10,7 +11,7 @@ REL_FIELD_INDEX_QUERY_FORMAT = "CREATE INDEX {constraint_name} IF NOT EXISTS FOR
 
 
 def key_index_from_format(key_index: KeyIndex, format: str) -> Query:
-    key_pattern = ",".join(f"n.`{p}`" for p in sorted(list(key_index.identity_keys)))
+    key_pattern = ",".join(f"n.`{p}`" for p in sorted(key_index.identity_keys))
     constraint_name = f"{key_index.type}_node_key"
     statement = format.format(
         constraint_name=constraint_name,
@@ -31,7 +32,7 @@ class Neo4jIndexQueryBuilder:
         return key_index_from_format(key_index, KEY_INDEX_QUERY_FORMAT)
 
     def create_field_index_query(self, field_index: FieldIndex) -> Query:
-        """Creates a filed index using a 'Range Index' or equilvant.
+        """Creates a filed index using a 'Range Index' or equivalent.
 
         see: https://neo4j.com/docs/cypher-manual/current/indexes-for-search-performance/#indexes-create-indexes
         """

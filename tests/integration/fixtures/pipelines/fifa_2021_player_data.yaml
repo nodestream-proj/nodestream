@@ -1,0 +1,42 @@
+- implementation: nodestream.pipeline.extractors.files:FileExtractor
+  arguments:
+    globs:
+      - tests/integration/fixtures/data/fifa_2021_player_data.csv
+
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: source_node
+        node_type: Player
+        key:
+          player_id: !jmespath player_id
+        properties:
+          name: !jmespath name
+          overall: !jmespath overall
+          hits:  !jmespath hits
+          age:  !jmespath age
+          potential: !jmespath potential
+      - type: relationship
+        node_type: Country
+        relationship_type: ORIGINATES_FROM
+        node_key:
+          name: !jmespath nationality
+        key_normalization:
+          do_trim_whitespace: true
+          do_lowercase_strings: false
+      - type: relationship
+        node_type: Position
+        relationship_type: LINES_UP_AT
+        node_key:
+          name: !jmespath position
+        key_normalization:
+          do_trim_whitespace: true
+          do_lowercase_strings: false
+      - type: relationship
+        node_type: Team
+        relationship_type: PLAYS_FOR
+        node_key:
+          name: !jmespath team
+        key_normalization:
+          do_trim_whitespace: true
+          do_lowercase_strings: false

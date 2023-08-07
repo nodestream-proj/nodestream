@@ -1,0 +1,15 @@
+- id: audit-ttls
+  name: Audit Nodestream TTLs
+  description: "Check for consistency between node keys and references in all Nodestream pipelines"
+  entry: nodestream audit ttls
+  language: python
+  minimum_pre_commit_version: 2.9.2
+  require_serial: true
+
+- id: audit-refs
+  name: Audit Nodestream References 
+  description: "Check for consistency between node keys and references in all Nodestream pipelines."
+  entry: nodestream audit ttls
+  language: python
+  minimum_pre_commit_version: 2.9.2
+  require_serial: true

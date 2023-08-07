@@ -1,12 +1,20 @@
+from abc import ABC
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 from .match_strategy import MatchStrategy
 
 if TYPE_CHECKING:
-    from ..value_providers.value_provider import ValueProvider
-    from .interpreter_context import InterpreterContext
+    from ..interpreting.context import ProviderContext
+    from ..interpreting.value_providers import ValueProvider
+
+
+class DeduplicatableObject(ABC):
+    def get_dedup_key(self) -> tuple:
+        raise NotImplementedError
+
+    def update(self, other: "DeduplicatableObject"):
+        raise NotImplementedError
 
 
 class PropertySet(dict):
@@ -15,14 +23,16 @@ class PropertySet(dict):
 
     @classmethod
     def default_properties(cls) -> "PropertySet":
-        from ..pipeline import get_pipeline_name
+        from pandas import Timestamp
+
+        from ..pipeline.meta import get_context
 
         """Returns a default set of properties which set values.
 
         These default values indicate when the current pipeline touched the object the properties are for.
         """
-        pipeline_name = get_pipeline_name()
-        now = datetime.utcnow()
+        pipeline_name = get_context().name
+        now = Timestamp.utcnow()
         return cls(
             {
                 "last_ingested_at": now,
@@ -38,7 +48,7 @@ class PropertySet(dict):
 
     def apply_providers(
         self,
-        context: "InterpreterContext",
+        context: "ProviderContext",
         provider_map: "Dict[str, ValueProvider]",
         **norm_args,
     ):
@@ -53,7 +63,7 @@ class PropertySet(dict):
 
 
 @dataclass(slots=True)
-class Node:
+class Node(DeduplicatableObject):
     """A `Node` is a entity that has a distinct identity.
 
     Each `Node` represents an entity (a person, place, thing, category or other piece of data) that has a distinct
@@ -97,17 +107,20 @@ class Node:
     def update(self, other: "Relationship"):
         self.properties.update(other.properties)
 
+    def get_dedup_key(self) -> tuple:
+        return tuple(sorted(self.key_values.values()))
 
-@dataclass(slots=True)
-class Relationship:
+
+@dataclass(slots=True, frozen=True)
+class Relationship(DeduplicatableObject):
     """A `Relationship` represents an inherent connection between two `Node`s.
 
-    Each `Relationship` follows a relatively similar model to a `Node`. There is a _single_ type for the relatioship.
+    Each `Relationship` follows a relatively similar model to a `Node`. There is a _single_ type for the relationship.
     Relationships can store properties on the relationship itself (This would be similar to a jump table in a relational database).
 
     A key for a `Relationship` can also be provided. By default, `nodestream` will assume that there should be one
-    relationship of the same type between two nodes. By providing keys, `nodestream` will create mulitple relationships between
-    two nodes and will descriminate based on the key values.
+    relationship of the same type between two nodes. By providing keys, `nodestream` will create multiple relationships between
+    two nodes and will discriminate based on the key values.
 
     This model represents the relationship itself and DOES NOT include a reference of the nodes that are stored.
     """
@@ -128,9 +141,12 @@ class Relationship:
     def update(self, other: "Relationship"):
         self.properties.update(other.properties)
 
+    def get_dedup_key(self) -> tuple:
+        return tuple(sorted(self.key_values.values()))
+
 
 @dataclass(slots=True)
-class RelationshipWithNodes:
+class RelationshipWithNodes(DeduplicatableObject):
     """Stores information about the related node and the relationship itself."""
 
     from_node: Node
@@ -151,6 +167,13 @@ class RelationshipWithNodes:
         self.to_node.properties.update(other.to_node.properties)
         self.from_node.properties.update(other.from_node.properties)
         self.relationship.properties.update(other.relationship.properties)
+
+    def get_dedup_key(self) -> tuple:
+        return (
+            self.to_node.get_dedup_key(),
+            self.from_node.get_dedup_key(),
+            self.relationship.get_dedup_key(),
+        )
 
 
 @dataclass(slots=True, frozen=True)

@@ -5,14 +5,14 @@ COMMIT_QUERY = """
 CALL apoc.periodic.iterate(
     "UNWIND $batched_parameter_sets as params RETURN params",
     $batched_query,
-    {batchsize: 1000, paralell: false, retries: 3, params: {batched_parameter_sets: $batched_parameter_sets}}
+    {batchsize: 1000, parallel: false, retries: 3, params: {batched_parameter_sets: $batched_parameter_sets}}
 )
 YIELD batches, committedOperations, failedOperations, errorMessages
 RETURN batches, committedOperations, failedOperations, errorMessages
 """
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class Query:
     query_statement: str
     parameters: Dict[str, Any]
@@ -22,7 +22,7 @@ class Query:
         return cls(query_statement=statement, parameters={})
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class QueryBatch:
     query_statement: str
     batched_parameter_sets: List[Dict[str, Any]]

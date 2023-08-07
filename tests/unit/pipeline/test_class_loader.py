@@ -3,11 +3,11 @@ from typing import Optional
 import pytest
 from hamcrest import assert_that, equal_to, none
 
-from nodestream.exceptions import (
+from nodestream.pipeline.class_loader import (
+    ClassLoader,
     InvalidClassPathError,
-    PipelineComponentInitilizationError,
+    PipelineComponentInitializationError,
 )
-from nodestream.pipeline import ClassLoader
 
 
 class SimpleClass:
@@ -18,8 +18,8 @@ class SimpleClass:
 
 class SimpleClassWithFactories(SimpleClass):
     @classmethod
-    def __declarative_init__(cls, argument: str):
-        return cls(argument=argument, from_factory="__declarative_init__")
+    def from_file_data(cls, argument: str):
+        return cls(argument=argument, from_factory="from_file_data")
 
     @classmethod
     def another_factory(cls, argument: str):
@@ -48,7 +48,7 @@ def test_class_loader_declartive_init(subject):
     )
     assert_that(result.__class__.__name__, equal_to("SimpleClassWithFactories"))
     assert_that(result.argument, equal_to("test"))
-    assert_that(result.from_factory, equal_to("__declarative_init__"))
+    assert_that(result.from_factory, equal_to("from_file_data"))
 
 
 def test_class_loader_another_factory(subject):
@@ -80,7 +80,7 @@ def test_class_loader_invalid_path_missing_class(subject):
 
 
 def test_class_loader_invalid_path_invalid_arugment(subject):
-    with pytest.raises(PipelineComponentInitilizationError):
+    with pytest.raises(PipelineComponentInitializationError):
         subject.load_class(
             implementation="tests.unit.pipeline.test_class_loader:SimpleClass",
             arguments={"not_a_valid_argument": True},

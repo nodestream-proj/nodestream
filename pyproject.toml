@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nodestream"
-version = "0.2.0"
+version = "0.5.0"
 description = "A Fast, Declarative ETL for Graph Databases."
 license = "GPL-3.0-only"
 authors = [
@@ -10,7 +10,7 @@ readme = "README.md"
 
 homepage = "https://github.com/nodestream-proj/nodestream"
 repository = "https://github.com/nodestream-proj/nodestream"
-documentation = "TODO"
+documentation = "https://nodestream-proj.github.io/nodestream"
 
 keywords = ["etl", "neo4j", "declarative", "data", "kafka", "ingest"]
 classifiers = [
@@ -38,6 +38,10 @@ python-json-logger = "^2.0.4"
 cymple = "0.8.1"
 boto3 = "^1.26.137"
 aiokafka = "^0.8.0"
+Jinja2 = "^3"
+pandas = "^2"
+schema = "^0.7.5"
+cookiecutter = "^2.1.1"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
@@ -56,13 +60,35 @@ pytest-mock = "^3.10.0"
 freezegun = "^1.2.2"
 moto = {version = "^4.1.10", extras = ["s3"]}
 ruff = "^0.0.270"
+pytest-snapshot = "^0.9.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks the test as an integration test (deselect with '-m \"not integration\"')",
+    "e2e: marks the test as an end-to-end test (deselect with '-m \"not e2e\"')",
+]
+
 [tool.poetry.scripts]
-nodestream = 'nodestream.cli:run'
+nodestream = 'nodestream.cli.application:run'
+
+# To prevent the "builin" stuff being a special case of plugins,
+# nodestream just considers itself a plugin for all of the things that are pluggable.
+[tool.poetry.plugins."nodestream.plugins"]
+"argument_resolvers" = "nodestream.pipeline.argument_resolvers"
+"file_formats" = "nodestream.pipeline.extractor.files"
+"interpretations" = "nodestream.interpreting.interpretations"
+"normalizers" = "nodestream.pipeline.normalizers"
+"value_providers" = "nodestream.pipeline.value_providers"   
+"record_formats" = "nodestream.extractors.streams"
+"stream_connectors" = "nodestream.extractors.streams"
+"commands" = "nodestream.cli.commands"                      
+"audits" = "nodestream.project.audits"                      
+"schema_printers" = "nodestream.schema.printers"
+"databases" = "nodestream.databases.neo4j"
 
 [tool.ruff]
 ignore = ["E501"]

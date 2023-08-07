@@ -40,7 +40,8 @@ class TableOutputFormat(OutputFormat):
 class JsonOutputFormat(OutputFormat):
     def output(self, matching_pipelines: Iterable[Tuple[str, PipelineDefinition]]):
         json_data = [
-            pipeline.as_file_definition() for _, pipeline in matching_pipelines
+            pipeline.to_file_data(verbose=self.command.is_verbose)
+            for _, pipeline in matching_pipelines
         ]
         self.command.write(json.dumps(json_data))
 

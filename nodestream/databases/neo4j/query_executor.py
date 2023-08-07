@@ -3,14 +3,8 @@ from typing import Iterable
 
 from neo4j import AsyncDriver, AsyncGraphDatabase
 
-from ...model import (
-    FieldIndex,
-    IngestionHook,
-    KeyIndex,
-    Node,
-    RelationshipWithNodes,
-    TimeToLiveConfiguration,
-)
+from ...model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
+from ...schema.indexes import FieldIndex, KeyIndex
 from ..query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
@@ -26,7 +20,7 @@ from .query import Query
 
 class Neo4jQueryExecutor(QueryExecutor, alias="neo4j"):
     @classmethod
-    def from_file_arguments(
+    def from_file_data(
         cls,
         uri: str,
         username: str,
@@ -72,11 +66,11 @@ class Neo4jQueryExecutor(QueryExecutor, alias="neo4j"):
     async def upsert_relationships_in_bulk_of_same_operation(
         self,
         shape: OperationOnRelationshipIdentity,
-        rels: Iterable[RelationshipWithNodes],
+        relationships: Iterable[RelationshipWithNodes],
     ):
         batched_query = (
             self.ingest_query_builder.generate_batch_update_relationship_query_batch(
-                shape, rels
+                shape, relationships
             )
         )
         await self.execute(batched_query.as_query(), log_result=True)
@@ -107,7 +101,9 @@ class Neo4jQueryExecutor(QueryExecutor, alias="neo4j"):
         )
         await self.driver.verify_connectivity()
         result = await self.driver.execute_query(
-            query.query_statement, query.parameters
+            query.query_statement,
+            query.parameters,
+            database_=self.database_name,
         )
         if log_result:
             for record in result.records:

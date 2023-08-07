@@ -2,22 +2,24 @@ from unittest.mock import call
 
 import pytest
 from freezegun import freeze_time
+from hamcrest import assert_that, equal_to, has_length, instance_of
 
-from nodestream.interpreting import SourceNodeInterpretation
+from nodestream.interpreting.interpretations import SourceNodeInterpretation
 from nodestream.interpreting.interpreter import (
     InterpretationPass,
     Interpreter,
     MultiSequenceInterpretationPass,
     NullInterpretationPass,
-    SingleSequenceIntepretationPass,
+    SingleSequenceInterpretationPass,
 )
 from nodestream.interpreting.record_decomposers import (
     RecordDecomposer,
     WholeRecordDecomposer,
 )
-from nodestream.model import DesiredIngestion, InterpreterContext
+from nodestream.model import DesiredIngestion
 from nodestream.pipeline import IterableExtractor
-from nodestream.pipeline.pipeline import empty_asnyc_generator
+from nodestream.pipeline.pipeline import empty_async_generator
+from nodestream.pipeline.value_providers import ProviderContext
 
 
 @pytest.fixture
@@ -33,7 +35,7 @@ def stubbed_interpreter(mocker):
 def single_pass_interpreter():
     return Interpreter(
         before_iteration=NullInterpretationPass(),
-        interpretations=SingleSequenceIntepretationPass(
+        interpretations=SingleSequenceInterpretationPass(
             SourceNodeInterpretation("test", {"test": "test"})
         ),
         decomposer=WholeRecordDecomposer(),
@@ -45,36 +47,36 @@ async def test_test_single_interpreter_yields_index(single_pass_interpreter):
     results = [
         r
         async for r in single_pass_interpreter.handle_async_record_stream(
-            empty_asnyc_generator()
+            empty_async_generator()
         )
     ]
-    assert len(results) == 2
+    assert_that(results, has_length(2))
 
 
 def test_null_interpretation_pass_pass_returns_passed_context():
     null_pass = NullInterpretationPass()
-    assert list(null_pass.apply_interpretations(None)) == [None]
+    assert_that(list(null_pass.apply_interpretations(None)), equal_to([None]))
 
 
 def test_single_sequence_interpretation_pass_returns_passed_context(mocker):
-    single_pass = SingleSequenceIntepretationPass(mocker.Mock())
-    assert list(single_pass.apply_interpretations(None)) == [None]
+    single_pass = SingleSequenceInterpretationPass(mocker.Mock())
+    assert_that(list(single_pass.apply_interpretations(None)), equal_to([None]))
     single_pass.interpretations[0].interpret.assert_called_once_with(None)
 
 
 def test_interpretation_pass_passing_null_returns_null_interpretation_pass():
-    null_pass = InterpretationPass.from_file_arguments(None)
-    assert isinstance(null_pass, NullInterpretationPass)
+    null_pass = InterpretationPass.from_file_data(None)
+    assert_that(null_pass, instance_of(NullInterpretationPass))
 
 
 def test_interpretation_pass_passing_list_of_list_returns_multi_pass():
-    multi_pass = InterpretationPass.from_file_arguments(
+    multi_pass = InterpretationPass.from_file_data(
         [
             [{"type": "properties", "properties": {}}],
             [{"type": "properties", "properties": {}}],
         ]
     )
-    assert isinstance(multi_pass, MultiSequenceInterpretationPass)
+    assert_that(multi_pass, instance_of(MultiSequenceInterpretationPass))
 
 
 def test_intepret_record_iterates_through_interpretation_process(stubbed_interpreter):
@@ -87,7 +89,7 @@ def test_intepret_record_iterates_through_interpretation_process(stubbed_interpr
     ]
 
     results = list(stubbed_interpreter.interpret_record(input_record))
-    assert results == ["a", "b", "c"] * 3
+    assert_that(results, equal_to(["a", "b", "c"] * 3))
 
     stubbed_interpreter.decomposer.decompose_record.assert_called_once()
     stubbed_interpreter.interpretations.apply_interpretations.assert_has_calls(
@@ -100,7 +102,7 @@ def test_intepret_record_iterates_through_interpretation_process(stubbed_interpr
 async def test_handle_async_record_stream_returns_iteration_results(
     stubbed_interpreter, mocker
 ):
-    contexts = [[InterpreterContext.fresh(i)] for i in range(5)]
+    contexts = [[ProviderContext.fresh(i)] for i in range(5)]
     stubbed_interpreter.gather_used_indexes = mocker.Mock(return_value=[])
     stubbed_interpreter.interpret_record = mocker.Mock(side_effect=contexts)
     results = [
@@ -111,4 +113,4 @@ async def test_handle_async_record_stream_returns_iteration_results(
         if isinstance(r, DesiredIngestion)
     ]
 
-    assert results == [context[0].desired_ingest for context in contexts]
+    assert_that(results, equal_to([context[0].desired_ingest for context in contexts]))

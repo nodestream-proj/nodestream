@@ -1,6 +1,3 @@
-imports:
-  - nodestream.databases.neo4j
-
 scopes:
   test:
     pipelines:

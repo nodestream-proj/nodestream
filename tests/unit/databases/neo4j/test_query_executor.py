@@ -2,7 +2,8 @@ import pytest
 
 from nodestream.databases.neo4j import Neo4jQueryExecutor
 from nodestream.databases.neo4j.query import Query, QueryBatch
-from nodestream.model import GraphObjectType, TimeToLiveConfiguration
+from nodestream.model import TimeToLiveConfiguration
+from nodestream.schema.schema import GraphObjectType
 
 
 @pytest.fixture
@@ -66,7 +67,7 @@ async def test_perform_ttl_op(query_executor, some_query):
     await query_executor.perform_ttl_op(ttl_config)
     query_generator.assert_called_once_with(ttl_config)
     query_executor.driver.execute_query.assert_called_once_with(
-        some_query.query_statement, some_query.parameters
+        some_query.query_statement, some_query.parameters, database_="test"
     )
 
 
@@ -77,7 +78,7 @@ async def test_upsert_key_index(query_executor, some_query):
     await query_executor.upsert_key_index(None)
     query_generator.assert_called_once_with(None)
     query_executor.driver.execute_query.assert_called_once_with(
-        some_query.query_statement, some_query.parameters
+        some_query.query_statement, some_query.parameters, database_="test"
     )
 
 
@@ -88,7 +89,7 @@ async def test_upsert_field_index(query_executor, some_query):
     await query_executor.upsert_field_index(None)
     query_generator.assert_called_once_with(None)
     query_executor.driver.execute_query.assert_called_once_with(
-        some_query.query_statement, some_query.parameters
+        some_query.query_statement, some_query.parameters, database_="test"
     )
 
 
@@ -101,5 +102,5 @@ async def test_execute_hook(query_executor, some_query, mocker):
     await query_executor.execute_hook(hook)
     hook.as_cypher_query_and_parameters.assert_called_once()
     query_executor.driver.execute_query.assert_called_once_with(
-        some_query.query_statement, some_query.parameters
+        some_query.query_statement, some_query.parameters, database_="test"
     )

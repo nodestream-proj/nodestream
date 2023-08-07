@@ -3,7 +3,7 @@
 
 _Fast, Declarative ETL for Graph Databases._
 
-[![Demo](docs/img/demo.gif)](https://badge.fury.io/py/nodestream)
+[![Demo](https://raw.githubusercontent.com/nodestream-proj/nodestream/e94d0faa024c0f8da1e83a4ff6d83746504d197e/docs/img/demo.gif)](https://badge.fury.io/py/nodestream)
 
 #### Badges
 
@@ -16,7 +16,7 @@ _Fast, Declarative ETL for Graph Databases._
 
 - Flexible and extensible YAML based DSL for ETL jobs
 - Connect to data sources like Kafka, AWS Athena, flat files, and more.
-- Developer friendly features such as snapshot testing
+- Developer friendly
 - Highly optimized with async and tuned query generation
 
 
@@ -51,4 +51,5 @@ Please adhere to this project's `code of conduct`.
 - Chad Cloes ([@ccloes](https://www.github.com/ccloes))
 - Oshri Rozenberg([@orozen](https://www.github.com/orozen))
 - Kevin Neal ([@khneal](https://www.github.com/khneal))
+- Grant Hoffman ([@grantleehoffman](https://www.github.com/grantleehoffman))
 

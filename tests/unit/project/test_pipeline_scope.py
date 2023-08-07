@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import pytest
+from hamcrest import assert_that, has_key, is_, not_, same_instance
 
-from nodestream.exceptions import MissingExpectedPipelineError
 from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import (
     PipelineDefinition,
@@ -10,6 +10,7 @@ from nodestream.project import (
     PipelineScope,
     RunRequest,
 )
+from nodestream.project.pipeline_scope import MissingExpectedPipelineError
 
 
 @pytest.fixture
@@ -26,8 +27,8 @@ def scope(pipelines):
 
 
 def test_pipeline_scope_organizes_pipeines_by_name(scope, pipelines):
-    assert scope["pipeline1"] is pipelines[0]
-    assert scope["pipeline2"] is pipelines[1]
+    assert_that(scope["pipeline1"], same_instance(pipelines[0]))
+    assert_that(scope["pipeline2"], same_instance(pipelines[1]))
 
 
 @pytest.mark.asyncio
@@ -50,15 +51,17 @@ def test_delete_pipeline_raises_error_when_missing_not_ok(scope):
 
 
 def test_delete_pipeline_does_not_raise_an_error_when_missing_ok(scope):
-    assert scope.delete_pipeline("does_not_exist") is False
+    assert_that(scope.delete_pipeline("does_not_exist"), is_(False))
 
 
 def test_delete_pipeline_removed_definition(scope):
-    assert scope.delete_pipeline("pipeline1")
-    assert "pipeline1" not in scope.pipelines_by_name
+    assert_that(scope.delete_pipeline("pipeline1"), is_(True))
+    assert_that(scope.pipelines_by_name, not_(has_key("pipeline1")))
 
 
 def test_delete_pipleine_did_not_remove_file_when_told_to_ignore(scope, mocker):
     scope.pipelines_by_name["pipeline1"].remove_file = rm = mocker.Mock()
-    assert scope.delete_pipeline("pipeline1", remove_pipeline_file=False)
+    assert_that(
+        scope.delete_pipeline("pipeline1", remove_pipeline_file=False), is_(True)
+    )
     rm.assert_not_called()

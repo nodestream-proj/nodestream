@@ -1,15 +1,13 @@
-from nodestream.pipeline.meta import (
-    UNKNOWN_PIPELINE_NAME,
-    get_pipeline_name,
-    set_pipeline_name,
-)
+from hamcrest import assert_that, equal_to
+
+from nodestream.pipeline.meta import UNKNOWN_PIPELINE_NAME, get_context, start_context
 
 
 def test_get_pipeline_name_unset():
-    assert get_pipeline_name() == UNKNOWN_PIPELINE_NAME
+    assert_that(get_context().name, equal_to(UNKNOWN_PIPELINE_NAME))
 
 
 def test_get_pipeline_name_set():
-    with set_pipeline_name("test"):
-        assert get_pipeline_name() == "test"
-    assert get_pipeline_name() == UNKNOWN_PIPELINE_NAME
+    with start_context("test"):
+        assert_that(get_context().name, equal_to("test"))
+    assert_that(get_context().name, equal_to(UNKNOWN_PIPELINE_NAME))

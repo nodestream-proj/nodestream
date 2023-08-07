@@ -6,7 +6,7 @@ class Step(ABC):
     """A `Step` represents a phase of an ETl pipeline."""
 
     @classmethod
-    def __declarative_init__(cls, **kwargs):
+    def from_file_data(cls, **kwargs):
         return cls(**kwargs)
 
     @abstractmethod
@@ -14,6 +14,9 @@ class Step(ABC):
         self, record_stream: AsyncGenerator[Any, Any]
     ) -> AsyncGenerator[Any, Any]:
         raise NotImplementedError
+
+    async def finish(self):
+        pass
 
 
 class PassStep(Step):

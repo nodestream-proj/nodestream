@@ -9,12 +9,12 @@ record formats.
 
 The documentation below contains information on the supported `StreamConnector` and `StreamRecordFormat` options and
 how to configure them. See the [Customizing The Stream Extractor](../guides/customizing-the-stream-extractor.md) guide
-to learn how to add your own implementions of these classes.
+to learn how to add your own implementations of these classes.
 
 #### Top Level Arguments
 
 ```yaml
-- implementation: nodestream.extractors.streams:StreamExtractor
+- implementation: nodestream.pipeline.extractors.streams:StreamExtractor
   arguments:
      # rest of the stream extractor format arguments
      timeout: 10 # default 60. Number of seconds to await records.
@@ -28,7 +28,7 @@ The `StreamConnector` describes how to poll data from the underlying streaming m
 #### `Kafka`
 
 ```yaml
-- implementation: nodestream.extractors.streams:StreamExtractor
+- implementation: nodestream.pipeline.extractors.streams:StreamExtractor
   arguments:
      # rest of the stream extractor format arguments
      connector: kafka
@@ -49,13 +49,31 @@ The `json` format simply calls `json.loads` on the data provided from the `Strea
 set the `record_format` to be `json` in the `StreamExtractor` configuration. For example:
 
 ```yaml
-- implementation: nodestream.extractors.streams:StreamExtractor
+- implementation: nodestream.pipeline.extractors.streams:StreamExtractor
   arguments:
      # rest of the stream extractor format
      record_format: json
 ```
 
 ## `AthenaExtractor`
+
+The `AthenaExtractor` issues a query to Amazon Athena, and returns yields each row as a record to the pipeline. For
+example, the following `AthenaExtractor` configuration:
+
+```yaml
+- implementation: nodestream.pipeline.extractors.stores.aws:AthenaExtractor
+  arguments:
+    query: SELECT name, version FROM python_package_versions;
+    workgroup: MY_WORKGROUP_NAME
+    database: package_registry_metadata;
+    output_location: s3://my_bucket/some_path
+```
+
+produces records with the following shape:
+
+```json
+{"name": "nodestream", "version": "0.2.0"}
+```
 
 ### Arguments
 
@@ -75,7 +93,7 @@ The `S3Extractor` pulls files down from S3 and yields the records read from each
 [appropriate file format parser](./file-formats.md). A simple example would look like this:
 
 ```yaml
-- implementation: nodestream.extractors.stores.aws:S3Extractor
+- implementation: nodestream.pipeline.extractors.stores.aws:S3Extractor
   arguments:
     bucket: my-awesome-bucket
 ```
@@ -100,7 +118,7 @@ It takes a collection of file paths as input and yields the records read from ea
 [appropriate file format parser](./file-formats.md).
 
 ```yaml
-- implementation: nodestream.extractors:FileExtractor
+- implementation: nodestream.pipeline.extractors:FileExtractor
   arguments:
     globs:
       - people/*.json
@@ -109,3 +127,43 @@ It takes a collection of file paths as input and yields the records read from ea
 
 ## `TimeToLiveConfigurationExtractor`
 
+"Extracts" time to live configurations from the file and yields them one at a time to the graph database writer.
+
+
+One can configure a Node TTL like this:
+```yaml
+- implementation: nodestream.pipeline.extractors.ttl:TimeToLiveConfigurationExtractor
+  arguments:
+    graph_object_type: NODE
+    configurations:
+      - object_type: Person
+        expiry_in_hours: 96
+      - object_type: Occupation
+        expiry_in_hours: 48
+```
+
+and one can configure a Relationship TTL like this:
+
+```yaml
+- implementation: nodestream.pipeline.extractors.ttl:TimeToLiveConfigurationExtractor
+  arguments:
+    graph_object_type: RELATIONSHIP
+    configurations:
+      - object_type: REPORTS_TO
+        expiry_in_hours: 96
+      - object_type: PERFORMS
+        expiry_in_hours: 48
+```
+
+
+### Arguments
+
+Each configuration can include the following arguments:
+
+| Parameter Name          	| Type   	| Description                                                                                                                                                                               	|
+|-------------------------	|--------	|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| object_type             	| String 	| The object type to apply the TTL to.                                                                                                                                                      	|
+| expiry_in_hours         	| Integer 	| The number of hours after which the object should be deleted.                                                                                                                              	|
+| enabled                 	| Boolean 	| Whether or not the TTL is enabled. Defaults to `True`.                                                                                                                                     	|
+| batch_size              	| Integer 	| The number of objects to delete in a single batch. Defaults to `100`.                                                                                                                     	|
+| custom_query            	| String 	| A custom query to use to delete the objects. If not provided, the default query will be used. The custom query is database implmentation specific.                                                                                             	|
