@@ -22,4 +22,3 @@ async def test_perform_initializes_project(subject, command, mocker):
     command.get_project.return_value = project = mocker.Mock(Project)
     result = await subject.perform(command)
     assert_that(result, equal_to(project))
-    project.ensure_modules_are_imported.assert_called_once()

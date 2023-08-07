@@ -2,13 +2,13 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Iterable
 
-from ..model import (
+from ..pipeline import Flush, Step
+from ..pipeline.value_providers import ProviderContext
+from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
-    InterpreterContext,
     IntrospectiveIngestionComponent,
 )
-from ..pipeline import Flush, Step
-from .interpretation import Interpretation
+from .interpretations import Interpretation
 from .record_decomposers import RecordDecomposer
 
 
@@ -24,14 +24,14 @@ class InterpretationPass(IntrospectiveIngestionComponent, ABC):
         return SingleSequenceInterpretationPass.from_file_data(args)
 
     @abstractmethod
-    def apply_interpretations(self, context: InterpreterContext):
+    def apply_interpretations(self, context: ProviderContext):
         pass
 
 
 class NullInterpretationPass(
     AggregatedIntrospectiveIngestionComponent, InterpretationPass
 ):
-    def apply_interpretations(self, context: InterpreterContext):
+    def apply_interpretations(self, context: ProviderContext):
         yield context
 
     def all_subordinate_components(
@@ -52,7 +52,7 @@ class MultiSequenceInterpretationPass(
     def __init__(self, *passes: InterpretationPass) -> None:
         self.passes = passes
 
-    def apply_interpretations(self, context: InterpreterContext):
+    def apply_interpretations(self, context: ProviderContext):
         for interpretation_pass in self.passes:
             provided_subcontext = deepcopy(context)
             for res in interpretation_pass.apply_interpretations(provided_subcontext):
@@ -77,7 +77,7 @@ class SingleSequenceInterpretationPass(
     def __init__(self, *interpretations: Interpretation):
         self.interpretations = interpretations
 
-    def apply_interpretations(self, context: InterpreterContext):
+    def apply_interpretations(self, context: ProviderContext):
         for interpretation in self.interpretations:
             interpretation.interpret(context)
         yield context
@@ -95,6 +95,9 @@ class Interpreter(Step, AggregatedIntrospectiveIngestionComponent):
 
     @classmethod
     def from_file_data(cls, interpretations, before_iteration=None, iterate_on=None):
+        # Import all interpretation plugins before we try to load any interpretations.
+        Interpretation.import_all()
+
         return cls(
             before_iteration=InterpretationPass.from_file_data(before_iteration),
             interpretations=InterpretationPass.from_file_data(interpretations),
@@ -127,7 +130,7 @@ class Interpreter(Step, AggregatedIntrospectiveIngestionComponent):
                 yield output_context.desired_ingest
 
     def interpret_record(self, record):
-        context = InterpreterContext.fresh(record)
+        context = ProviderContext.fresh(record)
         self.before_iteration.apply_interpretations(context)
         for sub_context in self.decomposer.decompose_record(context):
             yield from self.interpretations.apply_interpretations(sub_context)

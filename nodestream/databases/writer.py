@@ -1,9 +1,9 @@
 from typing import Optional
 
-from ..model.ingest_strategy import INGESTION_STRATEGY_REGISTRY, IngestionStrategy
 from ..pipeline import Flush, Writer
 from .debounced_ingest_strategy import DebouncedIngestStrategy
-from .query_executor import QUERY_EXECUTOR_SUBCLASS_REGISTRY
+from .ingest_strategy import INGESTION_STRATEGY_REGISTRY, IngestionStrategy
+from .query_executor import QUERY_EXECUTOR_SUBCLASS_REGISTRY, QueryExecutor
 from .query_executor_with_statistics import QueryExecutorWithStatistics
 
 
@@ -17,6 +17,9 @@ class GraphDatabaseWriter(Writer):
         collect_stats: bool = True,
         **database_args
     ):
+        # Import all query executors so that they can register themselves
+        QueryExecutor.import_all()
+
         executor_class = QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database)
         executor = executor_class.from_file_data(**database_args)
         if collect_stats:

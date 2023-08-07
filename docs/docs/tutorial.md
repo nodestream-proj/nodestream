@@ -32,6 +32,7 @@ In your newly created `my_first_graph` directory, you should see a folder struct
 │   ├── normalizers.py
 │   └── value_providers.py
 ├── nodestream.yaml
+├── pyproject.toml
 └── pipelines
     └── sample.yaml
 ```
@@ -45,25 +46,13 @@ Essentially it produces three things.
 Expanding on the `nodestream.yaml` file, it looks a little like this:
 
 ```yaml
-imports:
-- my_first_graph.argument_resolvers
-- my_first_graph.normalizers
-- my_first_graph.value_providers
-- nodestream.databases.neo4j
 scopes:
   default:
     pipelines:
     - pipelines/sample.yaml
 ```
 
-This file has two sections:
-
-1. `imports` are dotted module paths that should be imported and initialized at project start. This is where you can
-   inject extra behaviors by [Extending Nodestream](../extending-nodestream/). You can also see that `nodestream`
-   itself has used this section to initialize the module for the `neo4j` database connector.
-
-2. `scopes` is where pipelines go. A `scope` represents a logical grouping of pipelines that make sense for your
-   application. Think of them like a folder.
+This file is comprised of a `scopes` section where pipelines are defined. A `scope` represents a logical grouping of pipelines that make sense for your application. Think of them like a folder.
 
 You can see the project status by running `nodestream show`. That should produce an output like this:
 
@@ -228,14 +217,14 @@ Not exactly the most interesting. Lets get to work wiring this up to use our new
 Replace the first block with the following:
 
 ```yaml
-- implementation: nodestream.extractors:FileExtractor
+- implementation: nodestream.pipeline.extractors:FileExtractor
   arguments:
     globs:
       - data/*.json
 # remainder of the pipeline unchanged.
 ```
 
-This block tells nodestream to initialize the `FileExtractor` class in the `nodestream.extractors` module to handle
+This block tells nodestream to initialize the `FileExtractor` class in the `nodestream.pipeline.extractors` module to handle
 the first step of the pipeline. To initialize it, it passes the `arguments` provided. In this case, the `FileExtractor`
 expects a list of [glob strings](https://en.wikipedia.org/wiki/Glob_(programming)). Every file that matches these glob
 strings is loaded and passed as a record in the pipeline.

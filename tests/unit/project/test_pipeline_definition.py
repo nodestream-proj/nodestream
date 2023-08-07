@@ -60,6 +60,34 @@ def test_to_file_data(definition, expected_data):
     )
 
 
+@pytest.mark.parametrize(
+    "definition,expected_data",
+    [
+        (
+            PipelineDefinition("test", Path("test.yaml")),
+            {"path": "test.yaml", "annotations": {}, "name": "test"},
+        ),
+        (
+            PipelineDefinition("test", Path("test.yaml"), {"foo": True}),
+            {"path": "test.yaml", "annotations": {"foo": True}, "name": "test"},
+        ),
+        (
+            PipelineDefinition("baz", Path("test.yaml"), {"foo": True}),
+            {"path": "test.yaml", "annotations": {"foo": True}, "name": "baz"},
+        ),
+        (
+            PipelineDefinition("baz", Path("test.yaml")),
+            {"path": "test.yaml", "annotations": {}, "name": "baz"},
+        ),
+    ],
+)
+def test_to_file_data_verbose(definition, expected_data):
+    assert_that(definition.to_file_data(verbose=True), equal_to(expected_data))
+    assert_that(
+        PipelineDefinition.from_file_data(expected_data, {}), equal_to(definition)
+    )
+
+
 def test_from_path():
     path = Path("test.yaml")
     result = PipelineDefinition.from_path(path)

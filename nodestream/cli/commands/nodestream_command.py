@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from cleo.commands.command import Command
 from cleo.io.outputs.output import Verbosity
 
+from ...pluggable import Pluggable
 from ...project import Project
 
 if TYPE_CHECKING:
@@ -13,7 +14,9 @@ if TYPE_CHECKING:
 DEFAULT_PROJECT_FILE = Path("nodestream.yaml")
 
 
-class NodestreamCommand(Command):
+class NodestreamCommand(Command, Pluggable):
+    entrypoint_name = "commands"
+
     def handle(self):
         return asyncio.run(self.handle_async())
 
@@ -40,3 +43,7 @@ class NodestreamCommand(Command):
     @property
     def scope(self) -> str:
         return self.option("scope")
+
+    @property
+    def is_verbose(self) -> bool:
+        return self.io.output.is_verbose()

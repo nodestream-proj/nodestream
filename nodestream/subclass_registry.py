@@ -1,6 +1,18 @@
 from functools import wraps
 
-from .exceptions import AlreadyInRegistryError, MissingFromRegistryError
+
+class AlreadyInRegistryError(ValueError):
+    """Raised when a subclass with the same name is already in the subclass registry."""
+
+    def __init__(self, name, *args: object) -> None:
+        super().__init__(f"{name} is already registered", *args)
+
+
+class MissingFromRegistryError(ValueError):
+    """Raised when a subclass is not in the subclass registry."""
+
+    def __init__(self, name, *args: object) -> None:
+        super().__init__(f"{name} is not in the subclass registry", *args)
 
 
 class SubclassRegistry:

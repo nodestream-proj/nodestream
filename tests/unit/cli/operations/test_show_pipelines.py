@@ -66,8 +66,10 @@ def test_output_table_format(project_with_two_scopes, project_dir, mocker):
 
 
 def test_json_output_format(project_with_two_scopes, mocker, project_dir):
-    results = ShowPipelines(project_with_two_scopes, "another").get_matching_pipelines()
+    subject = ShowPipelines(project_with_two_scopes, "another")
+    results = subject.get_matching_pipelines()
     subject = JsonOutputFormat(command := mocker.Mock())
+    command.is_verbose = False
     subject.output(results)
     pipeline_file = str(project_dir) + "/test.yaml"
     command.write.assert_called_once_with(f'["{pipeline_file}"]')

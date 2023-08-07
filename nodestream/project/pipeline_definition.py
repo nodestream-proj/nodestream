@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any, Dict
 
 from ..file_io import LoadsFromYaml, SavesToYaml
-from ..model import IntrospectiveIngestionComponent
 from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
+from ..schema.schema import IntrospectiveIngestionComponent
 
 
 def get_default_name(file_path: Path) -> str:
@@ -14,7 +14,18 @@ def get_default_name(file_path: Path) -> str:
 
 @dataclass
 class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFromYaml):
-    """A `PipelineDefinition` represents a pipeline that can be loaded from a file."""
+    """A `PipelineDefinition` represents a pipeline that can be loaded from a file.
+
+    `PipelineDefinition` objects are used to load pipelines from files. They themselves
+    are not pipelines, but rather represent the metadata needed to load a pipeline from
+    a file.
+
+    `PipelineDefinition` objects are also `IntrospectiveIngestionComponent` objects,
+    meaning that they can be introspected to determine their known schema definitions.
+
+    `PipelineDefinition` objects are also `SavesToYaml` and `LoadsFromYaml` objects,
+    meaning that they can be serialized to and deserialized from YAML data.
+    """
 
     name: str
     file_path: Path
@@ -22,6 +33,17 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     @classmethod
     def from_path(cls, file_path: Path):
+        """Create a `PipelineDefinition` from a file path.
+
+        The name of the pipeline will be the stem of the file path, and the annotations
+        will be empty. The pipeline will be loaded from the provided file path.
+
+        Args:
+            file_path (Path): The path to the file from which to load the pipeline.
+
+        Returns:
+            PipelineDefinition: The `PipelineDefinition` object.
+        """
         return cls(get_default_name(file_path), file_path)
 
     @classmethod
@@ -49,15 +71,15 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         annotations = data.pop("annotations", {})
         return cls(name, file_path, {**parent_annotations, **annotations})
 
-    def to_file_data(self):
+    def to_file_data(self, verbose: bool = False):
         using_default_name = self.name == self.file_path.stem
-        if using_default_name and not self.annotations:
+        if using_default_name and not self.annotations and not verbose:
             return str(self.file_path)
 
         result = {"path": str(self.file_path)}
-        if not using_default_name:
+        if not using_default_name or verbose:
             result["name"] = self.name
-        if self.annotations:
+        if self.annotations or verbose:
             result["annotations"] = self.annotations
 
         return result
@@ -66,6 +88,14 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         return PipelineFileLoader(self.file_path).load_pipeline(init_args)
 
     def remove_file(self, missing_ok: bool = True):
+        """Remove the file associated with this `PipelineDefinition`.
+
+        Args:
+            missing_ok (bool, optional): Whether to ignore missing files. Defaults to True.
+
+        Raises:
+            FileNotFoundError: If the file does not exist and `missing_ok` is False.
+        """
         self.file_path.unlink(missing_ok=missing_ok)
 
     def initialize_for_introspection(self) -> Pipeline:

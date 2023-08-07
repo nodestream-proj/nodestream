@@ -1,10 +1,9 @@
 from abc import abstractmethod
 from typing import Any, AsyncGenerator, Dict, Iterable, Optional
 
-from ..model import InterpreterContext
-from ..value_providers import StaticValueOrValueProvider, ValueProvider
 from .flush import Flush
 from .step import Step
+from .value_providers import ProviderContext, StaticValueOrValueProvider, ValueProvider
 
 
 class Filter(Step):
@@ -50,7 +49,7 @@ class ValueMatcher:
         self.possibilities = possibilities
         self.normalization = normalization
 
-    def does_match(self, context: InterpreterContext):
+    def does_match(self, context: ProviderContext):
         actual_value = self.value_provider.normalize_single_value(
             context, **self.normalization
         )
@@ -74,7 +73,7 @@ class ValuesMatchPossibilitiesFilter(Filter):
         self.value_matchers = value_matchers
 
     async def filter_record(self, item):
-        context_from_record = InterpreterContext(item, None)
+        context_from_record = ProviderContext(item, None)
         return not all(
             matcher.does_match(context_from_record) for matcher in self.value_matchers
         )

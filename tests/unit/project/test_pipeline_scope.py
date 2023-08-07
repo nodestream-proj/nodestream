@@ -3,7 +3,6 @@ from pathlib import Path
 import pytest
 from hamcrest import assert_that, has_key, is_, not_, same_instance
 
-from nodestream.exceptions import MissingExpectedPipelineError
 from nodestream.pipeline import PipelineInitializationArguments
 from nodestream.project import (
     PipelineDefinition,
@@ -11,6 +10,7 @@ from nodestream.project import (
     PipelineScope,
     RunRequest,
 )
+from nodestream.project.pipeline_scope import MissingExpectedPipelineError
 
 
 @pytest.fixture

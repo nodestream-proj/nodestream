@@ -30,7 +30,7 @@ Given that, let's consider our `MemoizeNegativeProperty` class. That implies tha
 
 ```python
 from nodestream.interpreting import Interpretation
-from nodestream.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider
 
 class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
     def __init__(self, positive_name: str, negative_name, value: ValueProvider):
@@ -46,7 +46,7 @@ A working implementation of `MemoizeNegativeProperty` could look like this:
 
 ```python
 from nodestream.interpreting import Interpretation
-from nodestream.value_providers import ValueProvider
+from nodestream.pipeline.value_providers import ValueProvider
 
 class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
     # __init__ omitted
@@ -61,13 +61,53 @@ class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
 Again, it will be valuable to read the API details on nodestream's model.
 The above code leverages the aforementioned `InterpretationContext` as well as `DesiredIngest` and `PropertySet`.
 
-## Make sure your module is imported
+## Register Your Interpretation
 
-Wherever you have your class defined, nodestream needs to know that its something that should be imported. To do
-so, add your module to the imports section of your `nodestream.yaml` file. For example:
+
+Interpretations are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `interpretations` inside of the `nodestream.plugins` group is loaded. Every `Interpretation`  is expected to be a subclass of `nodestream.interpreting:Interpretation` as directed above.
+
+The `entry_point` should be a module that contains at least one `Interpretation` class. At runtime, the module will be loaded and all classes that inherit from `nodestream.interpreting:Interpretation` will be registered. The `alias` attribute of the class will be used as as the name of the tag used in the yaml pipeline.
+
+Depending on how you are building your package, you can register your `Interpretation` plugin in one of the following ways:
+
+=== "pyproject.toml"
+    ```toml
+    [project.entry-points."nodestream.plugins"]
+    interpretations = "nodestream_plugin_cool.interpretations"
+    ```
+
+=== "setup.cfg"
+    ```ini
+    [options.entry_points]
+    nodestream.plugins =
+        interpretations = nodestream_plugin_cool.interpretations
+    ```
+
+=== "setup.py"
+    ```python
+    setup(
+        ...
+        entry_points={
+            "nodestream.plugins": [
+                "interpretations = nodestream_plugin_cool.interpretations"
+            ]
+        },
+        ...
+    )
+    ```
+
+## Use Your Interpretation
+
+Now that you've defined your interpretation, you can use it in your pipeline. For example:
 
 ```yaml
-imports:
-  - nodestream.databases.neo4j # an existing import
-  - my_project.some_sub_package.interpretations
+# ... other pipeline steps
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      # ... other interpretations
+      - type: memoize_negative
+        positive_name: enabled
+        negative_name: disabled
+        value: !jmespath "enabled"
 ```

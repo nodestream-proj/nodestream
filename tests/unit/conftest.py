@@ -2,7 +2,8 @@ import asyncio
 
 import pytest
 
-from nodestream.model import DesiredIngestion, InterpreterContext
+from nodestream.model import DesiredIngestion
+from nodestream.pipeline.value_providers import ProviderContext
 
 DECENT_DOCUMENT = {
     "team": {
@@ -18,12 +19,12 @@ DECENT_DOCUMENT = {
 
 @pytest.fixture
 def blank_context():
-    return InterpreterContext({}, DesiredIngestion())
+    return ProviderContext({}, DesiredIngestion())
 
 
 @pytest.fixture
 def blank_context_with_document():
-    return InterpreterContext(DECENT_DOCUMENT, DesiredIngestion())
+    return ProviderContext(DECENT_DOCUMENT, DesiredIngestion())
 
 
 @pytest.fixture

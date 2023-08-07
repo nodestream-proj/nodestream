@@ -11,13 +11,13 @@ from nodestream.databases.query_executor import (
     OperationOnRelationshipIdentity,
 )
 from nodestream.model import (
-    GraphObjectType,
     MatchStrategy,
     Node,
     Relationship,
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
+from nodestream.schema.schema import GraphObjectType
 
 
 @pytest.fixture

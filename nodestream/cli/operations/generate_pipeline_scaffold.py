@@ -1,8 +1,9 @@
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
-from ...utilities import pretty_print_yaml_to_file
-from ...value_providers import JmespathValueProvider
+import yaml
+
+from ...pipeline.value_providers import JmespathValueProvider
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 
@@ -42,6 +43,11 @@ WRITER_CONFIG_BY_DATABASE = {
         },
     }
 }
+
+
+def pretty_print_yaml_to_file(path: Path, data: Any):
+    with open(path, "w") as fp:
+        yaml.safe_dump(data, fp, indent=2, sort_keys=True)
 
 
 class GeneratePipelineScaffold(Operation):
