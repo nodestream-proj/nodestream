@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, AsyncGenerator, Iterable, Union
 
 from ...model import JsonLikeDocument
+from ...pluggable import Pluggable
 from ...subclass_registry import SubclassRegistry
 from .extractor import Extractor
 
@@ -15,7 +16,7 @@ SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
-class SupportedFileFormat(ABC):
+class SupportedFileFormat(Pluggable, ABC):
     def __init__(self, file: Union[Path, StringIO]) -> None:
         self.file = file
 
@@ -41,6 +42,8 @@ class SupportedFileFormat(ABC):
     def from_file_pointer_and_format(
         cls, fp: StringIO, file_format: str
     ) -> "SupportedFileFormat":
+        # Import all file formats so that they can register themselves
+        cls.import_all()
         file_format = SUPPORTED_FILE_FORMAT_REGISTRY.get(file_format)
         return file_format(fp)
 

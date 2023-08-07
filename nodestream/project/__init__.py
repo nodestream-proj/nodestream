@@ -1,7 +1,7 @@
 from .pipeline_definition import PipelineDefinition
 from .pipeline_progress_reporter import PipelineProgressReporter
 from .pipeline_scope import PipelineScope
-from .project import Project
+from .project import Project, ProjectPlugin
 from .run_request import RunRequest
 
 __all__ = (
@@ -9,5 +9,6 @@ __all__ = (
     "PipelineProgressReporter",
     "PipelineScope",
     "Project",
+    "ProjectPlugin",
     "RunRequest",
 )

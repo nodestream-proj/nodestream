@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from ...pipeline.value_providers import (
     ProviderContext,
@@ -29,6 +29,16 @@ class SwitchInterpretation(
         "fail_on_unhandled",
     )
 
+    @staticmethod
+    def guarantee_interpretation_list_from_file_data(file_data) -> List[Interpretation]:
+        if isinstance(file_data, list):
+            return [
+                Interpretation.from_file_data(**interpretation)
+                for interpretation in file_data
+            ]
+
+        return [Interpretation.from_file_data(**file_data)]
+
     def __init__(
         self,
         switch_on: StaticValueOrValueProvider,
@@ -39,28 +49,34 @@ class SwitchInterpretation(
     ):
         self.switch_on = ValueProvider.guarantee_value_provider(switch_on)
         self.interpretations = {
-            field_value: Interpretation.from_file_data(**interpretation)
+            field_value: self.guarantee_interpretation_list_from_file_data(
+                interpretation
+            )
             for field_value, interpretation in cases.items()
         }
-        self.default = Interpretation.from_file_data(**default) if default else None
+        self.default = (
+            self.guarantee_interpretation_list_from_file_data(default)
+            if default
+            else None
+        )
         self.normalization = normalization or {}
         self.fail_on_unhandled = fail_on_unhandled
 
     def all_subordinate_components(self):
-        yield from self.interpretations.values()
+        for child in self.interpretations.values():
+            yield from child
         if self.default:
-            yield self.default
+            yield from self.default
 
     def interpret(self, context: ProviderContext):
-        value_to_look_for = self.switch_on.normalize_single_value(
-            context, **self.normalization
-        )
-        if value_to_look_for not in self.interpretations:
-            if self.default:
-                self.default.interpret(context)
-                return
+        key = self.switch_on.normalize_single_value(context, **self.normalization)
+        interpretations = self.interpretations.get(key, self.default)
+
+        if interpretations is None:
             if self.fail_on_unhandled:
-                raise UnhandledBranchError(value_to_look_for)
+                raise UnhandledBranchError(key)
             else:
-                return
-        return self.interpretations[value_to_look_for].interpret(context)
+                interpretations = []
+
+        for interpretation in interpretations:
+            interpretation.interpret(context)
