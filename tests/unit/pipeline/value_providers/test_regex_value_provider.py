@@ -35,12 +35,12 @@ def test_many_values_not_matching_regex(blank_context, subject_with_named_groups
     assert_that(result, equal_to([None, None]))
 
 
-def test_numeric_group(blank_context, subject_with_named_groups):
-    subject_with_named_groups.group = 2
-    assert_that(subject_with_named_groups.single_value(blank_context), equal_to("42"))
-
-
 def test_default_group(blank_context, subject_with_named_groups):
     assert_that(
         subject_with_named_groups.single_value(blank_context), equal_to("john 42")
     )
+
+
+def test_numeric_group(blank_context, subject_with_named_groups):
+    subject_with_named_groups.group = 2
+    assert_that(subject_with_named_groups.single_value(blank_context), equal_to("42"))
