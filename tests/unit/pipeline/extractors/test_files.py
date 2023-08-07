@@ -6,10 +6,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 import pytest
 from hamcrest import assert_that, equal_to, has_length
 
-from nodestream.pipeline.extractors.files import (
-    FileExtractor,
-    RemoteFileExtractor,
-)
+from nodestream.pipeline.extractors.files import FileExtractor, RemoteFileExtractor
 
 SIMPLE_RECORD = {"record": "value"}
 
