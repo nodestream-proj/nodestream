@@ -9,7 +9,6 @@ from hamcrest import assert_that, equal_to, has_length
 from nodestream.pipeline.extractors.files import (
     FileExtractor,
     RemoteFileExtractor,
-    SupportedFileFormat,
 )
 
 SIMPLE_RECORD = {"record": "value"}
