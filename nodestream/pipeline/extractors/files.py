@@ -1,11 +1,14 @@
 import json
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
 from glob import glob
 from io import StringIO
 from pathlib import Path
+from tempfile import SpooledTemporaryFile
 from typing import Any, AsyncGenerator, Iterable, Union
+
+from httpx import AsyncClient
 
 from ...model import JsonLikeDocument
 from ...pluggable import Pluggable
@@ -86,3 +89,27 @@ class FileExtractor(Extractor):
             with SupportedFileFormat.open(path) as file:
                 for record in file.read_file():
                     yield record
+
+
+class RemoteFileExtractor(Extractor):
+    def __init__(
+        self, urls: Iterable[str], memory_spooling_max_size_in_mb: int = 5
+    ) -> None:
+        self.urls = urls
+        self.memory_spooling_max_size = memory_spooling_max_size_in_mb * 1024 * 1024
+
+    @asynccontextmanager
+    async def download_file(self, client: AsyncClient, url: str) -> SupportedFileFormat:
+        with SpooledTemporaryFile(max_size=self.memory_spooling_max_size) as fp:
+            async with client.stream("GET", url) as response:
+                async for chunk in response.aiter_bytes():
+                    fp.write(chunk)
+            fp.seek(0)
+            yield SupportedFileFormat.from_file_pointer_and_format(fp, Path(url).suffix)
+
+    async def extract_records(self) -> AsyncGenerator[Any, Any]:
+        async with AsyncClient() as client:
+            for url in self.urls:
+                async with self.download_file(client, url) as file:
+                    for record in file.read_file():
+                        yield record
