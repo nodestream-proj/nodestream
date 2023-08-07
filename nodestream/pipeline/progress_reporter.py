@@ -8,10 +8,16 @@ from .meta import PipelineContext
 
 
 def no_op(*_, **__):
+    """A no-op function that does nothing."""
     pass
 
 
 def get_max_mem_mb():
+    """Get the maximum memory used by the current process in MB.
+
+    Returns:
+        int: The maximum memory used by the current process in MB.
+    """
     max_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     max_mem /= 1024
     if platform.system() == "Darwin":

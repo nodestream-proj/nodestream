@@ -3,6 +3,7 @@ from typing import Any, Dict, Iterable, Type, Union
 
 from yaml import SafeLoader
 
+from ...pluggable import Pluggable
 from ...subclass_registry import SubclassRegistry
 from ..normalizers import Normalizer
 from .context import ProviderContext
@@ -14,8 +15,10 @@ VALUE_PROVIDER_REGISTRY = SubclassRegistry()
 
 
 @VALUE_PROVIDER_REGISTRY.connect_baseclass
-class ValueProvider(ABC):
+class ValueProvider(Pluggable, ABC):
     """A `ValueProvider` is a class that can extract values from a document."""
+
+    entrypoint_name = "value_providers"
 
     @classmethod
     def guarantee_value_provider(

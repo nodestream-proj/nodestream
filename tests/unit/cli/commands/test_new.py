@@ -12,4 +12,4 @@ async def test_handle_async(mocker):
     run.run_operation = mocker.AsyncMock()
     run.line = mocker.Mock()
     await run.handle_async()
-    assert_that(run.run_operation.await_count, equal_to(4))
+    assert_that(run.run_operation.await_count, equal_to(1))
