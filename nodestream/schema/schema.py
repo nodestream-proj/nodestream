@@ -166,6 +166,10 @@ class GraphObjectShape:
         if object_type := self.object_type.resolve_type(shapes):
             self.object_type = object_type
 
+    def property_names(self):
+        all_props = self.properties.properties
+        return  [all_props[prop].name for prop in all_props.keys()]
+
     @property
     def is_node(self) -> bool:
         return self.graph_object_type == GraphObjectType.NODE
