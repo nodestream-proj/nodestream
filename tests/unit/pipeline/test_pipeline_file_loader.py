@@ -24,3 +24,9 @@ def test_basic_file_load_with_annotations():
     assert_that(result.steps, has_length(2))
     assert_that(result.steps[0], instance_of(PassStep))
     assert_that(result.steps[1], instance_of(PassStep))
+
+
+def test_init_args_for_testing():
+    init_args = PipelineInitializationArguments.for_testing()
+    assert_that(init_args.annotations, has_length(1))
+    assert_that(init_args.annotations[0], "test")
