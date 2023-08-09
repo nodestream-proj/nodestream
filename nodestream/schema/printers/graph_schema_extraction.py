@@ -1,7 +1,7 @@
 from .schema_printer import SchemaPrinter
 from collections import defaultdict
 
-class Neo4jLLMGraphSchemaExtraction(SchemaPrinter, alias="genaillm"):
+class LargeLanguageModelSchemaPrinter(SchemaPrinter, alias="genaillm"):
     def return_nodes_props(self, schema):
         return {
             str(node_shape.object_type): node_shape.property_names()
