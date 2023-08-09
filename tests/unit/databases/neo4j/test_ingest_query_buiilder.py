@@ -4,7 +4,7 @@ import pytest
 from freezegun import freeze_time
 from hamcrest import assert_that, equal_to, equal_to_ignoring_whitespace
 
-from nodestream.databases.neo4j import Neo4jIngestQueryBuilder
+from nodestream.databases.neo4j.ingest_query_builder import Neo4jIngestQueryBuilder
 from nodestream.databases.neo4j.query import Query, QueryBatch
 from nodestream.databases.query_executor import (
     OperationOnNodeIdentity,

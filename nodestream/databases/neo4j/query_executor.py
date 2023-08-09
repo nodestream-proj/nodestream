@@ -1,7 +1,7 @@
 from logging import getLogger
 from typing import Iterable
 
-from neo4j import AsyncDriver, AsyncGraphDatabase
+from neo4j import AsyncDriver
 
 from ...model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from ...schema.indexes import FieldIndex, KeyIndex
@@ -10,48 +10,24 @@ from ..query_executor import (
     OperationOnRelationshipIdentity,
     QueryExecutor,
 )
-from .index_query_builder import (
-    Neo4jEnterpriseIndexQueryBuilder,
-    Neo4jIndexQueryBuilder,
-)
+from .index_query_builder import Neo4jIndexQueryBuilder
 from .ingest_query_builder import Neo4jIngestQueryBuilder
 from .query import Query
 
 
-class Neo4jQueryExecutor(QueryExecutor, alias="neo4j"):
-    @classmethod
-    def from_file_data(
-        cls,
-        uri: str,
-        username: str,
-        password: str,
-        database_name: str = "neo4j",
-        use_enterprise_features: bool = False,
-    ):
-        driver = AsyncGraphDatabase.driver(uri, auth=(username, password))
-        if use_enterprise_features:
-            index_query_builder = Neo4jEnterpriseIndexQueryBuilder()
-        else:
-            index_query_builder = Neo4jIndexQueryBuilder()
-        return cls(
-            driver=driver,
-            index_query_builder=index_query_builder,
-            ingest_query_builder=Neo4jIngestQueryBuilder(),
-            database_name=database_name,
-        )
-
+class Neo4jQueryExecutor(QueryExecutor):
     def __init__(
         self,
         driver: AsyncDriver,
-        index_query_builder: Neo4jIndexQueryBuilder,
         ingest_query_builder: Neo4jIngestQueryBuilder,
+        index_query_builder: Neo4jIndexQueryBuilder,
         database_name: str,
     ) -> None:
         self.driver = driver
-        self.index_query_builder = index_query_builder
         self.ingest_query_builder = ingest_query_builder
-        self.database_name = database_name
+        self.index_query_builder = index_query_builder
         self.logger = getLogger(self.__class__.__name__)
+        self.database_name = database_name
 
     async def upsert_nodes_in_bulk_with_same_operation(
         self, operation: OperationOnNodeIdentity, nodes: Iterable[Node]
