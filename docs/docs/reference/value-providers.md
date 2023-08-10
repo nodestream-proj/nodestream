@@ -120,3 +120,38 @@ The following interpretation would create a node with the key `Hello, Joe!`:
         properties:
           age: !jmespath age
 ```
+
+## `!regex`
+
+The `!regex` value provider allows you to extract a value from a string using a regular expression. For example, if you wanted to extract
+the first name from a string given a record like this:
+
+```json
+{
+    "name": "Joe Smith",
+    "age": 25
+}
+```
+
+The following interpretation would create a node with the key `Joe`:
+
+```yaml
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: source_node
+        node_type: HelloNode
+        key:
+          first_name: !regex 
+            regex: "^(?P<first_name>[a-zA-Z]+)\s(?P<last_name>[a-zA-Z]+)$"
+            data: !jmespath name
+            group: first_name
+        properties:
+          age: !jmespath age
+```
+
+You can either use named groups or numbered groups.
+If you use named groups, you can specify the group name in the `group` argument. 
+If you use numbered groups, you can specify the group number in the `group` argument. 
+If you do not specify a group, the first group will be used - which is the entire match.
+
