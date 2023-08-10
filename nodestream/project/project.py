@@ -95,6 +95,22 @@ class Project(
         for scope in self.scopes_by_name.values():
             await scope.run_request(request)
 
+    async def get_snapshot_for(self, pipeline_name: str) -> list:
+        """Returns the output of the pipeline with the given name to be used as a snapshot.
+
+        This method is intended for testing purposes only. It will run the pipeline and return the results.
+        The pipeline is run with the `test` annotation, so components that you want to run must be annotated with `test` or not annotated at all.
+
+        Args:
+            pipeline_name (str): The name of the pipeline to get a snapshot for.
+
+        Returns:
+            str: The snapshot of the pipeline.
+        """
+        run_request = RunRequest.for_testing(pipeline_name, results := [])
+        await self.run(run_request)
+        return results
+
     def add_scope(self, scope: PipelineScope):
         """Adds a scope to the project.
 
