@@ -53,6 +53,27 @@ class PipelineProgressReporter:
     on_start_callback: Callable[[], None] = field(default=no_op)
     on_finish_callback: Callable[[PipelineContext], None] = field(default=no_op)
 
+    @classmethod
+    def for_testing(cls, results_list: list) -> "PipelineProgressReporter":
+        """Create a `PipelineProgressReporter` for testing.
+
+        This method is intended to be used for testing purposes only. It will create a
+        `PipelineProgressReporter` with the default values for testing.
+
+        Args:
+            results_list: The list to append results to.
+
+        Returns:
+            PipelineProgressReporter: A `PipelineProgressReporter` for testing.
+        """
+        return cls(
+            reporting_frequency=1,
+            logger=getLogger("test"),
+            callback=lambda _, record: results_list.append(record),
+            on_start_callback=no_op,
+            on_finish_callback=no_op,
+        )
+
     async def execute_with_reporting(self, pipeline: Pipeline):
         """Execute the given pipeline with progress reporting.
 
