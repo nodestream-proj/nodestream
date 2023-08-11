@@ -19,6 +19,27 @@ class RunRequest:
     initialization_arguments: PipelineInitializationArguments
     progress_reporter: PipelineProgressReporter
 
+    @classmethod
+    def for_testing(cls, pipeline_name: str, results_list: list) -> "RunRequest":
+        """Create a `RunRequest` for testing.
+
+        This method is intended to be used for testing purposes only. It will create a
+        run request with the given pipeline name and `PipelineInitializationArguments`
+        for testing.
+
+        Args:
+            pipeline_name: The name of the pipeline to run.
+            results_list: The list to append results to.
+
+        Returns:
+            RunRequest: A `RunRequest` for testing.
+        """
+        return cls(
+            pipeline_name,
+            PipelineInitializationArguments.for_testing(),
+            PipelineProgressReporter.for_testing(results_list),
+        )
+
     async def execute_with_definition(self, definition: PipelineDefinition):
         """Execute this run request with the given pipeline definition.
 
