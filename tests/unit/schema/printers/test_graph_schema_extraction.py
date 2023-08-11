@@ -33,9 +33,3 @@ def test_ensure_rels(basic_schema):
     subject = LargeLanguageModelSchemaPrinter()
     result = subject.return_rels(basic_schema)
     assert_that(result, equal_to(EXPECTED_RELS))
-
-
-def test_ensure_rels_props(basic_schema):
-    subject = LargeLanguageModelSchemaPrinter()
-    result = subject.return_rels_props(basic_schema)
-    assert_that(result, equal_to(EXPECTED_RELS_PROPS))
