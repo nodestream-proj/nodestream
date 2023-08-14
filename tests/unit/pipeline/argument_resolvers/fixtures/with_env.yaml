@@ -1,0 +1,3 @@
+test:
+  env: !env TEST_ENV
+  not_env: 123
