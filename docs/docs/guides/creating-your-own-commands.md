@@ -97,7 +97,7 @@ Depending on how you are building your package, you can register your command pl
     ```ini
     [options.entry_points]
     nodestream.plugins =
-        project = nodestream_plugin_cool.audits
+        commands = nodestream_plugin_cool.audits
     ```
 
 === "setup.py"
@@ -108,7 +108,7 @@ Depending on how you are building your package, you can register your command pl
         # ...,
         entry_points = {
             'nodestream.plugins': [
-                'project = nodestream_plugin_cool.audits',
+                'commands = nodestream_plugin_cool.audits',
             ]
         }
     )

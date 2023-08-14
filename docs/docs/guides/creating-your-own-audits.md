@@ -62,7 +62,7 @@ Depending on how you are building your package, you can register your audit plug
     ```ini
     [options.entry_points]
     nodestream.plugins =
-        project = nodestream_plugin_cool.audits
+        audits = nodestream_plugin_cool.audits
     ```
 
 === "setup.py"
@@ -73,7 +73,7 @@ Depending on how you are building your package, you can register your audit plug
         # ...,
         entry_points = {
             'nodestream.plugins': [
-                'project = nodestream_plugin_cool.audits',
+                'audits = nodestream_plugin_cool.audits',
             ]
         }
     )
