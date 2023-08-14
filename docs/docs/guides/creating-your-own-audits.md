@@ -52,6 +52,12 @@ Depending on how you are building your package, you can register your audit plug
     audits = "nodestream_plugin_cool.audits"
     ```
 
+=== "pyproject.toml (poetry)"
+    ```toml
+    [tool.poetry.plugins."nodestream.plugins"]
+    audits = "nodestream_plugin_cool.audits"
+    ```
+
 === "setup.cfg"
     ```ini
     [options.entry_points]

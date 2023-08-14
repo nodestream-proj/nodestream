@@ -66,14 +66,20 @@ Depending on how you are building your package, you can register your project pl
 === "pyproject.toml"
     ```toml
     [project.entry-points."nodestream.plugins"]
-    project = "nodestream_plugin_cool:MyProjectPlugin"
+    projects = "nodestream_plugin_cool:plugin"
+    ```
+
+=== "pyproject.toml (poetry)"
+    ```toml
+    [tool.poetry.plugins."nodestream.plugins"]
+    projects = "nodestream_plugin_cool.plugin"
     ```
 
 === "setup.cfg"
     ```ini
     [options.entry_points]
     nodestream.plugins =
-        project = nodestream_plugin_cool:MyProjectPlugin
+        projects = nodestream_plugin_cool:MyProjectPlugin
     ```
 
 === "setup.py"
@@ -84,7 +90,7 @@ Depending on how you are building your package, you can register your project pl
         # ...,
         entry_points = {
             'nodestream.plugins': [
-                'project = nodestream_plugin_cool:MyProjectPlugin',
+                'projects = nodestream_plugin_cool:MyProjectPlugin',
             ]
         }
     )

@@ -84,7 +84,13 @@ Depending on how you are building your package, you can register your command pl
 === "pyproject.toml"
     ```toml
     [project.entry-points."nodestream.plugins"]
-    audits = "nodestream_plugin_cool.audits"
+    commands = "nodestream_plugin_cool.commands"
+    ```
+
+=== "pyproject.toml (poetry)"
+    ```toml
+    [tool.poetry.plugins."nodestream.plugins"]
+    commands = "nodestream_plugin_cool.commands"
     ```
 
 === "setup.cfg"
