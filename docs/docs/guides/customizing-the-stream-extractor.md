@@ -43,6 +43,12 @@ Depending on how you are building your package, you can register your stream con
     stream_connectors = "nodestream_plugin_cool.stream_connectors"
     ```
 
+=== "pyproject.toml (poetry)"
+    ```toml
+    [tool.poetry.plugins."nodestream.plugins"]
+    stream_connectors = "nodestream_plugin_cool.stream_connectors"
+    ```
+
 === "setup.cfg"
     ```ini
     [options.entry_points]

@@ -48,6 +48,12 @@ Depending on how you are building your package, you can register your file forma
     file_formats = "nodestream_plugin_cool.file_formats"
     ```
 
+=== "pyproject.toml (poetry)"
+    ```toml
+    [tool.poetry.plugins."nodestream.plugins"]
+    file_formats = "nodestream_plugin_cool.file_formats"
+    ```
+
 === "setup.cfg"
     ```ini
     [options.entry_points]
