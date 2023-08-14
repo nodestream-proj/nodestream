@@ -76,6 +76,12 @@ Depending on how you are building your package, you can register your `Interpret
     interpretations = "nodestream_plugin_cool.interpretations"
     ```
 
+=== "pyproject.toml (poetry)"
+    ```toml
+    [tool.poetry.plugins."nodestream.plugins"]
+    interpretations = "nodestream_plugin_cool.interpretations"
+    ```
+
 === "setup.cfg"
     ```ini
     [options.entry_points]

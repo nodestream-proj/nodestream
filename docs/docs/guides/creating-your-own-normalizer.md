@@ -32,6 +32,12 @@ Depending on how you are building your package, you can register your `Normalize
     normalizers = "nodestream_plugin_cool.normalizers"
     ```
 
+=== "pyproject.toml (poetry)"
+    ```toml
+    [tool.poetry.plugins."nodestream.plugins"]
+    normalizers = "nodestream_plugin_cool.normalizers"
+    ```
+
 === "setup.cfg"
     ```ini
     [options.entry_points]
