@@ -36,6 +36,7 @@ class StepExecutor:
         self.done = False
         self.step = step
         self.progress_reporter = progress_reporter
+        self.end_of_line = False
 
     async def outbox_generator(self):
         while not self.done or not self.outbox.empty():
@@ -46,7 +47,9 @@ class StepExecutor:
         if self.progress_reporter:
             self.progress_reporter.on_start_callback()
 
-        pass
+    def set_end_of_line(self, progress_reporter: Optional[PipelineProgressReporter]):
+        self.progress_reporter = progress_reporter
+        self.end_of_line = True
 
     async def stop(self):
         self.done = True
@@ -63,7 +66,8 @@ class StepExecutor:
 
         results = self.step.handle_async_record_stream(upstream)
         async for index, record in enumerate_async(results):
-            await self.outbox.put(record)
+            if not self.end_of_line:
+                await self.outbox.put(record)
             if self.progress_reporter:
                 self.progress_reporter.report(index, record)
 
@@ -91,7 +95,7 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
             current_executor = StepExecutor(current_executor, step)
             tasks.append(asyncio.create_task(current_executor.work_loop()))
 
-        current_executor.progress_reporter = progress_reporter
+        current_executor.set_end_of_line(progress_reporter)
 
         await asyncio.gather(*tasks)
 
