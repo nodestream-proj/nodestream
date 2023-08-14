@@ -24,7 +24,7 @@ graph LR
 then we can use the following YAML definition to instruct the interpreter on how to do this:
 
 ```yaml
-- implementation: nodestream.interpreters:Interpreter
+- implementation: nodestream.interpreting:Interpreter
   arguments:
     interpretations:
       - type: source_node
@@ -55,7 +55,7 @@ Sometimes single records come in a format were multiple ingestions are required 
 We can use `iterate_on` to iterate over the `people` list and `before_iteration` to set the `team_name` for each person.
 
 ```yaml
-- implementation: nodestream.interpreters:Interpreter
+- implementation: nodestream.interpreting:Interpreter
     arguments:
       before_iteration:
         - type: relationship
@@ -90,7 +90,7 @@ Imaging we have data like this:
 We can use the following YAML definition to instruct the interpreter on how to parse this data:
 
 ```yaml
-- implementation: nodestream.interpreters:Interpreter
+- implementation: nodestream.interpreting:Interpreter
   arguments:
     interpretations:
       - - type: source_node

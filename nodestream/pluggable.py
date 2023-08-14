@@ -18,7 +18,7 @@ class Pluggable:
     @cache
     def all(cls):
         def is_plugin(member):
-            return isclass(member) and issubclass(member, cls)
+            return isclass(member) and issubclass(member, cls) and member is not cls
 
         for entrypoint in cls.entrypoints():
             plugin_module = entrypoint.load()

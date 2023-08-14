@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 import pytest
 from hamcrest import assert_that, equal_to, has_length
 
-from nodestream.pipeline.extractors import FileExtractor
+from nodestream.pipeline.extractors.files import FileExtractor, RemoteFileExtractor
 
 SIMPLE_RECORD = {"record": "value"}
 
@@ -67,3 +67,17 @@ async def test_txt_formatting(txt_file):
 def test_declarative_init(fixture_directory, csv_file, json_file, txt_file):
     subject = FileExtractor.from_file_data(globs=[f"{fixture_directory}/**"])
     assert_that(list(subject.paths), has_length(3))
+
+
+@pytest.mark.asyncio
+async def test_remote_file_extractor_extract_records(mocker, httpx_mock):
+    files = ["https://example.com/file.json", "https://example.com/file2.json"]
+    for file in files:
+        httpx_mock.add_response(
+            url=file,
+            method="GET",
+            json=SIMPLE_RECORD,
+        )
+    subject = RemoteFileExtractor(files)
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
