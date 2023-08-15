@@ -1,7 +1,9 @@
+import asyncio
 import importlib.metadata
 import os
 import sys
 
+import uvloop
 from cleo.application import Application
 
 from ..project.audits import Audit
@@ -26,4 +28,5 @@ def get_application() -> Application:
 
 def run():
     sys.path.append(os.getcwd())
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     get_application().run()

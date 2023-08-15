@@ -43,6 +43,7 @@ pandas = "^2"
 schema = "^0.7.5"
 cookiecutter = "^2.1.1"
 httpx = "^0.24.1"
+uvloop = "^0.17.0"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
