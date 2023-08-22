@@ -14,5 +14,9 @@ DEEP_OUTPUT = {"a": 1, "b": {"c": {"d": {"hello": "world"}}}}
 @pytest.mark.parametrize("input,output,path", [(SIMPLE_INPUT, SIMPLE_OUTPUT, "b")])
 async def test_expand_json_fields(input, output, path):
     subject = ExpandJsonField.from_file_data(path)
-    result = await subject.transform_record(input)
-    assert_that(result, equal_to(output))
+
+    async def upstream():
+        yield input
+
+    results = [r async for r in subject.handle_async_record_stream(upstream())]
+    assert_that(results, equal_to([output]))
