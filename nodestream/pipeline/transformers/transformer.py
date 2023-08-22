@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, AsyncGenerator, Generator
+from typing import Any, AsyncGenerator
 
 from ..flush import Flush
 from ..step import Step
@@ -19,12 +19,12 @@ class Transformer(Step):
             if record is Flush:
                 yield record
             else:
-                val_or_gen = await self.transform_record(record)
-                if isinstance(val_or_gen, Generator):
-                    for result in val_or_gen:
+                val_or_gen = self.transform_record(record)
+                if isinstance(val_or_gen, AsyncGenerator):
+                    async for result in val_or_gen:
                         yield result
                 else:
-                    yield val_or_gen
+                    yield await val_or_gen
 
     @abstractmethod
     async def transform_record(self, record: Any) -> Any:
