@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from ..pipeline import PipelineInitializationArguments
 from ..pipeline.meta import start_context
+from ..pipeline.progress_reporter import PipelineProgressReporter
 from .pipeline_definition import PipelineDefinition
-from .pipeline_progress_reporter import PipelineProgressReporter
 
 
 @dataclass
@@ -54,4 +54,4 @@ class RunRequest:
         """
         with start_context(self.pipeline_name):
             pipeline = definition.initialize(self.initialization_arguments)
-            await self.progress_reporter.execute_with_reporting(pipeline)
+            await pipeline.run(self.progress_reporter)

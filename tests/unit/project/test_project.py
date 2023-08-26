@@ -3,14 +3,11 @@ from pathlib import Path
 import pytest
 from hamcrest import assert_that, equal_to, has_length, same_instance
 
-from nodestream.pipeline import PipelineInitializationArguments
-from nodestream.project import (
-    PipelineDefinition,
+from nodestream.pipeline import (
+    PipelineInitializationArguments,
     PipelineProgressReporter,
-    PipelineScope,
-    Project,
-    RunRequest,
 )
+from nodestream.project import PipelineDefinition, PipelineScope, Project, RunRequest
 from nodestream.schema.schema import GraphSchema
 
 
