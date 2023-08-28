@@ -1,7 +1,7 @@
 # Value Providers
 
 There are many methods of extracting and providing data to the ETl pipeline as it operates.
-The various yaml tags such as `!jq` or `!variable` refer to an underlying ValueProvider.
+The various yaml tags such as `!jmespath` or `!variable` refer to an underlying ValueProvider.
 
 ## `!jmespath`
 
@@ -18,20 +18,6 @@ For example, if you want to get extract all of the `name` fields from the list o
 A valid `!jmespath` value provider would look like this: `!jmespath people[*].name` Essentially, any `jmespath` expression
 provided after the `!jmespath` tag will be parsed and loaded as one. Another guide on `jmespath` can be found [here](https://jmespath.site/main/).
 
-## `!jq`
-
-Represents a [jq](https://jqlang.github.io/jq/) query language expression that should be executed against the input record.
-
-For example, if you want to get extract all of the `name` fields from the list of people provided in a document like this:
-
-```json
-{
-    "people": [{"name": "Joe", "age": 25}, {"name": "john", "age": 45}]
-}
-```
-
-A valid `!jq` value provider would look like this: `!jq .people[].name` Essentially, any `jq` expression
-provided after the `!jq` tag will be parsed and loaded as one. More information on `jq` can be found [here](https://jqlang.github.io/jq/tutorial/).
 
 ## `!variable`
 

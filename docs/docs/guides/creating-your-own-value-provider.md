@@ -1,7 +1,7 @@
 # Creating A Value Provider
 
 There are many methods of extracting and providing data to the ETl pipeline as it operates. The various yaml tags such
-as `!jq` or `!variable` refer to an underlying `ValueProvider`. 
+as `!jmespath` or `!variable` refer to an underlying `ValueProvider`. 
 
 ## Creating a Value Provider
 In order to introduce your own mechanism for providing values you can create your own subclass of `ValueProvider`.
