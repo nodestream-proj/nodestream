@@ -20,6 +20,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: poetry
           cache-dependency-path: poetry.lock
+      - run: export PATH="/Users/runner/.local/bin:$PATH"
+        if: runner.os == 'macOS'
+      - run: set PATH=%PATH%;C:\Users\runneradmin\AppData\Roaming\Python\Scripts
+        if: runner.os == 'Windows'
       - name: Install Dependenencies
         run: |
           poetry env use ${{ matrix.python-version }}
