@@ -20,6 +20,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: poetry
           cache-dependency-path: poetry.lock
+          allow-prereleases: true
       - name: Install Dependenencies
         run: |
           poetry env use ${{ matrix.python-version }}
