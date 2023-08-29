@@ -47,6 +47,7 @@ class PipelineFileSafeLoader(SafeLoader):
 class PipelineInitializationArguments:
     """Arguments used to initialize a pipeline from a file."""
 
+    step_outbox_size: int = 1000
     annotations: Optional[List[str]] = None
 
     @classmethod
@@ -58,7 +59,10 @@ class PipelineInitializationArguments:
         return cls(annotations=["test"])
 
     def initialize_from_file_data(self, file_data: List[dict]):
-        return Pipeline(self.load_steps(ClassLoader(), file_data))
+        return Pipeline(
+            steps=self.load_steps(ClassLoader(), file_data),
+            step_outbox_size=self.step_outbox_size,
+        )
 
     def load_steps(self, class_loader, file_data):
         return [

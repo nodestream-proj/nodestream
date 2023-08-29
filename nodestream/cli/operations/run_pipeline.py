@@ -19,6 +19,7 @@ class RunPipeline(Operation):
             pipeline_name=command.argument("pipeline"),
             initialization_arguments=PipelineInitializationArguments(
                 annotations=command.option("annotations"),
+                step_outbox_size=int(command.option("step-outbox-size")),
             ),
             progress_reporter=self.create_progress_reporter(command),
         )

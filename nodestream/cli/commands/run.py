@@ -26,6 +26,13 @@ class Run(NodestreamCommand):
             default=1000,
             flag=False,
         ),
+        option(
+            "step-outbox-size",
+            "s",
+            "How many records to buffer in each step's outbox before blocking",
+            default=1000,
+            flag=False,
+        ),
     ]
 
     async def handle_async(self):

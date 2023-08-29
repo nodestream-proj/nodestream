@@ -82,8 +82,9 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
 
     __slots__ = ("steps",)
 
-    def __init__(self, steps: List[Step]) -> None:
+    def __init__(self, steps: List[Step], step_outbox_size: int) -> None:
         self.steps = steps
+        self.step_outbox_size = step_outbox_size
 
     async def run(
         self, progress_reporter: Optional[PipelineProgressReporter] = None
@@ -92,7 +93,9 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
         tasks = []
 
         for step in self.steps:
-            current_executor = StepExecutor(current_executor, step)
+            current_executor = StepExecutor(
+                upstream=current_executor, step=step, outbox_size=self.step_outbox_size
+            )
             tasks.append(asyncio.create_task(current_executor.work_loop()))
 
         current_executor.set_end_of_line(progress_reporter)

@@ -10,7 +10,7 @@ def pipeline(mocker):
     s1.handle_async_record_stream = mocker.Mock(return_value=empty_async_generator())
     s2.handle_async_record_stream = mocker.Mock(return_value=empty_async_generator())
     s1.finish, s2.finish = mocker.AsyncMock(), mocker.AsyncMock()
-    return Pipeline([s1, s2])
+    return Pipeline([s1, s2], 10)
 
 
 @pytest.mark.asyncio
