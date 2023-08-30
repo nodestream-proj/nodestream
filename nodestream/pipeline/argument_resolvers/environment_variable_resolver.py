@@ -18,4 +18,4 @@ class EnvironmentResolver(ArgumentResolver):
 
     @staticmethod
     def resolve_argument(variable_name):
-        return os.environ[variable_name]
+        return os.environ.get(variable_name)
