@@ -34,5 +34,7 @@ def test_init_args_for_testing():
 
 def test_unset_annotations():
     init_args = PipelineInitializationArguments(annotations=[])
-    step = {"annotations": ["good"]}
+    rest_of_step = {"implementation": "test"}
+    step = {"annotations": ["good"], **rest_of_step}
     assert_that(init_args.step_is_tagged_properly(step), equal_to(True))
+    assert_that(step, equal_to(rest_of_step))
