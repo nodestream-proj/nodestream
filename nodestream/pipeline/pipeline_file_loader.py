@@ -75,7 +75,7 @@ class PipelineInitializationArguments:
         return self.step_is_tagged_properly(step)
 
     def step_is_tagged_properly(self, step):
-        if "annotations" in step and self.annotations is not None:
+        if "annotations" in step and self.annotations:
             if not set(step.pop("annotations")).intersection(self.annotations):
                 return False
 

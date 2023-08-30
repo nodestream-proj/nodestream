@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from hamcrest import assert_that, has_length, instance_of
+from hamcrest import assert_that, equal_to, has_length, instance_of
 
 from nodestream.pipeline import PipelineFileLoader, PipelineInitializationArguments
 from nodestream.pipeline.step import PassStep
@@ -30,3 +30,9 @@ def test_init_args_for_testing():
     init_args = PipelineInitializationArguments.for_testing()
     assert_that(init_args.annotations, has_length(1))
     assert_that(init_args.annotations[0], "test")
+
+
+def test_unset_annotations():
+    init_args = PipelineInitializationArguments(annotations=[])
+    step = {"annotations": ["good"]}
+    assert_that(init_args.step_is_tagged_properly(step), equal_to(True))
