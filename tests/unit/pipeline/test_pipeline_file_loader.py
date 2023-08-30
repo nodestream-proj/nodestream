@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from hamcrest import assert_that, has_length, instance_of, equal_to
+from hamcrest import assert_that, equal_to, has_length, instance_of
 
 from nodestream.pipeline import PipelineFileLoader, PipelineInitializationArguments
 from nodestream.pipeline.step import PassStep
