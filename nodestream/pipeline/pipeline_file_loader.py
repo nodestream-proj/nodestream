@@ -75,9 +75,15 @@ class PipelineInitializationArguments:
         return self.step_is_tagged_properly(step)
 
     def step_is_tagged_properly(self, step):
-        if "annotations" in step and self.annotations:
-            if not set(step.pop("annotations")).intersection(self.annotations):
-                return False
+        # By default, we need to load all steps. Only filter a step out if:
+        #   1. We have set annotations during initialization (e.g from the cli)
+        #   2. The step is annotated
+        #   3. There is not an intersection between the annotations from (1) and (2).
+        #
+        # This function also has a side effect of removing the annotations from the step data.
+        annotations_set_on_step = set(step.pop("annotations", []))
+        if annotations_set_on_step and self.annotations:
+            return annotations_set_on_step.intersection(self.annotations)
 
         return True
 
