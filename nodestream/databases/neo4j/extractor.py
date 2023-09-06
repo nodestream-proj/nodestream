@@ -11,13 +11,13 @@ class Neo4jExtractor(Extractor):
     def __init__(
         self,
         query: str,
-        params: Optional[Dict[str, Any]] = None,
+        parameters: Optional[Dict[str, Any]] = None,
         limit: int = 100,
         **database_connector_args
     ) -> None:
         self.connector = DatabaseConnector.from_file_data(**database_connector_args)
         self.query = query
-        self.params = params or {}
+        self.parameters = parameters or {}
         self.limit = limit
         self.logger = getLogger(self.__class__.__name__)
 
@@ -31,7 +31,7 @@ class Neo4jExtractor(Extractor):
         database_name = self.connector.database_name
 
         while should_continue:
-            params = dict(**self.params, limit=self.limit, offset=offset)
+            params = dict(**self.parameters, limit=self.limit, offset=offset)
             self.logger.info(
                 "Running query on neo4j",
                 extra=dict(query=self.query, params=params),
