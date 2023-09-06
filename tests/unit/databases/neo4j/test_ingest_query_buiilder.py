@@ -5,11 +5,11 @@ from freezegun import freeze_time
 from hamcrest import assert_that, equal_to, equal_to_ignoring_whitespace
 
 from nodestream.databases.neo4j.ingest_query_builder import (
-    Neo4jIngestQueryBuilder,
     DELETE_NODE_QUERY,
     DELETE_REL_QUERY,
+    Neo4jIngestQueryBuilder,
 )
-from nodestream.databases.neo4j.query import Query, QueryBatch, COMMIT_QUERY
+from nodestream.databases.neo4j.query import COMMIT_QUERY, Query, QueryBatch
 from nodestream.databases.query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
