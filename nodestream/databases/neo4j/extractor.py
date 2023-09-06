@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from neo4j import RoutingControl
 
