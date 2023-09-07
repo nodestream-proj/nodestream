@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from hamcrest import assert_that, has_items, has_length, not_, has_key
+from hamcrest import assert_that, has_items, has_key, has_length, not_
 from moto import mock_s3
 
 BUCKET_NAME = "bucket"
