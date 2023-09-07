@@ -34,7 +34,7 @@ class DeleteOrder(IngestionHook):
 
 ## Triggering an Ingestion Hook
 
-Ingestion hooks have to added at some point. 
+Ingestion hooks have to be added at some point. 
 This is generally done as part of a [custom interpretation](./creating-your-own-interpretation.md).
 
 For example, if you wanted to delete an order, you could create a custom interpretation that adds the hook to the `DesiredIngestion` object.
