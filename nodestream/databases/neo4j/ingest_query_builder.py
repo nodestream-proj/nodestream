@@ -24,6 +24,8 @@ FROM_NODE_REF_NAME = "from_node"
 TO_NODE_REF_NAME = "to_node"
 RELATIONSHIP_REF_NAME = "rel"
 PARAMETER_CORRECTION_REGEX = re.compile(r"\"(params.__\w+)\"")
+DELETE_NODE_QUERY = "MATCH (n) WHERE id(n) = id DETACH DELETE n"
+DELETE_REL_QUERY = "MATCH ()-[r]->() WHERE id(r) = id DELETE r"
 
 
 def correct_parameters(f):
@@ -213,9 +215,7 @@ class Neo4jIngestQueryBuilder:
         ]
         return QueryBatch(query, params)
 
-    def generate_ttl_query_from_configuration(
-        self, config: TimeToLiveConfiguration
-    ) -> Query:
+    def generate_ttl_match_query(self, config: TimeToLiveConfiguration) -> Query:
         earliest_allowed_time = datetime.utcnow() - timedelta(
             hours=config.expiry_in_hours
         )
@@ -243,3 +243,14 @@ class Neo4jIngestQueryBuilder:
         ).return_literal(f"id({ref_name}) as id")
 
         return Query(str(query_builder), params)
+
+    def generate_ttl_query_from_configuration(
+        self, config: TimeToLiveConfiguration
+    ) -> Query:
+        ttl_match_query = self.generate_ttl_match_query(config)
+        operation = (
+            DELETE_NODE_QUERY
+            if config.graph_object_type == GraphObjectType.NODE
+            else DELETE_REL_QUERY
+        )
+        return ttl_match_query.feed_batched_query(operation)

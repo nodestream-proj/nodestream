@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
+UNWIND_QUERY = "UNWIND $batched_parameter_sets as params RETURN params"
 COMMIT_QUERY = """
 CALL apoc.periodic.iterate(
-    "UNWIND $batched_parameter_sets as params RETURN params",
+    $iterable_query,
     $batched_query,
-    {batchsize: 1000, parallel: false, retries: 3, params: {batched_parameter_sets: $batched_parameter_sets}}
+    {batchsize: 1000, parallel: false, retries: 3, params: $iterate_params}
 )
 YIELD batches, committedOperations, failedOperations, errorMessages
 RETURN batches, committedOperations, failedOperations, errorMessages
@@ -21,6 +22,17 @@ class Query:
     def from_statement(cls, statement: str):
         return cls(query_statement=statement, parameters={})
 
+    def feed_batched_query(self, batched_query: str) -> "Query":
+        """Feed the results of the the query into another query that will be executed in batches."""
+        return Query(
+            COMMIT_QUERY,
+            {
+                "iterate_params": self.parameters,
+                "batched_query": batched_query,
+                "iterable_query": self.query_statement,
+            },
+        )
+
 
 @dataclass(slots=True, frozen=True)
 class QueryBatch:
@@ -31,7 +43,8 @@ class QueryBatch:
         return Query(
             COMMIT_QUERY,
             {
-                "batched_parameter_sets": self.batched_parameter_sets,
+                "iterate_params": self.batched_parameter_sets,
                 "batched_query": self.query_statement,
+                "iterable_query": UNWIND_QUERY,
             },
         )
