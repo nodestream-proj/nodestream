@@ -50,6 +50,12 @@ Depending on how you are building your package, you can register your Argument R
     argument_resolvers = "nodestream_plugin_cool.argument_resolvers"
     ```
 
+=== "pyproject.toml (poetry)"
+    ```toml
+    [tool.poetry.plugins."nodestream.plugins"]
+    argument_resolvers = "nodestream_plugin_cool.argument_resolvers"
+    ```
+
 === "setup.cfg"
     ```ini
     [options.entry_points]

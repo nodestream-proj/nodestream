@@ -1,6 +1,6 @@
-from ...pipeline import PipelineInitializationArguments
+from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
 from ...pipeline.meta import PipelineContext
-from ...project import PipelineProgressReporter, Project, RunRequest
+from ...project import Project, RunRequest
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 
@@ -19,6 +19,7 @@ class RunPipeline(Operation):
             pipeline_name=command.argument("pipeline"),
             initialization_arguments=PipelineInitializationArguments(
                 annotations=command.option("annotations"),
+                step_outbox_size=int(command.option("step-outbox-size")),
             ),
             progress_reporter=self.create_progress_reporter(command),
         )

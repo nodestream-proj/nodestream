@@ -125,6 +125,83 @@ It takes a collection of file paths as input and yields the records read from ea
       - other_people/*.json
 ```
 
+## `RemoteFileExtractor`
+
+The `RemoteFileExtractor` class represents an extractor that reads records from files specified by URLs. It takes a
+collection of URLs as input and yields the records read from each file using the [appropriate file format parser](./file-formats.md).
+
+```yaml
+- implementation: nodestream.pipeline.extractors:RemoteFileExtractor
+  arguments:
+    memory_spooling_max_size_in_mb: 10 # Optional
+    urls:
+      - https://example.com/people.json
+      - https://example.com/other_people.json
+```
+
+The `RemoteFileExtractor` will use the value of `memory_spooling_max_size_in_mb` to determine how much memory to use when spooling the file contents. 
+If the file is larger than the specified amount, it will be downloaded to a temporary file on disk and read from there. 
+If the file is smaller than the specified amount, it will be downloaded to memory and read from there. 
+The default value is 5 MB.
+
+## `SimpleApiExtractor`
+
+The `SimpleApiExtractor` class represents an extractor that reads records from a simple API. It takes a single URL as
+input and yields the records read from the API. The API must return a JSON array of objects either directly or as the
+value of specified key.
+
+For example, if the API returns the following JSON:
+
+```json
+{
+  "people": [
+    {
+      "name": "John Doe",
+      "age": 42
+    },
+    {
+      "name": "Jane Doe",
+      "age": 42
+    }
+  ]
+}
+```
+
+Then the extractor can be configured as follows:
+
+```yaml
+- implementation: nodestream.pipeline.extractors:SimpleApiExtractor
+  arguments:
+    url: https://example.com/people
+    yield_from: people
+```
+
+If the API returns a JSON array directly, then the `yield_from` argument can be omitted.
+
+The `SimpleApiExtractor` will automatically paginate through the API until it reaches the end if the API supports
+limit-offset style pagination through a query parameter. 
+By default, no pagination is performed. The query parameter name can be configured using the `offset_query_param` argument.
+
+For example, if the API supports pagination through a `page` query parameter, then the extractor can be configured as follows:
+
+```yaml
+- implementation: nodestream.pipeline.extractors:SimpleApiExtractor
+  arguments:
+    url: https://example.com/people
+    offset_query_param: page
+```
+
+You can also specify headers to be sent with the request using the `headers` argument.
+  
+```yaml
+- implementation: nodestream.pipeline.extractors:SimpleApiExtractor
+  arguments:
+    url: https://example.com/people
+    headers:
+      x-api-key: !env MY_API_KEY
+```
+
+
 ## `TimeToLiveConfigurationExtractor`
 
 "Extracts" time to live configurations from the file and yields them one at a time to the graph database writer.
@@ -167,3 +244,27 @@ Each configuration can include the following arguments:
 | enabled                 	| Boolean 	| Whether or not the TTL is enabled. Defaults to `True`.                                                                                                                                     	|
 | batch_size              	| Integer 	| The number of objects to delete in a single batch. Defaults to `100`.                                                                                                                     	|
 | custom_query            	| String 	| A custom query to use to delete the objects. If not provided, the default query will be used. The custom query is database implmentation specific.                                                                                             	|
+
+
+## `Neo4jExtractor`
+
+The `Neo4jExtractor` class represents an extractor that reads records from a Neo4j database. It takes a single Cypher query as
+input and yields the records read from the database. The extractor will automatically paginate through the database until it reaches the end. Therefore, the query needs to include a `SKIP` and `LIMIT` clause. For example:
+
+```yaml
+- implementation: nodestream.pipeline.extractors.graphs.neo4j:Neo4jExtractor
+  arguments:
+    query: MATCH (p:Person) WHERE p.name = $name RETURN p.name SKIP $offset LIMIT $limit
+    uri: bolt://localhost:7687
+    username: neo4j
+    password: neo4j
+    database_name: my_database # Optional; defaults to neo4j
+    limit: 100000 # Optional; defaults to 100
+    parameters:
+      # Optional; defaults to {}
+      # Any parameters to be passed to the query
+      # For example, if you want to pass a parameter called "name" with the value "John Doe", you would do this:
+      name: John Doe
+```
+
+The extractor will automatically add the `SKIP` and `LIMIT` clauses to the query. The extractor will also automatically add the `offset` and `limit` parameters to the query. The extractor will start with `offset` set to `0` and `limit` set to `100` (unless overridden by setting `limit`) The extractor will continue to paginate through the database until the query returns no results. 

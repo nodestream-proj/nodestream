@@ -4,8 +4,12 @@ import pytest
 from freezegun import freeze_time
 from hamcrest import assert_that, equal_to, equal_to_ignoring_whitespace
 
-from nodestream.databases.neo4j import Neo4jIngestQueryBuilder
-from nodestream.databases.neo4j.query import Query, QueryBatch
+from nodestream.databases.neo4j.ingest_query_builder import (
+    DELETE_NODE_QUERY,
+    DELETE_REL_QUERY,
+    Neo4jIngestQueryBuilder,
+)
+from nodestream.databases.neo4j.query import COMMIT_QUERY, Query, QueryBatch
 from nodestream.databases.query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
@@ -33,8 +37,12 @@ BASIC_NODE_TTL = TimeToLiveConfiguration(
     expiry_in_hours=10,
 )
 BASIC_NODE_TTL_EXPECTED_QUERY = Query(
-    "MATCH (x: TestNodeType) WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
-    {"earliest_allowed_time": GREATEST_DAY},
+    COMMIT_QUERY,
+    {
+        "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
+        "batched_query": DELETE_NODE_QUERY,
+        "iterable_query": "MATCH (x: TestNodeType) WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
+    },
 )
 
 NODE_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
@@ -44,7 +52,12 @@ NODE_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
     expiry_in_hours=10,
 )
 NODE_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
-    "MATCH (n:TestNodeType) RETURN n", {"earliest_allowed_time": GREATEST_DAY}
+    COMMIT_QUERY,
+    {
+        "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
+        "batched_query": DELETE_NODE_QUERY,
+        "iterable_query": NODE_TTL_WITH_CUSTOM_QUERY.custom_query,
+    },
 )
 
 BASIC_REL_TTL = TimeToLiveConfiguration(
@@ -53,19 +66,27 @@ BASIC_REL_TTL = TimeToLiveConfiguration(
     expiry_in_hours=10,
 )
 BASIC_REL_TTL_EXPECTED_QUERY = Query(
-    "MATCH ()-[x: IS_RELATED_TO]->() WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
-    {"earliest_allowed_time": GREATEST_DAY},
+    COMMIT_QUERY,
+    {
+        "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
+        "iterable_query": "MATCH ()-[x: IS_RELATED_TO]->() WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
+        "batched_query": DELETE_REL_QUERY,
+    },
 )
 
 REL_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
     graph_object_type=GraphObjectType.RELATIONSHIP,
     object_type="IS_RELATED_TO",
-    custom_query="MATCH ()-[x: IS_RELATED_TO]->() RETURN x",
+    custom_query="MATCH ()-[x: IS_RELATED_TO]->() RETURN id(x) as id",
     expiry_in_hours=10,
 )
 REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
-    "MATCH ()-[x: IS_RELATED_TO]->() RETURN x",
-    {"earliest_allowed_time": GREATEST_DAY},
+    COMMIT_QUERY,
+    {
+        "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
+        "iterable_query": REL_TTL_WITH_CUSTOM_QUERY.custom_query,
+        "batched_query": DELETE_REL_QUERY,
+    },
 )
 
 

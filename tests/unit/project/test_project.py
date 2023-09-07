@@ -3,14 +3,11 @@ from pathlib import Path
 import pytest
 from hamcrest import assert_that, equal_to, has_length, same_instance
 
-from nodestream.pipeline import PipelineInitializationArguments
-from nodestream.project import (
-    PipelineDefinition,
+from nodestream.pipeline import (
+    PipelineInitializationArguments,
     PipelineProgressReporter,
-    PipelineScope,
-    Project,
-    RunRequest,
 )
+from nodestream.project import PipelineDefinition, PipelineScope, Project, RunRequest
 from nodestream.schema.schema import GraphSchema
 
 
@@ -92,3 +89,10 @@ def test_get_schema_with_overrides(project, mocker):
     project.generate_graph_schema.return_value.apply_type_overrides_from_file.assert_called_once_with(
         "some/path"
     )
+
+
+@pytest.mark.asyncio
+async def test_get_snapshot_for(project, mocker):
+    project.run = mocker.AsyncMock()
+    await project.get_snapshot_for("pipeline")
+    project.run.assert_awaited_once()

@@ -11,11 +11,7 @@ from ..model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
-from ..pluggable import Pluggable
 from ..schema.indexes import FieldIndex, KeyIndex
-from ..subclass_registry import SubclassRegistry
-
-QUERY_EXECUTOR_SUBCLASS_REGISTRY = SubclassRegistry()
 
 
 @dataclass(slots=True, frozen=True)
@@ -31,20 +27,7 @@ class OperationOnRelationshipIdentity:
     relationship_identity: RelationshipIdentityShape
 
 
-@QUERY_EXECUTOR_SUBCLASS_REGISTRY.connect_baseclass
-class QueryExecutor(ABC, Pluggable):
-    entrypoint_name = "databases"
-
-    @classmethod
-    def from_database_args(cls, database: str = "neo4j", **database_args):
-        return QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database).from_file_data(
-            **database_args
-        )
-
-    @classmethod
-    def from_file_data(cls, **kwargs):
-        return cls(**kwargs)
-
+class QueryExecutor(ABC):
     @abstractmethod
     async def upsert_nodes_in_bulk_with_same_operation(
         self, operation: OperationOnNodeIdentity, nodes: Iterable[Node]

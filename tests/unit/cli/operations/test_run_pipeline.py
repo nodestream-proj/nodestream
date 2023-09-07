@@ -22,14 +22,16 @@ async def test_run_pipeline_operation_perform(run_pipeline_operation, mocker):
 
 def test_make_run_request(run_pipeline_operation, mocker):
     command = mocker.Mock()
-    command.option.side_effect = [["annotation1", "annotation2"], "10000"]
+    command.option.side_effect = [["annotation1", "annotation2"], "10001", "10000"]
     command.argument.return_value = "my_pipeline"
     result = run_pipeline_operation.make_run_request(command)
     assert_that(result.pipeline_name, equal_to("my_pipeline"))
     assert_that(
         result.initialization_arguments,
         equal_to(
-            PipelineInitializationArguments(annotations=["annotation1", "annotation2"])
+            PipelineInitializationArguments(
+                annotations=["annotation1", "annotation2"], step_outbox_size=10001
+            )
         ),
     )
     assert_that(result.progress_reporter.reporting_frequency, equal_to(10000))
