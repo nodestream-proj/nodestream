@@ -68,20 +68,22 @@ class S3Extractor(Extractor):
         object_format = self.infer_object_format(key)
         return SupportedFileFormat.from_file_pointer_and_format(io, object_format)
 
+    def is_object_in_archive(self, key: str) -> bool:
+        if self.archive_dir:
+            return key.startswith(self.archive_dir)
+        return False
+
     def find_keys_in_bucket(self) -> list[str]:
+        # Returns all keys in the bucket that are not in the archive dir and have the prefix.
         paginator = self.s3_client.get_paginator("list_objects_v2")
         page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
         for page in page_iterator:
-            if page["KeyCount"] > 0:
-                for obj in page["Contents"]:
-                    if self.archive_dir is not None:
-                        if obj["Key"].startswith(self.archive_dir):
-                            continue
-                    yield obj["Key"]
+            keys = (obj["Key"] for obj in page.get("Contents", []))
+            yield from filter(lambda k: not self.is_object_in_archive(k), keys)
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for key in self.find_keys_in_bucket():
-            try: 
+            try:
                 for record in self.get_object_as_file(key).read_file():
                     yield record
             finally:
