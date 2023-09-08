@@ -1,8 +1,9 @@
 import pytest
 from hamcrest import assert_that, equal_to
 
-from nodestream.pipeline import (
+from nodestream.pipeline.filters import (
     ExcludeWhenValuesMatchPossibilities,
+    Filter,
     ValuesMatchPossibilitiesFilter,
 )
 
@@ -58,3 +59,21 @@ async def test_exclude_possibilities__failing():
     )
     result = await subject.filter_record({})
     assert_that(result, equal_to(False))
+
+
+@pytest.mark.asyncio
+async def test_base_filter_filters_correctly():
+    async def records():
+        yield 1
+        yield 2
+
+    class TestFilter(Filter):
+        def __init__(self, results) -> None:
+            self.results = results
+
+        async def filter_record(self, record):
+            return self.results.pop(0)
+
+    subject = TestFilter([False, True])
+    results = [record async for record in subject.handle_async_record_stream(records())]
+    assert_that(results, equal_to([1]))
