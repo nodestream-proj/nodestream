@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from nodestream.pipeline.scope_config import ScopeConfig
+
 from ..pipeline import PipelineInitializationArguments
 from ..pipeline.meta import start_context
 from .pipeline_definition import PipelineDefinition
@@ -40,7 +42,7 @@ class RunRequest:
             PipelineProgressReporter.for_testing(results_list),
         )
 
-    async def execute_with_definition(self, definition: PipelineDefinition):
+    async def execute_with_definition(self, definition: PipelineDefinition, config: ScopeConfig):
         """Execute this run request with the given pipeline definition.
 
         This method is intended to be called by `PipelineScope` and should not be called
@@ -53,5 +55,5 @@ class RunRequest:
             definition: The pipeline definition to execute this run request with.
         """
         with start_context(self.pipeline_name):
-            pipeline = definition.initialize(self.initialization_arguments)
+            pipeline = definition.initialize(self.initialization_arguments, config)
             await self.progress_reporter.execute_with_reporting(pipeline)

@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+from unittest import mock
 
 import pytest
 from hamcrest import assert_that, equal_to, has_length, same_instance
@@ -11,6 +13,7 @@ from nodestream.project import (
     Project,
     RunRequest,
 )
+from nodestream.pipeline.scope_config import ScopeConfig
 from nodestream.schema.schema import GraphSchema
 
 
@@ -25,6 +28,11 @@ def scopes():
 @pytest.fixture
 def project(scopes):
     return Project(scopes)
+
+@pytest.fixture
+def add_env_var() -> pytest.fixture():
+    os.environ["USERNAME_ENV"] = "bob"
+    return os.environ["USERNAME_ENV"]
 
 
 def test_pipeline_organizes_scopes_by_name(scopes, project):
@@ -44,10 +52,11 @@ async def test_project_runs_pipeline_in_scope_when_present(
     scopes[0].run_request.assert_called_once_with(request)
 
 
-def test_project_from_file():
+def test_project_from_file(add_env_var):
     file_name = Path("tests/unit/project/fixtures/simple_project.yaml")
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
+    assert_that(result.scopes_by_name['perpetual'].config, equal_to(ScopeConfig({"Username": "bob"})))
 
 
 def test_project_from_file_missing_file():

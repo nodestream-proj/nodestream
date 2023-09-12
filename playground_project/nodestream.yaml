@@ -3,3 +3,6 @@ scopes:
     pipelines:
       - test.yaml
       - test2.yaml
+    config:
+      Username: !env PIPELINE_USERNAME
+      Password: !env PIPELINE_PASSWORD

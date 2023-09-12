@@ -4,6 +4,8 @@ from typing import List, Optional
 
 from yaml import SafeLoader, load
 
+from nodestream.pipeline.scope_config import ScopeConfig
+
 from .argument_resolvers import ArgumentResolver
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
@@ -19,13 +21,18 @@ class InvalidPipelineDefinitionError(ValueError):
 
 class PipelineFileSafeLoader(SafeLoader):
     """A YAML loader that can load pipeline files.""" ""
-
     was_configured = False
-
     @classmethod
-    def configure(cls):
+    def configure(cls, config: ScopeConfig = None):
         if cls.was_configured:
             return
+
+        print(config)
+        if config:
+            cls.add_constructor(
+            "!config",
+            lambda loader, node: config.get_config_value(loader.construct_scalar(node)),
+        )
 
         for normalizer in Normalizer.all():
             normalizer.setup()
@@ -37,11 +44,30 @@ class PipelineFileSafeLoader(SafeLoader):
         cls.was_configured = True
 
     @classmethod
-    def load_file_by_path(cls, file_path: str):
-        PipelineFileSafeLoader.configure()
+    def load_file_by_path(cls, file_path: str, config: ScopeConfig = None):
+        PipelineFileSafeLoader.configure(config)
         with open(file_path) as fp:
             return load(fp, cls)
 
+class NodestreamProjectFileSafeLoader(SafeLoader):
+    """A YAML loader that can load nodestream project files.""" ""
+
+    was_configured = False
+
+    @classmethod
+    def configure(cls):
+        if cls.was_configured:
+            return
+        for argument_resolver in ArgumentResolver.all():
+            argument_resolver.install_yaml_tag(cls)
+
+        cls.was_configured = True
+
+    @classmethod
+    def load_file_by_path(cls, file_path: str, config: ScopeConfig = None):
+        NodestreamProjectFileSafeLoader.configure(config)
+        with open(file_path) as fp:
+            return load(fp, cls)
 
 @dataclass(slots=True)
 class PipelineInitializationArguments:
@@ -85,11 +111,11 @@ class PipelineFileLoader:
         self.file_path = file_path
 
     def load_pipeline(
-        self, init_args: Optional[PipelineInitializationArguments] = None
+        self, init_args: Optional[PipelineInitializationArguments] = None, config: ScopeConfig = None
     ) -> Pipeline:
         init_args = init_args or PipelineInitializationArguments()
         return self.load_pipeline_from_file_data(
-            self.load_pipeline_file_data(), init_args
+            self.load_pipeline_file_data(config), init_args
         )
 
     def load_pipeline_from_file_data(
@@ -102,5 +128,5 @@ class PipelineFileLoader:
 
         return init_args.initialize_from_file_data(file_data)
 
-    def load_pipeline_file_data(self):
-        return PipelineFileSafeLoader.load_file_by_path(self.file_path)
+    def load_pipeline_file_data(self, config: ScopeConfig = None):
+        return PipelineFileSafeLoader.load_file_by_path(self.file_path, config)
