@@ -9,6 +9,7 @@ from .flush import Flush
 from .meta import UNKNOWN_PIPELINE_NAME
 from .pipeline import Pipeline
 from .pipeline_file_loader import PipelineFileLoader, PipelineInitializationArguments
+from .progress_reporter import PipelineProgressReporter
 from .step import PassStep, Step
 from .transformers import Transformer
 from .writers import LoggerWriter, Writer
@@ -30,4 +31,5 @@ __all__ = (
     "PassStep",
     "Flush",
     "UNKNOWN_PIPELINE_NAME",
+    "PipelineProgressReporter",
 )

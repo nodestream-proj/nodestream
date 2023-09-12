@@ -1,0 +1,73 @@
+
+
+type Airport @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    identifier: String
+
+    elevation_in_feet: String
+
+    iata_code: String
+
+    local_code: String
+
+    name: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    withinCountry: Country
+        @relationship(type: "WITHIN", direction: OUT, properties: "Within")
+    
+
+    
+    withinRegion: Region
+        @relationship(type: "WITHIN", direction: OUT, properties: "Within")
+    
+
+}
+
+type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    code: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    airportWithin: [Airport!]!
+        @relationship(type: "WITHIN", direction: IN, properties: "Within")
+    
+
+    # Outbound Relationships
+
+}
+
+type Region @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    code: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    airportWithin: [Airport!]!
+        @relationship(type: "WITHIN", direction: IN, properties: "Within")
+    
+
+    # Outbound Relationships
+
+}
+interface Within @relationshipProperties {
+
+    last_ingested_at: LocalDateTime
+
+}

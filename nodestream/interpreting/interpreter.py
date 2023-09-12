@@ -131,9 +131,9 @@ class Interpreter(Step, AggregatedIntrospectiveIngestionComponent):
 
     def interpret_record(self, record):
         context = ProviderContext.fresh(record)
-        self.before_iteration.apply_interpretations(context)
-        for sub_context in self.decomposer.decompose_record(context):
-            yield from self.interpretations.apply_interpretations(sub_context)
+        for base_context in self.before_iteration.apply_interpretations(context):
+            for sub_context in self.decomposer.decompose_record(base_context):
+                yield from self.interpretations.apply_interpretations(sub_context)
 
     def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         yield self.before_iteration
