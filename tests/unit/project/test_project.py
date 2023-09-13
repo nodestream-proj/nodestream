@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -7,6 +8,7 @@ from nodestream.pipeline import (
     PipelineInitializationArguments,
     PipelineProgressReporter,
 )
+from nodestream.pipeline.scope_config import ScopeConfig
 from nodestream.project import PipelineDefinition, PipelineScope, Project, RunRequest
 from nodestream.schema.schema import GraphSchema
 
@@ -20,8 +22,21 @@ def scopes():
 
 
 @pytest.fixture
+def plugin_scope():
+    return [
+        PipelineScope("scope3", []),
+    ]
+
+
+@pytest.fixture
 def project(scopes):
     return Project(scopes)
+
+
+@pytest.fixture
+def add_env_var() -> pytest.fixture():
+    os.environ["USERNAME_ENV"] = "bob"
+    return os.environ["USERNAME_ENV"]
 
 
 def test_pipeline_organizes_scopes_by_name(scopes, project):
@@ -41,10 +56,44 @@ async def test_project_runs_pipeline_in_scope_when_present(
     scopes[0].run_request.assert_called_once_with(request)
 
 
+def test_project_init_sets_up_plugin_scope_when_present(plugin_scope):
+    Project(plugin_scope, {"scope3": ScopeConfig({"PluginUsername": "bob"})})
+    assert plugin_scope[0].config == ScopeConfig({"PluginUsername": "bob"})
+
+
+def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
+    plugin_scope,
+):
+    Project(plugin_scope, {"other_scope": ScopeConfig({"PluginUsername": "bob"})})
+    assert plugin_scope[0].config is None
+
+
+def test_project_from_file_with_config(add_env_var):
+    file_name = Path("tests/unit/project/fixtures/simple_project_with_config.yaml")
+    result = Project.read_from_file(file_name)
+    assert_that(result.scopes_by_name, has_length(1))
+    assert_that(
+        result.plugin_configs,
+        equal_to({"test": ScopeConfig({"PluginUsername": "bob"})}),
+    )
+    assert_that(
+        result.scopes_by_name["perpetual"].config,
+        equal_to(ScopeConfig({"Username": "bob"})),
+    )
+
+
 def test_project_from_file():
     file_name = Path("tests/unit/project/fixtures/simple_project.yaml")
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
+    assert_that(
+        result.plugin_configs,
+        equal_to({}),
+    )
+    assert_that(
+        result.scopes_by_name["perpetual"].config,
+        equal_to(ScopeConfig(config={})),
+    )
 
 
 def test_project_from_file_missing_file():

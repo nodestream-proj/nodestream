@@ -8,6 +8,7 @@ from .argument_resolvers import ArgumentResolver
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
 from .pipeline import Pipeline
+from .scope_config import ScopeConfig
 from .value_providers import ValueProvider
 
 
@@ -23,7 +24,15 @@ class PipelineFileSafeLoader(SafeLoader):
     was_configured = False
 
     @classmethod
-    def configure(cls):
+    def configure(cls, config: ScopeConfig = None):
+        if config:
+            cls.add_constructor(
+                "!config",
+                lambda loader, node: config.get_config_value(
+                    loader.construct_scalar(node)
+                ),
+            )
+
         if cls.was_configured:
             return
 
@@ -37,8 +46,8 @@ class PipelineFileSafeLoader(SafeLoader):
         cls.was_configured = True
 
     @classmethod
-    def load_file_by_path(cls, file_path: str):
-        PipelineFileSafeLoader.configure()
+    def load_file_by_path(cls, file_path: str, config: ScopeConfig = None):
+        PipelineFileSafeLoader.configure(config)
         with open(file_path) as fp:
             return load(fp, cls)
 
@@ -95,11 +104,13 @@ class PipelineFileLoader:
         self.file_path = file_path
 
     def load_pipeline(
-        self, init_args: Optional[PipelineInitializationArguments] = None
+        self,
+        init_args: Optional[PipelineInitializationArguments] = None,
+        config: ScopeConfig = None,
     ) -> Pipeline:
         init_args = init_args or PipelineInitializationArguments()
         return self.load_pipeline_from_file_data(
-            self.load_pipeline_file_data(), init_args
+            self.load_pipeline_file_data(config), init_args
         )
 
     def load_pipeline_from_file_data(
@@ -112,5 +123,5 @@ class PipelineFileLoader:
 
         return init_args.initialize_from_file_data(file_data)
 
-    def load_pipeline_file_data(self):
-        return PipelineFileSafeLoader.load_file_by_path(self.file_path)
+    def load_pipeline_file_data(self, config: ScopeConfig = None):
+        return PipelineFileSafeLoader.load_file_by_path(self.file_path, config)

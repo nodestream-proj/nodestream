@@ -1,4 +1,3 @@
-from functools import cache
 from importlib.metadata import entry_points
 from inspect import getmembers, isclass
 
@@ -15,7 +14,6 @@ class Pluggable:
         )
 
     @classmethod
-    @cache
     def all(cls):
         def is_plugin(member):
             return isclass(member) and issubclass(member, cls) and member is not cls

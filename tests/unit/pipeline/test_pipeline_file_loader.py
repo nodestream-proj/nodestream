@@ -3,6 +3,7 @@ from pathlib import Path
 from hamcrest import assert_that, equal_to, has_length, instance_of
 
 from nodestream.pipeline import PipelineFileLoader, PipelineInitializationArguments
+from nodestream.pipeline.scope_config import ScopeConfig
 from nodestream.pipeline.step import PassStep
 
 
@@ -30,6 +31,17 @@ def test_init_args_for_testing():
     init_args = PipelineInitializationArguments.for_testing()
     assert_that(init_args.annotations, has_length(1))
     assert_that(init_args.annotations[0], "test")
+
+
+def test_config_file_load():
+    loader = PipelineFileLoader(
+        Path("tests/unit/pipeline/fixtures/config_pipeline.yaml")
+    )
+    result = loader.load_pipeline(
+        config=ScopeConfig({"TestValue": "nodestream.pipeline.step:PassStep"})
+    )
+    assert_that(result.steps, has_length(1))
+    assert_that(result.steps[0], instance_of(PassStep))
 
 
 def test_unset_annotations():

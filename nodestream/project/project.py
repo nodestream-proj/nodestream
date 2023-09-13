@@ -1,8 +1,12 @@
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
+from yaml import SafeLoader
+
 from ..file_io import LoadsFromYamlFile, SavesToYamlFile
 from ..pipeline import Step
+from ..pipeline.argument_resolvers.argument_resolver import ArgumentResolver
+from ..pipeline.scope_config import ScopeConfig
 from ..pluggable import Pluggable
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
@@ -28,6 +32,16 @@ class Project(
     """
 
     @classmethod
+    def get_loader(cls) -> Type[SafeLoader]:
+        """Get the YAML loader to use when reading this object from a file.
+
+        Returns:
+            The YAML loader to use when reading this object from a file.
+        """
+        NodestreamProjectFileSafeLoader.configure()
+        return NodestreamProjectFileSafeLoader
+
+    @classmethod
     def describe_yaml_schema(cls):
         from schema import Optional, Schema
 
@@ -35,6 +49,9 @@ class Project(
             {
                 Optional("scopes"): {
                     str: PipelineScope.describe_yaml_schema(),
+                },
+                Optional("plugin_config"): {
+                    str: ScopeConfig.describe_yaml_schema(),
                 },
             }
         )
@@ -47,7 +64,7 @@ class Project(
         which should be a dictionary mapping scope names to scope file data and
         should be validated by the schema returned by `describe_yaml_schema`.
 
-        This method should not be called directly. Instead, use `LoadsFromYamlFile.load_from_yaml_file`.
+        This method should not be called directly. Instead, use `NodestreamProjectFileSafeLoader.load_from_yaml_file`.
 
         Args:
             data (Dict): The file data to create the project from.
@@ -60,7 +77,12 @@ class Project(
             PipelineScope.from_file_data(*scope_data)
             for scope_data in scopes_data.items()
         ]
-        project = cls(scopes)
+
+        plugins = data.pop("plugin_config", {})
+        plugin_cfgs = {
+            name: ScopeConfig.from_file_data(value) for name, value in plugins.items()
+        }
+        project = cls(scopes, plugin_configs=plugin_cfgs)
         for plugin in ProjectPlugin.all():
             plugin().activate(project)
         return project
@@ -81,8 +103,11 @@ class Project(
             },
         }
 
-    def __init__(self, scopes: List[PipelineScope]):
+    def __init__(
+        self, scopes: List[PipelineScope], plugin_configs: Dict[str, ScopeConfig] = None
+    ):
         self.scopes_by_name: Dict[str, PipelineScope] = {}
+        self.plugin_configs = plugin_configs
         for scope in scopes:
             self.add_scope(scope)
 
@@ -117,6 +142,9 @@ class Project(
         Args:
             scope (PipelineScope): The scope to add.
         """
+
+        if self.plugin_configs and self.plugin_configs.get(scope.name):
+            scope.set_configuration(self.plugin_configs[scope.name])
         self.scopes_by_name[scope.name] = scope
 
     def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:
@@ -201,6 +229,21 @@ class Project(
                 for idx, step in enumerate(pipeline_steps):
                     if isinstance(step, step_type):
                         yield pipeline_definition, idx, step
+
+
+class NodestreamProjectFileSafeLoader(SafeLoader):
+    """A YAML loader that can load nodestream project files.""" ""
+
+    was_configured = False
+
+    @classmethod
+    def configure(cls):
+        if cls.was_configured:
+            return
+        for argument_resolver in ArgumentResolver.all():
+            argument_resolver.install_yaml_tag(cls)
+
+        cls.was_configured = True
 
 
 class ProjectPlugin(Pluggable):

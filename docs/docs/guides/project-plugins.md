@@ -95,3 +95,31 @@ Depending on how you are building your package, you can register your project pl
         }
     )
     ```
+
+### Configuration for Project Plugins
+
+The `!config` YAML tag followed by a key can be used to provide end-user configurable values for project plugin pipelines.
+
+#### Plugin Creator Provided
+=== "plugin-pipeline.yaml"
+    ```
+    - implementation: myPlugin.testPipeline:TestExctractor
+      arguments:
+        base_url: !config 'service_base_url'
+        username: !config 'service_username'
+        password: !config 'service_password'
+    ```
+
+End users can provide values for the `!config` plugin tags in their nodestream.yaml file. This feature is particularly useful for supplying user-provided information such as URLs and credentials. The values can be accessed at plugin_config.<plugin_name>.<config_value>. To ensure proper provision of configuration values, the plugin name under `plugin_config` must match the plugin scope name. This enables plugins to use similar configuration value keys without conflicts.
+
+#### Plugin End-User Provided
+=== "nodestream.yaml"
+    ```
+    plugin_config:
+      myPlugin:
+        service_base_url: "https://mytestpluginapi.com"
+        service_username: !env MY_TEST_PLUGIN_USERNAME
+        service_password: !env MY_TEST_PLUGIN_PASSWORD
+      otherPlugin:
+        service_base_url: "https://otherurl.com"
+    ```
