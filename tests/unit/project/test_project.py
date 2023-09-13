@@ -54,7 +54,10 @@ def test_project_from_file(add_env_var):
     file_name = Path("tests/unit/project/fixtures/simple_project.yaml")
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
-    assert_that(result.plugin_configs, equal_to({"test": ScopeConfig({"PluginUsername":"bob"})}))
+    assert_that(
+        result.plugin_configs,
+        equal_to({"test": ScopeConfig({"PluginUsername": "bob"})}),
+    )
     assert_that(
         result.scopes_by_name["perpetual"].config,
         equal_to(ScopeConfig({"Username": "bob"})),

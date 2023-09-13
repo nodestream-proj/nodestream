@@ -1,9 +1,8 @@
 from typing import Dict
 from ..file_io import LoadsFromYamlFile
 
-class ScopeConfig(
-    LoadsFromYamlFile
-):
+
+class ScopeConfig(LoadsFromYamlFile):
     """A `Config` represents a collection of configuration for a scope.
 
     A config is a key value pair object in a nodestream scope including plugins.
@@ -14,9 +13,7 @@ class ScopeConfig(
     def describe_yaml_schema(cls):
         from schema import Schema
 
-        return Schema(
-            dict
-        )
+        return Schema(dict)
 
     @classmethod
     def from_file_data(cls, data) -> "ScopeConfig":
@@ -42,6 +39,6 @@ class ScopeConfig(
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, ScopeConfig) and self.config == other.config
-    
+
     def get_config_value(self, key):
         return self.config.get(key)

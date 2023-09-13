@@ -6,7 +6,6 @@ from yaml import SafeLoader
 from nodestream.pipeline.pipeline_file_loader import NodestreamProjectFileSafeLoader
 
 
-
 from ..file_io import LoadsFromYamlFile, SavesToYamlFile
 from ..pipeline import Step
 from ..pluggable import Pluggable
@@ -43,7 +42,7 @@ class Project(
         """
         NodestreamProjectFileSafeLoader.configure()
         return NodestreamProjectFileSafeLoader
- 
+
     @classmethod
     def describe_yaml_schema(cls):
         from schema import Optional, Schema
@@ -82,7 +81,9 @@ class Project(
         ]
 
         plugins = data.pop("plugin_config", {})
-        plugin_cfgs = {name: ScopeConfig.from_file_data(value) for name, value in plugins.items()}
+        plugin_cfgs = {
+            name: ScopeConfig.from_file_data(value) for name, value in plugins.items()
+        }
         project = cls(scopes, plugin_configs=plugin_cfgs)
         for plugin in ProjectPlugin.all():
             plugin().activate(project)

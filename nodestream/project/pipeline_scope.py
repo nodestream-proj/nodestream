@@ -21,7 +21,11 @@ class PipelineScope(
     """A `PipelineScope` represents a collection of pipelines subordinate to a project."""
 
     def __init__(
-        self, name: str, pipelines: List[PipelineDefinition], persist: bool = True, config: ScopeConfig = None
+        self,
+        name: str,
+        pipelines: List[PipelineDefinition],
+        persist: bool = True,
+        config: ScopeConfig = None,
     ) -> None:
         self.persist = persist
         self.name = name
@@ -124,7 +128,7 @@ class PipelineScope(
             definition.remove_file(missing_ok=missing_ok)
 
         return True
-    
+
     def set_configuration(self, config):
         self.config = config
 
