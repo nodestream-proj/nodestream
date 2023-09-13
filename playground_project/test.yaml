@@ -24,7 +24,7 @@
 - implementation: nodestream.databases:GraphDatabaseWriter
   arguments:
     batch_size: 1000
-    database: neo4j
-    uri: bolt://localhost:7687
-    username: neo4j
-    password: neo4j123
+    database: !config neo4j_database
+    uri: !config neo4j_uri
+    username: !config neo4j_username
+    password: !config neo4j_password
