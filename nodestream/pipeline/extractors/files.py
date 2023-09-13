@@ -84,8 +84,11 @@ class FileExtractor(Extractor):
     def __init__(self, paths: Iterable[Path]) -> None:
         self.paths = paths
 
+    def _ordered_paths(self) -> Iterable[Path]:
+        return sorted(self.paths)
+
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
-        for path in self.paths:
+        for path in self._ordered_paths():
             with SupportedFileFormat.open(path) as file:
                 for record in file.read_file():
                     yield record

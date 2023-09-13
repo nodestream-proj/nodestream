@@ -116,7 +116,8 @@ With the previous minimal configuration, it will use your currently active aws c
 
 The `FileExtractor` class represents an extractor that reads records from files specified by glob patterns.
 It takes a collection of file paths as input and yields the records read from each file using the
-[appropriate file format parser](./file-formats.md).
+[appropriate file format parser](./file-formats.md). The files are read and yield in sorted order by file name so that
+the records are always yielded in the same order. 
 
 ```yaml
 - implementation: nodestream.pipeline.extractors:FileExtractor
