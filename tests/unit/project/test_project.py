@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 from hamcrest import assert_that, equal_to, has_length, same_instance
@@ -66,7 +65,7 @@ def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
     plugin_scope,
 ):
     Project(plugin_scope, {"other_scope": ScopeConfig({"PluginUsername": "bob"})})
-    assert plugin_scope[0].config == None
+    assert plugin_scope[0].config is None
 
 
 def test_project_from_file_with_config(add_env_var):
