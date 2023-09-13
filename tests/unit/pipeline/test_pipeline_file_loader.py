@@ -3,8 +3,8 @@ from pathlib import Path
 from hamcrest import assert_that, equal_to, has_length, instance_of
 
 from nodestream.pipeline import PipelineFileLoader, PipelineInitializationArguments
-from nodestream.pipeline.step import PassStep
 from nodestream.pipeline.scope_config import ScopeConfig
+from nodestream.pipeline.step import PassStep
 
 
 def test_basic_file_load():

@@ -2,6 +2,7 @@ from importlib import resources
 from typing import Dict, Iterable, List
 
 from nodestream.pipeline.scope_config import ScopeConfig
+
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,

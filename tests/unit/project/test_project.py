@@ -8,9 +8,8 @@ from nodestream.pipeline import (
     PipelineInitializationArguments,
     PipelineProgressReporter,
 )
-from nodestream.project import PipelineDefinition, PipelineScope, Project, RunRequest
 from nodestream.pipeline.scope_config import ScopeConfig
-
+from nodestream.project import PipelineDefinition, PipelineScope, Project, RunRequest
 from nodestream.schema.schema import GraphSchema
 
 

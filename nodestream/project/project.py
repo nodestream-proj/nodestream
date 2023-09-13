@@ -5,9 +5,9 @@ from yaml import SafeLoader
 
 from nodestream.pipeline.pipeline_file_loader import NodestreamProjectFileSafeLoader
 
-
 from ..file_io import LoadsFromYamlFile, SavesToYamlFile
 from ..pipeline import Step
+from ..pipeline.scope_config import ScopeConfig
 from ..pluggable import Pluggable
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
@@ -17,7 +17,6 @@ from ..schema.schema import (
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
-from ..pipeline.scope_config import ScopeConfig
 
 T = TypeVar("T", bound=Step)
 
