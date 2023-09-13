@@ -4,12 +4,11 @@ from typing import List, Optional
 
 from yaml import SafeLoader, load
 
-from nodestream.pipeline.scope_config import ScopeConfig
-
 from .argument_resolvers import ArgumentResolver
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
 from .pipeline import Pipeline
+from .scope_config import ScopeConfig
 from .value_providers import ValueProvider
 
 
@@ -51,21 +50,6 @@ class PipelineFileSafeLoader(SafeLoader):
         PipelineFileSafeLoader.configure(config)
         with open(file_path) as fp:
             return load(fp, cls)
-
-
-class NodestreamProjectFileSafeLoader(SafeLoader):
-    """A YAML loader that can load nodestream project files.""" ""
-
-    was_configured = False
-
-    @classmethod
-    def configure(cls):
-        if cls.was_configured:
-            return
-        for argument_resolver in ArgumentResolver.all():
-            argument_resolver.install_yaml_tag(cls)
-
-        cls.was_configured = True
 
 
 @dataclass(slots=True)

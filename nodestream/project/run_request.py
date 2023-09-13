@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 
-from nodestream.pipeline.scope_config import ScopeConfig
-
 from ..pipeline import PipelineInitializationArguments
 from ..pipeline.meta import start_context
 from ..pipeline.progress_reporter import PipelineProgressReporter
+from ..pipeline.scope_config import ScopeConfig
 from .pipeline_definition import PipelineDefinition
 
 

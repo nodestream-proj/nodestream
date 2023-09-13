@@ -1,14 +1,18 @@
+from dataclasses import dataclass
 from typing import Dict
 
 from ..file_io import LoadsFromYamlFile
 
 
+@dataclass
 class ScopeConfig(LoadsFromYamlFile):
     """A `Config` represents a collection of configuration for a scope.
 
     A config is a key value pair object in a nodestream scope including plugins.
     It contains a collection of configuration key value pairs to be used by the pipelines of a scope.
     """
+
+    config: Dict[str, any]
 
     @classmethod
     def describe_yaml_schema(cls):
@@ -32,14 +36,7 @@ class ScopeConfig(LoadsFromYamlFile):
             Config: The config created from the file data.
         """
 
-        config = cls(data)
-        return config
-
-    def __init__(self, config: Dict = {}):
-        self.config = config
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, ScopeConfig) and self.config == other.config
+        return cls(data)
 
     def get_config_value(self, key):
         return self.config.get(key)

@@ -3,10 +3,9 @@ from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from yaml import SafeLoader
 
-from nodestream.pipeline.pipeline_file_loader import NodestreamProjectFileSafeLoader
-
 from ..file_io import LoadsFromYamlFile, SavesToYamlFile
 from ..pipeline import Step
+from ..pipeline.argument_resolvers.argument_resolver import ArgumentResolver
 from ..pipeline.scope_config import ScopeConfig
 from ..pluggable import Pluggable
 from ..schema.schema import (
@@ -104,7 +103,9 @@ class Project(
             },
         }
 
-    def __init__(self, scopes: List[PipelineScope], plugin_configs: Dict = None):
+    def __init__(
+        self, scopes: List[PipelineScope], plugin_configs: Dict[str, ScopeConfig] = None
+    ):
         self.scopes_by_name: Dict[str, PipelineScope] = {}
         self.plugin_configs = plugin_configs
         for scope in scopes:
@@ -228,6 +229,21 @@ class Project(
                 for idx, step in enumerate(pipeline_steps):
                     if isinstance(step, step_type):
                         yield pipeline_definition, idx, step
+
+
+class NodestreamProjectFileSafeLoader(SafeLoader):
+    """A YAML loader that can load nodestream project files.""" ""
+
+    was_configured = False
+
+    @classmethod
+    def configure(cls):
+        if cls.was_configured:
+            return
+        for argument_resolver in ArgumentResolver.all():
+            argument_resolver.install_yaml_tag(cls)
+
+        cls.was_configured = True
 
 
 class ProjectPlugin(Pluggable):
