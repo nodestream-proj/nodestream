@@ -1,4 +1,5 @@
 import csv
+import itertools
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -81,3 +82,10 @@ async def test_remote_file_extractor_extract_records(mocker, httpx_mock):
     subject = RemoteFileExtractor(files)
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
+
+
+def test_file_ordereing():
+    files_in_order = [Path(f"file{i}.json") for i in range(1, 4)]
+    for permutation in itertools.permutations(files_in_order):
+        subject = FileExtractor(permutation)
+        assert_that(list(subject._ordered_paths()), equal_to(files_in_order))
