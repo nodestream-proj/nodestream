@@ -3,8 +3,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict
 
-from nodestream.pipeline.scope_config import ScopeConfig
-
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
 from ..schema.schema import IntrospectiveIngestionComponent

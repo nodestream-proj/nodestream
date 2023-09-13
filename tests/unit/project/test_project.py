@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from unittest import mock
 
 import pytest
 from hamcrest import assert_that, equal_to, has_length, same_instance

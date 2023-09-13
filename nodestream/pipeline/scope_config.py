@@ -1,4 +1,3 @@
-import os
 from typing import Dict
 from ..file_io import LoadsFromYamlFile
 
