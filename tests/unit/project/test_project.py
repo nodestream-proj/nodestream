@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 from hamcrest import assert_that, equal_to, has_length, same_instance
@@ -18,6 +19,13 @@ def scopes():
     return [
         PipelineScope("scope1", [PipelineDefinition("test", Path("path/to/pipeline"))]),
         PipelineScope("scope2", []),
+    ]
+
+
+@pytest.fixture
+def plugin_scope():
+    return [
+        PipelineScope("scope3", []),
     ]
 
 
@@ -47,6 +55,18 @@ async def test_project_runs_pipeline_in_scope_when_present(
     )
     await project.run(request)
     scopes[0].run_request.assert_called_once_with(request)
+
+
+def test_project_init_sets_up_plugin_scope_when_present(plugin_scope):
+    Project(plugin_scope, {"scope3": ScopeConfig({"PluginUsername": "bob"})})
+    assert plugin_scope[0].config == ScopeConfig({"PluginUsername": "bob"})
+
+
+def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
+    plugin_scope,
+):
+    Project(plugin_scope, {"other_scope": ScopeConfig({"PluginUsername": "bob"})})
+    assert plugin_scope[0].config == None
 
 
 def test_project_from_file_with_config(add_env_var):
