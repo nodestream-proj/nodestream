@@ -27,6 +27,16 @@ def json_file(fixture_directory):
 
 
 @pytest.fixture
+def jsonl_file(fixture_directory):
+    with NamedTemporaryFile("w+", suffix=".jsonl", dir=fixture_directory) as temp_file:
+        json.dump(SIMPLE_RECORD, temp_file)
+        temp_file.write("\n")
+        json.dump(SIMPLE_RECORD, temp_file)
+        temp_file.seek(0)
+        yield Path(temp_file.name)
+
+
+@pytest.fixture
 def csv_file(fixture_directory):
     with NamedTemporaryFile("w+", suffix=".csv", dir=fixture_directory) as temp_file:
         writer = csv.DictWriter(temp_file, SIMPLE_RECORD.keys())
@@ -65,9 +75,16 @@ async def test_txt_formatting(txt_file):
     assert_that(results, equal_to([{"line": "hello world"}]))
 
 
-def test_declarative_init(fixture_directory, csv_file, json_file, txt_file):
+@pytest.mark.asyncio
+async def test_jsonl_formatting(jsonl_file):
+    subject = FileExtractor([jsonl_file])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
+
+
+def test_declarative_init(fixture_directory, csv_file, json_file, txt_file, jsonl_file):
     subject = FileExtractor.from_file_data(globs=[f"{fixture_directory}/**"])
-    assert_that(list(subject.paths), has_length(3))
+    assert_that(list(subject.paths), has_length(4))
 
 
 @pytest.mark.asyncio

@@ -60,6 +60,11 @@ class JsonFileFormat(SupportedFileFormat, alias=".json"):
         return [json.load(fp)]
 
 
+class LineSeperatedJsonFileFormat(SupportedFileFormat, alias=".jsonl"):
+    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+        return (json.loads(line) for line in fp)
+
+
 class TextFileFormat(SupportedFileFormat, alias=".txt"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
         return ({"line": line} for line in fp)
