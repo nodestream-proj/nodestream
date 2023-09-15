@@ -25,12 +25,14 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         self.logger = getLogger(__name__)
 
     async def connect(self):
+        self.logger.debug("Starting Connection to Kafka Topic %s", self.topic)
         self.consumer = AIOKafkaConsumer(
             self.topic,
             bootstrap_servers=self.bootstrap_servers,
             group_id=self.group_id,
         )
         await self.consumer.start()
+        self.logger.info("Connected to Kafka Topic %s", self.topic)
 
     async def disconnect(self):
         await self.consumer.stop()
