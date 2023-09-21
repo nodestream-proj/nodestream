@@ -1,5 +1,7 @@
 from neo4j import AsyncDriver, AsyncGraphDatabase
+from neo4j.auth_management import AsyncAuthManagers
 
+from ...pipeline.argument_resolvers import RefreshableArgument
 from ..database_connector import DatabaseConnector
 from ..query_executor import QueryExecutor
 from .index_query_builder import (
@@ -15,12 +17,22 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
     def from_file_data(
         cls,
         uri: str,
-        username: str,
-        password: str,
+        username: str | RefreshableArgument,
+        password: str | RefreshableArgument,
         database_name: str = "neo4j",
         use_enterprise_features: bool = False,
     ):
-        driver = AsyncGraphDatabase.driver(uri, auth=(username, password))
+        async def get_credentials():
+            usr, pwd = username, password
+            if isinstance(usr, RefreshableArgument):
+                usr = username.get_current_value()
+            if isinstance(pwd, RefreshableArgument):
+                usr = password.get_current_value()
+            return username, password
+
+        driver = AsyncGraphDatabase.driver(
+            uri, auth=AsyncAuthManagers.basic(get_credentials)
+        )
         if use_enterprise_features:
             index_query_builder = Neo4jEnterpriseIndexQueryBuilder()
         else:
