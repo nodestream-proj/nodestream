@@ -17,7 +17,9 @@ from nodestream.schema.schema import GraphSchema
 def scopes():
     return [
         PipelineScope("scope1", [PipelineDefinition("test", Path("path/to/pipeline"))]),
-        PipelineScope("scope2", []),
+        PipelineScope(
+            "scope2", [PipelineDefinition("test2", Path("path/to/pipeline"))]
+        ),
     ]
 
 
@@ -145,3 +147,7 @@ async def test_get_snapshot_for(project, mocker):
     project.run = mocker.AsyncMock()
     await project.get_snapshot_for("pipeline")
     project.run.assert_awaited_once()
+
+
+def test_all_pipeline_names(project):
+    assert_that(list(project.get_all_pipeline_names()), equal_to(["test", "test2"]))

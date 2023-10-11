@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import Callable, Dict, List, Optional
 
 from yaml import SafeLoader, load
 
@@ -58,6 +58,7 @@ class PipelineInitializationArguments:
 
     step_outbox_size: int = 1000
     annotations: Optional[List[str]] = None
+    on_effective_configuration_resolved: Optional[Callable[[List[Dict]], None]] = None
 
     @classmethod
     def for_introspection(cls):
@@ -74,10 +75,14 @@ class PipelineInitializationArguments:
         )
 
     def load_steps(self, class_loader, file_data):
+        effective = self.get_effective_configuration(file_data)
+        if self.on_effective_configuration_resolved:
+            self.on_effective_configuration_resolved(file_data)
+        return [class_loader.load_class(**step_data) for step_data in effective]
+
+    def get_effective_configuration(self, file_data):
         return [
-            class_loader.load_class(**step_data)
-            for step_data in file_data
-            if self.should_load_step(step_data)
+            step_data for step_data in file_data if self.should_load_step(step_data)
         ]
 
     def should_load_step(self, step):
