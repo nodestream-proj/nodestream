@@ -6,7 +6,7 @@ COMMIT_QUERY = """
 CALL apoc.periodic.iterate(
     $iterable_query,
     $batched_query,
-    {batchsize: 1000, parallel: false, retries: 3, params: $iterate_params}
+    {batchsize: 1000, parallel: true, retries: 3, params: $iterate_params}
 )
 YIELD batches, committedOperations, failedOperations, errorMessages
 RETURN batches, committedOperations, failedOperations, errorMessages
@@ -43,7 +43,9 @@ class QueryBatch:
         return Query(
             COMMIT_QUERY,
             {
-                "iterate_params": self.batched_parameter_sets,
+                "iterate_params": {
+                    "batched_parameter_sets": self.batched_parameter_sets
+                },
                 "batched_query": self.query_statement,
                 "iterable_query": UNWIND_QUERY,
             },
