@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Callable, Dict
+from typing import Callable, Dict, List, Optional
 
 from yaml import SafeLoader, load
 
