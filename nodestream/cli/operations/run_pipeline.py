@@ -15,9 +15,12 @@ class RunPipeline(Operation):
         self.project = project
 
     async def perform(self, command: NodestreamCommand):
-        await self.project.run(self.make_run_request(command))
+        for pipeline_name in command.argument("pipelines"):
+            await self.project.run(self.make_run_request(command, pipeline_name))
 
-    def make_run_request(self, command: NodestreamCommand) -> RunRequest:
+    def make_run_request(
+        self, command: NodestreamCommand, pipeline_name: str
+    ) -> RunRequest:
         def print_effective_config(config):
             command.line(
                 "<info>Effective configuration:</info>",
@@ -28,25 +31,27 @@ class RunPipeline(Operation):
             )
 
         return RunRequest(
-            pipeline_name=command.argument("pipeline"),
+            pipeline_name=pipeline_name,
             initialization_arguments=PipelineInitializationArguments(
                 annotations=command.option("annotations"),
                 step_outbox_size=int(command.option("step-outbox-size")),
                 on_effective_configuration_resolved=print_effective_config,
             ),
-            progress_reporter=self.create_progress_reporter(command),
+            progress_reporter=self.create_progress_reporter(command, pipeline_name),
         )
 
-    def get_progress_indicator(self, command: NodestreamCommand) -> "ProgressIndicator":
+    def get_progress_indicator(
+        self, command: NodestreamCommand, pipeline_name: str
+    ) -> "ProgressIndicator":
         if command.has_json_logging_set:
-            return ProgressIndicator(command)
+            return ProgressIndicator(command, pipeline_name)
 
-        return SpinnerProgressIndicator(command)
+        return SpinnerProgressIndicator(command, pipeline_name)
 
     def create_progress_reporter(
-        self, command: NodestreamCommand
+        self, command: NodestreamCommand, pipeline_name: str
     ) -> PipelineProgressReporter:
-        indicator = self.get_progress_indicator(command)
+        indicator = self.get_progress_indicator(command, pipeline_name)
         return PipelineProgressReporter(
             reporting_frequency=int(command.option("reporting-frequency")),
             callback=indicator.progress_callback,
@@ -56,8 +61,9 @@ class RunPipeline(Operation):
 
 
 class ProgressIndicator:
-    def __init__(self, command: NodestreamCommand) -> None:
+    def __init__(self, command: NodestreamCommand, pipeline_name: str) -> None:
         self.command = command
+        self.pipeline_name = pipeline_name
 
     def on_start(self):
         pass
@@ -67,10 +73,6 @@ class ProgressIndicator:
 
     def on_finish(self, context: PipelineContext):
         pass
-
-    @property
-    def pipeline_name(self) -> str:
-        return self.command.argument("pipeline")
 
 
 class SpinnerProgressIndicator(ProgressIndicator):
