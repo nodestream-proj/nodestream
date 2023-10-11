@@ -1,3 +1,6 @@
+from cleo.io.outputs.output import Verbosity
+from yaml import safe_dump
+
 from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
 from ...pipeline.meta import PipelineContext
 from ...project import Project, RunRequest
@@ -15,11 +18,21 @@ class RunPipeline(Operation):
         await self.project.run(self.make_run_request(command))
 
     def make_run_request(self, command: NodestreamCommand) -> RunRequest:
+        def print_effective_config(config):
+            command.line(
+                "<info>Effective configuration:</info>",
+                verbosity=Verbosity.VERY_VERBOSE,
+            )
+            command.line(
+                f"<info>{safe_dump(config)}</info>", verbosity=Verbosity.VERY_VERBOSE
+            )
+
         return RunRequest(
             pipeline_name=command.argument("pipeline"),
             initialization_arguments=PipelineInitializationArguments(
                 annotations=command.option("annotations"),
                 step_outbox_size=int(command.option("step-outbox-size")),
+                on_effective_configuration_resolved=print_effective_config,
             ),
             progress_reporter=self.create_progress_reporter(command),
         )
