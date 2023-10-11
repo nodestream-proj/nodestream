@@ -1,3 +1,5 @@
+from typing import Iterable
+
 from cleo.io.outputs.output import Verbosity
 from yaml import safe_dump
 
@@ -14,8 +16,12 @@ class RunPipeline(Operation):
     def __init__(self, project: Project) -> None:
         self.project = project
 
+    def get_pipelines_to_run(self, command: NodestreamCommand) -> Iterable[str]:
+        supplied_commands = command.argument("pipelines")
+        return supplied_commands or self.project.get_all_pipeline_names()
+
     async def perform(self, command: NodestreamCommand):
-        for pipeline_name in command.argument("pipelines"):
+        for pipeline_name in self.get_pipelines_to_run(command):
             await self.project.run(self.make_run_request(command, pipeline_name))
 
     def make_run_request(

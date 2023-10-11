@@ -160,6 +160,12 @@ class Project(
 
         return [self.scopes_by_name[scope_name]]
 
+    def get_all_pipeline_names(self) -> Iterable[str]:
+        """Returns all pipeline names in the project."""
+        for scope in self.scopes_by_name.values():
+            for pipeline in scope.pipelines_by_name.values():
+                yield pipeline.name
+
     def delete_pipeline(
         self,
         scope_name: Optional[str],

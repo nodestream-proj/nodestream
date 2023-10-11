@@ -17,5 +17,5 @@ JSON_OPTION = option("json", "j", "Log output in JSON", flag=True)
 
 PIPELINE_ARGUMENT = argument("pipeline", "the name of the pipeline")
 MANY_PIPELINES_ARGUMENT = argument(
-    "pipelines", "the names of the pipelines", multiple=True
+    "pipelines", "the names of the pipelines", multiple=True, optional=True
 )
