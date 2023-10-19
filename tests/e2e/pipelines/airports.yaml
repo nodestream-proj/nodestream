@@ -25,3 +25,11 @@
         relationship_type: WITHIN
         node_key:
           code: !jmespath iso_region
+
+- implementation: nodestream.databases:GraphDatabaseWriter
+  arguments:
+    batch_size: 1000
+    database: neo4j
+    uri: !env NEO4J_CONNECT_URI
+    username: neo4j
+    password: password
