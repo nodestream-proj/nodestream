@@ -31,7 +31,6 @@ profile = "black"
 python = "^3.10"
 pyyaml = "^6.0"
 jmespath = "^1.0.1"
-jq = "^1.4.1"
 neo4j = "^5.8.0"
 cleo = "^2.0.1"
 python-json-logger = "^2.0.4"
@@ -45,6 +44,7 @@ cookiecutter = "^2.1.1"
 httpx = "^0.24.1"
 uvloop = "^0.17.0"
 testcontainers = {extras = ["neo4j"], version = "^3.7.1"}
+psutil = "^5.9.6"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
