@@ -10,6 +10,7 @@
         node_type: Player
         key:
           player_id: !jmespath player_id
+      - type: properties
         properties:
           name: !jmespath name
           overall: !jmespath overall
@@ -40,3 +41,11 @@
         key_normalization:
           do_trim_whitespace: true
           do_lowercase_strings: false
+
+- implementation: nodestream.databases:GraphDatabaseWriter
+  arguments:
+    batch_size: 1000
+    database: neo4j
+    uri: !env NEO4J_CONNECT_URI
+    username: neo4j
+    password: password
