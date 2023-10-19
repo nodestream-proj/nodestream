@@ -1,4 +1,5 @@
 from importlib import import_module
+from typing import Optional, Type
 
 DECLARATIVE_INIT_METHOD_NAME = "from_file_data"
 
@@ -43,6 +44,9 @@ def find_class(class_path):
 class ClassLoader:
     """Loads a class from a string path and instantiates it with the given arguments."""
 
+    def __init__(self, class_constratint: Optional[Type] = None) -> None:
+        self.class_constratint = class_constratint or object
+
     def find_class_initializer(self, implementation, factory=None):
         class_definition = find_class(implementation)
         factory_method = factory or DECLARATIVE_INIT_METHOD_NAME
@@ -55,6 +59,12 @@ class ClassLoader:
         arguments = arguments or {}
         initializer = self.find_class_initializer(implementation, factory)
         try:
-            return initializer(**arguments)
+            result = initializer(**arguments)
         except TypeError as e:
             raise PipelineComponentInitializationError(initializer, arguments) from e
+
+        if not isinstance(result, self.class_constratint):
+            raise TypeError(
+                f"Expected class of type {self.class_constratint}, but got {type(result)}."
+            )
+        return result
