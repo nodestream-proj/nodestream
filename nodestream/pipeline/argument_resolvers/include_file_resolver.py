@@ -16,7 +16,7 @@ class IncludeFileResolver(ArgumentResolver):
         )
 
     @staticmethod
-    def resolve_argument(file_path: str):
+    def include_file(file_path: str):
         from ..pipeline_file_loader import PipelineFileSafeLoader
 
         return PipelineFileSafeLoader.load_file_by_path(file_path)

@@ -2,6 +2,7 @@ from importlib import resources
 from typing import Dict, Iterable, List
 
 from ..file_io import LoadsFromYaml, SavesToYaml
+from ..pipeline.scope_config import ScopeConfig
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
@@ -20,10 +21,15 @@ class PipelineScope(
     """A `PipelineScope` represents a collection of pipelines subordinate to a project."""
 
     def __init__(
-        self, name: str, pipelines: List[PipelineDefinition], persist: bool = True
+        self,
+        name: str,
+        pipelines: List[PipelineDefinition],
+        persist: bool = True,
+        config: ScopeConfig = None,
     ) -> None:
         self.persist = persist
         self.name = name
+        self.config = config
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
         for pipeline in pipelines:
             self.add_pipeline_definition(pipeline)
@@ -32,11 +38,12 @@ class PipelineScope(
     def from_file_data(cls, scope_name, file_data):
         pipelines_data = file_data.pop("pipelines", [])
         annotations = file_data.pop("annotations", {})
+        config = file_data.pop("config", {})
         pipelines = [
             PipelineDefinition.from_file_data(pipeline_data, annotations)
             for pipeline_data in pipelines_data
         ]
-        return cls(scope_name, pipelines)
+        return cls(scope_name, pipelines, config=ScopeConfig.from_file_data(config))
 
     @classmethod
     def describe_yaml_schema(cls):
@@ -50,6 +57,7 @@ class PipelineScope(
                 Optional("annotations"): {
                     str: Or(str, int, float, bool),
                 },
+                Optional("config"): ScopeConfig.describe_yaml_schema(),
             }
         )
 
@@ -74,7 +82,7 @@ class PipelineScope(
         if (name := run_request.pipeline_name) not in self:
             return
 
-        await run_request.execute_with_definition(self[name])
+        await run_request.execute_with_definition(self[name], self.config)
 
     def __getitem__(self, pipeline_name):
         return self.pipelines_by_name[pipeline_name]
@@ -120,6 +128,9 @@ class PipelineScope(
             definition.remove_file(missing_ok=missing_ok)
 
         return True
+
+    def set_configuration(self, config):
+        self.config = config
 
     @classmethod
     def from_resources(

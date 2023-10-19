@@ -84,6 +84,12 @@ Depending on how you are building your package, you can register your Value Prov
     value_providers = "nodestream_plugin_cool.value_providers"
     ```
 
+=== "pyproject.toml (poetry)"
+    ```toml
+    [tool.poetry.plugins."nodestream.plugins"]
+    value_providers = "nodestream_plugin_cool.value_providers"
+    ```
+
 === "setup.cfg"
     ```ini
     [options.entry_points]

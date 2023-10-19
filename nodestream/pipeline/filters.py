@@ -17,7 +17,7 @@ class Filter(Step):
         self, record_stream: AsyncGenerator[Any, Any]
     ) -> AsyncGenerator[Any, Any]:
         async for record in record_stream:
-            if record is Flush or not self.should_filter(record):
+            if record is Flush or not await self.filter_record(record):
                 yield record
 
     @abstractmethod

@@ -200,15 +200,29 @@ like this:
   implementation: nodestream.interpreting:Interpreter
 - arguments:
     batch_size: 1000
-    database: neo4j
-    password: neo4j123
-    uri: bolt://localhost:7687
-    username: neo4j
+    database: !config neo4j_database
+    uri: !config neo4j_uri
+    username: !config neo4j_username
+    password: !config neo4j_password
   implementation: nodestream.databases:GraphDatabaseWriter
 ```
 
 Each pipeline file is laid out as a series of `Step`s which are chained together and executed in order for each
 record. The first item in the pipeline is referred to generally as an `Extractor`.
+
+## Implement Config Values
+Now that we have a pipeline, lets open `nodestream.yaml` and add our configuration to provide the values for the `!config` tags in the default scope.
+```yaml
+scopes:
+  default:
+    pipelines:
+    - pipelines/org-chart.yaml
+    config:
+      neo4j_database: neo4j
+      neo4j_uri: bolt://127.0.0.1:7687
+      neo4j_username: neo4j
+      neo4j_password: neo4j123
+```
 
 ### Loading our Data Files
 

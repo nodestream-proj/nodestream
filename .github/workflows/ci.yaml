@@ -9,7 +9,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-
     steps:
       - uses: actions/checkout@v3
       - name: Install Poetry
@@ -26,12 +25,14 @@ jobs:
           poetry env use ${{ matrix.python-version }}
           poetry install
       - name: Run Tests
-        run: poetry run pytest --cov nodestream --cov-report term --cov-report xml
+        run: poetry run pytest --cov nodestream --cov-report term --cov-report xml -m "not e2e"
       - name: Run Lints
         run: |
           poetry run ruff nodestream tests
           poetry run black nodestream tests --check
           poetry run isort nodestream tests --check-only
+      - name: Run E2E Tests
+        run: poetry run pytest -m "e2e"
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:

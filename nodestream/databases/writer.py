@@ -1,10 +1,7 @@
-from typing import Optional
-
 from ..pipeline import Flush, Writer
+from .database_connector import DatabaseConnector
 from .debounced_ingest_strategy import DebouncedIngestStrategy
 from .ingest_strategy import INGESTION_STRATEGY_REGISTRY, IngestionStrategy
-from .query_executor import QUERY_EXECUTOR_SUBCLASS_REGISTRY, QueryExecutor
-from .query_executor_with_statistics import QueryExecutorWithStatistics
 
 
 class GraphDatabaseWriter(Writer):
@@ -13,22 +10,18 @@ class GraphDatabaseWriter(Writer):
         cls,
         batch_size: int,
         database: str,
-        ingest_strategy_name: Optional[str] = None,
+        ingest_strategy_name: str = INGESTION_STRATEGY_REGISTRY.name_for(
+            DebouncedIngestStrategy
+        ),
         collect_stats: bool = True,
         **database_args
     ):
         # Import all query executors so that they can register themselves
-        QueryExecutor.import_all()
-
-        executor_class = QUERY_EXECUTOR_SUBCLASS_REGISTRY.get(database)
-        executor = executor_class.from_file_data(**database_args)
-        if collect_stats:
-            executor = QueryExecutorWithStatistics(executor)
-
-        ingest_strategy_name = (
-            ingest_strategy_name
-            or INGESTION_STRATEGY_REGISTRY.name_for(DebouncedIngestStrategy)
+        DatabaseConnector.import_all()
+        connector = DatabaseConnector.from_database_args(
+            database=database, **database_args
         )
+        executor = connector.get_query_executor(collect_stats=collect_stats)
         ingest_strategy_cls = INGESTION_STRATEGY_REGISTRY.get(ingest_strategy_name)
         ingest_strategy = ingest_strategy_cls(executor)
 

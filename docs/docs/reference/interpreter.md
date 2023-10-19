@@ -24,7 +24,7 @@ graph LR
 then we can use the following YAML definition to instruct the interpreter on how to do this:
 
 ```yaml
-- implementation: nodestream.interpreters:Interpreter
+- implementation: nodestream.interpreting:Interpreter
   arguments:
     interpretations:
       - type: source_node
@@ -55,7 +55,7 @@ Sometimes single records come in a format were multiple ingestions are required 
 We can use `iterate_on` to iterate over the `people` list and `before_iteration` to set the `team_name` for each person.
 
 ```yaml
-- implementation: nodestream.interpreters:Interpreter
+- implementation: nodestream.interpreting:Interpreter
     arguments:
       before_iteration:
         - type: relationship
@@ -90,7 +90,7 @@ Imaging we have data like this:
 We can use the following YAML definition to instruct the interpreter on how to parse this data:
 
 ```yaml
-- implementation: nodestream.interpreters:Interpreter
+- implementation: nodestream.interpreting:Interpreter
   arguments:
     interpretations:
       - - type: source_node
@@ -109,4 +109,53 @@ We can use the following YAML definition to instruct the interpreter on how to p
           related_field_name: city
           relationship_type: IN_CITY
           search: !jmespath city
+```
+
+
+Mutliple interpretation passes are also allowed for the `before_iteration` block. 
+In this case, the `iterate_on` and `iterpretation` blocks are applied on the result of each pass pass of the `before_iteration` block.
+
+For example, imagine we have data like this:
+
+```json
+{
+  "site": "github.com",
+  "other_site": "another-git-host.com",
+  "people": [
+    {"name": "John", "address": "123 Test St"},
+    {"name": "Jane", "address": "456 Test St"}
+  ]
+}
+```
+
+We can use the following YAML definition to instruct the interpreter on how to parse this data:
+
+```yaml
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    before_iteration:
+      - - type: variables
+          site: !jmespath site
+      - - type: variables
+          site: !jmespath other_site
+    iterate_on: !jmespath people[*]
+    interpretations:
+      - type: source_node
+        name: !jmespath name
+        node_type: AwesomePerson
+      - type: relationship
+        node_type: Website
+        relationship_type: VISITS
+        node_key:
+          site: !variable site
+```
+
+This would result in the following graph:
+
+```mermaid
+graph LR
+  A[John] -->|VISITS| B[github.com];
+  C[Jane] -->|VISITS| B[github.com];
+  D[John] -->|VISITS| E[another-git-host.com];
+  F[Jane] -->|VISITS| E[another-git-host.com];
 ```

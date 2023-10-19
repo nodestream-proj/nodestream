@@ -4,6 +4,7 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
+  custom_dir: docs_overrides
   icon:
     repo: fontawesome/brands/github
   features:
@@ -56,3 +57,8 @@ plugins:
   - mkdocstrings:
       watch:
         - nodestream
+
+extra:
+  version:
+    default: latest
+    provider: mike

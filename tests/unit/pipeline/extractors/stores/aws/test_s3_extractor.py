@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from hamcrest import assert_that, has_items, has_length
+from hamcrest import assert_that, has_items, has_key, has_length, not_
 from moto import mock_s3
 
 BUCKET_NAME = "bucket"
@@ -46,6 +46,23 @@ def subject_with_populated_objects(subject, s3_client):
     return subject
 
 
+@pytest.fixture
+def subject_with_archiving_enabled(subject_with_populated_objects):
+    subject_with_populated_objects.archive_dir = "archive"
+    return subject_with_populated_objects
+
+
+@pytest.fixture
+def subject_with_archieved_objects(subject_with_archiving_enabled, s3_client):
+    for i in range(NUM_OBJECTS):
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=f"archieve/{i}.json",
+            Body=json.dumps({"hello": i}),
+        )
+    return subject_with_archiving_enabled
+
+
 @pytest.mark.asyncio
 async def test_s3_extractor_pages_and_reads_all_files(subject_with_populated_objects):
     expected_results = [{"hello": i} for i in range(NUM_OBJECTS)]
@@ -54,6 +71,28 @@ async def test_s3_extractor_pages_and_reads_all_files(subject_with_populated_obj
     ]
     assert_that(results, has_length(1000))
     assert_that(results, has_items(*expected_results))
+
+
+@pytest.mark.asyncio
+async def test_s3_extractor_archives_objects(subject_with_archiving_enabled, s3_client):
+    [result async for result in subject_with_archiving_enabled.extract_records()]
+    assert_that(
+        s3_client.list_objects(Bucket=BUCKET_NAME, Prefix="archive", MaxKeys=1000)[
+            "Contents"
+        ],
+        has_length(NUM_OBJECTS),
+    )
+
+
+@pytest.mark.asyncio
+async def test_s3_extractor_does_not_archive_objects_when_archive_dir_is_none(
+    subject_with_populated_objects, s3_client
+):
+    [result async for result in subject_with_populated_objects.extract_records()]
+    assert_that(
+        s3_client.list_objects(Bucket=BUCKET_NAME, Prefix="archive", MaxKeys=1000),
+        not_(has_key("Contents")),
+    )
 
 
 @pytest.mark.parametrize(

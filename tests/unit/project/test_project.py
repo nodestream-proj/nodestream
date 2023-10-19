@@ -1,16 +1,15 @@
+import os
 from pathlib import Path
 
 import pytest
 from hamcrest import assert_that, equal_to, has_length, same_instance
 
-from nodestream.pipeline import PipelineInitializationArguments
-from nodestream.project import (
-    PipelineDefinition,
+from nodestream.pipeline import (
+    PipelineInitializationArguments,
     PipelineProgressReporter,
-    PipelineScope,
-    Project,
-    RunRequest,
 )
+from nodestream.pipeline.scope_config import ScopeConfig
+from nodestream.project import PipelineDefinition, PipelineScope, Project, RunRequest
 from nodestream.schema.schema import GraphSchema
 
 
@@ -18,13 +17,28 @@ from nodestream.schema.schema import GraphSchema
 def scopes():
     return [
         PipelineScope("scope1", [PipelineDefinition("test", Path("path/to/pipeline"))]),
-        PipelineScope("scope2", []),
+        PipelineScope(
+            "scope2", [PipelineDefinition("test2", Path("path/to/pipeline"))]
+        ),
+    ]
+
+
+@pytest.fixture
+def plugin_scope():
+    return [
+        PipelineScope("scope3", []),
     ]
 
 
 @pytest.fixture
 def project(scopes):
     return Project(scopes)
+
+
+@pytest.fixture
+def add_env_var() -> pytest.fixture():
+    os.environ["USERNAME_ENV"] = "bob"
+    return os.environ["USERNAME_ENV"]
 
 
 def test_pipeline_organizes_scopes_by_name(scopes, project):
@@ -44,10 +58,44 @@ async def test_project_runs_pipeline_in_scope_when_present(
     scopes[0].run_request.assert_called_once_with(request)
 
 
+def test_project_init_sets_up_plugin_scope_when_present(plugin_scope):
+    Project(plugin_scope, {"scope3": ScopeConfig({"PluginUsername": "bob"})})
+    assert plugin_scope[0].config == ScopeConfig({"PluginUsername": "bob"})
+
+
+def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
+    plugin_scope,
+):
+    Project(plugin_scope, {"other_scope": ScopeConfig({"PluginUsername": "bob"})})
+    assert plugin_scope[0].config is None
+
+
+def test_project_from_file_with_config(add_env_var):
+    file_name = Path("tests/unit/project/fixtures/simple_project_with_config.yaml")
+    result = Project.read_from_file(file_name)
+    assert_that(result.scopes_by_name, has_length(1))
+    assert_that(
+        result.plugin_configs,
+        equal_to({"test": ScopeConfig({"PluginUsername": "bob"})}),
+    )
+    assert_that(
+        result.scopes_by_name["perpetual"].config,
+        equal_to(ScopeConfig({"Username": "bob"})),
+    )
+
+
 def test_project_from_file():
     file_name = Path("tests/unit/project/fixtures/simple_project.yaml")
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
+    assert_that(
+        result.plugin_configs,
+        equal_to({}),
+    )
+    assert_that(
+        result.scopes_by_name["perpetual"].config,
+        equal_to(ScopeConfig(config={})),
+    )
 
 
 def test_project_from_file_missing_file():
@@ -92,3 +140,14 @@ def test_get_schema_with_overrides(project, mocker):
     project.generate_graph_schema.return_value.apply_type_overrides_from_file.assert_called_once_with(
         "some/path"
     )
+
+
+@pytest.mark.asyncio
+async def test_get_snapshot_for(project, mocker):
+    project.run = mocker.AsyncMock()
+    await project.get_snapshot_for("pipeline")
+    project.run.assert_awaited_once()
+
+
+def test_all_pipeline_names(project):
+    assert_that(list(project.get_all_pipeline_names()), equal_to(["test", "test2"]))

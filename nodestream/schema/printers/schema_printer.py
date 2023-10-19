@@ -20,3 +20,7 @@ class SchemaPrinter(Pluggable):
 
     def print_schema_to_string(self, schema: GraphSchema) -> str:
         return str(schema)
+
+    @classmethod
+    def from_name(cls, name: str) -> "SchemaPrinter":
+        return SCHEMA_PRINTER_SUBCLASS_REGISTRY.get(name)()

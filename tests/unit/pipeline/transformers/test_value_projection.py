@@ -10,5 +10,9 @@ async def test_value_projection_transform_record():
     subject = ValueProjection(
         projection=JmespathValueProvider.from_string_expression("items[*]")
     )
-    results = [r async for r in subject.transform_record(record={"items": [1, 2, 3]})]
+
+    async def record():
+        yield {"items": [1, 2, 3]}
+
+    results = [r async for r in subject.handle_async_record_stream(record())]
     assert_that(results, equal_to([1, 2, 3]))

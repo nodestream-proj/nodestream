@@ -82,18 +82,31 @@ def test_interpretation_pass_passing_list_of_list_returns_multi_pass():
 def test_intepret_record_iterates_through_interpretation_process(stubbed_interpreter):
     input_record = 1
     stubbed_interpreter.decomposer.decompose_record.return_value = [1, 2, 3]
+    stubbed_interpreter.before_iteration.apply_interpretations.return_value = [
+        "base1",
+        "base2",
+        "base3",
+    ]
     stubbed_interpreter.interpretations.apply_interpretations.return_value = [
-        "a",
-        "b",
-        "c",
+        "inner1",
+        "inner2",
+        "inner3",
     ]
 
     results = list(stubbed_interpreter.interpret_record(input_record))
-    assert_that(results, equal_to(["a", "b", "c"] * 3))
 
-    stubbed_interpreter.decomposer.decompose_record.assert_called_once()
+    # On each source record, the record can be decomposed into multiple records (3 in this case)
+    # each of those records can be interpreted with multiple base contexts (before iteration; 3 in this case)
+    # each of those items can return multiple results (3 in this case). Hence a total of 27 results (3 * 3 * 3)
+    assert_that(results, equal_to(["inner1", "inner2", "inner3"] * 9))
+
+    # We should decompose the record once for each base context we got from before_iteration.
+    assert_that(stubbed_interpreter.decomposer.decompose_record.call_count, equal_to(3))
+
+    # The inner interpretations should be called once for each sub-record, for each sub-context.
+    # In this case, 3 sub-records, 3 sub-contexts, so 9 calls.
     stubbed_interpreter.interpretations.apply_interpretations.assert_has_calls(
-        (call(1), call(2), call(3))
+        (call(1), call(2), call(3)) * 3
     )
 
 

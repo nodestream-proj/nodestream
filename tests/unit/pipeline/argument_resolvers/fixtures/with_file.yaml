@@ -1,0 +1,2 @@
+test:
+  included_test_properties: !include tests/unit/pipeline/argument_resolvers/fixtures/with_file_include.yaml
