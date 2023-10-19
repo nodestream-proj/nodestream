@@ -82,6 +82,7 @@ def validate_fifa_mo_club(session):
 
 
 @pytest.mark.asyncio
+@pytest.mark.e2e
 @pytest.mark.parametrize("neo4j_version", ["4.4", "5.1", "5.10", "5.12"])
 @pytest.mark.parametrize(
     "pipeline_name,validations",
