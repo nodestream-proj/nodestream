@@ -14,7 +14,7 @@ def _get_logger_level():
 
 
 def configure_logging_with_json_defaults():
-    logging.basicConfig(level=_get_logger_level())
+    logging.basicConfig(level=_get_logger_level(), force=True)
     old_record_factory = logging.getLogRecordFactory()
 
     def record_factory(*args, **kwargs):
@@ -25,7 +25,7 @@ def configure_logging_with_json_defaults():
     logging.setLogRecordFactory(record_factory)
 
     formatter = JsonFormatter(
-        "%(name)s %(levelname)s %(pipleine_name)s %(message)s", timestamp=True
+        "%(name)s %(levelname)s %(pipeline_name)s %(message)s", timestamp=True
     )
     logger = logging.getLogger()  # Configure the root logger.
     logger.handlers[0].setFormatter(formatter)
