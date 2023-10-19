@@ -1,15 +1,15 @@
 from contextlib import contextmanager
-from pathlib import Path
 from os import environ
+from pathlib import Path
 
 import pytest
 from testcontainers.neo4j import Neo4jContainer
 
-from nodestream.project import RunRequest, Project
 from nodestream.pipeline import (
     PipelineInitializationArguments,
     PipelineProgressReporter,
 )
+from nodestream.project import Project, RunRequest
 
 EXPECTED_USER_NAME = "neo4j"
 EXPECTED_PASSWORD = "test12345"
