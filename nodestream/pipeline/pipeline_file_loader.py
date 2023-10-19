@@ -8,8 +8,8 @@ from .argument_resolvers import ArgumentResolver
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
 from .pipeline import Pipeline
-from .step import Step
 from .scope_config import ScopeConfig
+from .step import Step
 from .value_providers import ValueProvider
 
 
