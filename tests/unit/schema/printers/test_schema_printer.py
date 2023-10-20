@@ -15,7 +15,7 @@ def test_schema_printer_print_schema_to_stdout(mocker):
 
 
 def test_schema_printer_print_schema_to_file(mocker):
-    with tempfile.NamedTemporaryFile() as f:
+    with tempfile.NamedTemporaryFile(mode="w") as f:
         file_path = Path(f.name)
         schema = GraphSchema([], [])
         schema_printer = SchemaPrinter()
