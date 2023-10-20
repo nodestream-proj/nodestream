@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from hamcrest import assert_that, equal_to, has_length, instance_of
 
@@ -60,7 +62,7 @@ def test_output_table_format(project_with_two_scopes, project_dir, mocker):
     subject = TableOutputFormat(command := mocker.Mock())
     subject.output(results)
     expected_headers = ["scope", "name", "file", "annotations"]
-    expected_rows = [["another", "test", str(project_dir) + "/test.yaml", ""]]
+    expected_rows = [["another", "test", str(project_dir / "test.yaml"), ""]]
     command.table.assert_called_once_with(expected_headers, expected_rows)
     command.table.return_value.render.assert_called_once()
 
@@ -71,5 +73,5 @@ def test_json_output_format(project_with_two_scopes, mocker, project_dir):
     subject = JsonOutputFormat(command := mocker.Mock())
     command.is_verbose = False
     subject.output(results)
-    pipeline_file = str(project_dir) + "/test.yaml"
+    pipeline_file = str(project_dir / "test.yaml")
     command.write.assert_called_once_with(f'["{pipeline_file}"]')
