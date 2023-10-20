@@ -29,6 +29,10 @@ CONVERTERS = {
 }
 
 
+def leave_untuched(value):
+    return value
+
+
 class AthenaRowConverter:
     def __init__(self, column_meta) -> None:
         self.column_meta = column_meta
@@ -43,7 +47,8 @@ class AthenaRowConverter:
         raw_value = column_value.get("VarCharValue")
         if raw_value is None:
             return None
-        return CONVERTERS[column_metadata["Type"]](raw_value)
+        convert = CONVERTERS.get(column_metadata["Type"], leave_untuched)
+        return convert(raw_value)
 
 
 class AthenaExtractor(Extractor):
