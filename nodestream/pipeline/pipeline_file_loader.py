@@ -9,6 +9,7 @@ from .class_loader import ClassLoader
 from .normalizers import Normalizer
 from .pipeline import Pipeline
 from .scope_config import ScopeConfig
+from .step import Step
 from .value_providers import ValueProvider
 
 
@@ -70,7 +71,7 @@ class PipelineInitializationArguments:
 
     def initialize_from_file_data(self, file_data: List[dict]):
         return Pipeline(
-            steps=self.load_steps(ClassLoader(), file_data),
+            steps=self.load_steps(ClassLoader(Step), file_data),
             step_outbox_size=self.step_outbox_size,
         )
 

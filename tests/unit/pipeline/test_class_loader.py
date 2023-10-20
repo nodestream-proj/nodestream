@@ -85,3 +85,21 @@ def test_class_loader_invalid_path_invalid_arugment(subject):
             implementation="tests.unit.pipeline.test_class_loader:SimpleClass",
             arguments={"not_a_valid_argument": True},
         )
+
+
+def test_class_loader_invalid_type_constraint(subject):
+    with pytest.raises(TypeError):
+        subject.class_constratint = SimpleClassWithFactories
+        subject.load_class(
+            implementation="tests.unit.pipeline.test_class_loader:SimpleClass",
+            arguments={"argument": "test"},
+        )
+
+
+def test_class_loader_valid_subclass(subject):
+    subject.class_constratint = SimpleClass
+    subject.load_class(
+        implementation="tests.unit.pipeline.test_class_loader:SimpleClassWithFactories",
+        arguments={"argument": "test"},
+        factory="another_factory",
+    )
