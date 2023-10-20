@@ -74,6 +74,13 @@ class DesiredIngestion:
         outbound: bool,
         match_strategy: MatchStrategy,
     ):
+        if not related_node.is_valid:
+            LOGGER.warning(
+                "Identity value for related node was null. Skipping.",
+                extra=asdict(related_node),
+            )
+            return
+
         from_node, to_node = (
             (self.source, related_node) if outbound else (related_node, self.source)
         )

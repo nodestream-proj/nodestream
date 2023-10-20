@@ -1,6 +1,13 @@
-import pytest
+import logging
 
-from nodestream.cli.operations import InitializeLogger
+import pytest
+from hamcrest import assert_that, contains_string
+
+from nodestream.cli.operations.initialize_logger import (
+    InitializeLogger,
+    configure_logging_with_json_defaults,
+)
+from nodestream.pipeline.meta import start_context
 
 
 @pytest.mark.asyncio
@@ -23,3 +30,14 @@ async def test_initialize_logger_json_logging_unset(mocker):
     )
     await subject.perform(command)
     patch.assert_not_called()
+
+
+def test_logs_pipeline_name(capsys):
+    configure_logging_with_json_defaults()
+    logger = logging.getLogger("some")
+    pipeline_name = "test_pipeline_name"
+    with start_context(pipeline_name):
+        logger.info("some message")
+
+    captured_out = capsys.readouterr().err
+    assert_that(captured_out, contains_string(pipeline_name))
