@@ -47,15 +47,17 @@ class AwsClientFactory:
             refresh_using=self.assume_role_and_get_credentials,
             method="sts-assume-role",
         )
-        session = Session(**self.session_args)
+        session = Session()
         session._credentials = refreshable_credentials
         return session
 
     def assume_role_if_supplied_and_get_session(self):
         if self.assume_role_arn:
             return self.get_boto_session_with_refreshable_credentials()
-        return Session(**self.session_args)
+        return Session()
 
     def make_client(self, client_name: str):
         session = self.assume_role_if_supplied_and_get_session()
-        return boto3.Session(botocore_session=session).client(client_name)
+        return boto3.Session(botocore_session=session, **self.session_args).client(
+            client_name
+        )
