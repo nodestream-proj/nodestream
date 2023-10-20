@@ -32,7 +32,7 @@ def run():
         import uvloop
 
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-    except:
+    except ImportError:
         pass
 
     get_application().run()
