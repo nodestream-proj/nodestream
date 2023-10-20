@@ -1,7 +1,6 @@
 import csv
 import itertools
 import json
-import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
