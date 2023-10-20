@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 from hamcrest import assert_that, equal_to, has_length, instance_of
 
