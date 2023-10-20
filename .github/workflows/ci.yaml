@@ -32,6 +32,8 @@ jobs:
           poetry run isort nodestream tests --check-only
       - name: Run E2E Tests
         run: poetry run pytest -m "e2e"
+        # only run on linux
+        if: ${{ matrix.os == "ubuntu-latest" }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:

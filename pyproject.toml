@@ -42,9 +42,13 @@ pandas = "^2"
 schema = "^0.7.5"
 cookiecutter = "^2.1.1"
 httpx = "^0.24.1"
-uvloop = ">=0.17.0,<=0.18.0"
 testcontainers = {extras = ["neo4j"], version = "^3.7.1"}
 psutil = "^5.9.6"
+
+uvloop = [
+    { version = ">=0.17.0,<=0.18.0", platform = "darwin"},
+    { version = ">=0.17.0,<=0.18.0", platform = "linux"}
+]
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
