@@ -11,6 +11,10 @@ from .operation import Operation
 
 STATS_TABLE_COLS = ["Statistic", "Value"]
 
+ERROR_NO_PIPELINES_FOUND = "<error>No pipelines with the provided name were found in your project. If you didn't provide a name, you have no pipelines.</error>"
+HINT_CHECK_PIPELINE_NAME = "<info>HINT: Check that the pipelines you are trying to run are named correctly and in the registry.</info>"
+HINT_USE_NODESTREAM_SHOW = "<info>HINT: You can view your project's pipelines by running 'nodestream show'. </info>"
+
 
 class RunPipeline(Operation):
     def __init__(self, project: Project) -> None:
@@ -21,8 +25,16 @@ class RunPipeline(Operation):
         return supplied_commands or self.project.get_all_pipeline_names()
 
     async def perform(self, command: NodestreamCommand):
+        pipelines_ran = 0
+
         for pipeline_name in self.get_pipelines_to_run(command):
-            await self.project.run(self.make_run_request(command, pipeline_name))
+            request = self.make_run_request(command, pipeline_name)
+            pipelines_ran += await self.project.run(request)
+
+        if pipelines_ran == 0:
+            command.line(ERROR_NO_PIPELINES_FOUND)
+            command.line(HINT_CHECK_PIPELINE_NAME)
+            command.line(HINT_USE_NODESTREAM_SHOW)
 
     def make_run_request(
         self, command: NodestreamCommand, pipeline_name: str
