@@ -2,13 +2,13 @@ from cleo.helpers import option
 
 from ..operations import InitializeLogger, InitializeProject, RunPipeline
 from .nodestream_command import NodestreamCommand
-from .shared_options import JSON_OPTION, PIPELINE_ARGUMENT, PROJECT_FILE_OPTION
+from .shared_options import JSON_OPTION, MANY_PIPELINES_ARGUMENT, PROJECT_FILE_OPTION
 
 
 class Run(NodestreamCommand):
     name = "run"
     description = "run a pipeline in the current project"
-    arguments = [PIPELINE_ARGUMENT]
+    arguments = [MANY_PIPELINES_ARGUMENT]
     options = [
         PROJECT_FILE_OPTION,
         JSON_OPTION,

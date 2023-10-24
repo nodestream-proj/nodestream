@@ -69,7 +69,7 @@ class PipelineScope(
     def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         return self.pipelines_by_name.values()
 
-    async def run_request(self, run_request: "RunRequest"):
+    async def run_request(self, run_request: "RunRequest") -> int:
         """Execute a run request.
 
         If the pipeline does not exist, this is a no-op. Otherwise, the run request
@@ -80,9 +80,10 @@ class PipelineScope(
             run_request: The run request to execute.
         """
         if (name := run_request.pipeline_name) not in self:
-            return
+            return 0
 
         await run_request.execute_with_definition(self[name], self.config)
+        return 1
 
     def __getitem__(self, pipeline_name):
         return self.pipelines_by_name[pipeline_name]
