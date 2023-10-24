@@ -18,6 +18,8 @@ from hamcrest import assert_that, equal_to, has_items
         ("string", "a", "a"),
         ("boolean", "true", True),
         ("boolean", "false", False),
+        ("varchar", "a", "a"),
+        ("some_random_type", "a", "a"),
     ],
 )
 def test_athena_row_converter(target_row_type, input_value, expected_value):

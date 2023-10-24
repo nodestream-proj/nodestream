@@ -111,14 +111,16 @@ class Project(
         for scope in scopes:
             self.add_scope(scope)
 
-    async def run(self, request: RunRequest):
+    async def run(self, request: RunRequest) -> int:
         """Takes a run request and runs the appropriate pipeline.
 
         Args:
             request (RunRequest): The run request to run.
         """
+        pipelines_ran = 0
         for scope in self.scopes_by_name.values():
-            await scope.run_request(request)
+            pipelines_ran += await scope.run_request(request)
+        return pipelines_ran
 
     async def get_snapshot_for(self, pipeline_name: str) -> list:
         """Returns the output of the pipeline with the given name to be used as a snapshot.
