@@ -134,7 +134,6 @@ class AthenaExtractor(Extractor):
     def convert_data_types_of_rows_based_on_headers(self, rows_with_meta):
         row, page_meta = next(rows_with_meta)
         converter = AthenaRowConverter(page_meta)
-        yield converter.convert_row(row)
         for row, _ in rows_with_meta:
             yield converter.convert_row(row)
 
