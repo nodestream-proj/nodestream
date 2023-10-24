@@ -63,7 +63,8 @@ def txt_file(fixture_directory):
         name = temp_file.name
         temp_file.write("hello world")
         temp_file.seek(0)
-    yield Path(name)
+    yield (path := Path(name))
+    path.unlink(missing_ok=True)
 
 
 @pytest.mark.asyncio

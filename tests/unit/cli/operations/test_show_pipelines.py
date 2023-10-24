@@ -71,5 +71,11 @@ def test_json_output_format(project_with_two_scopes, mocker, project_dir):
     subject = JsonOutputFormat(command := mocker.Mock())
     command.is_verbose = False
     subject.output(results)
-    pipeline_file = str(project_dir / "test.yaml")
+
+    # Windows, ugh. On Windows, the path separator is a backslash, which is also the
+    # escape character in JSON strings. So we have to escape the backslash in the path
+    # separator, which means we have to escape the escape character. So the path
+    # separator in the path to the test.yaml file in the project directory will be
+    # represented as "\\\\".
+    pipeline_file = str(project_dir / "test.yaml").replace("\\", "\\\\")
     command.write.assert_called_once_with(f'["{pipeline_file}"]')
