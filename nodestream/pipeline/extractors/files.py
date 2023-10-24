@@ -26,7 +26,7 @@ class SupportedFileFormat(Pluggable, ABC):
     @contextmanager
     def read_handle(self) -> StringIO:
         if isinstance(self.file, Path):
-            with open(self.file, "r") as fp:
+            with open(self.file, "r", encoding="utf-8") as fp:
                 yield fp
         else:
             yield self.file
