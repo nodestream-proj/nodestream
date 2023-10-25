@@ -1,5 +1,5 @@
-from logging import getLogger
 import ssl
+from logging import getLogger
 from typing import Any, Iterable, List, Optional
 
 from aiokafka import AIOKafkaConsumer
