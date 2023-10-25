@@ -22,7 +22,7 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         topic: str,
         group_id: Optional[str] = None,
         security_protocol: str = "PLAINTEXT",
-        ssl_context: ssl.SSLContext = None,
+        ssl_context=None,
     ):
         self.bootstrap_servers = ",".join(bootstrap_servers)
         self.topic = topic
