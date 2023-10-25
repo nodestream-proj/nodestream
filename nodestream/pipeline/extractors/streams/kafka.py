@@ -2,6 +2,7 @@ from logging import getLogger
 from typing import Any, Iterable, List, Optional
 
 from aiokafka import AIOKafkaConsumer
+from aiokafka.helpers import create_ssl_context
 
 from .extractor import StreamConnector
 
@@ -31,12 +32,20 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
 
     async def connect(self):
         self.logger.debug("Starting Connection to Kafka Topic %s", self.topic)
+
+        # set default ssl context when using SSL or SASL_SSL security protocol
+        ssl_context = None
+        if self.security_protocol in ["SSL", "SASL_SSL"]:
+            ssl_context = create_ssl_context()
+
         self.consumer = AIOKafkaConsumer(
             self.topic,
             bootstrap_servers=self.bootstrap_servers,
             group_id=self.group_id,
             security_protocol=self.security_protocol,
+            ssl_context=ssl_context,
         )
+
         await self.consumer.start()
         self.logger.info("Connected to Kafka Topic %s", self.topic)
 
