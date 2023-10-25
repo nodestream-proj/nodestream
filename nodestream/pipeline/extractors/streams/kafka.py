@@ -1,4 +1,3 @@
-import ssl
 from logging import getLogger
 from typing import Any, Iterable, List, Optional
 
