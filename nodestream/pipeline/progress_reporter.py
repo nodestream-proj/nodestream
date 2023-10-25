@@ -1,8 +1,9 @@
-import platform
-import resource
+import os
 from dataclasses import dataclass, field
 from logging import Logger, getLogger
 from typing import Any, Callable
+
+from psutil import Process
 
 from .meta import PipelineContext
 
@@ -18,11 +19,8 @@ def get_max_mem_mb():
     Returns:
         int: The maximum memory used by the current process in MB.
     """
-    max_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    max_mem /= 1024
-    if platform.system() == "Darwin":
-        max_mem /= 1024
-    return int(max_mem)
+    process = Process(os.getpid())
+    return process.memory_info().rss
 
 
 @dataclass
