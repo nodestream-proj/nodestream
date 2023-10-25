@@ -1,4 +1,5 @@
 from logging import getLogger
+import ssl
 from typing import Any, Iterable, List, Optional
 
 from aiokafka import AIOKafkaConsumer
@@ -21,12 +22,14 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         topic: str,
         group_id: Optional[str] = None,
         security_protocol: str = "PLAINTEXT",
+        ssl_context: ssl.SSLContext = None,
     ):
         self.bootstrap_servers = ",".join(bootstrap_servers)
         self.topic = topic
         self.group_id = group_id or DEFAULT_GROUP_ID
         self.consumer = None
         self.security_protocol = security_protocol
+        self.ssl_context = ssl_context
         self.logger = getLogger(__name__)
 
     async def connect(self):
@@ -36,6 +39,7 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
             bootstrap_servers=self.bootstrap_servers,
             group_id=self.group_id,
             security_protocol=self.security_protocol,
+            ssl_context=self.ssl_context,
         )
         await self.consumer.start()
         self.logger.info("Connected to Kafka Topic %s", self.topic)
