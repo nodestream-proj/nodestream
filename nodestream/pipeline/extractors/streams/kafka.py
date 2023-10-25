@@ -16,7 +16,11 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
     """
 
     def __init__(
-        self, bootstrap_servers: List[str], topic: str, group_id: Optional[str] = None, security_protocol: str = "PLAINTEXT"
+        self,
+        bootstrap_servers: List[str],
+        topic: str,
+        group_id: Optional[str] = None,
+        security_protocol: str = "PLAINTEXT",
     ):
         self.bootstrap_servers = ",".join(bootstrap_servers)
         self.topic = topic
