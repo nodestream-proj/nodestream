@@ -16,12 +16,13 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
     """
 
     def __init__(
-        self, bootstrap_servers: List[str], topic: str, group_id: Optional[str] = None
+        self, bootstrap_servers: List[str], topic: str, group_id: Optional[str] = None, security_protocol: str = "PLAINTEXT"
     ):
         self.bootstrap_servers = ",".join(bootstrap_servers)
         self.topic = topic
         self.group_id = group_id or DEFAULT_GROUP_ID
         self.consumer = None
+        self.security_protocol = security_protocol
         self.logger = getLogger(__name__)
 
     async def connect(self):
@@ -30,6 +31,7 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
             self.topic,
             bootstrap_servers=self.bootstrap_servers,
             group_id=self.group_id,
+            security_protocol=self.security_protocol,
         )
         await self.consumer.start()
         self.logger.info("Connected to Kafka Topic %s", self.topic)
