@@ -87,15 +87,12 @@ class StreamExtractor(Extractor):
         self.timeout = timeout
         self.max_records = max_records
 
-    async def poll(self):
-        return await self.connector.poll(
-            timeout=self.timeout, max_records=self.max_records
-        )
-
     async def extract_records(self):
         await self.connector.connect()
         try:
-            results = tuple(await self.poll())
+            results = await self.connector.poll(
+                timeout=self.timeout, max_records=self.max_records
+            )
             if len(results) == 0:
                 yield Flush
             else:
