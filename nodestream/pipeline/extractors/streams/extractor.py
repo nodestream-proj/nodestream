@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Iterable
 
 from ....model import JsonLikeDocument
 from ....pluggable import Pluggable
@@ -28,7 +28,7 @@ class StreamConnector(Pluggable, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def poll(self, timeout: int, max_records: int):
+    async def poll(self, timeout: int, max_records: int) -> Iterable[Any]:
         raise NotImplementedError
 
 
