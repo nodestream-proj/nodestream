@@ -31,6 +31,6 @@ async def test_poll(connector, mocker):
     connector.consumer.getmany.return_value = {
         mocker.Mock(topic="test-topic", partition=0): [mocker.Mock(value="test-value")]
     }
-    result = [record async for record in connector.poll(1, 1)]
+    result = [record for record in await connector.poll(1, 1)]
     assert_that(result, equal_to(["test-value"]))
     connector.consumer.getmany.assert_called_once_with(max_records=1, timeout_ms=1000)

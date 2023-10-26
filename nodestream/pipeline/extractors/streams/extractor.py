@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Any, Iterable
+from typing import Any
 
 from ....model import JsonLikeDocument
 from ....pluggable import Pluggable
@@ -28,7 +28,7 @@ class StreamConnector(Pluggable, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def poll(self, timeout: int, max_records: int) -> Iterable[Any]:
+    async def poll(self, timeout: int, max_records: int):
         raise NotImplementedError
 
 
@@ -87,12 +87,13 @@ class StreamExtractor(Extractor):
         self.timeout = timeout
         self.max_records = max_records
 
+    def poll(self):
+        return self.connector.poll(timeout=self.timeout, max_records=self.max_records)
+
     async def extract_records(self):
         await self.connector.connect()
         try:
-            results = await self.connector.poll(
-                timeout=self.timeout, max_records=self.max_records
-            )
+            results = await self.poll()
             if len(results) == 0:
                 yield Flush
             else:

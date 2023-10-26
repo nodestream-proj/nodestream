@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Any, Iterable, List, Optional
+from typing import List, Optional
 
 from aiokafka import AIOKafkaConsumer
 from aiokafka.helpers import create_ssl_context
@@ -52,7 +52,8 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
     async def disconnect(self):
         await self.consumer.stop()
 
-    async def poll(self, timeout: int, max_records: int) -> Iterable[Any]:
+    async def poll(self, timeout: int, max_records: int) -> List:
+        entries = []
         result = await self.consumer.getmany(
             max_records=max_records, timeout_ms=timeout * 1000
         )
@@ -62,4 +63,5 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
                 extra={"topic": tp.topic, "partition": tp.partition},
             )
             for message in messages:
-                yield message.value
+                entries.append(message.value)
+        return entries
