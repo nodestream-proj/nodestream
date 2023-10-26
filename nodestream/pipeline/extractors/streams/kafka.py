@@ -53,6 +53,7 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         await self.consumer.stop()
 
     async def poll(self, timeout: int, max_records: int) -> Iterable[Any]:
+        entries = []
         result = await self.consumer.getmany(
             max_records=max_records, timeout_ms=timeout * 1000
         )
@@ -62,4 +63,5 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
                 extra={"topic": tp.topic, "partition": tp.partition},
             )
             for message in messages:
-                yield message.value
+                entries.append(message.value)
+        return entries
