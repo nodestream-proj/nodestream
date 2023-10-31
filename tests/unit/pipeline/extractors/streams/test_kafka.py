@@ -6,7 +6,9 @@ from nodestream.pipeline.extractors.streams import KafkaStreamConnector
 
 @pytest.fixture
 def connector():
-    return KafkaStreamConnector("localhost:9092", "test-topic", max_records=1, poll_timeout_ms=10000)
+    return KafkaStreamConnector(
+        "localhost:9092", "test-topic", max_records=1, poll_timeout_ms=10000
+    )
 
 
 @pytest.mark.asyncio
