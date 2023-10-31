@@ -11,9 +11,6 @@ from ..extractor import Extractor
 STREAM_CONNECTOR_SUBCLASS_REGISTRY = SubclassRegistry()
 STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY = SubclassRegistry()
 
-DEFAULT_TIMEOUT = 60
-DEFAULT_MAX_RECORDS = 100
-
 
 @STREAM_CONNECTOR_SUBCLASS_REGISTRY.connect_baseclass
 class StreamConnector(Pluggable, ABC):
@@ -28,7 +25,7 @@ class StreamConnector(Pluggable, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def poll(self, timeout: int, max_records: int) -> Iterable[Any]:
+    async def poll(self) -> Iterable[Any]:
         raise NotImplementedError
 
 
@@ -54,14 +51,7 @@ class StreamExtractor(Extractor):
     """
 
     @classmethod
-    def from_file_data(
-        cls,
-        connector: str,
-        record_format: str,
-        timeout: int = DEFAULT_TIMEOUT,
-        max_records: int = DEFAULT_MAX_RECORDS,
-        **connector_args
-    ):
+    def from_file_data(cls, connector: str, record_format: str, **connector_args):
         # Import all plugins so that they can register themselves
         StreamRecordFormat.import_all()
         StreamConnector.import_all()
@@ -69,8 +59,6 @@ class StreamExtractor(Extractor):
         object_format_cls = STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY.get(record_format)
         connector_cls = STREAM_CONNECTOR_SUBCLASS_REGISTRY.get(connector)
         return cls(
-            timeout=timeout,
-            max_records=max_records,
             record_format=object_format_cls(),
             connector=connector_cls(**connector_args),
         )
@@ -79,16 +67,12 @@ class StreamExtractor(Extractor):
         self,
         connector: StreamConnector,
         record_format: StreamRecordFormat,
-        timeout: int,
-        max_records: int,
     ):
         self.connector = connector
         self.record_format = record_format
-        self.timeout = timeout
-        self.max_records = max_records
 
     def poll(self):
-        return self.connector.poll(timeout=self.timeout, max_records=self.max_records)
+        return self.connector.poll()
 
     async def extract_records(self):
         await self.connector.connect()

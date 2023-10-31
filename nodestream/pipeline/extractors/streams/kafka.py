@@ -22,12 +22,21 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         topic: str,
         group_id: Optional[str] = None,
         security_protocol: str = "PLAINTEXT",
+        max_poll_interval_ms: int = 30000,
+        max_records: int = 10,
+        poll_timeout_ms: int = 30000,
     ):
         self.bootstrap_servers = ",".join(bootstrap_servers)
         self.topic = topic
+        self.max_records = 10
         self.group_id = group_id or DEFAULT_GROUP_ID
         self.consumer = None
         self.security_protocol = security_protocol
+        self.max_poll_interval_ms = (
+            max_poll_interval_ms  # must be set higher than poll timeout
+        )
+        self.max_records = max_records
+        self.poll_timeout_ms = poll_timeout_ms
         self.logger = getLogger(__name__)
 
     async def connect(self):
@@ -44,6 +53,8 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
             group_id=self.group_id,
             security_protocol=self.security_protocol,
             ssl_context=ssl_context,
+            max_poll_interval_ms=self.max_poll_interval_ms,
+            max_poll_records=self.max_records,
         )
 
         await self.consumer.start()
@@ -52,11 +63,9 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
     async def disconnect(self):
         await self.consumer.stop()
 
-    async def poll(self, timeout: int, max_records: int) -> Iterable[Any]:
+    async def poll(self) -> Iterable[Any]:
         entries = []
-        result = await self.consumer.getmany(
-            max_records=max_records, timeout_ms=timeout * 1000
-        )
+        result = await self.consumer.getmany(timeout_ms=self.poll_timeout_ms)
         for tp, messages in result.items():
             self.logger.debug(
                 "Recived Kafka Messages",
