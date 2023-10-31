@@ -71,6 +71,5 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
                 "Recived Kafka Messages",
                 extra={"topic": tp.topic, "partition": tp.partition},
             )
-            for message in messages:
-                entries.append(message.value)
+            entries.extend(messages)
         return entries
