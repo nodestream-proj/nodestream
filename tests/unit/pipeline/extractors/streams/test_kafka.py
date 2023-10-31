@@ -6,7 +6,7 @@ from nodestream.pipeline.extractors.streams import KafkaStreamConnector
 
 @pytest.fixture
 def connector():
-    return KafkaStreamConnector("localhost:9092", "test-topic")
+    return KafkaStreamConnector("localhost:9092", "test-topic", max_records=1, poll_timeout_ms=10000)
 
 
 @pytest.mark.asyncio
@@ -31,6 +31,6 @@ async def test_poll(connector, mocker):
     connector.consumer.getmany.return_value = {
         mocker.Mock(topic="test-topic", partition=0): [mocker.Mock(value="test-value")]
     }
-    result = [record for record in await connector.poll(1, 1)]
+    result = [record for record in await connector.poll()]
     assert_that(result, equal_to(["test-value"]))
-    connector.consumer.getmany.assert_called_once_with(max_records=1, timeout_ms=1000)
+    connector.consumer.getmany.assert_called_once_with(timeout_ms=10000)
