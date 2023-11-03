@@ -36,7 +36,7 @@ class Neo4jExtractor(Extractor):
                 "Running query on neo4j",
                 extra=dict(query=self.query, params=params),
             )
-            query_results = await driver.execute_query(
+            query_results, _, _ = await driver.execute_query(
                 self.query,
                 params,
                 routing_=RoutingControl.READ,
