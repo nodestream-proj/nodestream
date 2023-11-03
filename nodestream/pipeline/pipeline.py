@@ -22,6 +22,9 @@ async def enumerate_async(iterable):
         yield count, item
         count += 1
 
+class DoneObject:
+    pass
+
 
 class StepExecutor:
     def __init__(
@@ -40,9 +43,11 @@ class StepExecutor:
 
     async def outbox_generator(self):
         while not self.done or not self.outbox.empty():
-            yield await self.outbox.get()
+            if (value := await self.outbox.get()) is not DoneObject:
+                yield value
             self.outbox.task_done()
 
+            
     def start(self):
         if self.progress_reporter:
             self.progress_reporter.on_start_callback()
@@ -53,6 +58,7 @@ class StepExecutor:
 
     async def stop(self):
         self.done = True
+        await self.outbox.put(DoneObject)
         await self.step.finish()
 
         if self.progress_reporter:

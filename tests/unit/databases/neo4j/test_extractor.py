@@ -7,7 +7,7 @@ from nodestream.databases.neo4j.extractor import Neo4jExtractor
 @pytest.mark.asyncio
 async def test_extract_records(mocker):
     mock_connector = mocker.patch(
-        "nodestream.databases.neo4j.extractor.DatabaseConnector"
+        "nodestream.databases.neo4j.extractor.Neo4jDatabaseConnector"
     )
     mock_connector.from_file_data.return_value = mock_connector
     mock_connector.driver = mocker.AsyncMock()
