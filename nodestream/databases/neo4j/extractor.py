@@ -15,7 +15,9 @@ class Neo4jExtractor(Extractor):
         limit: int = 100,
         **database_connector_args
     ) -> None:
-        self.connector = Neo4jDatabaseConnector.from_file_data(**database_connector_args)
+        self.connector = Neo4jDatabaseConnector.from_file_data(
+            **database_connector_args
+        )
         self.query = query
         self.parameters = parameters or {}
         self.limit = limit
