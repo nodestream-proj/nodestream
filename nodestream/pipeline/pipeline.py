@@ -22,6 +22,7 @@ async def enumerate_async(iterable):
         yield count, item
         count += 1
 
+
 class DoneObject:
     pass
 
@@ -47,7 +48,6 @@ class StepExecutor:
                 yield value
             self.outbox.task_done()
 
-            
     def start(self):
         if self.progress_reporter:
             self.progress_reporter.on_start_callback()
