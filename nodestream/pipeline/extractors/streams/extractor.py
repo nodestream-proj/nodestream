@@ -86,6 +86,6 @@ class StreamExtractor(Extractor):
                 for record in results:
                     yield self.record_format.parse(record)
         except Exception as e:
-            self.logger.error(f"failed extracting records, Exception: '{e}'")
+            self.logger.exception(f"failed extracting records")
         finally:
             await self.connector.disconnect()
