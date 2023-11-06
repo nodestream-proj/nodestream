@@ -13,9 +13,9 @@ async def test_extract_records(mocker):
     mock_connector.driver = mocker.AsyncMock()
     mock_connector.database_name = "test"
     mock_connector.driver.execute_query.side_effect = [
-        [[{"name": "test1"}, {"name": "test2"}], "SummaryObject", ['name']],
-        [[{"name": "test3"}], "SummaryObject", ['name']],
-        [[], "SummaryObject", ['name']],
+        [[{"name": "test1"}, {"name": "test2"}], "SummaryObject", ["name"]],
+        [[{"name": "test3"}], "SummaryObject", ["name"]],
+        [[], "SummaryObject", ["name"]],
     ]
 
     extractor = Neo4jExtractor(
