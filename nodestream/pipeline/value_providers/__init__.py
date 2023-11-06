@@ -2,6 +2,7 @@ from .context import ProviderContext
 from .jmespath_value_provider import JmespathValueProvider
 from .mapping_value_provider import MappingValueProvider
 from .regex_value_provider import RegexValueProvider
+from .split_value_provider import SplitValueProvider
 from .static_value_provider import StaticValueProvider
 from .string_format_value_provider import StringFormattingValueProvider
 from .value_provider import (
@@ -15,6 +16,7 @@ __all__ = (
     "ProviderContext",
     "JmespathValueProvider",
     "MappingValueProvider",
+    "SplitValueProvider",
     "StaticValueProvider",
     "StringFormattingValueProvider",
     "ValueProvider",
