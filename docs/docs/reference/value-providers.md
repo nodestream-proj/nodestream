@@ -140,3 +140,33 @@ If you use named groups, you can specify the group name in the `group` argument.
 If you use numbered groups, you can specify the group number in the `group` argument.
 If you do not specify a group, the first group will be used - which is the entire match.
 
+## `!split`
+
+The `!split` value provider allows you to split a string into a list of strings using a delimiter. For example, if you wanted to split a string like this:
+
+```json
+{
+    "name": "Joe Smith",
+    "talents": "jumping,running,swimming"
+}
+```
+
+The following interpretations would create a `Joe Smith` node with relationships to `jumping`, `running`, and `swimming`:
+
+```yaml
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: source_node
+        node_type: Person
+        key:
+          name: !jmespath name
+      - type: relationship
+        node_type: Talent
+        relationship_type: HAS_TALENT
+        find_many: true
+        node_key:
+          name: !split
+            data: !jmespath talents
+            delimiter: ","
+```
