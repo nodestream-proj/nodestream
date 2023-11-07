@@ -79,12 +79,13 @@ class StreamExtractor(Extractor):
     async def extract_records(self):
         await self.connector.connect()
         try:
-            results = await self.poll()
-            if len(results) == 0:
-                yield Flush
-            else:
-                for record in results:
-                    yield self.record_format.parse(record)
+            while True:
+                results = await self.poll()
+                if len(results) == 0:
+                    yield Flush
+                else:
+                    for record in results:
+                        yield self.record_format.parse(record)
         except Exception:
             self.logger.exception("failed extracting records")
         finally:
