@@ -120,9 +120,11 @@ class Neo4jIngestQueryBuilder:
     def generate_update_node_operation_query_statement(
         self,
         operation: OperationOnNodeIdentity,
+        apoc_iterate: bool = True,
     ) -> str:
         """Generate a query to update a node in the database given a node type and a match strategy."""
 
+        self.apoc_iterate = apoc_iterate
         if operation.match_strategy == MatchStrategy.EAGER:
             query = str(_merge_node(operation))
         else:
@@ -195,17 +197,19 @@ class Neo4jIngestQueryBuilder:
         self,
         operation: OperationOnNodeIdentity,
         nodes: Iterable[Node],
+        apoc_iterate,
     ) -> QueryBatch:
         """Generate a batch of queries to update nodes in the database in the same way of the same type."""
 
         query_statement = self.generate_update_node_operation_query_statement(operation)
         params = [self.generate_update_node_operation_params(node) for node in nodes]
-        return QueryBatch(query_statement, params)
+        return QueryBatch(query_statement, params, apoc_iterate)
 
     def generate_batch_update_relationship_query_batch(
         self,
         operation: OperationOnRelationshipIdentity,
         relationships: Iterable[RelationshipWithNodes],
+        apoc_iterate: bool,
     ) -> QueryBatch:
         """Generate a batch of queries to update relationships in the database in the same way of the same type."""
 
@@ -213,15 +217,15 @@ class Neo4jIngestQueryBuilder:
         params = [
             self.generate_update_rel_between_nodes_params(rel) for rel in relationships
         ]
-        return QueryBatch(query, params)
+        return QueryBatch(query, params, apoc_iterate)
 
-    def generate_ttl_match_query(self, config: TimeToLiveConfiguration) -> Query:
+    def generate_ttl_match_query(self, config: TimeToLiveConfiguration, apoc_iterate: bool) -> Query:
         earliest_allowed_time = datetime.utcnow() - timedelta(
             hours=config.expiry_in_hours
         )
         params = {"earliest_allowed_time": earliest_allowed_time}
         if config.custom_query is not None:
-            return Query(config.custom_query, params)
+            return Query(config.custom_query, params, apoc_iterate)
 
         query_builder = QueryBuilder()
         ref_name = "x"
@@ -242,12 +246,12 @@ class Neo4jIngestQueryBuilder:
             f"{ref_name}.last_ingested_at <= $earliest_allowed_time"
         ).return_literal(f"id({ref_name}) as id")
 
-        return Query(str(query_builder), params)
+        return Query(str(query_builder), params, apoc_iterate)
 
     def generate_ttl_query_from_configuration(
-        self, config: TimeToLiveConfiguration
+        self, config: TimeToLiveConfiguration, apoc_iterate: bool
     ) -> Query:
-        ttl_match_query = self.generate_ttl_match_query(config)
+        ttl_match_query = self.generate_ttl_match_query(config, apoc_iterate)
         operation = (
             DELETE_NODE_QUERY
             if config.graph_object_type == GraphObjectType.NODE

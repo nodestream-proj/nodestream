@@ -22,22 +22,24 @@ class Neo4jQueryExecutor(QueryExecutor):
         ingest_query_builder: Neo4jIngestQueryBuilder,
         index_query_builder: Neo4jIndexQueryBuilder,
         database_name: str,
+        apoc_iterate: bool = True
     ) -> None:
         self.driver = driver
         self.ingest_query_builder = ingest_query_builder
         self.index_query_builder = index_query_builder
         self.logger = getLogger(self.__class__.__name__)
         self.database_name = database_name
+        self.apoc_iterate = apoc_iterate
 
     async def upsert_nodes_in_bulk_with_same_operation(
         self, operation: OperationOnNodeIdentity, nodes: Iterable[Node]
     ):
         batched_query = (
             self.ingest_query_builder.generate_batch_update_node_operation_batch(
-                operation, nodes
+                operation, nodes, self.apoc_iterate
             )
         )
-        await self.execute(batched_query.as_query(), log_result=True)
+        await self.execute(batched_query.as_query(apoc_iterate=self.apoc_iterate), log_result=True)
 
     async def upsert_relationships_in_bulk_of_same_operation(
         self,
@@ -46,26 +48,26 @@ class Neo4jQueryExecutor(QueryExecutor):
     ):
         batched_query = (
             self.ingest_query_builder.generate_batch_update_relationship_query_batch(
-                shape, relationships
+                shape, relationships, self.apoc_iterate
             )
         )
-        await self.execute(batched_query.as_query(), log_result=True)
+        await self.execute(batched_query.as_query(apoc_iterate=self.apoc_iterate), log_result=True)
 
     async def upsert_key_index(self, index: KeyIndex):
-        query = self.index_query_builder.create_key_index_query(index)
+        query = self.index_query_builder.create_key_index_query(index, self.apoc_iterate)
         await self.execute(query)
 
     async def upsert_field_index(self, index: FieldIndex):
-        query = self.index_query_builder.create_field_index_query(index)
+        query = self.index_query_builder.create_field_index_query(index, self.apoc_iterate)
         await self.execute(query)
 
     async def perform_ttl_op(self, config: TimeToLiveConfiguration):
-        query = self.ingest_query_builder.generate_ttl_query_from_configuration(config)
+        query = self.ingest_query_builder.generate_ttl_query_from_configuration(config, self.apoc_iterate)
         await self.execute(query)
 
     async def execute_hook(self, hook: IngestionHook):
         query_string, params = hook.as_cypher_query_and_parameters()
-        await self.execute(Query(query_string, params))
+        await self.execute(Query(query_string, params, self.apoc_iterate))
 
     async def execute(self, query: Query, log_result: bool = False):
         self.logger.debug(

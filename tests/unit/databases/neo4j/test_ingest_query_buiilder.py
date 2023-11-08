@@ -43,6 +43,7 @@ BASIC_NODE_TTL_EXPECTED_QUERY = Query(
         "batched_query": DELETE_NODE_QUERY,
         "iterable_query": "MATCH (x: TestNodeType) WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
     },
+    True,
 )
 
 NODE_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
@@ -58,6 +59,7 @@ NODE_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         "batched_query": DELETE_NODE_QUERY,
         "iterable_query": NODE_TTL_WITH_CUSTOM_QUERY.custom_query,
     },
+    True
 )
 
 BASIC_REL_TTL = TimeToLiveConfiguration(
@@ -72,6 +74,7 @@ BASIC_REL_TTL_EXPECTED_QUERY = Query(
         "iterable_query": "MATCH ()-[x: IS_RELATED_TO]->() WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
         "batched_query": DELETE_REL_QUERY,
     },
+    True
 )
 
 REL_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
@@ -87,6 +90,7 @@ REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         "iterable_query": REL_TTL_WITH_CUSTOM_QUERY.custom_query,
         "batched_query": DELETE_REL_QUERY,
     },
+    True
 )
 
 
@@ -101,7 +105,7 @@ REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
 )
 @freeze_time("1998-03-25 12:00:01")
 def test_generates_expected_queries(query_builder, ttl, expected_query):
-    resultant_query = query_builder.generate_ttl_query_from_configuration(ttl)
+    resultant_query = query_builder.generate_ttl_query_from_configuration(ttl, True)
     assert_that(resultant_query, equal_to(expected_query))
 
 
@@ -117,6 +121,7 @@ SIMPLE_NODE_EXPECTED_QUERY = QueryBatch(
             "__node_additional_labels": (),
         }
     ],
+    True
 )
 
 SIMPLE_NODE_EXPECTED_QUERY_ON_MATCH = QueryBatch(
@@ -128,6 +133,7 @@ SIMPLE_NODE_EXPECTED_QUERY_ON_MATCH = QueryBatch(
             "__node_additional_labels": (),
         }
     ],
+    True
 )
 
 # In a more complex node case, we should still MERGE the node on the basis of its identity shape
@@ -146,6 +152,7 @@ COMPLEX_NODE_EXPECTED_QUERY = QueryBatch(
             "__node_additional_labels": ("ExtraTypeOne", "ExtraTypeTwo"),
         }
     ],
+    True
 )
 
 COMPLEX_NODE_TWO = Node(
@@ -164,6 +171,7 @@ COMPLEX_NODE_TWO_EXPECTED_QUERY = QueryBatch(
             "__node_additional_labels": ("ExtraTypeOne", "ExtraTypeTwo"),
         }
     ],
+    True
 )
 
 
@@ -180,7 +188,7 @@ def test_node_update_generates_expected_queries(
     query_builder, node, expected_query, match_strategy
 ):
     operation = OperationOnNodeIdentity(node.identity_shape, match_strategy)
-    query = query_builder.generate_batch_update_node_operation_batch(operation, [node])
+    query = query_builder.generate_batch_update_node_operation_batch(operation, [node], True)
     assert_that(query, equal_to(expected_query))
 
 
@@ -205,6 +213,7 @@ RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY = QueryBatch(
             "__rel_properties": RELATIONSHIP_BETWEEN_TWO_NODES.relationship.properties,
         }
     ],
+    True
 )
 
 RELATIONSHIP_BETWEEN_TWO_NODES_WITH_MULTI_KEY = RelationshipWithNodes(
@@ -229,6 +238,7 @@ RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY_WITH_MULTI_KEY = QueryBatch(
             "__rel_properties": RELATIONSHIP_BETWEEN_TWO_NODES_WITH_MULTI_KEY.relationship.properties,
         }
     ],
+    True
 )
 
 
@@ -253,7 +263,7 @@ def test_relationship_update_generates_expected_queries(
         from_op, to_op, rel.relationship.identity_shape
     )
     query = query_builder.generate_batch_update_relationship_query_batch(
-        operation, [rel]
+        operation, [rel], True
     )
     assert_that(
         query.query_statement,

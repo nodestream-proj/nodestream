@@ -25,6 +25,7 @@ async def test_extract_records(mocker):
         uri="bolt://localhost:7687",
         username="neo4j",
         password="test",
+        apoc_iterate=True,
     )
 
     result = [item async for item in extractor.extract_records()]
