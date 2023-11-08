@@ -23,22 +23,20 @@ RETURN value
 class Query:
     query_statement: str
     parameters: Dict[str, Any]
-    apoc_iterate: bool
 
     @classmethod
-    def from_statement(cls, statement: str, apoc_iterate: bool):
-        return cls(query_statement=statement, parameters={}, apoc_iterate=apoc_iterate)
+    def from_statement(cls, statement: str):
+        return cls(query_statement=statement, parameters={})
 
     def feed_batched_query(self, batched_query: str) -> "Query":
         """Feed the results of the the query into another query that will be executed in batches."""
         return Query(
-            {True: COMMIT_QUERY, False: NON_APOCH_COMMIT_QUERY}[self.apoc_iterate],
+            COMMIT_QUERY,
             {
                 "iterate_params": self.parameters,
                 "batched_query": batched_query,
                 "iterable_query": self.query_statement,
             },
-            self.apoc_iterate
         )
 
 
@@ -48,7 +46,7 @@ class QueryBatch:
     batched_parameter_sets: List[Dict[str, Any]]
     apoc_iterate: bool
 
-    def as_query(self, apoc_iterate) -> Query:
+    def as_query(self) -> Query:
         return Query(
             {True: COMMIT_QUERY, False: NON_APOCH_COMMIT_QUERY}[self.apoc_iterate],
             {
@@ -58,5 +56,4 @@ class QueryBatch:
                 "batched_query": self.query_statement,
                 "iterable_query": UNWIND_QUERY,
             },
-            apoc_iterate,
         )

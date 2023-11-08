@@ -39,7 +39,7 @@ class Neo4jQueryExecutor(QueryExecutor):
                 operation, nodes, self.apoc_iterate
             )
         )
-        await self.execute(batched_query.as_query(apoc_iterate=self.apoc_iterate), log_result=True)
+        await self.execute(batched_query.as_query(), log_result=True)
 
     async def upsert_relationships_in_bulk_of_same_operation(
         self,
@@ -51,23 +51,23 @@ class Neo4jQueryExecutor(QueryExecutor):
                 shape, relationships, self.apoc_iterate
             )
         )
-        await self.execute(batched_query.as_query(apoc_iterate=self.apoc_iterate), log_result=True)
+        await self.execute(batched_query.as_query(), log_result=True)
 
     async def upsert_key_index(self, index: KeyIndex):
-        query = self.index_query_builder.create_key_index_query(index, self.apoc_iterate)
+        query = self.index_query_builder.create_key_index_query(index)
         await self.execute(query)
 
     async def upsert_field_index(self, index: FieldIndex):
-        query = self.index_query_builder.create_field_index_query(index, self.apoc_iterate)
+        query = self.index_query_builder.create_field_index_query(index)
         await self.execute(query)
 
     async def perform_ttl_op(self, config: TimeToLiveConfiguration):
-        query = self.ingest_query_builder.generate_ttl_query_from_configuration(config, self.apoc_iterate)
+        query = self.ingest_query_builder.generate_ttl_query_from_configuration(config)
         await self.execute(query)
 
     async def execute_hook(self, hook: IngestionHook):
         query_string, params = hook.as_cypher_query_and_parameters()
-        await self.execute(Query(query_string, params, self.apoc_iterate))
+        await self.execute(Query(query_string, params))
 
     async def execute(self, query: Query, log_result: bool = False):
         self.logger.debug(

@@ -8,7 +8,7 @@ from nodestream.schema.schema import GraphObjectType
 
 @pytest.fixture
 def some_query():
-    return Query("MATCH (n) RETURN n LIMIT $limit", {"limit ": "10"}, True)
+    return Query("MATCH (n) RETURN n LIMIT $limit", {"limit ": "10"})
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ async def test_upsert_nodes_in_bulk_of_same_operation(
         None, None, True
     )
     query_executor.execute.assert_called_once_with(
-        some_query_batch.as_query(True), log_result=True
+        some_query_batch.as_query(), log_result=True
     )
     query_executor.execute.assert_awaited_once()
 
@@ -52,7 +52,7 @@ async def test_upsert_rel_in_bulk_of_same_shape(
         None, None, True
     )
     query_executor.execute.assert_called_once_with(
-        some_query_batch.as_query(True), log_result=True
+        some_query_batch.as_query(), log_result=True
     )
     query_executor.execute.assert_awaited_once()
 
@@ -65,7 +65,7 @@ async def test_perform_ttl_op(query_executor, some_query):
     )
     query_generator.return_value = some_query
     await query_executor.perform_ttl_op(ttl_config)
-    query_generator.assert_called_once_with(ttl_config, True)
+    query_generator.assert_called_once_with(ttl_config)
     query_executor.driver.execute_query.assert_called_once_with(
         some_query.query_statement, some_query.parameters, database_="test"
     )
@@ -76,7 +76,7 @@ async def test_upsert_key_index(query_executor, some_query):
     query_generator = query_executor.index_query_builder.create_key_index_query
     query_generator.return_value = some_query
     await query_executor.upsert_key_index(None)
-    query_generator.assert_called_once_with(None, True)
+    query_generator.assert_called_once_with(None)
     query_executor.driver.execute_query.assert_called_once_with(
         some_query.query_statement, some_query.parameters, database_="test"
     )
@@ -87,7 +87,7 @@ async def test_upsert_field_index(query_executor, some_query):
     query_generator = query_executor.index_query_builder.create_field_index_query
     query_generator.return_value = some_query
     await query_executor.upsert_field_index(None)
-    query_generator.assert_called_once_with(None, True)
+    query_generator.assert_called_once_with(None)
     query_executor.driver.execute_query.assert_called_once_with(
         some_query.query_statement, some_query.parameters, database_="test"
     )

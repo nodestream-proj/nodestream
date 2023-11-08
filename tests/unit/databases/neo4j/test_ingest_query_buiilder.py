@@ -42,8 +42,7 @@ BASIC_NODE_TTL_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "batched_query": DELETE_NODE_QUERY,
         "iterable_query": "MATCH (x: TestNodeType) WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
-    },
-    True,
+    }
 )
 
 NODE_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
@@ -58,8 +57,7 @@ NODE_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "batched_query": DELETE_NODE_QUERY,
         "iterable_query": NODE_TTL_WITH_CUSTOM_QUERY.custom_query,
-    },
-    True
+    }
 )
 
 BASIC_REL_TTL = TimeToLiveConfiguration(
@@ -73,8 +71,7 @@ BASIC_REL_TTL_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "iterable_query": "MATCH ()-[x: IS_RELATED_TO]->() WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
         "batched_query": DELETE_REL_QUERY,
-    },
-    True
+    }
 )
 
 REL_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
@@ -89,8 +86,7 @@ REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "iterable_query": REL_TTL_WITH_CUSTOM_QUERY.custom_query,
         "batched_query": DELETE_REL_QUERY,
-    },
-    True
+    }
 )
 
 
@@ -105,7 +101,7 @@ REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
 )
 @freeze_time("1998-03-25 12:00:01")
 def test_generates_expected_queries(query_builder, ttl, expected_query):
-    resultant_query = query_builder.generate_ttl_query_from_configuration(ttl, True)
+    resultant_query = query_builder.generate_ttl_query_from_configuration(ttl)
     assert_that(resultant_query, equal_to(expected_query))
 
 

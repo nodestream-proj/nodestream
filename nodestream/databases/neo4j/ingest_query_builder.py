@@ -219,13 +219,13 @@ class Neo4jIngestQueryBuilder:
         ]
         return QueryBatch(query, params, apoc_iterate)
 
-    def generate_ttl_match_query(self, config: TimeToLiveConfiguration, apoc_iterate: bool) -> Query:
+    def generate_ttl_match_query(self, config: TimeToLiveConfiguration) -> Query:
         earliest_allowed_time = datetime.utcnow() - timedelta(
             hours=config.expiry_in_hours
         )
         params = {"earliest_allowed_time": earliest_allowed_time}
         if config.custom_query is not None:
-            return Query(config.custom_query, params, apoc_iterate)
+            return Query(config.custom_query, params)
 
         query_builder = QueryBuilder()
         ref_name = "x"
@@ -246,12 +246,12 @@ class Neo4jIngestQueryBuilder:
             f"{ref_name}.last_ingested_at <= $earliest_allowed_time"
         ).return_literal(f"id({ref_name}) as id")
 
-        return Query(str(query_builder), params, apoc_iterate)
+        return Query(str(query_builder), params)
 
     def generate_ttl_query_from_configuration(
-        self, config: TimeToLiveConfiguration, apoc_iterate: bool
+        self, config: TimeToLiveConfiguration
     ) -> Query:
-        ttl_match_query = self.generate_ttl_match_query(config, apoc_iterate)
+        ttl_match_query = self.generate_ttl_match_query(config)
         operation = (
             DELETE_NODE_QUERY
             if config.graph_object_type == GraphObjectType.NODE
