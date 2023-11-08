@@ -18,7 +18,7 @@ class Neo4jExtractor(Extractor):
         self.connector = Neo4jDatabaseConnector.from_file_data(
             **database_connector_args
         )
-        self.apoc_iterate = self.connector.apoc_iterate
+        self.apoc_iterate = self.connector.use_apoc
         self.query = query
         self.parameters = parameters or {}
         self.limit = limit

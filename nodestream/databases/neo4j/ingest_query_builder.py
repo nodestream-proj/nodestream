@@ -115,16 +115,17 @@ def _merge_relationship(rel_identity: RelationshipIdentityShape):
 
 
 class Neo4jIngestQueryBuilder:
+    def __init__(self, apoc_iterate: bool):
+        self.apoc_iterate = apoc_iterate
+
     @cache
     @correct_parameters
     def generate_update_node_operation_query_statement(
         self,
         operation: OperationOnNodeIdentity,
-        apoc_iterate: bool = True,
     ) -> str:
         """Generate a query to update a node in the database given a node type and a match strategy."""
 
-        self.apoc_iterate = apoc_iterate
         if operation.match_strategy == MatchStrategy.EAGER:
             query = str(_merge_node(operation))
         else:
@@ -197,19 +198,17 @@ class Neo4jIngestQueryBuilder:
         self,
         operation: OperationOnNodeIdentity,
         nodes: Iterable[Node],
-        apoc_iterate,
     ) -> QueryBatch:
         """Generate a batch of queries to update nodes in the database in the same way of the same type."""
 
         query_statement = self.generate_update_node_operation_query_statement(operation)
         params = [self.generate_update_node_operation_params(node) for node in nodes]
-        return QueryBatch(query_statement, params, apoc_iterate)
+        return QueryBatch(query_statement, params, self.apoc_iterate)
 
     def generate_batch_update_relationship_query_batch(
         self,
         operation: OperationOnRelationshipIdentity,
         relationships: Iterable[RelationshipWithNodes],
-        apoc_iterate: bool,
     ) -> QueryBatch:
         """Generate a batch of queries to update relationships in the database in the same way of the same type."""
 
@@ -217,7 +216,7 @@ class Neo4jIngestQueryBuilder:
         params = [
             self.generate_update_rel_between_nodes_params(rel) for rel in relationships
         ]
-        return QueryBatch(query, params, apoc_iterate)
+        return QueryBatch(query, params, self.apoc_iterate)
 
     def generate_ttl_match_query(self, config: TimeToLiveConfiguration) -> Query:
         earliest_allowed_time = datetime.utcnow() - timedelta(

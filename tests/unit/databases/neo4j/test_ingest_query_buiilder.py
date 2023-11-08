@@ -26,7 +26,7 @@ from nodestream.schema.schema import GraphObjectType
 
 @pytest.fixture
 def query_builder():
-    return Neo4jIngestQueryBuilder()
+    return Neo4jIngestQueryBuilder(True)
 
 
 GREATEST_DAY = datetime(1998, 3, 25, 2, 0, 1)
@@ -184,7 +184,7 @@ def test_node_update_generates_expected_queries(
     query_builder, node, expected_query, match_strategy
 ):
     operation = OperationOnNodeIdentity(node.identity_shape, match_strategy)
-    query = query_builder.generate_batch_update_node_operation_batch(operation, [node], True)
+    query = query_builder.generate_batch_update_node_operation_batch(operation, [node])
     assert_that(query, equal_to(expected_query))
 
 
@@ -259,7 +259,7 @@ def test_relationship_update_generates_expected_queries(
         from_op, to_op, rel.relationship.identity_shape
     )
     query = query_builder.generate_batch_update_relationship_query_batch(
-        operation, [rel], True
+        operation, [rel]
     )
     assert_that(
         query.query_statement,

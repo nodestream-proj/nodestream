@@ -19,19 +19,18 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
         password: str,
         database_name: str = "neo4j",
         use_enterprise_features: bool = False,
-        apoc_iterate: bool = True,
+        use_apoc: bool = True,
     ):
         driver = AsyncGraphDatabase.driver(uri, auth=(username, password))
         if use_enterprise_features:
             index_query_builder = Neo4jEnterpriseIndexQueryBuilder()
         else:
-            index_query_builder = Neo4jIndexQueryBuilder()
+            index_query_builder = Neo4jIndexQueryBuilder(use_apoc)
         return cls(
             driver=driver,
             index_query_builder=index_query_builder,
-            ingest_query_builder=Neo4jIngestQueryBuilder(),
+            ingest_query_builder=Neo4jIngestQueryBuilder(use_apoc),
             database_name=database_name,
-            apoc_iterate=apoc_iterate,
         )
 
     def __init__(
@@ -40,13 +39,11 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
         index_query_builder: Neo4jIndexQueryBuilder,
         ingest_query_builder: Neo4jIngestQueryBuilder,
         database_name: str,
-        apoc_iterate: bool,
     ) -> None:
         self.driver = driver
         self.index_query_builder = index_query_builder
         self.ingest_query_builder = ingest_query_builder
         self.database_name = database_name
-        self.apoc_iterate = apoc_iterate
 
     def make_query_executor(self) -> QueryExecutor:
         return Neo4jQueryExecutor(
@@ -54,5 +51,4 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
             self.ingest_query_builder,
             self.index_query_builder,
             self.database_name,
-            self.apoc_iterate,
         )

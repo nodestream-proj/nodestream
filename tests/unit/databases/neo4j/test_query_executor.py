@@ -18,7 +18,7 @@ def some_query_batch(some_query):
 
 @pytest.fixture
 def query_executor(mocker):
-    return Neo4jQueryExecutor(mocker.AsyncMock(), mocker.Mock(), mocker.Mock(), "test", apoc_iterate=True)
+    return Neo4jQueryExecutor(mocker.AsyncMock(), mocker.Mock(), mocker.Mock(), "test")
 
 
 @pytest.mark.asyncio
@@ -31,7 +31,7 @@ async def test_upsert_nodes_in_bulk_of_same_operation(
     query_executor.execute = mocker.AsyncMock()
     await query_executor.upsert_nodes_in_bulk_with_same_operation(None, None)
     query_executor.ingest_query_builder.generate_batch_update_node_operation_batch.assert_called_once_with(
-        None, None, True
+        None, None
     )
     query_executor.execute.assert_called_once_with(
         some_query_batch.as_query(), log_result=True
@@ -49,7 +49,7 @@ async def test_upsert_rel_in_bulk_of_same_shape(
     query_executor.execute = mocker.AsyncMock()
     await query_executor.upsert_relationships_in_bulk_of_same_operation(None, None)
     query_executor.ingest_query_builder.generate_batch_update_relationship_query_batch.assert_called_once_with(
-        None, None, True
+        None, None
     )
     query_executor.execute.assert_called_once_with(
         some_query_batch.as_query(), log_result=True

@@ -22,21 +22,19 @@ class Neo4jQueryExecutor(QueryExecutor):
         ingest_query_builder: Neo4jIngestQueryBuilder,
         index_query_builder: Neo4jIndexQueryBuilder,
         database_name: str,
-        apoc_iterate: bool = True
     ) -> None:
         self.driver = driver
         self.ingest_query_builder = ingest_query_builder
         self.index_query_builder = index_query_builder
         self.logger = getLogger(self.__class__.__name__)
         self.database_name = database_name
-        self.apoc_iterate = apoc_iterate
 
     async def upsert_nodes_in_bulk_with_same_operation(
         self, operation: OperationOnNodeIdentity, nodes: Iterable[Node]
     ):
         batched_query = (
             self.ingest_query_builder.generate_batch_update_node_operation_batch(
-                operation, nodes, self.apoc_iterate
+                operation, nodes
             )
         )
         await self.execute(batched_query.as_query(), log_result=True)
@@ -48,7 +46,7 @@ class Neo4jQueryExecutor(QueryExecutor):
     ):
         batched_query = (
             self.ingest_query_builder.generate_batch_update_relationship_query_batch(
-                shape, relationships, self.apoc_iterate
+                shape, relationships
             )
         )
         await self.execute(batched_query.as_query(), log_result=True)
