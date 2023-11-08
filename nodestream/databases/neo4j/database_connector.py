@@ -25,7 +25,7 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
         if use_enterprise_features:
             index_query_builder = Neo4jEnterpriseIndexQueryBuilder()
         else:
-            index_query_builder = Neo4jIndexQueryBuilder(use_apoc)
+            index_query_builder = Neo4jIndexQueryBuilder()
         return cls(
             driver=driver,
             index_query_builder=index_query_builder,
