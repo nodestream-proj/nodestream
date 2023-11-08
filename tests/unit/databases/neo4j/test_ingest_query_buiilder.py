@@ -42,7 +42,7 @@ BASIC_NODE_TTL_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "batched_query": DELETE_NODE_QUERY,
         "iterable_query": "MATCH (x: TestNodeType) WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
-    }
+    },
 )
 
 NODE_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
@@ -57,7 +57,7 @@ NODE_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "batched_query": DELETE_NODE_QUERY,
         "iterable_query": NODE_TTL_WITH_CUSTOM_QUERY.custom_query,
-    }
+    },
 )
 
 BASIC_REL_TTL = TimeToLiveConfiguration(
@@ -71,7 +71,7 @@ BASIC_REL_TTL_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "iterable_query": "MATCH ()-[x: IS_RELATED_TO]->() WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
         "batched_query": DELETE_REL_QUERY,
-    }
+    },
 )
 
 REL_TTL_WITH_CUSTOM_QUERY = TimeToLiveConfiguration(
@@ -86,7 +86,7 @@ REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "iterable_query": REL_TTL_WITH_CUSTOM_QUERY.custom_query,
         "batched_query": DELETE_REL_QUERY,
-    }
+    },
 )
 
 
@@ -117,7 +117,6 @@ SIMPLE_NODE_EXPECTED_QUERY = QueryBatch(
             "__node_additional_labels": (),
         }
     ],
-    True
 )
 
 SIMPLE_NODE_EXPECTED_QUERY_ON_MATCH = QueryBatch(
@@ -129,7 +128,6 @@ SIMPLE_NODE_EXPECTED_QUERY_ON_MATCH = QueryBatch(
             "__node_additional_labels": (),
         }
     ],
-    True
 )
 
 # In a more complex node case, we should still MERGE the node on the basis of its identity shape
@@ -148,7 +146,6 @@ COMPLEX_NODE_EXPECTED_QUERY = QueryBatch(
             "__node_additional_labels": ("ExtraTypeOne", "ExtraTypeTwo"),
         }
     ],
-    True
 )
 
 COMPLEX_NODE_TWO = Node(
@@ -167,7 +164,6 @@ COMPLEX_NODE_TWO_EXPECTED_QUERY = QueryBatch(
             "__node_additional_labels": ("ExtraTypeOne", "ExtraTypeTwo"),
         }
     ],
-    True
 )
 
 
@@ -209,7 +205,6 @@ RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY = QueryBatch(
             "__rel_properties": RELATIONSHIP_BETWEEN_TWO_NODES.relationship.properties,
         }
     ],
-    True
 )
 
 RELATIONSHIP_BETWEEN_TWO_NODES_WITH_MULTI_KEY = RelationshipWithNodes(
@@ -234,7 +229,6 @@ RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY_WITH_MULTI_KEY = QueryBatch(
             "__rel_properties": RELATIONSHIP_BETWEEN_TWO_NODES_WITH_MULTI_KEY.relationship.properties,
         }
     ],
-    True
 )
 
 

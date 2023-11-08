@@ -19,6 +19,7 @@ YIELD value
 RETURN value
 """
 
+
 @dataclass(slots=True, frozen=True)
 class Query:
     query_statement: str
@@ -44,11 +45,10 @@ class Query:
 class QueryBatch:
     query_statement: str
     batched_parameter_sets: List[Dict[str, Any]]
-    apoc_iterate: bool
 
-    def as_query(self) -> Query:
+    def as_query(self, apoc_iterate: bool) -> Query:
         return Query(
-            {True: COMMIT_QUERY, False: NON_APOCH_COMMIT_QUERY}[self.apoc_iterate],
+            {True: COMMIT_QUERY, False: NON_APOCH_COMMIT_QUERY}[apoc_iterate],
             {
                 "iterate_params": {
                     "batched_parameter_sets": self.batched_parameter_sets

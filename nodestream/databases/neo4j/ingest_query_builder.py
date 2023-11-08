@@ -203,7 +203,7 @@ class Neo4jIngestQueryBuilder:
 
         query_statement = self.generate_update_node_operation_query_statement(operation)
         params = [self.generate_update_node_operation_params(node) for node in nodes]
-        return QueryBatch(query_statement, params, self.apoc_iterate)
+        return QueryBatch(query_statement, params)
 
     def generate_batch_update_relationship_query_batch(
         self,
@@ -216,7 +216,7 @@ class Neo4jIngestQueryBuilder:
         params = [
             self.generate_update_rel_between_nodes_params(rel) for rel in relationships
         ]
-        return QueryBatch(query, params, self.apoc_iterate)
+        return QueryBatch(query, params)
 
     def generate_ttl_match_query(self, config: TimeToLiveConfiguration) -> Query:
         earliest_allowed_time = datetime.utcnow() - timedelta(
