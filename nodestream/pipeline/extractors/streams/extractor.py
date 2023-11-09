@@ -1,5 +1,6 @@
 import json
 from abc import ABC, abstractmethod
+from logging import getLogger
 from typing import Any, Iterable
 
 from ....model import JsonLikeDocument
@@ -70,6 +71,7 @@ class StreamExtractor(Extractor):
     ):
         self.connector = connector
         self.record_format = record_format
+        self.logger = getLogger(__name__)
 
     def poll(self):
         return self.connector.poll()
@@ -77,11 +79,14 @@ class StreamExtractor(Extractor):
     async def extract_records(self):
         await self.connector.connect()
         try:
-            results = await self.poll()
-            if len(results) == 0:
-                yield Flush
-            else:
-                for record in results:
-                    yield self.record_format.parse(record)
+            while True:
+                results = await self.poll()
+                if len(results) == 0:
+                    yield Flush
+                else:
+                    for record in results:
+                        yield self.record_format.parse(record)
+        except Exception:
+            self.logger.exception("failed extracting records")
         finally:
             await self.connector.disconnect()

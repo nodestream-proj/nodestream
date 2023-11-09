@@ -1,3 +1,4 @@
+from .apis import SimpleApiExtractor
 from .extractor import Extractor
 from .files import FileExtractor, RemoteFileExtractor
 from .iterable import IterableExtractor
@@ -9,4 +10,5 @@ __all__ = (
     "FileExtractor",
     "RemoteFileExtractor",
     "TimeToLiveConfigurationExtractor",
+    "SimpleApiExtractor",
 )
