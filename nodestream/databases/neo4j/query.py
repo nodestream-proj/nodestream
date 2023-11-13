@@ -12,6 +12,13 @@ YIELD batches, committedOperations, failedOperations, errorMessages
 RETURN batches, committedOperations, failedOperations, errorMessages
 """
 
+NON_APOCH_COMMIT_QUERY = """
+UNWIND $param_sets AS param
+CALL apoc.cypher.doIt($batched_query, {params: param}) 
+YIELD value 
+RETURN value
+"""
+
 
 @dataclass(slots=True, frozen=True)
 class Query:
@@ -39,9 +46,9 @@ class QueryBatch:
     query_statement: str
     batched_parameter_sets: List[Dict[str, Any]]
 
-    def as_query(self) -> Query:
+    def as_query(self, apoc_iterate: bool) -> Query:
         return Query(
-            COMMIT_QUERY,
+            {True: COMMIT_QUERY, False: NON_APOCH_COMMIT_QUERY}[apoc_iterate],
             {
                 "iterate_params": {
                     "batched_parameter_sets": self.batched_parameter_sets
