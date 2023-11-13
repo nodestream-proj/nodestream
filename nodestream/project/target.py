@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 @dataclass(slots=True, frozen=True)
