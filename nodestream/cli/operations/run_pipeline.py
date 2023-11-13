@@ -43,7 +43,7 @@ class RunPipeline(Operation):
                 yield target.make_writer()
             else:
                 command.line(
-                    f"<warning>Target '{target_name}' not found in project. Ignoring.</warning>"
+                    f"<error>Target '{target_name}' not found in project. Ignoring.</error>"
                 )
 
     def make_run_request(
