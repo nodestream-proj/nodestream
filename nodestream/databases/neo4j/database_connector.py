@@ -19,6 +19,7 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
         password: str,
         database_name: str = "neo4j",
         use_enterprise_features: bool = False,
+        use_apoc: bool = True,
     ):
         driver = AsyncGraphDatabase.driver(uri, auth=(username, password))
         if use_enterprise_features:
@@ -28,7 +29,7 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
         return cls(
             driver=driver,
             index_query_builder=index_query_builder,
-            ingest_query_builder=Neo4jIngestQueryBuilder(),
+            ingest_query_builder=Neo4jIngestQueryBuilder(use_apoc),
             database_name=database_name,
         )
 
