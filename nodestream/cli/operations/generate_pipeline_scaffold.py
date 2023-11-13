@@ -31,19 +31,6 @@ SIMPLE_PIPELINE = [
     },
 ]
 
-WRITER_CONFIG_BY_DATABASE = {
-    "neo4j": {
-        "implementation": "nodestream.databases:GraphDatabaseWriter",
-        "arguments": {
-            "batch_size": 1000,
-            "database": "neo4j",
-            "uri": "bolt://localhost:7687",
-            "username": "neo4j",
-            "password": "neo4j123",
-        },
-    }
-}
-
 
 def pretty_print_yaml_to_file(path: Path, data: Any):
     with open(path, "w") as fp:
@@ -72,6 +59,4 @@ class GeneratePipelineScaffold(Operation):
         return pipeline_dir / self.pipeline_file_name
 
     def make_pipeline_at_path(self, path: Path):
-        steps = SIMPLE_PIPELINE.copy()
-        steps.append(WRITER_CONFIG_BY_DATABASE[self.database_name])
-        pretty_print_yaml_to_file(path, steps)
+        pretty_print_yaml_to_file(path, SIMPLE_PIPELINE)
