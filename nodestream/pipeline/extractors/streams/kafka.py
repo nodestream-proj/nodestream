@@ -57,20 +57,29 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
             max_poll_records=self.max_records,
         )
 
-        await self.consumer.start()
-        self.logger.info("Connected to Kafka Topic %s", self.topic)
+        try:
+            await self.consumer.start()
+            self.logger.info("Connected to Kafka Topic %s", self.topic)
+        except Exception:
+            self.logger.exception("failed connecting to kafka stream")
 
     async def disconnect(self):
         await self.consumer.stop()
 
     async def poll(self) -> Iterable[Any]:
         entries = []
-        result = await self.consumer.getmany(timeout_ms=self.poll_timeout_ms)
-        for tp, messages in result.items():
-            self.logger.debug(
-                "Recived Kafka Messages",
-                extra={"topic": tp.topic, "partition": tp.partition},
+        try:
+            result = await self.consumer.getmany(
+                partitions=self.consumer.partitions_for_topic,
+                timeout_ms=self.poll_timeout_ms,
             )
-            for message in messages:
-                entries.append(message.value)
-        return entries
+            for tp, messages in result.items():
+                self.logger.debug(
+                    "Recived Kafka Messages",
+                    extra={"topic": tp.topic, "partition": tp.partition},
+                )
+                for message in messages:
+                    entries.append(message.value)
+            return entries
+        except Exception:
+            self.logger.exception("failed processing kafka messages")

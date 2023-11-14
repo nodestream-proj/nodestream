@@ -77,7 +77,11 @@ class StreamExtractor(Extractor):
         return self.connector.poll()
 
     async def extract_records(self):
-        await self.connector.connect()
+        try:
+            await self.connector.connect()
+        except Exception:
+            self.logger.exception("failed connecting to extraction stream")
+
         try:
             while True:
                 results = await self.poll()
