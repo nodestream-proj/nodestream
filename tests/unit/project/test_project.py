@@ -9,8 +9,21 @@ from nodestream.pipeline import (
     PipelineProgressReporter,
 )
 from nodestream.pipeline.scope_config import ScopeConfig
-from nodestream.project import PipelineDefinition, PipelineScope, Project, RunRequest
+from nodestream.project import (
+    PipelineDefinition,
+    PipelineScope,
+    Project,
+    RunRequest,
+    Target,
+)
 from nodestream.schema.schema import GraphSchema
+
+
+@pytest.fixture
+def targets():
+    return {
+        "t1": Target("t1", {"a": "b"}),
+    }
 
 
 @pytest.fixture
@@ -31,8 +44,8 @@ def plugin_scope():
 
 
 @pytest.fixture
-def project(scopes):
-    return Project(scopes)
+def project(scopes, targets):
+    return Project(scopes, targets=targets)
 
 
 @pytest.fixture
@@ -68,6 +81,13 @@ def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
 ):
     Project(plugin_scope, {"other_scope": ScopeConfig({"PluginUsername": "bob"})})
     assert plugin_scope[0].config is None
+
+
+def test_project_from_with_with_targets():
+    result = Project.read_from_file(
+        Path("tests/unit/project/fixtures/simple_project_with_targets.yaml")
+    )
+    assert_that(result.targets_by_name, equal_to({"t1": Target("t1", {"a": "b"})}))
 
 
 def test_project_from_file_with_config(add_env_var):
@@ -151,3 +171,11 @@ async def test_get_snapshot_for(project, mocker):
 
 def test_all_pipeline_names(project):
     assert_that(list(project.get_all_pipeline_names()), equal_to(["test", "test2"]))
+
+
+def test_get_target_present(project):
+    assert_that(project.get_target_by_name("t1"), equal_to(Target("t1", {"a": "b"})))
+
+
+def test_get_target_missing(project):
+    assert_that(project.get_target_by_name("missing"), equal_to(None))
