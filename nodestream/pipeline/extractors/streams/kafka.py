@@ -64,11 +64,15 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         await self.consumer.stop()
 
     async def poll(self) -> Iterable[Any]:
-        entries = []
-        async for message in self.consumer:
-            self.logger.debug(
-                "Recived Kafka Messages",
-                extra={"topic": message.topic, "partition": message.partition},
-            )
-            entries.append(message.value)
-        return entries
+        result = []
+        for _ in range(self.max_records):
+            try:
+                message = await anext(self.consumer)
+                self.logger.debug(
+                    "Recived Kafka Messages",
+                    extra={"topic": message.topic, "partition": message.partition},
+                )
+                result.append(message.value)
+            except StopAsyncIteration:
+                break
+        return result
