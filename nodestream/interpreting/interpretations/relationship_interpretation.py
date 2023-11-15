@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, Optional, Tuple
 
 from ...compat import deprecated_arugment
-from ...model import NodeCreationRule, Node, PropertySet, Relationship
+from ...model import Node, NodeCreationRule, PropertySet, Relationship
 from ...pipeline.normalizers import LowercaseStrings
 from ...pipeline.value_providers import (
     ProviderContext,

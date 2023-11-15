@@ -4,13 +4,13 @@ from typing import Iterable
 
 from ..model import (
     IngestionHook,
-    NodeCreationRule,
     Node,
+    NodeCreationRule,
     NodeIdentityShape,
+    RelationshipCreationRule,
     RelationshipIdentityShape,
     RelationshipWithNodes,
     TimeToLiveConfiguration,
-    RelationshipCreationRule,
 )
 from ..schema.indexes import FieldIndex, KeyIndex
 

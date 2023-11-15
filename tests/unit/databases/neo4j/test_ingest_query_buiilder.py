@@ -15,10 +15,10 @@ from nodestream.databases.query_executor import (
     OperationOnRelationshipIdentity,
 )
 from nodestream.model import (
-    NodeCreationRule,
-    RelationshipCreationRule,
     Node,
+    NodeCreationRule,
     Relationship,
+    RelationshipCreationRule,
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )

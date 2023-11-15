@@ -6,13 +6,13 @@ from typing import Iterable
 from cymple.builder import NodeAfterMergeAvailable, NodeAvailable, QueryBuilder
 
 from ...model import (
-    NodeCreationRule,
     Node,
+    NodeCreationRule,
     Relationship,
+    RelationshipCreationRule,
     RelationshipIdentityShape,
     RelationshipWithNodes,
     TimeToLiveConfiguration,
-    RelationshipCreationRule,
 )
 from ...schema.schema import GraphObjectType
 from ..query_executor import OperationOnNodeIdentity, OperationOnRelationshipIdentity

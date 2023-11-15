@@ -3,8 +3,8 @@ from typing import Dict, Iterable, Tuple
 
 from ..model.graph_objects import (
     DeduplicatableObject,
-    NodeCreationRule,
     Node,
+    NodeCreationRule,
     RelationshipWithNodes,
 )
 from .query_executor import OperationOnNodeIdentity, OperationOnRelationshipIdentity

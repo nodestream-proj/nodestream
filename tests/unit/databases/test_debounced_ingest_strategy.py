@@ -5,8 +5,8 @@ from nodestream.databases import DebouncedIngestStrategy
 from nodestream.databases.query_executor import OperationOnNodeIdentity
 from nodestream.model import (
     IngestionHookRunRequest,
-    NodeCreationRule,
     Node,
+    NodeCreationRule,
     NodeIdentityShape,
     Relationship,
     RelationshipWithNodes,

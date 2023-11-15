@@ -1,6 +1,6 @@
 import pytest
 
-from nodestream.model import DesiredIngestion, NodeCreationRule, Node, Relationship
+from nodestream.model import DesiredIngestion, Node, NodeCreationRule, Relationship
 
 
 @pytest.fixture

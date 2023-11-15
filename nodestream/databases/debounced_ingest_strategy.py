@@ -4,8 +4,8 @@ from logging import getLogger
 
 from ..model import (
     IngestionHookRunRequest,
-    NodeCreationRule,
     Node,
+    NodeCreationRule,
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )

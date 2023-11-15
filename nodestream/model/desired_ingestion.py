@@ -3,9 +3,9 @@ from dataclasses import asdict, dataclass, field
 from logging import getLogger
 from typing import TYPE_CHECKING, List
 
+from .creation_rules import NodeCreationRule, RelationshipCreationRule
 from .graph_objects import Node, Relationship, RelationshipWithNodes
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
-from .creation_rules import NodeCreationRule, RelationshipCreationRule
 
 if TYPE_CHECKING:
     from ..databases.ingest_strategy import IngestionStrategy
