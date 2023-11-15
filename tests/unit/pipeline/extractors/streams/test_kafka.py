@@ -1,7 +1,15 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
+from aiokafka import ConsumerRecord
 from hamcrest import assert_that, equal_to, not_
 
 from nodestream.pipeline.extractors.streams import KafkaStreamConnector
+
+
+class AsyncConnectorMock(MagicMock):
+    async def __call__(self, *args, **kwargs):
+        return super(AsyncConnectorMock, self).__call__(*args, **kwargs)
 
 
 @pytest.fixture
@@ -28,11 +36,21 @@ async def test_disconnect(connector, mocker):
 
 
 @pytest.mark.asyncio
+@patch("aiokafka.AIOKafkaConsumer", new_callable=AsyncConnectorMock)
 async def test_poll(connector, mocker):
-    connector.consumer = mocker.AsyncMock()
-    connector.consumer.getmany.return_value = {
-        mocker.Mock(topic="test-topic", partition=0): [mocker.Mock(value="test-value")]
-    }
-    result = [record for record in await connector.poll()]
+    test_record = ConsumerRecord(
+        key="",
+        topic="test-topic",
+        value="test-value",
+        partition=None,
+        offset=0,
+        timestamp=0,
+        timestamp_type=1,
+        checksum=1,
+        serialized_key_size=30,
+        serialized_value_size=30,
+        headers=None,
+    )
+    connector.consumer.getone.return_value = test_record
+    result = await connector.poll()
     assert_that(result, equal_to(["test-value"]))
-    connector.consumer.getmany.assert_called_once_with(timeout_ms=10000)
