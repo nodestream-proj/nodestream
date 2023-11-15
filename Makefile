@@ -35,16 +35,13 @@ lint: venv
 	poetry run black nodestream tests --check
 	poetry run ruff nodestream tests
 
-.PHONY: test
+.PHONY: test-unit
 test-unit: venv
 	poetry run pytest -m "not e2e"
 
-.PHONY: e2e
+.PHONY: test-e2e
 test-e2e: venv
 	poetry run pytest -m "e2e"
-
-.PHONY: docs
-docs: docs-build docs-publish
 
 .PHONY: docs-build
 docs-build: venv
