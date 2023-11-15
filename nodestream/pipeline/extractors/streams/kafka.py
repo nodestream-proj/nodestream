@@ -65,12 +65,10 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
 
     async def poll(self) -> Iterable[Any]:
         entries = []
-        result = await self.consumer.getmany(timeout_ms=self.poll_timeout_ms)
-        for tp, messages in result.items():
+        async for message in self.consumer:
             self.logger.debug(
                 "Recived Kafka Messages",
-                extra={"topic": tp.topic, "partition": tp.partition},
+                extra={"topic": message.topic, "partition": message.partition},
             )
-            for message in messages:
-                entries.append(message.value)
+            entries.append(message.value)
         return entries
