@@ -2,8 +2,8 @@ from hamcrest import assert_that, equal_to
 from yaml import safe_dump
 
 from nodestream.pipeline.value_providers import (
-    StringFormattingValueProvider,
     StaticValueProvider,
+    StringFormattingValueProvider,
 )
 
 from ...stubs import StubbedValueProvider

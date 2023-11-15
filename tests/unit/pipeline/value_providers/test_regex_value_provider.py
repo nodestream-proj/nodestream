@@ -2,10 +2,7 @@ import pytest
 from hamcrest import assert_that, equal_to
 from yaml import safe_dump
 
-from nodestream.pipeline.value_providers import (
-    RegexValueProvider,
-    StaticValueProvider,
-)
+from nodestream.pipeline.value_providers import RegexValueProvider, StaticValueProvider
 
 from ...stubs import StubbedValueProvider
 

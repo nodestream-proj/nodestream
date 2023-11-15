@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import assert_that, equal_to_ignoring_whitespace
+from hamcrest import assert_that, equal_to, equal_to_ignoring_whitespace
 from yaml import safe_dump
 
 from nodestream.model import PropertySet

@@ -1,6 +1,5 @@
 from typing import Iterable
 
-from cleo.io.outputs.output import Verbosity
 from yaml import safe_dump
 
 from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
