@@ -4,7 +4,6 @@ from hamcrest import assert_that, equal_to, not_
 
 from nodestream.pipeline.extractors.streams import KafkaStreamConnector
 
-
 TEST_RECORD = ConsumerRecord(
     key="",
     topic="test-topic",
