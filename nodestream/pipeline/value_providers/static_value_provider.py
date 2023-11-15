@@ -1,4 +1,5 @@
 from typing import Any, Iterable
+from yaml import SafeDumper
 
 from .context import ProviderContext
 from .value_provider import ValueProvider
@@ -21,3 +22,9 @@ class StaticValueProvider(ValueProvider):
     @property
     def is_static(self) -> bool:
         return True
+
+
+SafeDumper.add_representer(
+    StaticValueProvider,
+    lambda dumper, static: dumper.represent_scalar("!static", static.value),
+)

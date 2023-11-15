@@ -1,6 +1,6 @@
 from typing import Any, Dict, Iterable, Type
 
-from yaml import SafeLoader
+from yaml import SafeLoader, SafeDumper
 
 from .context import ProviderContext
 from .value_provider import StaticValueOrValueProvider, ValueProvider
@@ -39,3 +39,11 @@ class StringFormattingValueProvider(ValueProvider):
     def many_values(self, context: ProviderContext) -> Iterable[Any]:
         value = self.single_value(context)
         return [value] if value else []
+
+
+SafeDumper.add_representer(
+    StringFormattingValueProvider,
+    lambda dumper, mapping: dumper.represent_mapping(
+        "!format", dict(fmt=mapping.fmt, **mapping.subs)
+    ),
+)
