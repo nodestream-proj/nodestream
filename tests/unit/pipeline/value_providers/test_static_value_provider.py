@@ -1,4 +1,5 @@
 from hamcrest import assert_that, equal_to
+from yaml import safe_dump
 
 from nodestream.pipeline.value_providers import StaticValueProvider
 
@@ -19,3 +20,8 @@ def test_many_values_list(blank_context):
     expected = [1, 2, 3]
     subject = StaticValueProvider(expected)
     assert_that(subject.many_values(blank_context), equal_to(expected))
+
+
+def test_static_dump():
+    subject = StaticValueProvider("foo")
+    assert_that(safe_dump(subject), equal_to("!static 'foo'\n"))

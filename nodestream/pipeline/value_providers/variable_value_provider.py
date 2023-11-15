@@ -1,6 +1,6 @@
 from typing import Any, Iterable, Type
 
-from yaml import SafeLoader
+from yaml import SafeDumper, SafeLoader
 
 from .context import ProviderContext
 from .value_provider import ValueProvider
@@ -29,3 +29,9 @@ class VariableValueProvider(ValueProvider):
         if value is None:
             return []
         return value if isinstance(value, list) else [value]
+
+
+SafeDumper.add_representer(
+    VariableValueProvider,
+    lambda dumper, mapping: dumper.represent_scalar("!variable", mapping.variable_name),
+)
