@@ -1,5 +1,6 @@
 import pytest
 from hamcrest import assert_that, equal_to, none
+from yaml import safe_dump
 
 from nodestream.pipeline.value_providers import MappingValueProvider
 
@@ -44,3 +45,11 @@ def test_many_values_hit(blank_context_with_mapping):
 def test_many_values_miss(blank_context_with_mapping):
     subject = MappingValueProvider("MAP_A", "other")
     assert_that(subject.many_values(blank_context_with_mapping), equal_to([]))
+
+
+def test_mapping_dump():
+    subject = MappingValueProvider("MAP_A", "static")
+    assert_that(
+        safe_dump(subject),
+        equal_to("!mapping\nkey: !static 'static'\nmapping_name: MAP_A\n"),
+    )
