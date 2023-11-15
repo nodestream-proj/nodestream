@@ -23,7 +23,7 @@ As an example, if we wanted to define a source node of type `Person` with a `nam
 ```
 
 Nodestream will automatically create indexes and/or constraints for the node key fields.
-As mentioned, you can also uses value providers to define the key. 
+As mentioned, you can also use value providers to define the key. 
 This is most often what you will do. 
 As an example, if we wanted to define a source node of type `Person` with a `name` field where the value of the `name` key is defined by a field called `p_name` in your input JSON, we would use the following interpretation:
 
@@ -31,7 +31,7 @@ As an example, if we wanted to define a source node of type `Person` with a `nam
 - type: source_node
   node_type: Person
   key:
-    name: !jmespath patient_name
+    name: !jmespath p_name
 ```
 
 Beyond the `type` and `key` fields, you can also define additional properties, indexes, and types for the source node.
