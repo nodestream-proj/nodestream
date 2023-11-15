@@ -1,6 +1,3 @@
-from unittest.mock import MagicMock, create_autospec, patch
-import aiokafka
-
 import pytest
 from aiokafka import ConsumerRecord
 from hamcrest import assert_that, equal_to, not_
@@ -35,6 +32,7 @@ async def test_disconnect(connector, mocker):
 async def test_poll(connector, mocker):
     async def iterator(record):
         yield record
+
     test_record = ConsumerRecord(
         key="",
         topic="test-topic",
