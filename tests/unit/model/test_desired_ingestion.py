@@ -1,6 +1,6 @@
 import pytest
 
-from nodestream.model import DesiredIngestion, MatchStrategy, Node, Relationship
+from nodestream.model import DesiredIngestion, Node, NodeCreationRule, Relationship
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def test_add_relationship_valid_node(desired_ingestion, valid_node, valid_relati
         related_node=valid_node,
         relationship=valid_relationship,
         outbound=True,
-        match_strategy=MatchStrategy.EAGER,
+        node_creation_rule=NodeCreationRule.EAGER,
     )
     assert len(desired_ingestion.relationships) == 1
 
@@ -40,6 +40,6 @@ def test_add_relationship_invalid_node(
         related_node=invalid_node,
         relationship=valid_relationship,
         outbound=True,
-        match_strategy=MatchStrategy.EAGER,
+        node_creation_rule=NodeCreationRule.EAGER,
     )
     assert len(desired_ingestion.relationships) == 0

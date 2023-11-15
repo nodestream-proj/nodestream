@@ -4,8 +4,8 @@ from logging import getLogger
 
 from ..model import (
     IngestionHookRunRequest,
-    MatchStrategy,
     Node,
+    NodeCreationRule,
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
@@ -24,15 +24,15 @@ class DebouncedIngestStrategy(IngestionStrategy, alias="debounced"):
 
     async def ingest_source_node(self, source: Node):
         self.debouncer.debounce_node_operation(
-            source, match_strategy=MatchStrategy.EAGER
+            source, node_creation_rule=NodeCreationRule.EAGER
         )
 
     async def ingest_relationship(self, relationship: RelationshipWithNodes):
         self.debouncer.debounce_node_operation(
-            relationship.from_node, relationship.from_side_match_strategy
+            relationship.from_node, relationship.from_side_node_creation_rule
         )
         self.debouncer.debounce_node_operation(
-            relationship.to_node, relationship.to_side_match_strategy
+            relationship.to_node, relationship.to_side_node_creation_rule
         )
         self.debouncer.debounce_relationship(relationship)
 

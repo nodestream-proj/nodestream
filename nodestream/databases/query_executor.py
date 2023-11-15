@@ -4,9 +4,10 @@ from typing import Iterable
 
 from ..model import (
     IngestionHook,
-    MatchStrategy,
     Node,
+    NodeCreationRule,
     NodeIdentityShape,
+    RelationshipCreationRule,
     RelationshipIdentityShape,
     RelationshipWithNodes,
     TimeToLiveConfiguration,
@@ -17,7 +18,7 @@ from ..schema.indexes import FieldIndex, KeyIndex
 @dataclass(slots=True, frozen=True)
 class OperationOnNodeIdentity:
     node_identity: NodeIdentityShape
-    match_strategy: MatchStrategy
+    node_creation_rule: NodeCreationRule
 
 
 @dataclass(slots=True, frozen=True)
@@ -25,6 +26,7 @@ class OperationOnRelationshipIdentity:
     from_node: OperationOnNodeIdentity
     to_node: OperationOnNodeIdentity
     relationship_identity: RelationshipIdentityShape
+    relationship_creation_rule: RelationshipCreationRule
 
 
 class QueryExecutor(ABC):

@@ -5,8 +5,8 @@ from nodestream.databases import DebouncedIngestStrategy
 from nodestream.databases.query_executor import OperationOnNodeIdentity
 from nodestream.model import (
     IngestionHookRunRequest,
-    MatchStrategy,
     Node,
+    NodeCreationRule,
     NodeIdentityShape,
     Relationship,
     RelationshipWithNodes,
@@ -28,7 +28,7 @@ async def test_ingest_source_node(ingest_strategy):
     node = Node("test", "test", {"test": "test"})
     await ingest_strategy.ingest_source_node(node)
     ingest_strategy.debouncer.debounce_node_operation.assert_called_once_with(
-        node, match_strategy=MatchStrategy.EAGER
+        node, node_creation_rule=NodeCreationRule.EAGER
     )
 
 
@@ -84,7 +84,7 @@ async def test_flush_nodes(ingest_strategy):
     ingest_strategy.debouncer.drain_node_groups.return_value = [
         (
             OperationOnNodeIdentity(
-                NodeIdentityShape("type", ("key",)), MatchStrategy.EAGER
+                NodeIdentityShape("type", ("key",)), NodeCreationRule.EAGER
             ),
             [Node("type", {"key": "test"})],
         )

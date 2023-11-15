@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
-from .match_strategy import MatchStrategy
+from .creation_rules import NodeCreationRule
 
 if TYPE_CHECKING:
     from ..interpreting.context import ProviderContext
@@ -153,8 +153,9 @@ class RelationshipWithNodes(DeduplicatableObject):
     to_node: Node
     relationship: Relationship
 
-    to_side_match_strategy: MatchStrategy = MatchStrategy.EAGER
-    from_side_match_strategy: MatchStrategy = MatchStrategy.EAGER
+    to_side_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
+    from_side_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
+    relationship_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
 
     def has_same_keys(self, other: "RelationshipWithNodes") -> bool:
         return (
