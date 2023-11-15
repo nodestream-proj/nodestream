@@ -9,7 +9,7 @@ from .graph_objects import (
     RelationshipIdentityShape,
 )
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
-from .match_strategy import MatchStrategy
+from .creation_rules import NodeCreationRule, RelationshipCreationRule
 from .ttl import TimeToLiveConfiguration
 
 JsonLikeDocument = Dict[str, Any]
@@ -23,9 +23,10 @@ __all__ = (
     "PropertySet",
     "Relationship",
     "RelationshipIdentityShape",
-    "MatchStrategy",
+    "NodeCreationRule",
     "IngestionHook",
     "IngestionHookRunRequest",
     "TimeToLiveConfiguration",
     "JsonLikeDocument",
+    "RelationshipCreationRule",
 )

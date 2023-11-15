@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List
 
 from .graph_objects import Node, Relationship, RelationshipWithNodes
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
-from .match_strategy import MatchStrategy
+from .creation_rules import NodeCreationRule, RelationshipCreationRule
 
 if TYPE_CHECKING:
     from ..databases.ingest_strategy import IngestionStrategy
@@ -72,7 +72,8 @@ class DesiredIngestion:
         related_node: Node,
         relationship: Relationship,
         outbound: bool,
-        match_strategy: MatchStrategy,
+        node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER,
+        relationship_creation_rule: RelationshipCreationRule = RelationshipCreationRule.EAGER,
     ):
         if not related_node.is_valid:
             LOGGER.warning(
@@ -85,17 +86,18 @@ class DesiredIngestion:
             (self.source, related_node) if outbound else (related_node, self.source)
         )
         from_match, to_match = (
-            (MatchStrategy.EAGER, match_strategy)
+            (NodeCreationRule.EAGER, node_creation_rule)
             if outbound
-            else (match_strategy, MatchStrategy.EAGER)
+            else (node_creation_rule, NodeCreationRule.EAGER)
         )
         self.relationships.append(
             RelationshipWithNodes(
                 from_node=from_node,
                 to_node=to_node,
                 relationship=relationship,
-                from_side_match_strategy=from_match,
-                to_side_match_strategy=to_match,
+                from_side_node_creation_rule=from_match,
+                to_side_node_creation_rule=to_match,
+                relationship_creation_rule=relationship_creation_rule,
             )
         )
 

@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, Optional, Tuple
 
-from ...model import MatchStrategy, Node, PropertySet, Relationship
+from ...compat import deprecated_arugment
+from ...model import NodeCreationRule, Node, PropertySet, Relationship
 from ...pipeline.normalizers import LowercaseStrings
 from ...pipeline.value_providers import (
     ProviderContext,
@@ -87,7 +88,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
     __slots__ = (
         "can_find_many",
         "outbound",
-        "match_strategy",
+        "node_creation_rule",
         "decomposer",
         "node_type",
         "relationship_type",
@@ -100,6 +101,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         "key_search_algorithm",
     )
 
+    @deprecated_arugment("match_strategy", "node_creation_rule")
     def __init__(
         self,
         node_type: StaticValueOrValueProvider,
@@ -111,13 +113,15 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         outbound: bool = True,
         find_many: bool = False,
         iterate_on: Optional[ValueProvider] = None,
-        match_strategy: Optional[str] = None,
+        node_creation_rule: Optional[str] = None,
         key_normalization: Optional[Dict[str, Any]] = None,
         properties_normalization: Optional[Dict[str, Any]] = None,
     ):
         self.can_find_many = find_many or iterate_on is not None
         self.outbound = outbound
-        self.match_strategy = MatchStrategy(match_strategy or MatchStrategy.EAGER.value)
+        self.node_creation_rule = NodeCreationRule(
+            node_creation_rule or NodeCreationRule.EAGER.value
+        )
         self.decomposer = RecordDecomposer.from_iteration_arguments(iterate_on)
         self.node_type = ValueProvider.guarantee_value_provider(node_type)
         self.relationship_type = ValueProvider.guarantee_value_provider(
@@ -150,7 +154,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         for sub_context in self.decomposer.decompose_record(context):
             for relationship, related_node in self.find_matches(sub_context):
                 context.desired_ingest.add_relationship(
-                    related_node, relationship, self.outbound, self.match_strategy
+                    related_node, relationship, self.outbound, self.node_creation_rule
                 )
 
     def find_relationship(self, context: ProviderContext) -> Relationship:
@@ -227,7 +231,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
             # If we are matching fuzzy or MATCH_ONLY, we cannot rely on the key index
             # to find the related node.
             # TODO: Perhaps in the future we can do a FieldIndex instead?
-            if self.match_strategy == MatchStrategy.EAGER:
+            if self.node_creation_rule == NodeCreationRule.EAGER:
                 yield KeyIndex(related_node_type, frozenset(self.node_key.keys()))
 
         if self.relationship_type.is_static:

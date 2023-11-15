@@ -15,7 +15,8 @@ from nodestream.databases.query_executor import (
     OperationOnRelationshipIdentity,
 )
 from nodestream.model import (
-    MatchStrategy,
+    NodeCreationRule,
+    RelationshipCreationRule,
     Node,
     Relationship,
     RelationshipWithNodes,
@@ -168,18 +169,18 @@ COMPLEX_NODE_TWO_EXPECTED_QUERY = QueryBatch(
 
 
 @pytest.mark.parametrize(
-    "node,expected_query,match_strategy",
+    "node,expected_query,node_creation_rule",
     [
-        [SIMPLE_NODE, SIMPLE_NODE_EXPECTED_QUERY, MatchStrategy.EAGER],
-        [COMPLEX_NODE, COMPLEX_NODE_EXPECTED_QUERY, MatchStrategy.EAGER],
-        [COMPLEX_NODE_TWO, COMPLEX_NODE_TWO_EXPECTED_QUERY, MatchStrategy.EAGER],
-        [SIMPLE_NODE, SIMPLE_NODE_EXPECTED_QUERY_ON_MATCH, MatchStrategy.MATCH_ONLY],
+        [SIMPLE_NODE, SIMPLE_NODE_EXPECTED_QUERY, NodeCreationRule.EAGER],
+        [COMPLEX_NODE, COMPLEX_NODE_EXPECTED_QUERY, NodeCreationRule.EAGER],
+        [COMPLEX_NODE_TWO, COMPLEX_NODE_TWO_EXPECTED_QUERY, NodeCreationRule.EAGER],
+        [SIMPLE_NODE, SIMPLE_NODE_EXPECTED_QUERY_ON_MATCH, NodeCreationRule.MATCH_ONLY],
     ],
 )
 def test_node_update_generates_expected_queries(
-    query_builder, node, expected_query, match_strategy
+    query_builder, node, expected_query, node_creation_rule
 ):
-    operation = OperationOnNodeIdentity(node.identity_shape, match_strategy)
+    operation = OperationOnNodeIdentity(node.identity_shape, node_creation_rule)
     query = query_builder.generate_batch_update_node_operation_batch(operation, [node])
     assert_that(query, equal_to(expected_query))
 
@@ -231,6 +232,26 @@ RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY_WITH_MULTI_KEY = QueryBatch(
     ],
 )
 
+RELATIONSHIP_BETWEEN_TWO_NODES_WITH_MULTI_KEY_AND_CREATE = RelationshipWithNodes(
+    from_node=SIMPLE_NODE,
+    to_node=COMPLEX_NODE_TWO,
+    relationship=Relationship("RELATED_TO"),
+    relationship_creation_rule=RelationshipCreationRule.CREATE,
+)
+
+RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY_WITH_MULTI_KEY_AND_CREATE = QueryBatch(
+    """MATCH (from_node: TestType) WHERE from_node.id = params.__from_node_id MATCH (to_node: ComplexType) WHERE to_node.id_part1 = params.__to_node_id_part1 AND to_node.id_part2 = params.__to_node_id_part2
+    CREATE (from_node)-[rel: RELATED_TO]->(to_node) SET rel += params.__rel_properties""",
+    [
+        {
+            "__from_node_id": "foo",
+            "__to_node_id_part1": "foo",
+            "__to_node_id_part2": "bar",
+            "__rel_properties": RELATIONSHIP_BETWEEN_TWO_NODES_WITH_MULTI_KEY_AND_CREATE.relationship.properties,
+        }
+    ],
+)
+
 
 @pytest.mark.parametrize(
     "rel,expected_query",
@@ -240,17 +261,24 @@ RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY_WITH_MULTI_KEY = QueryBatch(
             RELATIONSHIP_BETWEEN_TWO_NODES_WITH_MULTI_KEY,
             RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY_WITH_MULTI_KEY,
         ],
+        [
+            RELATIONSHIP_BETWEEN_TWO_NODES_WITH_MULTI_KEY_AND_CREATE,
+            RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY_WITH_MULTI_KEY_AND_CREATE,
+        ],
     ],
 )
 def test_relationship_update_generates_expected_queries(
     query_builder, rel, expected_query
 ):
-    to_op = OperationOnNodeIdentity(rel.to_node.identity_shape, MatchStrategy.EAGER)
+    to_op = OperationOnNodeIdentity(rel.to_node.identity_shape, NodeCreationRule.EAGER)
     from_op = OperationOnNodeIdentity(
-        rel.from_node.identity_shape, MatchStrategy.MATCH_ONLY
+        rel.from_node.identity_shape, NodeCreationRule.MATCH_ONLY
     )
     operation = OperationOnRelationshipIdentity(
-        from_op, to_op, rel.relationship.identity_shape
+        from_op,
+        to_op,
+        rel.relationship.identity_shape,
+        relationship_creation_rule=rel.relationship_creation_rule,
     )
     query = query_builder.generate_batch_update_relationship_query_batch(
         operation, [rel]

@@ -224,7 +224,7 @@ def test_relationship_interpretation_gather_used_indexes_static_values_match_onl
         node_type="static",
         node_key={"hello": "world"},
         relationship_type=StubbedValueProvider(values=["Dynamic"]),
-        match_strategy="MATCH_ONLY",
+        node_creation_rule="MATCH_ONLY",
     )
     assert_that(list(subject.gather_used_indexes()), has_length(1))
 
