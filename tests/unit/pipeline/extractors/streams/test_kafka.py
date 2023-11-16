@@ -60,6 +60,14 @@ async def test_poll(connector, mocker):
 
 
 @pytest.mark.asyncio
+async def test_poll_empty(connector, mocker):
+    connector.consumer = mocker.Mock()
+    connector.consumer.poll.return_value = None
+    result = await connector.poll()
+    assert_that(result, equal_to([]))
+
+
+@pytest.mark.asyncio
 async def test_poll_error(connector, mocker):
     connector.consumer = mocker.Mock()
     connector.consumer.poll.return_value = MockKafkaMessage(None, "error")
