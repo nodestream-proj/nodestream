@@ -88,7 +88,7 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
     async def poll(self) -> Iterable[Any]:
         results = []
         for _ in range(self.max_records):
-            msg = self.consumer.poll(timeout=1.0)
+            msg = self.consumer.poll(self.poll_timeout)
             message_value = self.process_message(msg)
             results.append(message_value)
         return results

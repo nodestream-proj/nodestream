@@ -7,6 +7,20 @@ from hamcrest.core.core.future import future_raising, resolved
 
 from nodestream.pipeline.extractors.streams import KafkaStreamConnector
 
+TEST_RECORD = ConsumerRecord(
+    key="",
+    topic="test-topic",
+    value="test-value",
+    partition=None,
+    offset=0,
+    timestamp=0,
+    timestamp_type=1,
+    checksum=1,
+    serialized_key_size=30,
+    serialized_value_size=30,
+    headers=None,
+)
+
 
 @pytest.fixture
 def connector():
