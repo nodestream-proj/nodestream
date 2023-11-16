@@ -90,6 +90,10 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
             try:
                 msg = self.consumer.poll(self.poll_timeout)
                 message_value = self.process_message(msg)
+                self.logger.debug(
+                    "Recived Kafka Messages",
+                    extra={"topic": msg.topic(), "partition": msg.partition()},
+                )
                 results.append(message_value)
             except Exception:
                 self.logger.exception("error while polling Kafka messages")
