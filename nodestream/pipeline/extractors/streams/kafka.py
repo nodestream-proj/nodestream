@@ -88,9 +88,13 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
     async def poll(self) -> Iterable[Any]:
         results = []
         for _ in range(self.max_records):
-            msg = self.consumer.poll(self.poll_timeout)
-            message_value = self.process_message(msg)
-            results.append(message_value)
+            try:
+                msg = self.consumer.poll(self.poll_timeout)
+                message_value = self.process_message(msg)
+                results.append(message_value)
+            except Exception:
+                self.logger.exception("error while polling Kafka messages")
+                break
         return results
 
     def process_message(self, msg):
