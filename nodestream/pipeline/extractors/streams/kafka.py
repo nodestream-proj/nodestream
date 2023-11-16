@@ -89,6 +89,9 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         for _ in range(self.max_records):
             try:
                 msg = self.consumer.poll(self.poll_timeout)
+                if msg is None:
+                    self.logger.debug("Polling returned no messages")
+                    continue
                 message_value = self.process_message(msg)
                 self.logger.debug(
                     "Recived Kafka Messages",
