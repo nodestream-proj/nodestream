@@ -115,6 +115,9 @@ def _merge_relationship(rel_identity: RelationshipIdentityShape):
 
 
 class Neo4jIngestQueryBuilder:
+    def __init__(self, apoc_iterate: bool):
+        self.apoc_iterate = apoc_iterate
+
     @cache
     @correct_parameters
     def generate_update_node_operation_query_statement(

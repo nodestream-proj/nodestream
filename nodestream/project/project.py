@@ -16,6 +16,7 @@ from ..schema.schema import (
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
+from .target import Target
 
 T = TypeVar("T", bound=Step)
 
@@ -53,6 +54,9 @@ class Project(
                 Optional("plugin_config"): {
                     str: ScopeConfig.describe_yaml_schema(),
                 },
+                Optional("targets"): {
+                    str: {str: object},
+                },
             }
         )
 
@@ -82,7 +86,11 @@ class Project(
         plugin_cfgs = {
             name: ScopeConfig.from_file_data(value) for name, value in plugins.items()
         }
-        project = cls(scopes, plugin_configs=plugin_cfgs)
+
+        targets = data.pop("targets", {})
+        target_cfgs = {name: Target(name, value) for name, value in targets.items()}
+
+        project = cls(scopes, plugin_cfgs, target_cfgs)
         for plugin in ProjectPlugin.all():
             plugin().activate(project)
         return project
@@ -104,12 +112,27 @@ class Project(
         }
 
     def __init__(
-        self, scopes: List[PipelineScope], plugin_configs: Dict[str, ScopeConfig] = None
+        self,
+        scopes: List[PipelineScope],
+        plugin_configs: Dict[str, ScopeConfig] = None,
+        targets: Dict[str, Target] = None,
     ):
         self.scopes_by_name: Dict[str, PipelineScope] = {}
         self.plugin_configs = plugin_configs
+        self.targets_by_name = targets
         for scope in scopes:
             self.add_scope(scope)
+
+    def get_target_by_name(self, target_name: str) -> Optional[Target]:
+        """Returns the target with the given name.
+
+        Args:
+            target_name (str): The name of the target to return.
+
+        Returns:
+            Optional[Target]: The target with the given name, or None if no target was found.
+        """
+        return self.targets_by_name.get(target_name)
 
     async def run(self, request: RunRequest) -> int:
         """Takes a run request and runs the appropriate pipeline.

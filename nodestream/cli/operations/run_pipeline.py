@@ -1,6 +1,5 @@
 from typing import Iterable
 
-from cleo.io.outputs.output import Verbosity
 from yaml import safe_dump
 
 from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
@@ -36,17 +35,23 @@ class RunPipeline(Operation):
             command.line(HINT_CHECK_PIPELINE_NAME)
             command.line(HINT_USE_NODESTREAM_SHOW)
 
+    def get_writer_steps_for_specified_targets(self, command: NodestreamCommand):
+        for target_name in command.option("target"):
+            target = self.project.get_target_by_name(target_name)
+            if target:
+                yield target.make_writer()
+            else:
+                command.line(
+                    f"<error>Target '{target_name}' not found in project. Ignoring.</error>"
+                )
+
     def make_run_request(
         self, command: NodestreamCommand, pipeline_name: str
     ) -> RunRequest:
         def print_effective_config(config):
-            command.line(
-                "<info>Effective configuration:</info>",
-                verbosity=Verbosity.VERY_VERBOSE,
-            )
-            command.line(
-                f"<info>{safe_dump(config)}</info>", verbosity=Verbosity.VERY_VERBOSE
-            )
+            if command.is_very_verbose:
+                command.line("<info>Effective configuration:</info>")
+                command.line(f"<info>{safe_dump(config)}</info>")
 
         return RunRequest(
             pipeline_name=pipeline_name,
@@ -54,6 +59,7 @@ class RunPipeline(Operation):
                 annotations=command.option("annotations"),
                 step_outbox_size=int(command.option("step-outbox-size")),
                 on_effective_configuration_resolved=print_effective_config,
+                extra_steps=list(self.get_writer_steps_for_specified_targets(command)),
             ),
             progress_reporter=self.create_progress_reporter(command, pipeline_name),
         )

@@ -47,3 +47,7 @@ class NodestreamCommand(Command, Pluggable):
     @property
     def is_verbose(self) -> bool:
         return self.io.output.is_verbose()
+
+    @property
+    def is_very_verbose(self) -> bool:
+        return self.io.output.is_very_verbose()

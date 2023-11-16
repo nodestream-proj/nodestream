@@ -1,6 +1,6 @@
 from typing import Any, Iterable, Type
 
-from yaml import SafeLoader
+from yaml import SafeDumper, SafeLoader
 
 from .context import ProviderContext
 from .value_provider import StaticValueOrValueProvider, ValueProvider
@@ -37,3 +37,11 @@ class MappingValueProvider(ValueProvider):
     def many_values(self, context: ProviderContext) -> Iterable[Any]:
         value = self.single_value(context)
         return [value] if value else []
+
+
+SafeDumper.add_representer(
+    MappingValueProvider,
+    lambda dumper, mapping: dumper.represent_mapping(
+        "!mapping", {"mapping_name": mapping.mapping_name, "key": mapping.key}
+    ),
+)
