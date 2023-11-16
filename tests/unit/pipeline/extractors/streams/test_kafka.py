@@ -20,6 +20,12 @@ class MockKafkaMessage:
     def value(self):
         return self.message
 
+    def partition(self):
+        return "test-partition"
+
+    def topic(self):
+        return "test-topic"
+
     def error(self):
         return self.error_message
 
