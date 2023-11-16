@@ -1,8 +1,7 @@
 from logging import getLogger
 from typing import Any, Iterable, List, Optional
 
-from aiokafka.helpers import create_ssl_context
-from confluent_kafka import Consumer, KafkaError, KafkaException
+from confluent_kafka import Consumer, KafkaException
 
 from .extractor import StreamConnector
 

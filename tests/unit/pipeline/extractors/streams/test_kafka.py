@@ -7,19 +7,21 @@ from hamcrest.core.core.future import future_raising, resolved
 
 from nodestream.pipeline.extractors.streams import KafkaStreamConnector
 
-TEST_RECORD = ConsumerRecord(
-    key="",
-    topic="test-topic",
-    value="test-value",
-    partition=None,
-    offset=0,
-    timestamp=0,
-    timestamp_type=1,
-    checksum=1,
-    serialized_key_size=30,
-    serialized_value_size=30,
-    headers=None,
-)
+
+@dataclass
+class MockKafkaMessage:
+    msg: str
+    error: str
+
+    def __init__(self, msg, error):
+        self.message = msg
+        self.error_message = error
+
+    def value(self):
+        return self.message
+
+    def error(self):
+        return self.error_message
 
 
 @pytest.fixture
@@ -43,22 +45,6 @@ async def test_disconnect(connector, mocker):
     connector.consumer.close.assert_called_once()
 
 
-@dataclass
-class MockKafkaMessage:
-    msg: str = "test-value"
-    error: str
-
-    def __init__(self, msg, error):
-        self.message = msg
-        self.error_message = error
-
-    def value(self):
-        return self.message
-
-    def error(self):
-        return self.error_message
-
-
 @pytest.mark.asyncio
 async def test_poll(connector, mocker):
     connector.consumer = mocker.Mock()
@@ -71,7 +57,10 @@ async def test_poll(connector, mocker):
 async def test_poll_error(connector, mocker):
     connector.consumer = mocker.Mock()
     connector.consumer.poll.return_value = MockKafkaMessage(None, "error")
-    assert_that(await resolved(connector.poll()), future_raising(KafkaException))
+    # check that polling errors don't raise out of the poller
+    assert_that(
+        await resolved(connector.poll()), not future_raising(KafkaException("error"))
+    )
 
 
 @pytest.mark.asyncio
