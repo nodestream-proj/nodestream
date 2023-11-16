@@ -37,7 +37,7 @@ def test_get_target_from_user_from_prompt(copy_command, project, mocker):
     copy_command.option.assert_called_once_with("from")
     copy_command.choice.assert_called_once_with(
         "Which target would you like to copy from?",
-        ["test"],
+        ["test", "test2"],
     )
 
 
@@ -51,7 +51,7 @@ def test_get_target_from_user_from_option_unknown_target(copy_command, project, 
 
 def test_get_type_selection_from_user_from_option(copy_command, mocker, basic_schema):
     copy_command.option = mocker.Mock(side_effect=[False, ["Person"]])
-    types = copy_command.prompt_user_for_type_selection(
+    types = copy_command.get_type_selection_from_user(
         basic_schema.known_node_types(), "node"
     )
     assert_that(types, equal_to(["Person"]))
@@ -61,7 +61,7 @@ def test_get_type_selection_from_user_from_option(copy_command, mocker, basic_sc
 def test_get_type_selection_from_user_from_prompt(copy_command, mocker, basic_schema):
     copy_command.option = mocker.Mock(side_effect=[False, None])
     copy_command.choice = mocker.Mock(return_value=["Person"])
-    types = copy_command.prompt_user_for_type_selection(
+    types = copy_command.get_type_selection_from_user(
         basic_schema.known_node_types(), "node"
     )
     assert_that(types, equal_to(["Person"]))
@@ -75,7 +75,7 @@ def test_get_type_selection_from_user_from_prompt(copy_command, mocker, basic_sc
 
 def test_get_type_selection_from_user_from_all_flag(copy_command, mocker, basic_schema):
     copy_command.option = mocker.Mock(return_value=True)
-    types = copy_command.prompt_user_for_type_selection(
+    types = copy_command.get_type_selection_from_user(
         basic_schema.known_node_types(), "node"
     )
     assert_that(types, equal_to(["Person", "Organization"]))
@@ -88,7 +88,7 @@ def test_get_type_selection_from_user_from_option_unknown_type(
     copy_command.line_error = mocker.Mock()
     with pytest.raises(UnknownTargetError):
         copy_command.option = mocker.Mock(side_effect=[False, ["Unknown"]])
-        copy_command.prompt_user_for_type_selection(
+        copy_command.get_type_selection_from_user(
             basic_schema.known_node_types(), "node"
         )
     copy_command.line_error.assert_called_once_with(

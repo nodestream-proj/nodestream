@@ -56,7 +56,7 @@ class Copy(NodestreamCommand):
         self.line(f"<info>Node Types: {', '.join(node_types)}</info>")
         self.line(f"<info>Relationship Types: {', '.join(rel_types)}</info>")
         await self.run_operation(
-            RunCopy(from_target, to_target, schema, node_types, rel_types)
+            RunCopy(from_target, to_target, project, node_types, rel_types)
         )
 
     def get_taget_from_user(self, project: Project, action: str) -> Target:

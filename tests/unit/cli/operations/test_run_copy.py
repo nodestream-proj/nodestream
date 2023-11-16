@@ -21,12 +21,12 @@ def test_build_writer(subject):
 
 
 def test_build_copier(subject):
+    subject.project.gather_used_indexes.return_value = []
     result = subject.build_copier()
     assert_that(
         result.type_retriever,
         equal_to(subject.from_target.make_type_retriever.return_value),
     )
-    assert_that(result.schema, equal_to(subject.schema))
     assert_that(result.node_types, equal_to(subject.node_types))
     assert_that(result.relationship_types, equal_to(subject.relationship_types))
 

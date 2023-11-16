@@ -2,8 +2,7 @@ from typing import List
 
 from ...databases import Copier, GraphDatabaseWriter
 from ...pipeline import Pipeline
-from ...project import Target
-from ...schema.schema import GraphSchema
+from ...project import Target, Project
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 
@@ -13,13 +12,13 @@ class RunCopy(Operation):
         self,
         from_target: Target,
         to_target: Target,
-        schema: GraphSchema,
+        project: Project,
         node_types: List[str],
         relationship_types: List[str],
     ) -> None:
         self.from_target = from_target
         self.to_target = to_target
-        self.schema = schema
+        self.project = project
         self.node_types = node_types
         self.relationship_types = relationship_types
 
@@ -35,7 +34,7 @@ class RunCopy(Operation):
     def build_copier(self) -> Copier:
         return Copier(
             self.from_target.make_type_retriever(),
-            self.schema,
+            self.project,
             self.node_types,
             self.relationship_types,
         )
