@@ -3,8 +3,11 @@ scopes:
     pipelines:
       - test.yaml
       - test2.yaml
-    config:
-      neo4j_database: neo4j
-      neo4j_username: neo4j
-      neo4j_password: neo4j123
-      neo4j_uri: bolt://localhost:7687
+
+targets:
+  my-db:
+    database: neo4j
+    database_name: neo4j
+    username: neo4j
+    password: neo4j123
+    uri: bolt://localhost:7687
