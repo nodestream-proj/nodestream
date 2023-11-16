@@ -153,8 +153,8 @@ By default, related nodes are created when not present based on the supplied nod
 ### Working with Many Relationships
 
 By default, the cardinality of a relationship is one-to-one (or many; depending on the data). 
-This means that the relationship interpreation will only relate to one node per instance of the interpreation. 
-Often times when working with document data, you might encounter a list of values all of which should be related to the source node. 
+This means that the relationship interpretation will only relate to one node per instance of the interpretation. 
+Oftentimes when working with document data, you might encounter a list of values all of which should be related to the source node. 
 To accomplish this, you can use the `find_many` field. 
 The `find_many` field is a boolean that represents whether or not the searches provided to `node_key` can return multiple values, and thus should create multiple relationships to multiple related nodes.
 
@@ -187,7 +187,7 @@ For example, the same interpretation as above could be written like this:
 
 | Parameter Name          	| Required? 	| Type                               	| Description                                                                                                                                                                                                                                                                                                            	|
 |-------------------------	|-----------	|------------------------------------	|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
-| node_type               	| Yes       	| String or ValueProvider            	| Specifies the type of the node to relationship connects to. It is a required field. When a ValueProvider is used dynamic index creation and schema introspection are not supported.                                                                                                                                    	|
+| node_type               	| Yes       	| String or ValueProvider            	| Specifies the type of the node a relationship connects to. It is a required field. When a ValueProvider is used dynamic index creation and schema introspection are not supported.                                                                                                                                    	|
 | relationship_type       	| Yes       	| String or ValueProvider            	| Specifies the type of the relationship. It is a required field. When a ValueProvider is used dynamic index creation and schema introspection are not supported.                                                                                                                                                        	|
 | node_key                	| Yes       	| Dictionary                         	| Contains key-value pairs that define the key of the related node. The keys represent field names, and the values can be either static values or value providers. It is a required field.                                                                                                                               	|
 | node_properties         	| No        	| Dictionary                         	| Stores additional properties of the related node. It is a dictionary where the keys represent property names, and the values can be either static values or value providers. This field is optional.                                                                                                                   	|
@@ -247,7 +247,7 @@ NOTE: that variables can be defined either statically or using a value provider.
 
 ## Switch Interpretation
 
-The switch interpretation allows you to define multiple interpretations that will be applied. The interpretations that will be applied is determined by the value of the `switch_on` parameter. The value of the `switch_on` parameter is a value provider that will be evaluated for each source node. The value of the value provider will be used to determine which interpretation to apply. The interpretation that will be applied is the one that has the same value as the value of the `switch_on` parameter. If no interpretation has the same value as the value of the `switch_on` parameter, the default interpretation will be applied. If no default interpretation is defined, the source node will be ignored.
+The switch interpretation allows you to define multiple interpretations that will be applied. The interpretation that will be applied is determined by the value of the `switch_on` parameter. The value of the `switch_on` parameter is a value provider that will be evaluated for each source node. The value of the value provider will be used to determine which interpretation to apply. The interpretation that will be applied is the one that has the same value as the value of the `switch_on` parameter. If no interpretation has the same value as the value of the `switch_on` parameter, the default interpretation will be applied. If no default interpretation is defined, the source node will be ignored.
 
 As an example, if we wanted to define a switch interpretation that would apply a `Person` interpretation if the `type` field of the source node was `person`, and a `Company` interpretation if the `type` field of the source node was `company`, we would use the following interpretation:
 

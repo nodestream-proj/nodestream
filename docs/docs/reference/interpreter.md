@@ -109,7 +109,7 @@ Note that in the `interpretations` section we are using `!jmespath` that are rel
 
 ## Performing Multiple Passes
 
-One limitation is that the interpreter can only relate nodes one level deep. For example, if we want to relate a person to an address, and a address to a city, we can't do that in a single pass. To accomplish it, we can do this by performing multiple passes over the data. In the following example, we will perform two passes. The first pass will relate a person to a team, and the second pass will relate a team to an address.
+One limitation is that the interpreter can only relate nodes one level deep. For example, if we want to relate a person to an address, and an address to a city, we can't do that in a single pass. To accomplish it, we can do this by performing multiple passes over the data. In the following example, we will perform two passes. The first pass will relate a person to a team, and the second pass will relate a team to an address.
 
 Imaging we have data like this:
 
