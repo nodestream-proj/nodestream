@@ -3,7 +3,7 @@ from typing import List
 from cleo.helpers import option
 
 from ...project import Project, Target
-from ...schema.schema import GraphSchema, GraphObjectShape
+from ...schema.schema import GraphObjectShape
 from ..operations import InitializeProject, RunCopy
 from .nodestream_command import NodestreamCommand
 from .shared_options import JSON_OPTION, PROJECT_FILE_OPTION
@@ -24,15 +24,13 @@ class Copy(NodestreamCommand):
         option("all", "a", "Copy all node and relationship types", flag=True),
         option(
             "node",
-            "n",
-            "Specify a node type to copy",
+            description="Specify a node type to copy",
             flag=False,
             multiple=True,
         ),
         option(
             "relationship",
-            "r",
-            "Specify a relationship type to copy",
+            description="Specify a relationship type to copy",
             flag=False,
             multiple=True,
         ),
