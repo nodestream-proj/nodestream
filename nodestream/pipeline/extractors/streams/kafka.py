@@ -59,7 +59,7 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         max_records: int = 10,
         poll_timeout: int = 30,
     ):
-        self.bootstrap_servers = ",".join(bootstrap_servers)
+        self.bootstrap_servers = bootstrap_servers
         self.topic = topic
         self.max_records = 10
         self.group_id = group_id or DEFAULT_GROUP_ID
