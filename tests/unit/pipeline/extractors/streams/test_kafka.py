@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import pytest
 from confluent_kafka import KafkaException
-from hamcrest import assert_that, equal_to, not_
+from hamcrest import assert_that, calling, equal_to, not_, raises
 from hamcrest.core.core.future import future_raising, resolved
 
 from nodestream.pipeline.extractors.streams import KafkaStreamConnector
@@ -58,9 +58,7 @@ async def test_poll_error(connector, mocker):
     connector.consumer = mocker.Mock()
     connector.consumer.poll.return_value = MockKafkaMessage(None, "error")
     # check that polling errors don't raise out of the poller
-    assert_that(
-        await resolved(connector.poll()), not future_raising(KafkaException("error"))
-    )
+    assert_that(await resolved(connector.poll()), not_(future_raising(KafkaException)))
 
 
 @pytest.mark.asyncio
@@ -70,3 +68,19 @@ async def test_poll_infinite_items_terminates(connector, mocker):
     connector.max_records = 10
     result = await connector.poll()
     assert_that(result, equal_to(["test-value"] * 10))
+
+
+@pytest.mark.asyncio
+async def test_process_message(connector, mocker):
+    connector.consumer = mocker.Mock()
+    test_msg = MockKafkaMessage("test-message", None)
+    assert_that(connector.process_message(test_msg), equal_to("test-message"))
+
+
+@pytest.mark.asyncio
+async def test_process_message_error(connector, mocker):
+    connector.consumer = mocker.Mock()
+    test_msg = MockKafkaMessage(None, "error")
+    assert_that(
+        calling(connector.process_message).with_args(test_msg), raises(KafkaException)
+    )
