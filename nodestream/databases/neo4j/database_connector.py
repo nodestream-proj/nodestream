@@ -1,5 +1,6 @@
 from neo4j import AsyncDriver, AsyncGraphDatabase
 
+from ..copy import TypeRetriever
 from ..database_connector import DatabaseConnector
 from ..query_executor import QueryExecutor
 from .index_query_builder import (
@@ -7,7 +8,6 @@ from .index_query_builder import (
     Neo4jIndexQueryBuilder,
 )
 from .ingest_query_builder import Neo4jIngestQueryBuilder
-from .query_executor import Neo4jQueryExecutor
 
 
 class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
@@ -46,9 +46,16 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
         self.database_name = database_name
 
     def make_query_executor(self) -> QueryExecutor:
+        from .query_executor import Neo4jQueryExecutor
+
         return Neo4jQueryExecutor(
             self.driver,
             self.ingest_query_builder,
             self.index_query_builder,
             self.database_name,
         )
+
+    def make_type_retriever(self) -> TypeRetriever:
+        from .type_retriever import Neo4jTypeRetriever
+
+        return Neo4jTypeRetriever(self)
