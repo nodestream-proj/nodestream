@@ -1,6 +1,5 @@
 from hamcrest import assert_that, equal_to, instance_of
 
-
 from nodestream.databases.neo4j import Neo4jDatabaseConnector
 from nodestream.databases.neo4j.index_query_builder import (
     Neo4jEnterpriseIndexQueryBuilder,
