@@ -46,7 +46,7 @@ async def test_connect(connector, mocker):
 
 @pytest.mark.asyncio
 async def test_disconnect(connector, mocker):
-    connector.consumer = mocker.AsyncMock()
+    connector.consumer = mocker.Mock()
     await connector.disconnect()
     connector.consumer.close.assert_called_once()
 
