@@ -19,9 +19,6 @@ class TypeRetriever(ABC):
         raise NotImplementedError
 
 
-# TODO: Change the CLI to pass the project, not the schema.
-
-
 class Copier(Extractor):
     def __init__(
         self,
