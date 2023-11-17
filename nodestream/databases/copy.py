@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import AsyncGenerator, List
 
-from ..schema.indexes import KeyIndex
-from ..project import Project
 from ..model import Node, RelationshipWithNodes
 from ..pipeline import Extractor
+from ..project import Project
+from ..schema.indexes import KeyIndex
 
 
 class TypeRetriever(ABC):

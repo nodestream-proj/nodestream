@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 
 from ..pluggable import Pluggable
 from ..subclass_registry import SubclassRegistry
+from .copy import TypeRetriever
 from .query_executor import QueryExecutor
 from .query_executor_with_statistics import QueryExecutorWithStatistics
-from .copy import TypeRetriever
 
 DATABASE_CONNECTOR_SUBCLASS_REGISTRY = SubclassRegistry()
 

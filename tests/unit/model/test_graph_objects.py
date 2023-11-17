@@ -2,10 +2,10 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.model import (
     Node,
-    RelationshipWithNodes,
+    NodeCreationRule,
     Relationship,
     RelationshipCreationRule,
-    NodeCreationRule,
+    RelationshipWithNodes,
 )
 
 

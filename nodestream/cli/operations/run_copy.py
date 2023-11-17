@@ -2,7 +2,7 @@ from typing import List
 
 from ...databases import Copier, GraphDatabaseWriter
 from ...pipeline import Pipeline
-from ...project import Target, Project
+from ...project import Project, Target
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 

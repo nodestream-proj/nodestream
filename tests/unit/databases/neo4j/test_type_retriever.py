@@ -1,9 +1,10 @@
 import pytest
-from neo4j.graph import Node as Neo4jNode, Relationship as Neo4jRelationship
 from hamcrest import assert_that, equal_to, has_length
+from neo4j.graph import Node as Neo4jNode
+from neo4j.graph import Relationship as Neo4jRelationship
 
-from nodestream.model import Node, Relationship
 from nodestream.databases.neo4j.type_retriever import Neo4jTypeRetriever
+from nodestream.model import Node, Relationship
 
 
 @pytest.fixture

@@ -1,11 +1,12 @@
 from typing import AsyncGenerator
 
-from neo4j.graph import Node as Neo4jNode, Relationship as Neo4jRelationship
+from neo4j.graph import Node as Neo4jNode
+from neo4j.graph import Relationship as Neo4jRelationship
 
+from ...model import Node, PropertySet, Relationship, RelationshipWithNodes
+from ..copy import TypeRetriever
 from .database_connector import Neo4jDatabaseConnector
 from .extractor import Neo4jExtractor
-from ..copy import TypeRetriever
-from ...model import RelationshipWithNodes, Node, PropertySet, Relationship
 
 FETCH_ALL_NODES_BY_TYPE_QUERY_FORMAT = """
 MATCH (n:{type})

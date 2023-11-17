@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 from .creation_rules import NodeCreationRule, RelationshipCreationRule
 
 if TYPE_CHECKING:
-    from .desired_ingestion import DesiredIngestion
     from ..interpreting.context import ProviderContext
     from ..interpreting.value_providers import ValueProvider
+    from .desired_ingestion import DesiredIngestion
 
 
 class DeduplicatableObject(ABC):
