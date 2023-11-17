@@ -1,5 +1,6 @@
 import pytest
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, equal_to, equal_to_ignoring_whitespace
+from yaml import safe_dump
 
 from nodestream.model import PropertySet
 from nodestream.pipeline.value_providers import VariableValueProvider
@@ -42,3 +43,8 @@ def test_hey_hit_many_from_list(blank_context_with_variables):
     assert_that(
         subject.many_values(blank_context_with_variables), equal_to(["a", "list"])
     )
+
+
+def test_variables_dump():
+    subject = VariableValueProvider("a")
+    assert_that(safe_dump(subject), equal_to_ignoring_whitespace("!variable 'a'"))

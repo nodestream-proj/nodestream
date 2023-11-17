@@ -71,21 +71,28 @@ class StreamExtractor(Extractor):
     ):
         self.connector = connector
         self.record_format = record_format
+        self.log_flush = True
         self.logger = getLogger(__name__)
 
-    def poll(self):
-        return self.connector.poll()
+    async def poll(self):
+        results = await self.connector.poll()
+        if len(results) == 0:
+            if self.log_flush:
+                self.logger.info("flushing extractor because no records were returned")
+                self.log_flush = False
+            yield Flush
+        else:
+            self.logger.debug("Received Kafka Messages")
+            self.log_flush = True
+            for record in results:
+                yield self.record_format.parse(record)
 
     async def extract_records(self):
         await self.connector.connect()
         try:
             while True:
-                results = await self.poll()
-                if len(results) == 0:
-                    yield Flush
-                else:
-                    for record in results:
-                        yield self.record_format.parse(record)
+                async for item in self.poll():
+                    yield item
         except Exception:
             self.logger.exception("failed extracting records")
         finally:

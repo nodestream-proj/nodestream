@@ -45,9 +45,6 @@ class JmespathValueProvider(ValueProvider):
         return self.search(context)
 
 
-# NOTE: This is here because the default pipeline generation includes a jmespath.
-# So we needed a way to represent this. If this becomes more of a thing, we
-# should consider doing something more robust
 SafeDumper.add_representer(
     JmespathValueProvider,
     lambda dumper, jmespath: dumper.represent_scalar(
