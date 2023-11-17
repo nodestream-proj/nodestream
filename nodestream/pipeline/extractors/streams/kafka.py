@@ -89,23 +89,23 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         results = []
         for _ in range(self.max_records):
             try:
-                loop = asyncio.get_running_loop()
-                msg = await loop.run_in_executor(
-                    None, self.consumer.poll, self.poll_timeout
-                )
-                if msg is None:
+                result = await self.get_next_messsage()
+                if result is None:
                     self.logger.debug("Polling returned no messages")
-                    break
-                message_value = self.process_message(msg)
-                self.logger.debug(
-                    "Received Kafka Messages",
-                    extra={"topic": msg.topic(), "partition": msg.partition()},
-                )
-                results.append(message_value)
+                    continue
+                results.append(result)
             except Exception:
                 self.logger.exception("error while polling Kafka messages")
                 break
         return results
+
+    async def get_next_messsage(self):
+        loop = asyncio.get_running_loop()
+        msg = await loop.run_in_executor(None, self.consumer.poll, self.poll_timeout)
+        if msg is None:
+            return None
+        message_value = self.process_message(msg)
+        return message_value
 
     def process_message(self, msg):
         if msg.error():
