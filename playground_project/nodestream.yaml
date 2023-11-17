@@ -5,9 +5,15 @@ scopes:
       - test2.yaml
 
 targets:
-  my-db:
+  db-one:
     database: neo4j
     database_name: neo4j
     username: neo4j
     password: neo4j123
     uri: bolt://localhost:7687
+  db-two:
+    database: neo4j
+    database_name: neo4j
+    username: neo4j
+    password: neo4j123
+    uri: bolt://localhost:7688
