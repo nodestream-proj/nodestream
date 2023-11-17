@@ -1,3 +1,4 @@
+import re
 from abc import abstractmethod
 from typing import Any, AsyncGenerator, Dict, Iterable, Optional
 
@@ -86,6 +87,70 @@ class ExcludeWhenValuesMatchPossibilities(Filter):
         return cls(inner)
 
     def __init__(self, inner: ValuesMatchPossibilitiesFilter) -> None:
+        self.inner = inner
+
+    async def filter_record(self, record: Any) -> bool:
+        return not await self.inner.filter_record(record)
+
+
+class RegexMatcher:
+    @classmethod
+    def from_file_data(
+        cls,
+        value: StaticValueOrValueProvider,
+        regex: str,
+        normalization: Optional[Dict[str, Any]] = None,
+    ):
+        return cls(
+            value_provider=ValueProvider.guarantee_value_provider(value),
+            regex=regex,
+            normalization=(normalization or {}),
+        )
+
+    def __init__(
+        self,
+        value_provider: StaticValueOrValueProvider,
+        regex: StaticValueOrValueProvider,
+        normalization: Dict[str, Any],
+    ) -> None:
+        self.value_provider = value_provider
+        self.regex = regex
+        self.normalization = normalization
+
+    def does_match(self, context: ProviderContext) -> bool:
+        actual_value = self.value_provider.normalize_single_value(
+            context, **self.normalization
+        )
+        return re.match(self.regex, actual_value) is not None
+
+
+class ValueMatchesRegex(Filter):
+    """A filter that ensures a given value matches a regex."""
+
+    @classmethod
+    def from_file_data(cls, fields: Iterable[Dict[str, Any]]):
+        regex_matchers = [RegexMatcher.from_file_data(**field) for field in fields]
+        return cls(regex_matchers=regex_matchers)
+
+    def __init__(self, regex_matchers: RegexMatcher):
+        self.regex_matchers = regex_matchers
+
+    async def filter_record(self, item: Any):
+        context_from_record = ProviderContext(item, None)
+        return not all(
+            matcher.does_match(context_from_record) for matcher in self.regex_matchers
+        )
+
+
+class ExcludeWhenValueMatchesRegex(Filter):
+    """A filter that excludes a given value that matches a regex."""
+
+    @classmethod
+    def from_file_data(cls, **kwargs):
+        inner = ValueMatchesRegex.from_file_data(**kwargs)
+        return cls(inner)
+
+    def __init__(self, inner: ValueMatchesRegex) -> None:
         self.inner = inner
 
     async def filter_record(self, record: Any) -> bool:
