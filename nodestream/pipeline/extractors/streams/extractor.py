@@ -82,6 +82,9 @@ class StreamExtractor(Extractor):
             while True:
                 results = await self.poll()
                 if len(results) == 0:
+                    self.logger.info(
+                        "flushing extractor because no results were returned",
+                    )
                     yield Flush
                 else:
                     for record in results:
