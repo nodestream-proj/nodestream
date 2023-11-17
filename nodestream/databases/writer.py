@@ -8,16 +8,14 @@ class GraphDatabaseWriter(Writer):
     @classmethod
     def from_file_data(
         cls,
-        batch_size: int,
         database: str,
         ingest_strategy_name: str = INGESTION_STRATEGY_REGISTRY.name_for(
             DebouncedIngestStrategy
         ),
         collect_stats: bool = True,
+        batch_size: int = 1000,
         **database_args
     ):
-        # Import all query executors so that they can register themselves
-        DatabaseConnector.import_all()
         connector = DatabaseConnector.from_database_args(
             database=database, **database_args
         )
