@@ -1,3 +1,4 @@
+import asyncio
 from logging import getLogger
 from typing import Any, Iterable, List, Optional
 
@@ -82,19 +83,22 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         self.logger.info("Connected to Kafka Topic %s", self.topic)
 
     async def disconnect(self):
-        await self.consumer.close()
+        self.consumer.close()
 
     async def poll(self) -> Iterable[Any]:
         results = []
         for _ in range(self.max_records):
             try:
-                msg = self.consumer.poll(self.poll_timeout)
+                loop = asyncio.get_running_loop()
+                msg = await loop.run_in_executor(
+                    None, self.consumer.poll, self.poll_timeout
+                )
                 if msg is None:
                     self.logger.debug("Polling returned no messages")
-                    continue
+                    break
                 message_value = self.process_message(msg)
                 self.logger.debug(
-                    "Recived Kafka Messages",
+                    "Received Kafka Messages",
                     extra={"topic": msg.topic(), "partition": msg.partition()},
                 )
                 results.append(message_value)
