@@ -2,7 +2,7 @@ import pytest
 
 from nodestream.databases import GraphDatabaseWriter
 from nodestream.interpreting import Interpreter
-from nodestream.pipeline import IterableExtractor, Flush, Pipeline
+from nodestream.pipeline import Flush, IterableExtractor, Pipeline
 
 
 @pytest.fixture
