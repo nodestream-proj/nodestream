@@ -1,6 +1,5 @@
 from typing import Iterable
 
-from cleo.io.outputs.output import Verbosity
 from yaml import safe_dump
 
 from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
@@ -50,13 +49,9 @@ class RunPipeline(Operation):
         self, command: NodestreamCommand, pipeline_name: str
     ) -> RunRequest:
         def print_effective_config(config):
-            command.line(
-                "<info>Effective configuration:</info>",
-                verbosity=Verbosity.VERY_VERBOSE,
-            )
-            command.line(
-                f"<info>{safe_dump(config)}</info>", verbosity=Verbosity.VERY_VERBOSE
-            )
+            if command.is_very_verbose:
+                command.line("<info>Effective configuration:</info>")
+                command.line(f"<info>{safe_dump(config)}</info>")
 
         return RunRequest(
             pipeline_name=pipeline_name,

@@ -1,7 +1,7 @@
 import re
 from typing import Any, Iterable, Type
 
-from yaml import SafeLoader
+from yaml import SafeDumper, SafeLoader
 
 from .context import ProviderContext
 from .value_provider import ValueProvider
@@ -30,3 +30,12 @@ class RegexValueProvider(ValueProvider):
         loader.add_constructor(
             "!regex", lambda loader, node: cls(**loader.construct_mapping(node))
         )
+
+
+SafeDumper.add_representer(
+    RegexValueProvider,
+    lambda dumper, regex: dumper.represent_mapping(
+        "!regex",
+        {"regex": regex.regex.pattern, "group": regex.group, "data": regex.data},
+    ),
+)
