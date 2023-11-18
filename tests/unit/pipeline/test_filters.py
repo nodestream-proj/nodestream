@@ -2,7 +2,6 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline.filters import (
-    ExcludeWhenValueMatchesRegex,
     ExcludeWhenValuesMatchPossibilities,
     Filter,
     ValueMatchesRegex,
@@ -81,16 +80,34 @@ async def test_base_filter_filters_correctly():
     assert_that(results, equal_to([1]))
 
 
-MATCH_REGEX_CONFIGURATION = [
+MATCH_INCLUDE_REGEX_CONFIGURATION = [
     {
         "value": ">[test]",
+        "include": True,
         "regex": ".*[\[\]\{\}\(\)\\\/~,]+",  # Matches any string with the characters: []{}()\/~,
     }
 ]
 
-FAILED_MATCH_REGEX_CONFIGURATION = [
+FAILED_MATCH_INCLUDE_REGEX_CONFIGURATION = [
     {
         "value": "test",
+        "include": True,
+        "regex": ".*[\[\]\{\}\(\)\\\/~,]+",  # Matches any string with the characters: []{}()\/~,
+    }
+]
+
+MATCH_EXCLUDE_REGEX_CONFIGURATION = [
+    {
+        "value": ">[test]",
+        "include": False,
+        "regex": ".*[\[\]\{\}\(\)\\\/~,]+",  # Matches any string with the characters: []{}()\/~,
+    }
+]
+
+FAILED_MATCH_EXCLUDE_REGEX_CONFIGURATION = [
+    {
+        "value": "test",
+        "include": False,
         "regex": ".*[\[\]\{\}\(\)\\\/~,]+",  # Matches any string with the characters: []{}()\/~,
     }
 ]
@@ -98,31 +115,31 @@ FAILED_MATCH_REGEX_CONFIGURATION = [
 
 @pytest.mark.asyncio
 async def test_match_regex_successful():
-    subject = ValueMatchesRegex.from_file_data(fields=MATCH_REGEX_CONFIGURATION)
+    subject = ValueMatchesRegex.from_file_data(fields=MATCH_INCLUDE_REGEX_CONFIGURATION)
     result = await subject.filter_record({})
     assert_that(result, equal_to(False))
 
 
 @pytest.mark.asyncio
 async def test_not_match_regex_successful():
-    subject = ValueMatchesRegex.from_file_data(fields=FAILED_MATCH_REGEX_CONFIGURATION)
-    result = await subject.filter_record({})
-    assert_that(result, equal_to(True))
-
-
-@pytest.mark.asyncio
-async def test_exclude_match_regex_successful():
-    subject = ExcludeWhenValueMatchesRegex.from_file_data(
-        fields=MATCH_REGEX_CONFIGURATION
+    subject = ValueMatchesRegex.from_file_data(
+        fields=FAILED_MATCH_INCLUDE_REGEX_CONFIGURATION
     )
     result = await subject.filter_record({})
     assert_that(result, equal_to(True))
 
 
 @pytest.mark.asyncio
+async def test_exclude_match_regex_successful():
+    subject = ValueMatchesRegex.from_file_data(fields=MATCH_EXCLUDE_REGEX_CONFIGURATION)
+    result = await subject.filter_record({})
+    assert_that(result, equal_to(True))
+
+
+@pytest.mark.asyncio
 async def test_exclude_match_regex_failing():
-    subject = ExcludeWhenValueMatchesRegex.from_file_data(
-        fields=FAILED_MATCH_REGEX_CONFIGURATION
+    subject = ValueMatchesRegex.from_file_data(
+        fields=FAILED_MATCH_EXCLUDE_REGEX_CONFIGURATION
     )
     result = await subject.filter_record({})
     assert_that(result, equal_to(False))

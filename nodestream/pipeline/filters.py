@@ -99,11 +99,13 @@ class RegexMatcher:
         cls,
         value: StaticValueOrValueProvider,
         regex: str,
+        include: bool = True,
         normalization: Optional[Dict[str, Any]] = None,
     ):
         return cls(
             value_provider=ValueProvider.guarantee_value_provider(value),
             regex=regex,
+            include=include,
             normalization=(normalization or {}),
         )
 
@@ -111,21 +113,24 @@ class RegexMatcher:
         self,
         value_provider: StaticValueOrValueProvider,
         regex: StaticValueOrValueProvider,
+        include: bool,
         normalization: Dict[str, Any],
     ) -> None:
         self.value_provider = value_provider
         self.regex = regex
+        self.include = include
         self.normalization = normalization
 
-    def does_match(self, context: ProviderContext) -> bool:
+    def should_include(self, context: ProviderContext) -> bool:
         actual_value = self.value_provider.normalize_single_value(
             context, **self.normalization
         )
-        return re.match(self.regex, actual_value) is not None
+        match = re.match(self.regex, actual_value) is not None
+        return not match if self.include else match
 
 
 class ValueMatchesRegex(Filter):
-    """A filter that ensures a given value matches a regex."""
+    """A filter that includes/excludes a given value based on a matched regex."""
 
     @classmethod
     def from_file_data(cls, fields: Iterable[Dict[str, Any]]):
@@ -137,21 +142,7 @@ class ValueMatchesRegex(Filter):
 
     async def filter_record(self, item: Any):
         context_from_record = ProviderContext(item, None)
-        return not all(
-            matcher.does_match(context_from_record) for matcher in self.regex_matchers
+        return all(
+            matcher.should_include(context_from_record)
+            for matcher in self.regex_matchers
         )
-
-
-class ExcludeWhenValueMatchesRegex(Filter):
-    """A filter that excludes a given value that matches a regex."""
-
-    @classmethod
-    def from_file_data(cls, **kwargs):
-        inner = ValueMatchesRegex.from_file_data(**kwargs)
-        return cls(inner)
-
-    def __init__(self, inner: ValueMatchesRegex) -> None:
-        self.inner = inner
-
-    async def filter_record(self, record: Any) -> bool:
-        return not await self.inner.filter_record(record)
