@@ -18,21 +18,6 @@ For example, if you want to get extract all of the `name` fields from the list o
 A valid `!jmespath` value provider would look like this: `!jmespath people[*].name` Essentially, any `jmespath` expression
 provided after the `!jmespath` tag will be parsed and loaded as one. Another guide on `jmespath` can be found [here](https://jmespath.site/main/).
 
-## `!jq`
-
-Represents a [jq](https://jqlang.github.io/jq/) query language expression that should be executed against the input record.
-
-For example, if you want to get extract all of the `name` fields from the list of people provided in a document like this:
-
-```json
-{
-    "people": [{"name": "Joe", "age": 25}, {"name": "john", "age": 45}]
-}
-```
-
-A valid `!jq` value provider would look like this: `!jq .people[].name` Essentially, any `jq` expression
-provided after the `!jq` tag will be parsed and loaded as one. More information on `jq` can be found [here](https://jqlang.github.io/jq/tutorial/).
-
 ## `!variable`
 
 Provides the value of an extracted variable from the [Variables Interpretation](./interpretations.md#variables-interpretation). For instance, if
@@ -114,7 +99,7 @@ The following interpretation would create a node with the key `Hello, Joe!`:
       - type: source_node
         node_type: HelloNode
         key:
-          name: !format 
+          name: !format
             fmt: "Hello, {name}!"
             name: !jmespath name
         properties:
@@ -142,7 +127,7 @@ The following interpretation would create a node with the key `Joe`:
       - type: source_node
         node_type: HelloNode
         key:
-          first_name: !regex 
+          first_name: !regex
             regex: "^(?P<first_name>[a-zA-Z]+)\s(?P<last_name>[a-zA-Z]+)$"
             data: !jmespath name
             group: first_name
@@ -151,7 +136,37 @@ The following interpretation would create a node with the key `Joe`:
 ```
 
 You can either use named groups or numbered groups.
-If you use named groups, you can specify the group name in the `group` argument. 
-If you use numbered groups, you can specify the group number in the `group` argument. 
+If you use named groups, you can specify the group name in the `group` argument.
+If you use numbered groups, you can specify the group number in the `group` argument.
 If you do not specify a group, the first group will be used - which is the entire match.
 
+## `!split`
+
+The `!split` value provider allows you to split a string into a list of strings using a delimiter. For example, if you wanted to split a string like this:
+
+```json
+{
+    "name": "Joe Smith",
+    "talents": "jumping,running,swimming"
+}
+```
+
+The following interpretations would create a `Joe Smith` node with relationships to `jumping`, `running`, and `swimming`:
+
+```yaml
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: source_node
+        node_type: Person
+        key:
+          name: !jmespath name
+      - type: relationship
+        node_type: Talent
+        relationship_type: HAS_TALENT
+        find_many: true
+        node_key:
+          name: !split
+            data: !jmespath talents
+            delimiter: ","
+```

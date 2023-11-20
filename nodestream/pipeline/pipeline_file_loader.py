@@ -60,6 +60,7 @@ class PipelineInitializationArguments:
     step_outbox_size: int = 1000
     annotations: Optional[List[str]] = None
     on_effective_configuration_resolved: Optional[Callable[[List[Dict]], None]] = None
+    extra_steps: Optional[List[Step]] = None
 
     @classmethod
     def for_introspection(cls):
@@ -79,7 +80,8 @@ class PipelineInitializationArguments:
         effective = self.get_effective_configuration(file_data)
         if self.on_effective_configuration_resolved:
             self.on_effective_configuration_resolved(file_data)
-        return [class_loader.load_class(**step_data) for step_data in effective]
+        in_file = [class_loader.load_class(**step_data) for step_data in effective]
+        return in_file + (self.extra_steps or [])
 
     def get_effective_configuration(self, file_data):
         return [

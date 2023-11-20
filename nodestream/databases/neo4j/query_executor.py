@@ -37,7 +37,10 @@ class Neo4jQueryExecutor(QueryExecutor):
                 operation, nodes
             )
         )
-        await self.execute(batched_query.as_query(), log_result=True)
+        await self.execute(
+            batched_query.as_query(self.ingest_query_builder.apoc_iterate),
+            log_result=True,
+        )
 
     async def upsert_relationships_in_bulk_of_same_operation(
         self,
@@ -49,7 +52,10 @@ class Neo4jQueryExecutor(QueryExecutor):
                 shape, relationships
             )
         )
-        await self.execute(batched_query.as_query(), log_result=True)
+        await self.execute(
+            batched_query.as_query(self.ingest_query_builder.apoc_iterate),
+            log_result=True,
+        )
 
     async def upsert_key_index(self, index: KeyIndex):
         query = self.index_query_builder.create_key_index_query(index)

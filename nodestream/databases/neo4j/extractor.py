@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 from neo4j import RoutingControl
 
 from ...pipeline.extractors import Extractor
-from .database_connector import DatabaseConnector
+from .database_connector import Neo4jDatabaseConnector
 
 
 class Neo4jExtractor(Extractor):
@@ -15,7 +15,9 @@ class Neo4jExtractor(Extractor):
         limit: int = 100,
         **database_connector_args
     ) -> None:
-        self.connector = DatabaseConnector.from_file_data(**database_connector_args)
+        self.connector = Neo4jDatabaseConnector.from_file_data(
+            **database_connector_args
+        )
         self.query = query
         self.parameters = parameters or {}
         self.limit = limit
@@ -36,7 +38,7 @@ class Neo4jExtractor(Extractor):
                 "Running query on neo4j",
                 extra=dict(query=self.query, params=params),
             )
-            query_results = await driver.execute_query(
+            query_results, _, _ = await driver.execute_query(
                 self.query,
                 params,
                 routing_=RoutingControl.READ,

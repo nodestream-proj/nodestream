@@ -50,6 +50,13 @@ scopes:
   default:
     pipelines:
     - pipelines/sample.yaml
+
+targets:
+  my-db:
+    database: neo4j 
+    uri: bolt://localhost:7687
+    username: neo4j
+    password: neo4j123
 ```
 
 This file is comprised of a `scopes` section where pipelines are defined. A `scope` represents a logical grouping of pipelines that make sense for your application. Think of them like a folder.
@@ -198,31 +205,10 @@ like this:
       node_type: Number
       type: source_node
   implementation: nodestream.interpreting:Interpreter
-- arguments:
-    batch_size: 1000
-    database: !config neo4j_database
-    uri: !config neo4j_uri
-    username: !config neo4j_username
-    password: !config neo4j_password
-  implementation: nodestream.databases:GraphDatabaseWriter
 ```
 
 Each pipeline file is laid out as a series of `Step`s which are chained together and executed in order for each
 record. The first item in the pipeline is referred to generally as an `Extractor`.
-
-## Implement Config Values
-Now that we have a pipeline, lets open `nodestream.yaml` and add our configuration to provide the values for the `!config` tags in the default scope.
-```yaml
-scopes:
-  default:
-    pipelines:
-    - pipelines/org-chart.yaml
-    config:
-      neo4j_database: neo4j
-      neo4j_uri: bolt://127.0.0.1:7687
-      neo4j_username: neo4j
-      neo4j_password: neo4j123
-```
 
 ### Loading our Data Files
 
@@ -341,7 +327,7 @@ docker run \
 After that, we are finally ready! Drum roll please...
 
 ```bash
-nodestream run org-chart -v
+nodestream run org-chart --target my-db -v
 ```
 
 Should give you output like this:
@@ -352,3 +338,33 @@ Running: Initialize Project
 Running: Run Pipeline
  - Finished running pipeline: 'org-chart' (1 sec)
 ```
+
+## Making It Production Ready
+
+Right now, we have a pipeline that works, but its not exactly production ready. 
+Most importantly, we have configuration values and credentials in our `nodestream.yaml` file.
+We can use [argument resolvers](./reference/argument-resovlers.md) to make this more secure.
+Let's use the `!env` value provider to pull the credentials from environment variables.
+
+```yaml title="nodestream.yaml"
+# scopes omitted for brevity
+
+targets:
+  my-db:
+    database: neo4j 
+    uri: !env NEO4J_URI
+    username: !env NEO4J_USERNAME
+    password: !env NEO4J_PASSWORD
+```
+
+Now you can export the environment variables and run the pipeline, for example:
+
+```bash
+export NEO4J_URI=bolt://localhost:7687
+export NEO4J_USERNAME=neo4j
+export NEO4J_PASSWORD=$(cat ~/.neo4j-password)
+nodestream run org-chart --target my-db -v
+```
+
+Or you can use a tool like the [nodestream-dotenv-plugin](https://github.com/nodestream-proj/nodestream-plugin-dotenv)
+to load the environment variables from a `.env` file.

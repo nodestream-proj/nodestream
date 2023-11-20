@@ -254,7 +254,7 @@ The `Neo4jExtractor` class represents an extractor that reads records from a Neo
 input and yields the records read from the database. The extractor will automatically paginate through the database until it reaches the end. Therefore, the query needs to include a `SKIP` and `LIMIT` clause. For example:
 
 ```yaml
-- implementation: nodestream.pipeline.extractors.graphs.neo4j:Neo4jExtractor
+- implementation: nodestream.databases.neo4j.extractor:Neo4jExtractor
   arguments:
     query: MATCH (p:Person) WHERE p.name = $name RETURN p.name SKIP $offset LIMIT $limit
     uri: bolt://localhost:7687

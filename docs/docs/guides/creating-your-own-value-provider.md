@@ -1,7 +1,7 @@
 # Creating A Value Provider
 
 There are many methods of extracting and providing data to the ETl pipeline as it operates. The various yaml tags such
-as `!jq` or `!variable` refer to an underlying `ValueProvider`. 
+as `!jmespath` or `!variable` refer to an underlying `ValueProvider`.
 
 ## Creating a Value Provider
 In order to introduce your own mechanism for providing values you can create your own subclass of `ValueProvider`.
@@ -72,9 +72,9 @@ class HashValueProvider(ValueProvider):
 
 ## Registering the Value Provider
 
-ValueProviders are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `value_providers` inside of the `nodestream.plugins` group is loaded. Every Value Provider is expected to be a subclass of `nodestream.pipeline.value_providers:ValueProvider` as directed above. 
+ValueProviders are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `value_providers` inside of the `nodestream.plugins` group is loaded. Every Value Provider is expected to be a subclass of `nodestream.pipeline.value_providers:ValueProvider` as directed above.
 
-The `entry_point` should be a module that contains at least one Value Provider class. At runtime, the module will be loaded and all classes that inherit from `nodestream.pipeline.value_providers:ValueProvider` will be registered. 
+The `entry_point` should be a module that contains at least one Value Provider class. At runtime, the module will be loaded and all classes that inherit from `nodestream.pipeline.value_providers:ValueProvider` will be registered.
 
 Depending on how you are building your package, you can register your Value Provider plugin in one of the following ways:
 
@@ -109,3 +109,23 @@ Depending on how you are building your package, you can register your Value Prov
         ...
     )
     ```
+
+## Debuggability 
+
+`nodestream` contains a feature that allows the user to print the effective pipeline configuration. This is useful for debugging purposes. 
+This means that `nodestream` needs to understand how to represent your custom value provider in a human readable way in yaml. 
+To do this, you need to implement a `Representer` for your value provider. 
+
+```python
+from yaml import SafeDumper
+
+class HashValueProvider(ValueProvider):
+    # ... implementation omitted
+
+
+SafeDumper.add_representer(
+    HashValueProvider,
+    lambda dumper, hash: dumper.represent_scalar(
+        "!hash", hash.value_provider_to_hash
+    ),
+)

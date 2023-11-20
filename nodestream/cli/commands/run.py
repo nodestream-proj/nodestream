@@ -33,6 +33,13 @@ class Run(NodestreamCommand):
             default=1000,
             flag=False,
         ),
+        option(
+            "target",
+            "t",
+            "Specify a database to target at run time.",
+            multiple=True,
+            flag=False,
+        ),
     ]
 
     async def handle_async(self):

@@ -1,26 +1,31 @@
 name: Continuous Integration
 
-on: [push]
+on: 
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         python-version: ["3.10", "3.11"]
     steps:
       - uses: actions/checkout@v3
-      - name: Install Poetry
-        run: curl -sSL https://install.python-poetry.org | python -
+      - name: Install poetry
+        run: pipx install poetry
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: poetry
-          cache-dependency-path: poetry.lock
-      - name: Install Dependenencies
+          cache: 'poetry'
+      - name: Install Dependencies
         run: |
+          pip install --upgrade pip
+          pip install --upgrade setuptools
           poetry env use ${{ matrix.python-version }}
           poetry install
       - name: Run Tests
@@ -32,8 +37,9 @@ jobs:
           poetry run isort nodestream tests --check-only
       - name: Run E2E Tests
         run: poetry run pytest -m "e2e"
+        if: "runner.os == 'Linux'"
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.python-version }}
+          flags: ${{ matrix.python-version }}-${{ matrix.os }}

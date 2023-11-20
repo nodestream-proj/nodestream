@@ -20,38 +20,51 @@ def fixture_directory():
 
 @pytest.fixture
 def json_file(fixture_directory):
-    with NamedTemporaryFile("w+", suffix=".json", dir=fixture_directory) as temp_file:
+    with NamedTemporaryFile(
+        "w+", suffix=".json", dir=fixture_directory, delete=False
+    ) as temp_file:
+        name = temp_file.name
         json.dump(SIMPLE_RECORD, temp_file)
         temp_file.seek(0)
-        yield Path(temp_file.name)
+    yield Path(name)
 
 
 @pytest.fixture
 def jsonl_file(fixture_directory):
-    with NamedTemporaryFile("w+", suffix=".jsonl", dir=fixture_directory) as temp_file:
+    with NamedTemporaryFile(
+        "w+", suffix=".jsonl", dir=fixture_directory, delete=False
+    ) as temp_file:
+        name = temp_file.name
         json.dump(SIMPLE_RECORD, temp_file)
         temp_file.write("\n")
         json.dump(SIMPLE_RECORD, temp_file)
         temp_file.seek(0)
-        yield Path(temp_file.name)
+    yield Path(name)
 
 
 @pytest.fixture
 def csv_file(fixture_directory):
-    with NamedTemporaryFile("w+", suffix=".csv", dir=fixture_directory) as temp_file:
+    with NamedTemporaryFile(
+        "w+", suffix=".csv", dir=fixture_directory, delete=False
+    ) as temp_file:
+        name = temp_file.name
         writer = csv.DictWriter(temp_file, SIMPLE_RECORD.keys())
         writer.writeheader()
         writer.writerow(SIMPLE_RECORD)
         temp_file.seek(0)
-        yield Path(temp_file.name)
+    yield Path(name)
 
 
 @pytest.fixture
 def txt_file(fixture_directory):
-    with NamedTemporaryFile("w+", suffix=".txt", dir=fixture_directory) as temp_file:
+    with NamedTemporaryFile(
+        "w+", suffix=".txt", dir=fixture_directory, delete=False
+    ) as temp_file:
+        name = temp_file.name
         temp_file.write("hello world")
         temp_file.seek(0)
-        yield Path(temp_file.name)
+    yield (path := Path(name))
+    path.unlink(missing_ok=True)
 
 
 @pytest.mark.asyncio

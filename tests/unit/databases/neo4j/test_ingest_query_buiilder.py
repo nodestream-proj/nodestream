@@ -26,7 +26,7 @@ from nodestream.schema.schema import GraphObjectType
 
 @pytest.fixture
 def query_builder():
-    return Neo4jIngestQueryBuilder()
+    return Neo4jIngestQueryBuilder(True)
 
 
 GREATEST_DAY = datetime(1998, 3, 25, 2, 0, 1)
