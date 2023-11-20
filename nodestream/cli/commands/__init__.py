@@ -1,4 +1,5 @@
 from .audit_command import AuditCommand
+from .copy import Copy
 from .new import New
 from .nodestream_command import NodestreamCommand
 from .print_schema import PrintSchema
@@ -9,6 +10,7 @@ from .show import Show
 
 __all__ = (
     "AuditCommand",
+    "Copy",
     "New",
     "NodestreamCommand",
     "PrintSchema",

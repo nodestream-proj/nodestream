@@ -20,11 +20,3 @@
           first_name: !jmespath friends[*].firstName
           last_name: !jmespath friends[*].lastName
         find_many: true
-
-- implementation: nodestream.databases:GraphDatabaseWriter
-  arguments:
-    batch_size: 1000
-    database: !config neo4j_database
-    uri: !config neo4j_uri
-    username: !config neo4j_username
-    password: !config neo4j_password

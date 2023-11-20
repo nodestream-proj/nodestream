@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from ..pluggable import Pluggable
 from ..subclass_registry import SubclassRegistry
+from .copy import TypeRetriever
 from .query_executor import QueryExecutor
 from .query_executor_with_statistics import QueryExecutorWithStatistics
 
@@ -16,6 +17,8 @@ class DatabaseConnector(ABC, Pluggable):
     def from_database_args(
         cls, database: str = "neo4j", **database_args
     ) -> "DatabaseConnector":
+        DatabaseConnector.import_all()
+
         return DATABASE_CONNECTOR_SUBCLASS_REGISTRY.get(database).from_file_data(
             **database_args
         )
@@ -28,8 +31,15 @@ class DatabaseConnector(ABC, Pluggable):
     def make_query_executor(self) -> QueryExecutor:
         raise NotImplementedError
 
+    @abstractmethod
+    def make_type_retriever(self) -> TypeRetriever:
+        raise NotImplementedError
+
     def get_query_executor(self, collect_stats: bool = True):
         connector = self.make_query_executor()
         if collect_stats:
             connector = QueryExecutorWithStatistics(connector)
         return connector
+
+    def get_type_retriever(self):
+        return self.make_type_retriever()

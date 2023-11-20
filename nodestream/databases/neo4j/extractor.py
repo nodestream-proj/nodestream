@@ -8,16 +8,25 @@ from .database_connector import Neo4jDatabaseConnector
 
 
 class Neo4jExtractor(Extractor):
-    def __init__(
-        self,
+    @classmethod
+    def from_file_data(
+        cls,
         query: str,
         parameters: Optional[Dict[str, Any]] = None,
         limit: int = 100,
-        **database_connector_args
+        **connector_args
+    ):
+        connector = Neo4jDatabaseConnector.from_file_data(**connector_args)
+        return cls(query, connector, parameters, limit)
+
+    def __init__(
+        self,
+        query: str,
+        connector: Neo4jDatabaseConnector,
+        parameters: Optional[Dict[str, Any]] = None,
+        limit: int = 100,
     ) -> None:
-        self.connector = Neo4jDatabaseConnector.from_file_data(
-            **database_connector_args
-        )
+        self.connector = connector
         self.query = query
         self.parameters = parameters or {}
         self.limit = limit
