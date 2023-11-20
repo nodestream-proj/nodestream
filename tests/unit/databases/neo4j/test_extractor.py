@@ -18,7 +18,7 @@ async def test_extract_records(mocker):
         [[], "SummaryObject", ["name"]],
     ]
 
-    extractor = Neo4jExtractor(
+    extractor = Neo4jExtractor.from_file_data(
         query="MATCH (n) RETURN n.name as name",
         params={"test": "test"},
         limit=2,

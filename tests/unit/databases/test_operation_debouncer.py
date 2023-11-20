@@ -1,7 +1,7 @@
 from hamcrest import assert_that, has_length
 
 from nodestream.databases.operation_debouncer import OperationDebouncer
-from nodestream.model import MatchStrategy, Node, Relationship, RelationshipWithNodes
+from nodestream.model import Node, NodeCreationRule, Relationship, RelationshipWithNodes
 
 
 def test_debounces_updates_to_nodes_with_same_key():
@@ -78,8 +78,8 @@ def test_debounces_nodes_with_different_match_strategies():
     debouncer = OperationDebouncer()
     node1 = Node("NodeType", {"id": "1", "name": "foo"}, {"foo": "bar"})
     node2 = Node("NodeType", {"id": "1", "name": "foo"}, {"foo": "baz"})
-    debouncer.debounce_node_operation(node1, match_strategy=MatchStrategy.EAGER)
-    debouncer.debounce_node_operation(node2, match_strategy=MatchStrategy.FUZZY)
+    debouncer.debounce_node_operation(node1, node_creation_rule=NodeCreationRule.EAGER)
+    debouncer.debounce_node_operation(node2, node_creation_rule=NodeCreationRule.FUZZY)
 
     result = list(debouncer.drain_node_groups())
     assert_that(result, has_length(2))
@@ -95,7 +95,7 @@ def test_debounced_relationships_with_different_match_strategies():
             "NodeType", {"id": "2", "name": "bar"}, {"foo": "node_two_val1"}
         ),
         relationship=Relationship("REL_TYPE", {"foo": "bar"}, {"prop": "rel_val1"}),
-        from_side_match_strategy=MatchStrategy.FUZZY,
+        from_side_node_creation_rule=NodeCreationRule.FUZZY,
     )
     rel2 = RelationshipWithNodes(
         to_node=Node("NodeType", {"id": "1", "name": "foo"}, {"foo": "node_one_val2"}),
@@ -103,7 +103,7 @@ def test_debounced_relationships_with_different_match_strategies():
             "NodeType", {"id": "2", "name": "bar"}, {"foo": "node_two_val2"}
         ),
         relationship=Relationship("REL_TYPE", {"foo": "bar"}, {"prop": "rel_val2"}),
-        from_side_match_strategy=MatchStrategy.MATCH_ONLY,
+        from_side_node_creation_rule=NodeCreationRule.MATCH_ONLY,
     )
     debouncer.debounce_relationship(rel1)
     debouncer.debounce_relationship(rel2)
@@ -123,7 +123,7 @@ def test_debounced_relationships_with_different_match_strategies_eager_does_not_
             "NodeType", {"id": "2", "name": "bar"}, {"foo": "node_two_val1"}
         ),
         relationship=Relationship("REL_TYPE", {"foo": "bar"}, {"prop": "rel_val1"}),
-        from_side_match_strategy=MatchStrategy.EAGER,
+        from_side_node_creation_rule=NodeCreationRule.EAGER,
     )
     rel2 = RelationshipWithNodes(
         to_node=Node("NodeType", {"id": "1", "name": "foo"}, {"foo": "node_one_val2"}),
@@ -131,7 +131,7 @@ def test_debounced_relationships_with_different_match_strategies_eager_does_not_
             "NodeType", {"id": "2", "name": "bar"}, {"foo": "node_two_val2"}
         ),
         relationship=Relationship("REL_TYPE", {"foo": "bar"}, {"prop": "rel_val2"}),
-        from_side_match_strategy=MatchStrategy.MATCH_ONLY,
+        from_side_node_creation_rule=NodeCreationRule.MATCH_ONLY,
     )
     debouncer.debounce_relationship(rel1)
     debouncer.debounce_relationship(rel2)

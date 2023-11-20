@@ -6,9 +6,10 @@ from typing import Iterable
 from cymple.builder import NodeAfterMergeAvailable, NodeAvailable, QueryBuilder
 
 from ...model import (
-    MatchStrategy,
     Node,
+    NodeCreationRule,
     Relationship,
+    RelationshipCreationRule,
     RelationshipIdentityShape,
     RelationshipWithNodes,
     TimeToLiveConfiguration,
@@ -59,7 +60,7 @@ def generate_where_set_with_prefix(properties: frozenset, prefix: str):
 def _match_node(
     node_operation: OperationOnNodeIdentity, name=GENERIC_NODE_REF_NAME
 ) -> NodeAvailable:
-    op = "=~" if node_operation.match_strategy == MatchStrategy.FUZZY else "="
+    op = "=~" if node_operation.node_creation_rule == NodeCreationRule.FUZZY else "="
     identity = node_operation.node_identity
     props = generate_where_set_with_prefix(identity.keys, name)
     return (
@@ -89,7 +90,9 @@ def _merge_node(
 
 
 @cache
-def _merge_relationship(rel_identity: RelationshipIdentityShape):
+def _make_relationship(
+    rel_identity: RelationshipIdentityShape, creation_rule: RelationshipCreationRule
+):
     keys = generate_properties_set_with_prefix(rel_identity.keys, RELATIONSHIP_REF_NAME)
     match_rel_query = (
         QueryBuilder()
@@ -102,8 +105,11 @@ def _merge_relationship(rel_identity: RelationshipIdentityShape):
         )
         .node(ref_name=TO_NODE_REF_NAME)
     )
+
     create_rel_query = str(match_rel_query).replace("OPTIONAL MATCH ", "CREATE")
     set_properties_query = f"SET {RELATIONSHIP_REF_NAME} += params.{generate_prefixed_param_name(PROPERTIES_PARAM_NAME, RELATIONSHIP_REF_NAME)}"
+    if creation_rule == RelationshipCreationRule.CREATE:
+        return f"{create_rel_query} {set_properties_query}"
 
     return f"""
     {match_rel_query}
@@ -126,7 +132,7 @@ class Neo4jIngestQueryBuilder:
     ) -> str:
         """Generate a query to update a node in the database given a node type and a match strategy."""
 
-        if operation.match_strategy == MatchStrategy.EAGER:
+        if operation.node_creation_rule == NodeCreationRule.EAGER:
             query = str(_merge_node(operation))
         else:
             query = str(_match_node(operation))
@@ -168,7 +174,9 @@ class Neo4jIngestQueryBuilder:
 
         match_from_node_segment = _match_node(operation.from_node, FROM_NODE_REF_NAME)
         match_to_node_segment = _match_node(operation.to_node, TO_NODE_REF_NAME)
-        merge_rel_segment = _merge_relationship(operation.relationship_identity)
+        merge_rel_segment = _make_relationship(
+            operation.relationship_identity, operation.relationship_creation_rule
+        )
         return f"{match_from_node_segment} {match_to_node_segment} {merge_rel_segment}"
 
     def generate_update_rel_params(self, rel: Relationship) -> dict:

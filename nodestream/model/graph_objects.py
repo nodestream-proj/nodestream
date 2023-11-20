@@ -2,11 +2,12 @@ from abc import ABC
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
-from .match_strategy import MatchStrategy
+from .creation_rules import NodeCreationRule, RelationshipCreationRule
 
 if TYPE_CHECKING:
     from ..interpreting.context import ProviderContext
     from ..interpreting.value_providers import ValueProvider
+    from .desired_ingestion import DesiredIngestion
 
 
 class DeduplicatableObject(ABC):
@@ -110,6 +111,11 @@ class Node(DeduplicatableObject):
     def get_dedup_key(self) -> tuple:
         return tuple(sorted(self.key_values.values()))
 
+    def into_ingest(self) -> "DesiredIngestion":
+        from .desired_ingestion import DesiredIngestion
+
+        return DesiredIngestion(source=self)
+
 
 @dataclass(slots=True, frozen=True)
 class Relationship(DeduplicatableObject):
@@ -153,8 +159,11 @@ class RelationshipWithNodes(DeduplicatableObject):
     to_node: Node
     relationship: Relationship
 
-    to_side_match_strategy: MatchStrategy = MatchStrategy.EAGER
-    from_side_match_strategy: MatchStrategy = MatchStrategy.EAGER
+    to_side_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
+    from_side_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
+    relationship_creation_rule: RelationshipCreationRule = (
+        RelationshipCreationRule.EAGER
+    )
 
     def has_same_keys(self, other: "RelationshipWithNodes") -> bool:
         return (
@@ -174,6 +183,19 @@ class RelationshipWithNodes(DeduplicatableObject):
             self.from_node.get_dedup_key(),
             self.relationship.get_dedup_key(),
         )
+
+    def into_ingest(self) -> "DesiredIngestion":
+        from .desired_ingestion import DesiredIngestion
+
+        ingest = DesiredIngestion(source=self.from_node)
+        ingest.add_relationship(
+            self.to_node,
+            self.relationship,
+            outbound=True,
+            node_creation_rule=NodeCreationRule.MATCH_ONLY,
+            relationship_creation_rule=RelationshipCreationRule.CREATE,
+        )
+        return ingest
 
 
 @dataclass(slots=True, frozen=True)
