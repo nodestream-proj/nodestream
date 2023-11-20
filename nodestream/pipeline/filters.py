@@ -117,7 +117,7 @@ class RegexMatcher:
         normalization: Dict[str, Any],
     ) -> None:
         self.value_provider = value_provider
-        self.regex = regex
+        self.regex = re.compile(regex)
         self.include = include
         self.normalization = normalization
 
@@ -125,7 +125,7 @@ class RegexMatcher:
         actual_value = self.value_provider.normalize_single_value(
             context, **self.normalization
         )
-        match = re.match(self.regex, actual_value) is not None
+        match = self.regex.match(actual_value) is not None
         return not match if self.include else match
 
 
