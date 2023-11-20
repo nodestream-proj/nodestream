@@ -129,7 +129,7 @@ class RegexMatcher:
         return not match if self.include else match
 
 
-class ValueMatchesRegex(Filter):
+class ValueMatchesRegexFilter(Filter):
     """A filter that includes/excludes a given value based on a matched regex."""
 
     @classmethod
