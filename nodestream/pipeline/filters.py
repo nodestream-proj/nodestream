@@ -133,16 +133,19 @@ class ValueMatchesRegexFilter(Filter):
     """A filter that includes/excludes a given value based on a matched regex."""
 
     @classmethod
-    def from_file_data(cls, fields: Iterable[Dict[str, Any]]):
-        regex_matchers = [RegexMatcher.from_file_data(**field) for field in fields]
-        return cls(regex_matchers=regex_matchers)
+    def from_file_data(
+        cls,
+        value: StaticValueOrValueProvider,
+        regex: StaticValueOrValueProvider,
+        include: bool,
+        normalize: Optional[Dict[str, Any]] = None,
+    ):
+        regex_matcher = RegexMatcher.from_file_data(value, regex, include, normalize)
+        return cls(regex_matcher=regex_matcher)
 
-    def __init__(self, regex_matchers: RegexMatcher):
-        self.regex_matchers = regex_matchers
+    def __init__(self, regex_matcher: RegexMatcher):
+        self.regex_matcher = regex_matcher
 
     async def filter_record(self, item: Any):
         context_from_record = ProviderContext(item, None)
-        return all(
-            matcher.should_include(context_from_record)
-            for matcher in self.regex_matchers
-        )
+        return self.regex_matcher.should_include(context_from_record)

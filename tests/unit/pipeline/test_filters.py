@@ -80,42 +80,11 @@ async def test_base_filter_filters_correctly():
     assert_that(results, equal_to([1]))
 
 
-MATCH_INCLUDE_REGEX_CONFIGURATION = [
-    {
-        "value": ">[test]",
-        "include": True,
-        "regex": ".*[\[\]\{\}\(\)\\\/~,]+",  # Matches any string with the characters: []{}()\/~,
-    }
-]
-
-FAILED_MATCH_INCLUDE_REGEX_CONFIGURATION = [
-    {
-        "value": "test",
-        "include": True,
-        "regex": ".*[\[\]\{\}\(\)\\\/~,]+",  # Matches any string with the characters: []{}()\/~,
-    }
-]
-
-MATCH_EXCLUDE_REGEX_CONFIGURATION = [
-    {
-        "value": ">[test]",
-        "include": False,
-        "regex": ".*[\[\]\{\}\(\)\\\/~,]+",  # Matches any string with the characters: []{}()\/~,
-    }
-]
-
-FAILED_MATCH_EXCLUDE_REGEX_CONFIGURATION = [
-    {
-        "value": "test",
-        "include": False,
-        "regex": ".*[\[\]\{\}\(\)\\\/~,]+",  # Matches any string with the characters: []{}()\/~,
-    }
-]
-
-
 @pytest.mark.asyncio
 async def test_match_regex_successful():
-    subject = ValueMatchesRegexFilter.from_file_data(fields=MATCH_INCLUDE_REGEX_CONFIGURATION)
+    subject = ValueMatchesRegexFilter.from_file_data(
+        value=">[test]", regex=".*[\[\]\{\}\(\)\\\/~,]+", include=True
+    )
     result = await subject.filter_record({})
     assert_that(result, equal_to(False))
 
@@ -123,7 +92,7 @@ async def test_match_regex_successful():
 @pytest.mark.asyncio
 async def test_not_match_regex_successful():
     subject = ValueMatchesRegexFilter.from_file_data(
-        fields=FAILED_MATCH_INCLUDE_REGEX_CONFIGURATION
+        value="test", regex=".*[\[\]\{\}\(\)\\\/~,]+", include=True
     )
     result = await subject.filter_record({})
     assert_that(result, equal_to(True))
@@ -131,7 +100,9 @@ async def test_not_match_regex_successful():
 
 @pytest.mark.asyncio
 async def test_exclude_match_regex_successful():
-    subject = ValueMatchesRegexFilter.from_file_data(fields=MATCH_EXCLUDE_REGEX_CONFIGURATION)
+    subject = ValueMatchesRegexFilter.from_file_data(
+        value=">[test]", regex=".*[\[\]\{\}\(\)\\\/~,]+", include=False
+    )
     result = await subject.filter_record({})
     assert_that(result, equal_to(True))
 
@@ -139,7 +110,7 @@ async def test_exclude_match_regex_successful():
 @pytest.mark.asyncio
 async def test_exclude_match_regex_failing():
     subject = ValueMatchesRegexFilter.from_file_data(
-        fields=FAILED_MATCH_EXCLUDE_REGEX_CONFIGURATION
+        value="test", regex=".*[\[\]\{\}\(\)\\\/~,]+", include=False
     )
     result = await subject.filter_record({})
     assert_that(result, equal_to(False))

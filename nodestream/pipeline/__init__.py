@@ -3,6 +3,7 @@ from .extractors import Extractor, IterableExtractor
 from .filters import (
     ExcludeWhenValuesMatchPossibilities,
     Filter,
+    ValueMatchesRegexFilter,
     ValuesMatchPossibilitiesFilter,
 )
 from .flush import Flush
@@ -20,6 +21,7 @@ __all__ = (
     "IterableExtractor",
     "Filter",
     "ValuesMatchPossibilitiesFilter",
+    "ValueMatchesRegexFilter",
     "ExcludeWhenValuesMatchPossibilities",
     "PipelineFileLoader",
     "Pipeline",
