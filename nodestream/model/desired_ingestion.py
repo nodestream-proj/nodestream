@@ -37,10 +37,7 @@ class DesiredIngestion:
 
     async def run_ingest_hooks(self, strategy: "IngestionStrategy"):
         await asyncio.gather(
-            *(
-                strategy.run_hook(hook_req.hook, hook_req.before_ingest)
-                for hook_req in self.hook_requests
-            )
+            *(strategy.run_hook(hook_req) for hook_req in self.hook_requests)
         )
 
     def can_perform_ingest(self):
