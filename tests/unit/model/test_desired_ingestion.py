@@ -1,6 +1,12 @@
 import pytest
 
-from nodestream.model import DesiredIngestion, Node, NodeCreationRule, Relationship
+from nodestream.model import (
+    DesiredIngestion,
+    IngestionHookRunRequest,
+    Node,
+    NodeCreationRule,
+    Relationship,
+)
 
 
 @pytest.fixture
@@ -43,3 +49,19 @@ def test_add_relationship_invalid_node(
         node_creation_rule=NodeCreationRule.EAGER,
     )
     assert len(desired_ingestion.relationships) == 0
+
+
+@pytest.mark.asyncio
+async def test_run_ingest_hooks(desired_ingestion, mocker):
+    desired_ingestion.hook_requests = [
+        IngestionHookRunRequest(mocker.Mock(), before_ingest=True),
+        IngestionHookRunRequest(mocker.Mock(), before_ingest=False),
+    ]
+
+    await desired_ingestion.run_ingest_hooks(strategy := mocker.AsyncMock())
+    strategy.run_hook.assert_has_awaits(
+        [
+            mocker.call(desired_ingestion.hook_requests[0]),
+            mocker.call(desired_ingestion.hook_requests[1]),
+        ]
+    )
