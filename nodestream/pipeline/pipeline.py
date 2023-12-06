@@ -1,5 +1,6 @@
 import asyncio
 from typing import Any, AsyncGenerator, Iterable, List, Optional
+from logging import getLogger
 
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
@@ -41,6 +42,7 @@ class StepExecutor:
         self.step = step
         self.progress_reporter = progress_reporter
         self.end_of_line = False
+        self.logger = getLogger(self.__class__.__name__)
 
     async def outbox_generator(self):
         while not self.done or not self.outbox.empty():
@@ -78,9 +80,43 @@ class StepExecutor:
                 self.progress_reporter.report(index, record)
 
     async def work_loop(self):
-        self.start()
-        await self.work_body()
-        await self.stop()
+        # Start only calls some callbacks on the reporter.
+        # If this fails, we can just log the error and move on.
+        try:
+            self.start()
+        except Exception:
+            self.logger.exception(
+                "Exception During Start for Step. This will not be considered fatal.",
+                stack_info=True,
+                extra={"step": self.step.__class__.__name__},
+            )
+
+        # During the main exection of the code, we want to catch any
+        # exceptions that happen and log them.
+        # Since this step can no longer do any work, we will raise the
+        # exception so that the pipeline can safely come to a stop.
+        try:
+            await self.work_body()
+        except Exception:
+            self.logger.exception(
+                "Exception During Work Loop for Step. This will be considered fatal.",
+                stack_info=True,
+                extra={"step": self.step.__class__.__name__},
+            )
+
+        # When we're done, we need to try to call stop on the step.
+        # This is because the step may have some cleanup to do.
+        # If this fails, we are near the end of the exection of the pipeline
+        # so we can just log the error and move on.
+        finally:
+            try:
+                await self.stop()
+            except Exception:
+                self.logger.exception(
+                    "Exception During Stop for Step. This will not be considered fatal.",
+                    stack_info=True,
+                    extra={"step": self.step.__class__.__name__},
+                )
 
 
 class Pipeline(AggregatedIntrospectiveIngestionComponent):
