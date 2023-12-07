@@ -1,8 +1,7 @@
 import pytest
+from hamcrest import assert_that, contains_inanyorder, has_length
 
 from nodestream.pipeline.transformers import ConcurrentTransformer
-
-from hamcrest import assert_that, contains_inanyorder, has_length
 
 
 class AddOneConcurrently(ConcurrentTransformer):
