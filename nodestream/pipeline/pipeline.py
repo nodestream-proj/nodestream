@@ -29,6 +29,11 @@ class DoneObject:
     pass
 
 
+START_EXCEPTION = "Exception in Start Process:"
+WORK_BODY_EXCEPTION = "Exception in Work Body:"
+STOP_EXCEPTION = "Exception in Stop Process:"
+
+
 class StepException(Exception):
     """
     Exception Format:
@@ -150,7 +155,7 @@ class StepExecutor:
                 stack_info=True,
                 extra={"step": self.step.__class__.__name__},
             )
-            self.exceptions["Exception in Start Process:"] = start_exception
+            self.exceptions[START_EXCEPTION] = start_exception
 
         # During the main exection of the code, we want to catch any
         # exceptions that happen and log them.
@@ -164,7 +169,7 @@ class StepExecutor:
                 stack_info=True,
                 extra={"step": self.step.__class__.__name__},
             )
-            self.exceptions["Exception in Work Body:"] = work_body_exception
+            self.exceptions[WORK_BODY_EXCEPTION] = work_body_exception
 
         # When we're done, we need to try to call stop on the step.
         # This is because the step may have some cleanup to do.
@@ -179,8 +184,7 @@ class StepExecutor:
                     stack_info=True,
                     extra={"step": self.step.__class__.__name__},
                 )
-                self.exceptions["Exception in Stop Process:"] = stop_exception
-                raise StepException(errors=self.exceptions, identifier=self.identifier)
+                self.exceptions[STOP_EXCEPTION] = stop_exception
 
             if self.exceptions:
                 raise StepException(errors=self.exceptions, identifier=self.identifier)
@@ -220,13 +224,7 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
 
         # Raise the error and log it.
         if self.errors:
-            try:
-                raise PipelineException(self.errors)
-            except PipelineException:
-                self.logger.exception(
-                    "Exception during execution of the pipeline.",
-                )
-                raise
+            raise PipelineException(self.errors)
 
     def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         return (s for s in self.steps if isinstance(s, IntrospectiveIngestionComponent))
