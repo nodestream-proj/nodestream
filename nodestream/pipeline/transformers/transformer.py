@@ -81,10 +81,16 @@ class ConcurrentTransformer(Transformer):
 
         async for record in record_stream:
             if record is Flush:
-                for result in drain_completed_tasks():
-                    yield result
+                # Flush the pending tasks, then yield the flush.
+                # In order to fully respect the Flush,
+                # we need to wait for all pending tasks to complete.
+                while pending_tasks:
+                    for result in drain_completed_tasks():
+                        yield result
                 yield record
             else:
+                # Submit the work to the thread pool (only if we have capacity)
+                # If we don't have capacity, yield completed tasks until we do.
                 submitted = False
                 while not submitted:
                     if len(pending_tasks) < self.maximum_pending_tasks:
@@ -94,6 +100,8 @@ class ConcurrentTransformer(Transformer):
                     for result in drain_completed_tasks():
                         yield result
 
+        # After we've finished enqueuing records, we need to drain all tasks.
+        # Items yielded from this loop are the final results of the step.
         self.logger.debug("Finished enqueuing records, draining pending tasks")
         while pending_tasks:
             for result in drain_completed_tasks():
@@ -103,6 +111,9 @@ class ConcurrentTransformer(Transformer):
         self.thread_pool.shutdown(wait=True)
 
     def do_work_on_record(self, record: Any) -> Any:
+        # Handles the work nessary to transform a single record.
+        # This method wraps the `transform_record` method in an asyncio loop.
+        # This is necessary because the thread pool executor is not async.
         return asyncio.run(self.transform_record(record))
 
     @abstractmethod
