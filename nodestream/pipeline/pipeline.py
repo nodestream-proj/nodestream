@@ -226,7 +226,7 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
                 self.logger.exception(
                     "Exception during execution of the pipeline.",
                 )
-                raise 
+                raise
 
     def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         return (s for s in self.steps if isinstance(s, IntrospectiveIngestionComponent))
