@@ -144,7 +144,7 @@ class StepExecutor:
             if self.progress_reporter:
                 self.progress_reporter.report(index, record)
 
-    async def work_loop(self):
+    def try_start(self):
         # Start only calls some callbacks on the reporter.
         # If this fails, we can just log the error and move on.
         try:
@@ -157,6 +157,7 @@ class StepExecutor:
             )
             self.exceptions[START_EXCEPTION] = start_exception
 
+    async def try_work_body(self):
         # During the main exection of the code, we want to catch any
         # exceptions that happen and log them.
         # Since this step can no longer do any work, we will raise the
@@ -171,23 +172,30 @@ class StepExecutor:
             )
             self.exceptions[WORK_BODY_EXCEPTION] = work_body_exception
 
+    async def try_stop(self):
         # When we're done, we need to try to call stop on the step.
         # This is because the step may have some cleanup to do.
         # If this fails, we are near the end of the exection of the pipeline
         # so we can just log the error and move on.
-        finally:
-            try:
-                await self.stop()
-            except Exception as stop_exception:
-                self.logger.exception(
-                    f"Exception during stop for step {self.step.__class__.__name__}. This will not be considered fatal.",
-                    stack_info=True,
-                    extra={"step": self.step.__class__.__name__},
-                )
-                self.exceptions[STOP_EXCEPTION] = stop_exception
+        try:
+            await self.stop()
+        except Exception as stop_exception:
+            self.logger.exception(
+                f"Exception during stop for step {self.step.__class__.__name__}. This will not be considered fatal.",
+                stack_info=True,
+                extra={"step": self.step.__class__.__name__},
+            )
+            self.exceptions[STOP_EXCEPTION] = stop_exception
 
-            if self.exceptions:
-                raise StepException(errors=self.exceptions, identifier=self.identifier)
+    def raise_encountered_exceptions(self):
+        if self.exceptions:
+            raise StepException(errors=self.exceptions, identifier=self.identifier)
+
+    async def work_loop(self):
+        self.try_start()
+        await self.try_work_body()
+        await self.try_stop()
+        self.raise_encountered_exceptions()
 
 
 class Pipeline(AggregatedIntrospectiveIngestionComponent):
@@ -201,12 +209,11 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
         self.logger = getLogger(self.__class__.__name__)
         self.errors = []
 
-    async def run(
+    def build_steps_into_tasks(
         self, progress_reporter: Optional[PipelineProgressReporter] = None
-    ) -> AsyncGenerator[Any, Any]:
+    ):
         current_executor = None
         tasks = []
-
         for step_index, step in enumerate(self.steps):
             current_executor = StepExecutor(
                 upstream=current_executor,
@@ -215,9 +222,10 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
                 step_index=step_index,
             )
             tasks.append(asyncio.create_task(current_executor.work_loop()))
-
         current_executor.set_end_of_line(progress_reporter)
-        return_states = await asyncio.gather(*tasks, return_exceptions=True)
+        return tasks
+
+    def propogate_errors_from_return_states(self, return_states):
         for return_state in return_states:
             if return_state:
                 self.errors.append(return_state)
@@ -225,6 +233,13 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
         # Raise the error and log it.
         if self.errors:
             raise PipelineException(self.errors)
+
+    async def run(
+        self, progress_reporter: Optional[PipelineProgressReporter] = None
+    ) -> AsyncGenerator[Any, Any]:
+        tasks = self.build_steps_into_tasks(progress_reporter)
+        return_states = await asyncio.gather(*tasks, return_exceptions=True)
+        self.propogate_errors_from_return_states(return_states)
 
     def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         return (s for s in self.steps if isinstance(s, IntrospectiveIngestionComponent))
