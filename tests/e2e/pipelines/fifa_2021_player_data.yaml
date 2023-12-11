@@ -10,7 +10,7 @@
         node_type: Player
         key:
           player_id: !jmespath player_id
-        addtional_types:
+        additional_types:
           - Person
       - type: properties
         properties:
