@@ -62,7 +62,7 @@ def valiudate_airport_country(session):
 def validate_fifa_player_count(session):
     result = session.run(
         """
-        MATCH (p:Player)
+        MATCH (p:Player:Person)
         RETURN count(p) AS count
         """
     )

@@ -137,10 +137,11 @@ class Neo4jIngestQueryBuilder:
         else:
             query = str(_match_node(operation))
 
-        result = f"{query} SET {GENERIC_NODE_REF_NAME} += params.{generate_prefixed_param_name(PROPERTIES_PARAM_NAME, GENERIC_NODE_REF_NAME)}"
         if operation.node_identity.additional_types:
-            result += f" WITH {GENERIC_NODE_REF_NAME}, params CALL apoc.create.addLabels({GENERIC_NODE_REF_NAME}, params.{generate_prefixed_param_name(ADDITIONAL_LABELS_PARAM_NAME, GENERIC_NODE_REF_NAME)}) yield node RETURN true"
-        return result
+            query += f" WITH {GENERIC_NODE_REF_NAME}, params CALL apoc.create.addLabels({GENERIC_NODE_REF_NAME}, params.{generate_prefixed_param_name(ADDITIONAL_LABELS_PARAM_NAME, GENERIC_NODE_REF_NAME)}) yield node as _"
+
+        query += f" SET {GENERIC_NODE_REF_NAME} += params.{generate_prefixed_param_name(PROPERTIES_PARAM_NAME, GENERIC_NODE_REF_NAME)}"
+        return query
 
     def generate_update_node_operation_params(self, node: Node) -> dict:
         """Generate the parameters for a query to update a node in the database."""

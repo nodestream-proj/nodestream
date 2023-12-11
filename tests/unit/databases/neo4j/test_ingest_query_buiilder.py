@@ -139,7 +139,7 @@ COMPLEX_NODE = Node(
     additional_types=("ExtraTypeOne", "ExtraTypeTwo"),
 )
 COMPLEX_NODE_EXPECTED_QUERY = QueryBatch(
-    "MERGE (node: ComplexType {id : params.__node_id}) SET node += params.__node_properties WITH node, params CALL apoc.create.addLabels(node, params.__node_additional_labels) yield node RETURN true",
+    "MERGE (node: ComplexType {id : params.__node_id}) WITH node, params CALL apoc.create.addLabels(node, params.__node_additional_labels) yield node as _ SET node += params.__node_properties",
     [
         {
             "__node_id": "foo",
@@ -156,7 +156,7 @@ COMPLEX_NODE_TWO = Node(
 )
 
 COMPLEX_NODE_TWO_EXPECTED_QUERY = QueryBatch(
-    "MERGE (node: ComplexType {id_part1 : params.__node_id_part1, id_part2 : params.__node_id_part2}) SET node += params.__node_properties WITH node, params CALL apoc.create.addLabels(node, params.__node_additional_labels) yield node RETURN true",
+    "MERGE (node: ComplexType {id_part1 : params.__node_id_part1, id_part2 : params.__node_id_part2}) WITH node, params CALL apoc.create.addLabels(node, params.__node_additional_labels) yield node as _ SET node += params.__node_properties",
     [
         {
             "__node_id_part1": "foo",
