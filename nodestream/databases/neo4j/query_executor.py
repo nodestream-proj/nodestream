@@ -2,18 +2,21 @@ from logging import getLogger
 from typing import Iterable
 
 from neo4j import AsyncDriver
-
-from ...model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
-from ...schema.indexes import FieldIndex, KeyIndex
-from ..query_executor import (
+from neo4j.exceptions import ServiceUnavailable
+from nodestream.model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
+from nodestream.schema.indexes import FieldIndex, KeyIndex
+from nodestream.databases.query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
     QueryExecutor,
 )
-from .index_query_builder import Neo4jIndexQueryBuilder
-from .ingest_query_builder import Neo4jIngestQueryBuilder
-from .query import Query
+from nodestream.databases.neo4j.index_query_builder import Neo4jIndexQueryBuilder
+from nodestream.databases.neo4j.ingest_query_builder import Neo4jIngestQueryBuilder
+from nodestream.databases.neo4j.query import Query
+from time import sleep
 
+MAX_ATTEMPTS = 10
+BASE_BACKOFF_TIME = 1 # 1 second is arbitrary, backoff increases exponentially. 
 
 class Neo4jQueryExecutor(QueryExecutor):
     def __init__(
@@ -74,14 +77,24 @@ class Neo4jQueryExecutor(QueryExecutor):
         await self.execute(Query(query_string, params))
 
     async def execute(self, query: Query, log_result: bool = False):
-        self.logger.debug(
+        self.logger.info(
             "Executing Cypher Query to Neo4j",
             extra={
                 "query": query.query_statement,
                 "uri": self.driver._pool.address.host,
             },
         )
-        await self.driver.verify_connectivity()
+
+        try:
+            await self.driver.verify_connectivity()
+        except ServiceUnavailable:
+            self.logger.exception(
+                f"Neo4j Session timed out while waiting for other steps to resolve. Trying one more time.",
+                stack_info=True,
+                extra={"class": self.__class__.__name__},
+            )
+            await self.driver.verify_connectivity()
+
         result = await self.driver.execute_query(
             query.query_statement,
             query.parameters,
