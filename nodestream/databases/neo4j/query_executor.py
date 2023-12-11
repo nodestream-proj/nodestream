@@ -3,20 +3,23 @@ from typing import Iterable
 
 from neo4j import AsyncDriver
 from neo4j.exceptions import ServiceUnavailable
-from nodestream.model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
-from nodestream.schema.indexes import FieldIndex, KeyIndex
+
+from nodestream.databases.neo4j.index_query_builder import Neo4jIndexQueryBuilder
+from nodestream.databases.neo4j.ingest_query_builder import Neo4jIngestQueryBuilder
+from nodestream.databases.neo4j.query import Query
 from nodestream.databases.query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
     QueryExecutor,
 )
-from nodestream.databases.neo4j.index_query_builder import Neo4jIndexQueryBuilder
-from nodestream.databases.neo4j.ingest_query_builder import Neo4jIngestQueryBuilder
-from nodestream.databases.neo4j.query import Query
-from time import sleep
+from nodestream.model import (
+    IngestionHook,
+    Node,
+    RelationshipWithNodes,
+    TimeToLiveConfiguration,
+)
+from nodestream.schema.indexes import FieldIndex, KeyIndex
 
-MAX_ATTEMPTS = 10
-BASE_BACKOFF_TIME = 1 # 1 second is arbitrary, backoff increases exponentially. 
 
 class Neo4jQueryExecutor(QueryExecutor):
     def __init__(
@@ -77,7 +80,7 @@ class Neo4jQueryExecutor(QueryExecutor):
         await self.execute(Query(query_string, params))
 
     async def execute(self, query: Query, log_result: bool = False):
-        self.logger.info(
+        self.logger.debug(
             "Executing Cypher Query to Neo4j",
             extra={
                 "query": query.query_statement,
@@ -89,7 +92,7 @@ class Neo4jQueryExecutor(QueryExecutor):
             await self.driver.verify_connectivity()
         except ServiceUnavailable:
             self.logger.exception(
-                f"Neo4j Session timed out while waiting for other steps to resolve. Trying one more time.",
+                "Neo4j Session timed out while waiting for other steps to resolve. Trying one more time.",
                 stack_info=True,
                 extra={"class": self.__class__.__name__},
             )
