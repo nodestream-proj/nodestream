@@ -88,7 +88,6 @@ class Neo4jQueryExecutor(QueryExecutor):
         except ServiceUnavailable:
             self.logger.exception(
                 "Neo4j Session timed out while waiting for other steps to resolve. Trying one more time.",
-                stack_info=True,
                 extra={"class": self.__class__.__name__},
             )
             await self.driver.verify_connectivity()
