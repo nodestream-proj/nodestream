@@ -4,21 +4,16 @@ from typing import Iterable
 from neo4j import AsyncDriver
 from neo4j.exceptions import ServiceUnavailable
 
-from .index_query_builder import Neo4jIndexQueryBuilder
-from .ingest_query_builder import Neo4jIngestQueryBuilder
-from .query import Query
+from ...model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
+from ...schema.indexes import FieldIndex, KeyIndex
 from ..query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
     QueryExecutor,
 )
-from ...model import (
-    IngestionHook,
-    Node,
-    RelationshipWithNodes,
-    TimeToLiveConfiguration,
-)
-from ...schema.indexes import FieldIndex, KeyIndex
+from .index_query_builder import Neo4jIndexQueryBuilder
+from .ingest_query_builder import Neo4jIngestQueryBuilder
+from .query import Query
 
 
 class Neo4jQueryExecutor(QueryExecutor):
