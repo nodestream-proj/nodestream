@@ -78,7 +78,6 @@ class ConcurrentTransformer(Transformer):
                     tasks_drained,
                     len(pending_tasks),
                 )
-                
 
         async for record in record_stream:
             if record is Flush:
