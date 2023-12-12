@@ -116,9 +116,6 @@ class ConcurrentTransformer(Transformer):
                 yield result
     
 
-    async def yield_processor(self):
-        await asyncio.sleep(0)
-
     async def finish(self):
         self.thread_pool.shutdown(wait=True)
 
