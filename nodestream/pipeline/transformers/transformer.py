@@ -79,6 +79,12 @@ class ConcurrentTransformer(Transformer):
                     len(pending_tasks),
                 )
 
+        async def drain_completed_tasks_async():
+            for result in drain_completed_tasks():
+                yield result
+            await asyncio.sleep(0)
+
+
         async for record in record_stream:
             if record is Flush:
                 # Flush the pending tasks, then yield the flush.
@@ -86,9 +92,8 @@ class ConcurrentTransformer(Transformer):
                 # we need to wait for all pending tasks to complete.
                 # If we're still waiting we can yield the processor.
                 while pending_tasks:
-                    for result in drain_completed_tasks():
+                    async for result in drain_completed_tasks_async():
                         yield result
-                    self.yield_processor()
                 yield record
             else:
                 # Submit the work to the thread pool (only if we have capacity)
@@ -100,16 +105,16 @@ class ConcurrentTransformer(Transformer):
                         task = self.thread_pool.submit(self.do_work_on_record, record)
                         pending_tasks.append(task)
                         submitted = True
-                    for result in drain_completed_tasks():
+                    async for result in drain_completed_tasks_async():
                         yield result
-                    await self.yield_processor()
 
         # After we've finished enqueuing records, we need to drain all tasks.
         # Items yielded from this loop are the final results of the step.
         self.logger.debug("Finished enqueuing records, draining pending tasks")
         while pending_tasks:
-            for result in drain_completed_tasks():
+            async for result in drain_completed_tasks_async():
                 yield result
+    
 
     async def yield_processor(self):
         await asyncio.sleep(0)
