@@ -2,7 +2,6 @@ from logging import getLogger
 from typing import Iterable
 
 from neo4j import AsyncDriver
-from neo4j.exceptions import ServiceUnavailable
 
 from ...model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from ...schema.indexes import FieldIndex, KeyIndex
@@ -82,15 +81,6 @@ class Neo4jQueryExecutor(QueryExecutor):
                 "uri": self.driver._pool.address.host,
             },
         )
-
-        try:
-            await self.driver.verify_connectivity()
-        except ServiceUnavailable:
-            self.logger.exception(
-                "Neo4j Session timed out while waiting for other steps to resolve. Trying one more time.",
-                extra={"class": self.__class__.__name__},
-            )
-            await self.driver.verify_connectivity()
 
         result = await self.driver.execute_query(
             query.query_statement,

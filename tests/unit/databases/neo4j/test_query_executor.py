@@ -1,5 +1,4 @@
 import pytest
-from neo4j.exceptions import ServiceUnavailable
 
 from nodestream.databases.neo4j.query import Query, QueryBatch
 from nodestream.databases.neo4j.query_executor import Neo4jQueryExecutor
@@ -108,44 +107,6 @@ async def test_execute_hook(query_executor, some_query, mocker):
     )
     await query_executor.execute_hook(hook)
     hook.as_cypher_query_and_parameters.assert_called_once()
-    query_executor.driver.execute_query.assert_called_once_with(
-        some_query.query_statement, some_query.parameters, database_="test"
-    )
-
-
-@pytest.mark.asyncio
-async def test_genuine_exception_handle(query_executor, some_query):
-    with pytest.raises(expected_exception=ServiceUnavailable):
-        query_generator = query_executor.index_query_builder.create_key_index_query
-        query_executor.driver.verify_connectivity.side_effect = ServiceUnavailable(
-            "test"
-        )
-        query_generator.return_value = some_query
-        await query_executor.upsert_key_index(None)
-        query_generator.assert_called_once_with(None)
-        query_executor.driver.execute_query.assert_called_once_with(
-            some_query.query_statement, some_query.parameters, database_="test"
-        )
-
-
-class ErrorMocker:
-    def __init__(self):
-        self.gave_error = False
-
-    def __next__(self):
-        if self.gave_error:
-            return None
-        self.gave_error = True
-        raise ServiceUnavailable()
-
-
-@pytest.mark.asyncio
-async def test_single_exception_handle(query_executor, some_query):
-    query_generator = query_executor.index_query_builder.create_key_index_query
-    query_executor.driver.verify_connectivity.side_effect = ErrorMocker()
-    query_generator.return_value = some_query
-    await query_executor.upsert_key_index(None)
-    query_generator.assert_called_once_with(None)
     query_executor.driver.execute_query.assert_called_once_with(
         some_query.query_statement, some_query.parameters, database_="test"
     )
