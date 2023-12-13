@@ -3,12 +3,7 @@ from pathlib import Path
 from typing import Type
 
 from schema import Schema
-from yaml import (
-    SafeDumper,
-    SafeLoader,
-    dump,
-    load,
-)
+from yaml import SafeDumper, SafeLoader, dump, load
 
 from .pipeline.argument_resolvers import ArgumentResolver
 
