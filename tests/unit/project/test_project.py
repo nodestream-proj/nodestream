@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
-from hamcrest import assert_that, equal_to, has_length, same_instance
+from hamcrest import assert_that, equal_to, has_key, has_length, same_instance
 
 from nodestream.pipeline import (
     PipelineInitializationArguments,
@@ -15,6 +15,7 @@ from nodestream.project import (
     Project,
     RunRequest,
     Target,
+    ProjectPlugin,
 )
 from nodestream.schema.schema import GraphSchema
 
@@ -94,13 +95,15 @@ def test_project_from_file_with_config(add_env_var):
     file_name = Path("tests/unit/project/fixtures/simple_project_with_config.yaml")
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
+
+    assert_that(result.plugin_configs, has_key("test"))
     assert_that(
-        result.plugin_configs,
-        equal_to({"test": ScopeConfig({"PluginUsername": "bob"})}),
+        result.plugin_configs["test"].get_config_value("PluginUsername"),
+        equal_to("bob"),
     )
     assert_that(
-        result.scopes_by_name["perpetual"].config,
-        equal_to(ScopeConfig({"Username": "bob"})),
+        result.scopes_by_name["perpetual"].config.get_config_value("Username"),
+        equal_to("bob"),
     )
 
 
@@ -179,3 +182,19 @@ def test_get_target_present(project):
 
 def test_get_target_missing(project):
     assert_that(project.get_target_by_name("missing"), equal_to(None))
+
+
+def test_project_load_lifecycle_hooks_calls_all_hooks_on_all_plugins(mocker):
+    plugins = [mocker.Mock(), mocker.Mock()]
+    mocker.patch(
+        "nodestream.project.project.ProjectPlugin.all_active",
+        return_value=plugins,
+    )
+
+    file_path = Path("tests/unit/project/fixtures/simple_project.yaml")
+    project = Project.read_from_file(file_path)
+
+    for plugin in plugins:
+        plugin.before_project_load.assert_called_once_with(file_path)
+        plugin.activate.assert_called_once_with(project)
+        plugin.after_project_load.assert_called_once_with(project)

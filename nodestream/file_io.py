@@ -3,7 +3,17 @@ from pathlib import Path
 from typing import Type
 
 from schema import Schema
-from yaml import SafeDumper, SafeLoader, dump, load
+from yaml import (
+    MappingNode,
+    SafeDumper,
+    SafeLoader,
+    ScalarNode,
+    SequenceNode,
+    dump,
+    load,
+)
+
+from .pipeline.argument_resolvers import ArgumentResolver
 
 
 class DescribesYamlSchema(ABC):
@@ -125,3 +135,43 @@ class SavesToYamlFile(SavesToYaml):
                 indent=2,
                 sort_keys=True,
             )
+
+
+# This approach is inspired by https://death.andgravity.com/any-yaml
+#
+# Generally, the idea is that instead of trying to resolve the arguments at the time of parsing the yaml file,
+# we instead create a special object that will resolve the arguments at the time of use.
+#
+# This comes with the side effect that we shift the responsibility of resolving the arguments from the
+# yaml parser to the code that uses the "loaded" yaml data.
+class LazyLoadedArgument:
+    def __init__(self, tag, value):
+        self.tag = tag
+        self.value = value
+
+    def get_value(self):
+        return ArgumentResolver.resolve_arugment_with_alias(self.tag, self.value)
+
+    @staticmethod
+    def resolve_if_needed(value):
+        if isinstance(value, LazyLoadedArgument):
+            return value.get_value()
+        return value
+
+
+class LazyLoadedTagSafeLoader(SafeLoader):
+    pass
+
+
+def construct_undefined(self, node):
+    if isinstance(node, ScalarNode):
+        value = self.construct_scalar(node)
+    elif isinstance(node, SequenceNode):
+        value = self.construct_sequence(node)
+    elif isinstance(node, MappingNode):
+        value = self.construct_mapping(node)
+    print(node.tag)
+    return LazyLoadedArgument(node.tag[1:], value)
+
+
+LazyLoadedTagSafeLoader.add_constructor(None, construct_undefined)
