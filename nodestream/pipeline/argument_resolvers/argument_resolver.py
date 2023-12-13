@@ -20,7 +20,7 @@ class ArgumentResolver(Pluggable, ABC):
         return value
 
     @classmethod
-    def resolve_arugment_with_alias(cls, tag, value):
+    def resolve_argument_with_alias(cls, tag, value):
         ArgumentResolver.import_all()
         resolver = ARGUMENT_RESOLVER_REGISTRY.get(tag)
         return resolver.resolve_argument(value)

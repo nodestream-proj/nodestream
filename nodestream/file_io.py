@@ -142,7 +142,7 @@ class LazyLoadedArgument:
         self.value = value
 
     def get_value(self):
-        return ArgumentResolver.resolve_arugment_with_alias(self.tag, self.value)
+        return ArgumentResolver.resolve_argument_with_alias(self.tag, self.value)
 
     @staticmethod
     def resolve_if_needed(value):
