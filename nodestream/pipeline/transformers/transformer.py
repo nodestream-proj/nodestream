@@ -84,7 +84,6 @@ class ConcurrentTransformer(Transformer):
                 yield result
             await asyncio.sleep(0)
 
-
         async for record in record_stream:
             if record is Flush:
                 # Flush the pending tasks, then yield the flush.
@@ -114,7 +113,6 @@ class ConcurrentTransformer(Transformer):
         while pending_tasks:
             async for result in drain_completed_tasks_async():
                 yield result
-    
 
     async def finish(self):
         self.thread_pool.shutdown(wait=True)
