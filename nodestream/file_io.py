@@ -4,11 +4,8 @@ from typing import Type
 
 from schema import Schema
 from yaml import (
-    MappingNode,
     SafeDumper,
     SafeLoader,
-    ScalarNode,
-    SequenceNode,
     dump,
     load,
 )
