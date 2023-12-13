@@ -15,7 +15,6 @@ from nodestream.project import (
     Project,
     RunRequest,
     Target,
-    ProjectPlugin,
 )
 from nodestream.schema.schema import GraphSchema
 
