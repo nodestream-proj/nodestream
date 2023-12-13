@@ -163,15 +163,9 @@ class LazyLoadedTagSafeLoader(SafeLoader):
     pass
 
 
-def construct_undefined(self, node):
-    if isinstance(node, ScalarNode):
-        value = self.construct_scalar(node)
-    elif isinstance(node, SequenceNode):
-        value = self.construct_sequence(node)
-    elif isinstance(node, MappingNode):
-        value = self.construct_mapping(node)
-    print(node.tag)
+def wrap_unloaded_tag(self, node):
+    value = self.construct_scalar(node)
     return LazyLoadedArgument(node.tag[1:], value)
 
 
-LazyLoadedTagSafeLoader.add_constructor(None, construct_undefined)
+LazyLoadedTagSafeLoader.add_constructor(None, wrap_unloaded_tag)
