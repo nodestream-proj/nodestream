@@ -82,7 +82,7 @@ class ConcurrentTransformer(Transformer):
         async def drain_completed_tasks_async():
             for result in drain_completed_tasks():
                 yield result
-            await asyncio.sleep(0)
+            await self.yield_processor()
 
         async for record in record_stream:
             if record is Flush:
@@ -116,6 +116,9 @@ class ConcurrentTransformer(Transformer):
 
     async def finish(self):
         self.thread_pool.shutdown(wait=True)
+
+    async def yield_processor(self):
+        await asyncio.sleep(0)
 
     def do_work_on_record(self, record: Any) -> Any:
         # Handles the work nessary to transform a single record.
