@@ -16,6 +16,7 @@ from nodestream.project import (
     RunRequest,
     Target,
 )
+from nodestream.project.plugin import PluginScope
 from nodestream.schema.schema import GraphSchema
 
 
@@ -72,14 +73,24 @@ async def test_project_runs_pipeline_in_scope_when_present(
 
 
 def test_project_init_sets_up_plugin_scope_when_present(plugin_scope):
-    Project(plugin_scope, {"scope3": ScopeConfig({"PluginUsername": "bob"})})
+    Project(
+        plugin_scope,
+        [PluginScope(name="scope3", config=ScopeConfig({"PluginUsername": "bob"}))],
+    )
     assert plugin_scope[0].config == ScopeConfig({"PluginUsername": "bob"})
 
 
 def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
     plugin_scope,
 ):
-    Project(plugin_scope, {"other_scope": ScopeConfig({"PluginUsername": "bob"})})
+    Project(
+        plugin_scope,
+        [
+            PluginScope(
+                name="other_scope", config=ScopeConfig({"PluginUsername": "bob"})
+            )
+        ],
+    )
     assert plugin_scope[0].config is None
 
 
@@ -95,12 +106,35 @@ def test_project_from_file_with_config(add_env_var):
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
     assert_that(
-        result.plugin_configs,
-        equal_to({"test": ScopeConfig({"PluginUsername": "bob"})}),
+        result.plugins,
+        equal_to(
+            [PluginScope(name="test", config={"PluginUsername": "bob"}, targets=[])]
+        ),
     )
     assert_that(
         result.scopes_by_name["perpetual"].config,
         equal_to(ScopeConfig({"Username": "bob"})),
+    )
+
+
+def test_project_from_with_with_config_targets(add_env_var):
+    result = Project.read_from_file(
+        Path("tests/unit/project/fixtures/simple_project_with_config_targets.yaml")
+    )
+    assert_that(result.targets_by_name, equal_to({"t1": Target("t1", {"a": "b"})}))
+    assert_that(
+        result.plugins,
+        equal_to(
+            [PluginScope(name="test", config={"PluginUsername": "bob"}, targets=["t1"])]
+        ),
+    )
+    assert_that(
+        result.scopes_by_name["perpetual"].config,
+        equal_to(ScopeConfig({"Username": "bob"})),
+    )
+    assert_that(
+        result.scopes_by_name["perpetual"].pipelines_by_name["target-pipeline"].targets,
+        equal_to(["t1"]),
     )
 
 
@@ -109,8 +143,8 @@ def test_project_from_file():
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
     assert_that(
-        result.plugin_configs,
-        equal_to({}),
+        result.plugins,
+        equal_to([]),
     )
     assert_that(
         result.scopes_by_name["perpetual"].config,
@@ -170,7 +204,8 @@ async def test_get_snapshot_for(project, mocker):
 
 
 def test_all_pipeline_names(project):
-    assert_that(list(project.get_all_pipeline_names()), equal_to(["test", "test2"]))
+    pipeline_names = [pipeline.name for pipeline in project.get_all_pipelines()]
+    assert_that(pipeline_names, equal_to(["test", "test2"]))
 
 
 def test_get_target_present(project):

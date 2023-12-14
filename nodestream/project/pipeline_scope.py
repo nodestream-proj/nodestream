@@ -26,10 +26,12 @@ class PipelineScope(
         pipelines: List[PipelineDefinition],
         persist: bool = True,
         config: ScopeConfig = None,
+        targets: List[str] = None,
     ) -> None:
         self.persist = persist
         self.name = name
         self.config = config
+        self.targets = targets
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
         for pipeline in pipelines:
             self.add_pipeline_definition(pipeline)
@@ -132,6 +134,9 @@ class PipelineScope(
 
     def set_configuration(self, config):
         self.config = config
+
+    def set_targets(self, targets):
+        self.targets = targets
 
     @classmethod
     def from_resources(

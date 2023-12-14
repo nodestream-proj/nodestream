@@ -3,11 +3,11 @@ from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from yaml import SafeLoader
 
+from nodestream.pluggable import Pluggable
+
 from ..file_io import LoadsFromYamlFile, SavesToYamlFile
 from ..pipeline import Step
 from ..pipeline.argument_resolvers.argument_resolver import ArgumentResolver
-from ..pipeline.scope_config import ScopeConfig
-from ..pluggable import Pluggable
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     GraphSchema,
@@ -15,6 +15,7 @@ from ..schema.schema import (
 )
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
+from .plugin import PluginScope
 from .run_request import RunRequest
 from .target import Target
 
@@ -51,9 +52,9 @@ class Project(
                 Optional("scopes"): {
                     str: PipelineScope.describe_yaml_schema(),
                 },
-                Optional("plugin_config"): {
-                    str: ScopeConfig.describe_yaml_schema(),
-                },
+                Optional("plugins"): [
+                    PluginScope.describe_yaml_schema(),
+                ],
                 Optional("targets"): {
                     str: {str: object},
                 },
@@ -82,15 +83,15 @@ class Project(
             for scope_data in scopes_data.items()
         ]
 
-        plugins = data.pop("plugin_config", {})
-        plugin_cfgs = {
-            name: ScopeConfig.from_file_data(value) for name, value in plugins.items()
-        }
+        plugins_list = data.pop("plugins", {})
+        plugins = [
+            PluginScope.from_file_data(plugins_data) for plugins_data in plugins_list
+        ]
 
         targets = data.pop("targets", {})
         target_cfgs = {name: Target(name, value) for name, value in targets.items()}
 
-        project = cls(scopes, plugin_cfgs, target_cfgs)
+        project = cls(scopes, plugins, target_cfgs)
         for plugin in ProjectPlugin.all():
             plugin().activate(project)
         return project
@@ -114,11 +115,11 @@ class Project(
     def __init__(
         self,
         scopes: List[PipelineScope],
-        plugin_configs: Dict[str, ScopeConfig] = None,
+        plugins: List[PluginScope] = None,
         targets: Dict[str, Target] = None,
     ):
         self.scopes_by_name: Dict[str, PipelineScope] = {}
-        self.plugin_configs = plugin_configs
+        self.plugins = plugins
         self.targets_by_name = targets
         for scope in scopes:
             self.add_scope(scope)
@@ -167,9 +168,11 @@ class Project(
         Args:
             scope (PipelineScope): The scope to add.
         """
-
-        if self.plugin_configs and self.plugin_configs.get(scope.name):
-            scope.set_configuration(self.plugin_configs[scope.name])
+        if self.plugins is not None:
+            for plugin in self.plugins:
+                if plugin.name == scope.name:
+                    scope.set_configuration(plugin.config)
+                    scope.set_targets(plugin.targets)
         self.scopes_by_name[scope.name] = scope
 
     def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:
@@ -185,11 +188,18 @@ class Project(
 
         return [self.scopes_by_name[scope_name]]
 
-    def get_all_pipeline_names(self) -> Iterable[str]:
-        """Returns all pipeline names in the project."""
+    def get_all_pipelines(self) -> Iterable[PipelineDefinition]:
+        """Returns all pipeline objects in the project."""
         for scope in self.scopes_by_name.values():
             for pipeline in scope.pipelines_by_name.values():
-                yield pipeline.name
+                yield pipeline
+
+    def get_pipeline_by_name(self, pipeline_name: str) -> PipelineDefinition:
+        """Returns pipeline object in the project."""
+        for scope in self.scopes_by_name.values():
+            pipeline = scope.pipelines_by_name.get(pipeline_name, None)
+            if pipeline is not None:
+                return
 
     def delete_pipeline(
         self,
