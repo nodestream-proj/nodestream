@@ -101,16 +101,16 @@ class TestPipeline(Pipeline):
 """ 
 Test that the concurrent transformer yields the processor
 In this test we will have the following:
-1. IterableExtractor (provides range(5))
-2. AddOneConcurrentlyModified
+1. IterableExtractor (provides range(20))
+2. AddOneConcurrently/AddOneConcurrentlyGreedy
 3. MockStep 
 
-Upon pipeline intiialization:
-1. IteratableExtractor provides [0-4] between AddOneConcurrentlyModified
-2. AddOneConcurrentlyModified submits 2 pending tasks to the task list
-3. On the 3'rd task it will attempt to drain the results
-4. After the drain the processor should be yielded.
-5. The MockStep will be initialized and we will immediately test for ONLY 1 or ONLY (1,2)
+Upon pipeline intialization:
+1. IteratableExtractor provides [0-19] between AddOneConcurrently
+2. AddOneConcurrentlyGreedy will attempt to process all records before leaving, 
+    AddOneConcurrently will add records to the task list, yield what it can and yield the processor
+3. The Mockstep will get all available records it can from the outbox, then yield the processor
+4. This is repeated until the AddOneConcurrently step is complete
 """
 
 
