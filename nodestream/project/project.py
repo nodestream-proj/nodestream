@@ -3,9 +3,13 @@ from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from yaml import SafeLoader
 
-from ..file_io import LoadsFromYamlFile, SavesToYamlFile
+from ..file_io import (
+    LazyLoadedTagSafeLoader,
+    LoadsFromYaml,
+    LoadsFromYamlFile,
+    SavesToYamlFile,
+)
 from ..pipeline import Step
-from ..pipeline.argument_resolvers.argument_resolver import ArgumentResolver
 from ..pipeline.scope_config import ScopeConfig
 from ..pluggable import Pluggable
 from ..schema.schema import (
@@ -33,14 +37,18 @@ class Project(
     """
 
     @classmethod
+    def read_from_file(cls, file_path: Path) -> LoadsFromYaml:
+        ProjectPlugin.execute_before_project_load(file_path)
+        return super().read_from_file(file_path)
+
+    @classmethod
     def get_loader(cls) -> Type[SafeLoader]:
         """Get the YAML loader to use when reading this object from a file.
 
         Returns:
             The YAML loader to use when reading this object from a file.
         """
-        NodestreamProjectFileSafeLoader.configure()
-        return NodestreamProjectFileSafeLoader
+        return LazyLoadedTagSafeLoader
 
     @classmethod
     def describe_yaml_schema(cls):
@@ -91,8 +99,8 @@ class Project(
         target_cfgs = {name: Target(name, value) for name, value in targets.items()}
 
         project = cls(scopes, plugin_cfgs, target_cfgs)
-        for plugin in ProjectPlugin.all():
-            plugin().activate(project)
+        ProjectPlugin.execute_activate(project)
+        ProjectPlugin.execute_after_project_load(project)
         return project
 
     def to_file_data(self) -> dict:
@@ -262,21 +270,6 @@ class Project(
                         yield pipeline_definition, idx, step
 
 
-class NodestreamProjectFileSafeLoader(SafeLoader):
-    """A YAML loader that can load nodestream project files.""" ""
-
-    was_configured = False
-
-    @classmethod
-    def configure(cls):
-        if cls.was_configured:
-            return
-        for argument_resolver in ArgumentResolver.all():
-            argument_resolver.install_yaml_tag(cls)
-
-        cls.was_configured = True
-
-
 class ProjectPlugin(Pluggable):
     """A plugin that can be used to modify a project.
 
@@ -289,6 +282,41 @@ class ProjectPlugin(Pluggable):
 
     entrypoint_name = "projects"
 
+    _active: List["ProjectPlugin"] = None
+
+    @classmethod
+    def all_active(cls) -> List["ProjectPlugin"]:
+        """Returns all instances of all registered plugins."""
+        if cls._active is None:
+            cls._active = [plugin() for plugin in cls.all()]
+        return cls._active
+
+    @classmethod
+    def execute_before_project_load(cls, project_file: Path):
+        """Executes the `before_project_load` method on all registered plugins."""
+        for plugin in cls.all_active():
+            plugin.before_project_load(project_file)
+
+    @classmethod
+    def execute_after_project_load(cls, project: Project):
+        """Executes the `after_project_load` method on all registered plugins."""
+        for plugin in cls.all_active():
+            plugin.after_project_load(project)
+
+    @classmethod
+    def execute_activate(cls, project: Project):
+        """Executes the `activate` method on all registered plugins."""
+        for plugin in cls.all_active():
+            plugin.activate(project)
+
+    def before_project_load(self, project_file: Path):
+        """Called before a project is loaded from disk."""
+        pass
+
+    def after_project_load(self, project: Project):
+        """Called after a project is loaded from disk and after each plugin is activated."""
+        pass
+
     def activate(self, project: Project):
         """Called when a project is loaded from disk.
 
@@ -296,4 +324,4 @@ class ProjectPlugin(Pluggable):
         or modify an existing scope. The plugin should not modify the project file on disk. Instead, it
         should modify the project object in memory.
         """
-        raise NotImplementedError
+        pass
