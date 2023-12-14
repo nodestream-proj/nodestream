@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from ..file_io import LoadsFromYamlFile
+from ..file_io import LazyLoadedArgument, LoadsFromYamlFile
 
 
 @dataclass
@@ -39,4 +39,4 @@ class ScopeConfig(LoadsFromYamlFile):
         return cls(data)
 
     def get_config_value(self, key):
-        return self.config.get(key)
+        return LazyLoadedArgument.resolve_if_needed(self.config.get(key))

@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
-from nodestream.pipeline.scope_config import ScopeConfig
-
-from ..file_io import LoadsFromYamlFile
+from ..pipeline.scope_config import ScopeConfig
+from ..file_io import LazyLoadedArgument, LoadsFromYamlFile
 
 
 @dataclass
@@ -38,4 +37,4 @@ class PluginScope(LoadsFromYamlFile):
         return cls(name, config, targets)
 
     def get_config_value(self, key):
-        return self.config.get(key)
+        return LazyLoadedArgument.resolve_if_needed(self.config.get(key))
