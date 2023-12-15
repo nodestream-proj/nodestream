@@ -32,7 +32,6 @@ class RunPipeline(Operation):
 
     async def perform(self, command: NodestreamCommand):
         pipelines_ran = 0
-
         for pipeline in self.get_pipelines_to_run(command):
             request = self.make_run_request(command, pipeline)
             pipelines_ran += await self.project.run(request)
@@ -59,6 +58,8 @@ class RunPipeline(Operation):
     def combine_target_lists_without_duplicates(
         self, pipeline_targets: List[str] = [], command_targets: List[str] = []
     ):
+        if not pipeline_targets:
+            return command_targets
         in_first = set(pipeline_targets)
         in_second = set(command_targets)
         in_second_but_not_in_first = in_second - in_first

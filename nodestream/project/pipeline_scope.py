@@ -40,7 +40,7 @@ class PipelineScope(
     def from_file_data(cls, scope_name, file_data):
         pipelines_data = file_data.pop("pipelines", [])
         annotations = file_data.pop("annotations", {})
-        config = file_data.pop("config", {})
+        config = file_data.pop("config", None)
         pipelines = [
             PipelineDefinition.from_file_data(pipeline_data, annotations)
             for pipeline_data in pipelines_data
@@ -132,10 +132,10 @@ class PipelineScope(
 
         return True
 
-    def set_configuration(self, config):
+    def set_configuration(self, config: ScopeConfig):
         self.config = config
 
-    def set_targets(self, targets):
+    def set_targets(self, targets: list[str]):
         self.targets = targets
 
     @classmethod

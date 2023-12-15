@@ -5,8 +5,6 @@ from typing import Type
 from schema import Schema
 from yaml import SafeDumper, SafeLoader, dump, load
 
-from .pipeline.argument_resolvers import ArgumentResolver
-
 
 class DescribesYamlSchema(ABC):
     """A mixin for classes that can be described by a YAML schema."""
@@ -81,6 +79,8 @@ class LoadsFromYamlFile(LoadsFromYaml):
             return cls.validate_and_load(file_data)
 
 
+
+
 class SavesToYaml(DescribesYamlSchema):
     """A mixin for classes that can be written to as YAML."""
 
@@ -142,6 +142,7 @@ class LazyLoadedArgument:
         self.value = value
 
     def get_value(self):
+        from .pipeline.argument_resolvers import ArgumentResolver
         return ArgumentResolver.resolve_argument_with_alias(self.tag, self.value)
 
     @staticmethod

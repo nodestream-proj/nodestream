@@ -142,7 +142,7 @@ def test_project_from_file():
     )
     assert_that(
         result.scopes_by_name["perpetual"].config,
-        equal_to(ScopeConfig(config={})),
+        equal_to(ScopeConfig(config=None)),
     )
 
 

@@ -206,7 +206,7 @@ class Project(
         for scope in self.scopes_by_name.values():
             pipeline = scope.pipelines_by_name.get(pipeline_name, None)
             if pipeline is not None:
-                return
+                return pipeline
 
     def delete_pipeline(
         self,

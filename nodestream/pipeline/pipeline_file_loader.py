@@ -25,7 +25,7 @@ class PipelineFileSafeLoader(SafeLoader):
     was_configured = False
 
     @classmethod
-    def configure(cls, config: ScopeConfig = None):
+    def configure(cls, config: ScopeConfig):
         if config:
             cls.add_constructor(
                 "!config",

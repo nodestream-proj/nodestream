@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List
 
 from ..pipeline.scope_config import ScopeConfig
-from ..file_io import LazyLoadedArgument, LoadsFromYamlFile
+from ..file_io import LoadsFromYamlFile
 
 
 @dataclass
@@ -33,8 +33,8 @@ class PluginScope(LoadsFromYamlFile):
     def from_file_data(cls, data) -> "PluginScope":
         name = data.pop("name")
         targets = data.pop("targets", [])
-        config = data.pop("config", {})
-        return cls(name, config, targets)
+        config = data.pop("config", None)
+        return cls(name, ScopeConfig.from_file_data(config), targets)
 
     def get_config_value(self, key):
-        return LazyLoadedArgument.resolve_if_needed(self.config.get(key))
+        return self.config.get_config_value(key)

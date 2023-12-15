@@ -6,7 +6,7 @@ from ..file_io import LazyLoadedArgument, LoadsFromYamlFile
 
 @dataclass
 class ScopeConfig(LoadsFromYamlFile):
-    """A `Config` represents a collection of configuration for a scope.
+    """A `ScopeConfig` represents a collection of configuration for a scope.
 
     A config is a key value pair object in a nodestream scope including plugins.
     It contains a collection of configuration key value pairs to be used by the pipelines of a scope.
