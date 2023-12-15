@@ -1,22 +1,28 @@
 import asyncio
-from typing import AsyncGenerator
 
 import pytest
 from hamcrest import assert_that, contains_inanyorder, has_length
 
 from nodestream.pipeline import Flush
-from nodestream.pipeline.pipeline import DoneObject
 from nodestream.pipeline.transformers import ConcurrentTransformer
 
 
 class AddOneConcurrently(ConcurrentTransformer):
     def __init__(self):
         self.done = False
-        self.queue = None
+        self.queue_size = 0
         super().__init__()
 
     async def transform_record(self, record):
         return record + 1
+
+
+class AddOneConcurrentlyGreedy(AddOneConcurrently):
+    async def yield_processor(self):
+        pass
+
+
+ITEM_COUNT = 100
 
 
 @pytest.mark.asyncio
@@ -52,38 +58,54 @@ Test:
 
 
 @pytest.mark.asyncio
-async def test_concurrent_transformer_passes_processor():
-    items = list(range(1000))
-    transformer = AddOneConcurrently()
-    transformer.queue = asyncio.Queue(maxsize=100)
+async def test_greedy_concurrent_transformer_does_not_pass_processor():
+    items = list(range(ITEM_COUNT))
+    transformer = AddOneConcurrentlyGreedy()
 
     async def input_record_stream():
         for i in items:
             yield i
 
-    async def transform(input_stream: AsyncGenerator):
-        async for record in transformer.handle_async_record_stream(input_stream):
-            await transformer.queue.put(record)
-            assert transformer.queue.qsize() != transformer.queue.maxsize
-
-        await transformer.queue.put(DoneObject)
+    async def transform():
+        async for _ in transformer.handle_async_record_stream(input_record_stream()):
+            transformer.queue_size += 1
         transformer.done = True
-        return
 
     async def downstream_client():
-        results = []
-        while not transformer.done or not transformer.queue.empty():
-            value = await transformer.queue.get()
-            if value is DoneObject:
-                break
-            results.append(value)
-        return results
+        should_continue = True
+        while should_continue:
+            if transformer.queue_size > 0:
+                assert transformer.queue_size >= ITEM_COUNT
+            transformer.queue_size -= 1
+            should_continue = not transformer.done
+            await asyncio.sleep(0)
 
-    _, results = await asyncio.gather(
-        transform(input_record_stream()), downstream_client()
-    )
-    assert_that(results, contains_inanyorder(*[i + 1 for i in items]))
-    assert_that(results, has_length(len(items)))
+    await asyncio.gather(transform(), downstream_client())
+
+
+@pytest.mark.asyncio
+async def test_normal_concurrent_transformer_passes_processor():
+    items = list(range(ITEM_COUNT))
+    transformer = AddOneConcurrently()
+
+    async def input_record_stream():
+        for i in items:
+            yield i
+
+    async def transform():
+        async for _ in transformer.handle_async_record_stream(input_record_stream()):
+            transformer.queue_size += 1
+        transformer.done = True
+
+    async def downstream_client():
+        should_continue = True
+        while should_continue:
+            assert transformer.queue_size < ITEM_COUNT
+            transformer.queue_size -= 1
+            should_continue = not transformer.done
+            await asyncio.sleep(0)
+
+    await asyncio.gather(transform(), downstream_client())
 
 
 @pytest.mark.asyncio
