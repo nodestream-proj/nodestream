@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
-from hamcrest import assert_that, equal_to, has_key, has_length, same_instance
+from hamcrest import assert_that, equal_to, has_length, same_instance
 
 from nodestream.pipeline import (
     PipelineInitializationArguments,

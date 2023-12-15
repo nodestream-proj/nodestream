@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
-from ..pipeline.scope_config import ScopeConfig
 from ..file_io import LoadsFromYamlFile
+from ..pipeline.scope_config import ScopeConfig
 
 
 @dataclass
