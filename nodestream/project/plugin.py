@@ -6,7 +6,7 @@ from ..pipeline.scope_config import ScopeConfig
 
 
 @dataclass
-class PluginScope(LoadsFromYamlFile):
+class PluginConfiguration(LoadsFromYamlFile):
     """A `PluginScope` represents a collection of configuration for a plugin.
 
     A config is a key value pair object in a nodestream scope including plugins.
@@ -30,10 +30,10 @@ class PluginScope(LoadsFromYamlFile):
         )
 
     @classmethod
-    def from_file_data(cls, data) -> "PluginScope":
+    def from_file_data(cls, data) -> "PluginConfiguration":
         name = data.pop("name")
         targets = data.pop("targets", [])
-        config = data.pop("config", None)
+        config = data.pop("config")
         return cls(name, ScopeConfig.from_file_data(config), targets)
 
     def get_config_value(self, key):

@@ -18,7 +18,7 @@ from ..schema.schema import (
 )
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
-from .plugin import PluginScope
+from .plugin import PluginConfiguration
 from .run_request import RunRequest
 from .target import Target
 
@@ -60,7 +60,7 @@ class Project(
                     str: PipelineScope.describe_yaml_schema(),
                 },
                 Optional("plugins"): [
-                    PluginScope.describe_yaml_schema(),
+                    PluginConfiguration.describe_yaml_schema(),
                 ],
                 Optional("targets"): {
                     str: {str: object},
@@ -92,7 +92,7 @@ class Project(
 
         plugins_list = data.pop("plugins", {})
         plugins = [
-            PluginScope.from_file_data(plugins_data) for plugins_data in plugins_list
+            PluginConfiguration.from_file_data(plugins_data) for plugins_data in plugins_list
         ]
 
         targets = data.pop("targets", {})
@@ -122,7 +122,7 @@ class Project(
     def __init__(
         self,
         scopes: List[PipelineScope],
-        plugins: List[PluginScope] = None,
+        plugins: List[PluginConfiguration] = None,
         targets: Dict[str, Target] = None,
     ):
         self.scopes_by_name: Dict[str, PipelineScope] = {}

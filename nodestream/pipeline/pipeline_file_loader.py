@@ -26,13 +26,12 @@ class PipelineFileSafeLoader(SafeLoader):
 
     @classmethod
     def configure(cls, config: ScopeConfig):
-        if config:
-            cls.add_constructor(
-                "!config",
-                lambda loader, node: config.get_config_value(
-                    loader.construct_scalar(node)
-                ),
-            )
+        cls.add_constructor(
+            "!config",
+            lambda loader, node: config.get_config_value(
+                loader.construct_scalar(node)
+            ),
+        )
 
         if cls.was_configured:
             return

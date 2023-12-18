@@ -16,7 +16,7 @@ from nodestream.project import (
     RunRequest,
     Target,
 )
-from nodestream.project.plugin import PluginScope
+from nodestream.project.plugin import PluginConfiguration
 from nodestream.schema.schema import GraphSchema
 
 
@@ -75,7 +75,7 @@ async def test_project_runs_pipeline_in_scope_when_present(
 def test_project_init_sets_up_plugin_scope_when_present(plugin_scope):
     Project(
         plugin_scope,
-        [PluginScope(name="scope3", config=ScopeConfig({"PluginUsername": "bob"}))],
+        [PluginConfiguration(name="scope3", config=ScopeConfig({"PluginUsername": "bob"}))],
     )
     assert plugin_scope[0].config == ScopeConfig({"PluginUsername": "bob"})
 
@@ -86,7 +86,7 @@ def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
     Project(
         plugin_scope,
         [
-            PluginScope(
+            PluginConfiguration(
                 name="other_scope", config=ScopeConfig({"PluginUsername": "bob"})
             )
         ],
