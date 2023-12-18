@@ -2,7 +2,12 @@ from pathlib import Path
 
 from hamcrest import assert_that, equal_to, has_length, instance_of
 
-from nodestream.pipeline import PipelineFile, PipelineInitializationArguments
+from nodestream.file_io import LazyLoadedArgument
+from nodestream.pipeline.pipeline_file_loader import (
+    PipelineFile,
+    PipelineInitializationArguments,
+    PipelineFileContents,
+)
 from nodestream.pipeline.step import PassStep
 
 
@@ -34,3 +39,20 @@ def test_unset_annotations():
     step = {"annotations": ["good"], **rest_of_step}
     assert_that(init_args.step_is_tagged_properly(step), equal_to(True))
     assert_that(step, equal_to(rest_of_step))
+
+
+def test_pipeline_file_loads_lazy():
+    file_contents = PipelineFileContents.read_from_file(
+        Path("tests/unit/pipeline/fixtures/config_pipeline.yaml")
+    )
+    assert_that(
+        file_contents.data,
+        equal_to(
+            [
+                {
+                    "implementation": "nodestream.pipeline.step:PassStep",
+                    "arguments": {"name": LazyLoadedArgument("config", "name")},
+                }
+            ]
+        ),
+    )

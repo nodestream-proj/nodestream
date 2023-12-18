@@ -1,6 +1,7 @@
 from abc import ABC, abstractclassmethod, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Type
+from typing import Type, Any
 
 from schema import Schema
 from yaml import SafeDumper, SafeLoader, dump, load
@@ -134,10 +135,10 @@ class SavesToYamlFile(SavesToYaml):
 #
 # This comes with the side effect that we shift the responsibility of resolving the arguments from the
 # yaml parser to the code that uses the "loaded" yaml data.
+@dataclass(frozen=True, slots=True)
 class LazyLoadedArgument:
-    def __init__(self, tag, value):
-        self.tag = tag
-        self.value = value
+    tag: str
+    value: Any
 
     def get_value(self):
         from .pipeline.argument_resolvers import ArgumentResolver

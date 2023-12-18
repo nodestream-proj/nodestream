@@ -1,1 +1,3 @@
-- implementation: !config TestValue 
+- implementation: nodestream.pipeline.step:PassStep
+  arguments:
+    name: !config name
