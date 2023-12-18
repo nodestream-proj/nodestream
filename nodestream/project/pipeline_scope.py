@@ -85,7 +85,7 @@ class PipelineScope(
             return 0
 
         run_request.set_configuration(self.config)
-        await run_request.execute_with_definition(self[name], self.config)
+        await run_request.execute_with_definition(self[name])
         return 1
 
     def __getitem__(self, pipeline_name):
