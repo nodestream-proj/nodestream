@@ -56,3 +56,25 @@ def test_spinner_progress_callback(mocker):
     spinner.on_start()
     spinner.progress_callback(1000, None)
     spinner.progress.set_message.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "from_cli,from_pipeline,expected",
+    [
+        (None, set(), set()),
+        (set(), None, set()),
+        (["t1", "t2"], None, {"t1", "t2"}),
+        (None, {"t1", "t2"}, {"t1", "t2"}),
+        (["t1", "t2"], {"t2", "t3"}, {"t1", "t2", "t3"}),
+    ],
+)
+def test_combine_targets_from_command_and_pipeline(
+    mocker, from_cli, from_pipeline, expected
+):
+    command, pipeline = mocker.Mock(), mocker.Mock()
+    command.option.return_value = from_cli
+    pipeline.targets = from_pipeline
+    result = RunPipeline(mocker.Mock()).combine_targets_from_command_and_pipeline(
+        command, pipeline
+    )
+    assert_that(result, equal_to(expected))
