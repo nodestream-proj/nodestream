@@ -1,10 +1,10 @@
 import pytest
 
-from nodestream.project import RunRequest
 from nodestream.pipeline import (
     PipelineInitializationArguments,
     PipelineProgressReporter,
 )
+from nodestream.project import RunRequest
 
 
 @pytest.mark.asyncio
