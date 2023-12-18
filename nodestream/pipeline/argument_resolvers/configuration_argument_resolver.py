@@ -2,8 +2,8 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Optional
 
-from .argument_resolver import ArgumentResolver
 from ..scope_config import ScopeConfig
+from .argument_resolver import ArgumentResolver
 
 config: ContextVar[Optional[ScopeConfig]] = ContextVar("context")
 

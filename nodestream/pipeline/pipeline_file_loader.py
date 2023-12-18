@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Any
+from typing import Any, Callable, Dict, List, Optional
 
+from ..file_io import LazyLoadedTagSafeLoader, LoadsFromYamlFile
 from .argument_resolvers import set_config
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
@@ -9,7 +10,6 @@ from .pipeline import Pipeline
 from .scope_config import ScopeConfig
 from .step import Step
 from .value_providers import ValueProvider
-from ..file_io import LazyLoadedTagSafeLoader, LoadsFromYamlFile
 
 
 class InvalidPipelineDefinitionError(ValueError):

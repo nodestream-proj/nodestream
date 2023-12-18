@@ -3,12 +3,12 @@ from typing import Optional
 import pytest
 from hamcrest import assert_that, equal_to, none
 
+from nodestream.file_io import LazyLoadedArgument
 from nodestream.pipeline.class_loader import (
     ClassLoader,
     InvalidClassPathError,
     PipelineComponentInitializationError,
 )
-from nodestream.file_io import LazyLoadedArgument
 
 
 class SimpleClass:

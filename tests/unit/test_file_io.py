@@ -1,8 +1,7 @@
 import pytest
+from hamcrest import assert_that, equal_to
 
 from nodestream.file_io import LazyLoadedArgument
-
-from hamcrest import assert_that, equal_to
 
 
 @pytest.mark.parametrize(
