@@ -9,8 +9,9 @@ from .filters import (
 from .flush import Flush
 from .meta import UNKNOWN_PIPELINE_NAME
 from .pipeline import Pipeline
-from .pipeline_file_loader import PipelineFileLoader, PipelineInitializationArguments
+from .pipeline_file_loader import PipelineFile, PipelineInitializationArguments
 from .progress_reporter import PipelineProgressReporter
+from .scope_config import ScopeConfig
 from .step import PassStep, Step
 from .transformers import Transformer
 from .writers import LoggerWriter, Writer
@@ -23,7 +24,7 @@ __all__ = (
     "ValuesMatchPossibilitiesFilter",
     "ValueMatchesRegexFilter",
     "ExcludeWhenValuesMatchPossibilities",
-    "PipelineFileLoader",
+    "PipelineFile",
     "Pipeline",
     "Step",
     "Transformer",

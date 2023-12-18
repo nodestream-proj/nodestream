@@ -8,6 +8,7 @@ from nodestream.pipeline.class_loader import (
     InvalidClassPathError,
     PipelineComponentInitializationError,
 )
+from nodestream.file_io import LazyLoadedArgument
 
 
 class SimpleClass:
@@ -103,3 +104,12 @@ def test_class_loader_valid_subclass(subject):
         arguments={"argument": "test"},
         factory="another_factory",
     )
+
+
+def test_class_loader_resolves_lazy_values(subject, mocker):
+    mocker.patch.dict("os.environ", {"USERNAME_FROM_ENV": "bob"})
+    result = subject.load_class(
+        implementation="tests.unit.pipeline.test_class_loader:SimpleClass",
+        arguments={"argument": LazyLoadedArgument("env", "USERNAME_FROM_ENV")},
+    )
+    assert_that(result.argument, equal_to("bob"))

@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from ..file_io import LoadsFromYaml, SavesToYaml
-from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
-from ..pipeline.scope_config import ScopeConfig
+from ..pipeline import Pipeline, PipelineFile, PipelineInitializationArguments
 from ..schema.schema import IntrospectiveIngestionComponent
 
 
@@ -85,10 +84,8 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
         return result
 
-    def initialize(
-        self, init_args: PipelineInitializationArguments, config: ScopeConfig = None
-    ) -> Pipeline:
-        return PipelineFileLoader(self.file_path).load_pipeline(init_args, config)
+    def initialize(self, init_args: PipelineInitializationArguments) -> Pipeline:
+        return PipelineFile(self.file_path).load_pipeline(init_args)
 
     def remove_file(self, missing_ok: bool = True):
         """Remove the file associated with this `PipelineDefinition`.
@@ -102,9 +99,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         self.file_path.unlink(missing_ok=missing_ok)
 
     def initialize_for_introspection(self) -> Pipeline:
-        return self.initialize(
-            PipelineInitializationArguments.for_introspection(), ScopeConfig({})
-        )
+        return self.initialize(PipelineInitializationArguments.for_introspection())
 
     def gather_object_shapes(self):
         return self.initialize_for_introspection().gather_object_shapes()

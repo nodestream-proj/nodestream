@@ -5,8 +5,6 @@ from typing import Type
 from schema import Schema
 from yaml import SafeDumper, SafeLoader, dump, load
 
-from .pipeline.argument_resolvers import ArgumentResolver
-
 
 class DescribesYamlSchema(ABC):
     """A mixin for classes that can be described by a YAML schema."""
@@ -142,12 +140,20 @@ class LazyLoadedArgument:
         self.value = value
 
     def get_value(self):
+        from .pipeline.argument_resolvers import ArgumentResolver
+
         return ArgumentResolver.resolve_argument_with_alias(self.tag, self.value)
 
     @staticmethod
     def resolve_if_needed(value):
         if isinstance(value, LazyLoadedArgument):
             return value.get_value()
+        if isinstance(value, dict):
+            return {
+                k: LazyLoadedArgument.resolve_if_needed(v) for k, v in value.items()
+            }
+        if isinstance(value, list):
+            return [LazyLoadedArgument.resolve_if_needed(v) for v in value]
         return value
 
 
