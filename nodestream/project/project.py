@@ -92,7 +92,8 @@ class Project(
 
         plugins_list = data.pop("plugins", {})
         plugins = [
-            PluginConfiguration.from_file_data(plugins_data) for plugins_data in plugins_list
+            PluginConfiguration.from_file_data(plugins_data)
+            for plugins_data in plugins_list
         ]
 
         targets = data.pop("targets", {})

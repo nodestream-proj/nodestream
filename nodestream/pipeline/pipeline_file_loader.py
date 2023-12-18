@@ -28,9 +28,7 @@ class PipelineFileSafeLoader(SafeLoader):
     def configure(cls, config: ScopeConfig):
         cls.add_constructor(
             "!config",
-            lambda loader, node: config.get_config_value(
-                loader.construct_scalar(node)
-            ),
+            lambda loader, node: config.get_config_value(loader.construct_scalar(node)),
         )
 
         if cls.was_configured:

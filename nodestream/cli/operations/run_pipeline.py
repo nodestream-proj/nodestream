@@ -44,7 +44,6 @@ class RunPipeline(Operation):
     def get_writer_steps_for_specified_targets(
         self, command: NodestreamCommand, pipeline_targets: List[str] = []
     ):
-        
         for target_name in set(command.option("target")).union(pipeline_targets):
             target = self.project.get_target_by_name(target_name)
             if target:

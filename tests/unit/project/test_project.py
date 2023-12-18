@@ -75,7 +75,11 @@ async def test_project_runs_pipeline_in_scope_when_present(
 def test_project_init_sets_up_plugin_scope_when_present(plugin_scope):
     Project(
         plugin_scope,
-        [PluginConfiguration(name="scope3", config=ScopeConfig({"PluginUsername": "bob"}))],
+        [
+            PluginConfiguration(
+                name="scope3", config=ScopeConfig({"PluginUsername": "bob"})
+            )
+        ],
     )
     assert plugin_scope[0].config == ScopeConfig({"PluginUsername": "bob"})
 
