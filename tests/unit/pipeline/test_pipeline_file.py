@@ -5,8 +5,8 @@ from hamcrest import assert_that, equal_to, has_length, instance_of
 from nodestream.file_io import LazyLoadedArgument
 from nodestream.pipeline.pipeline_file_loader import (
     PipelineFile,
-    PipelineInitializationArguments,
     PipelineFileContents,
+    PipelineInitializationArguments,
 )
 from nodestream.pipeline.step import PassStep
 

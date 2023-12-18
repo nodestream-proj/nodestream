@@ -1,7 +1,7 @@
 from abc import ABC, abstractclassmethod, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Type, Any
+from typing import Any, Type
 
 from schema import Schema
 from yaml import SafeDumper, SafeLoader, dump, load
