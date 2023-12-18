@@ -130,11 +130,19 @@ End users can provide values for the `!config` plugin tags in their nodestream.y
 #### Plugin End-User Provided
 === "nodestream.yaml"
     ```
-    plugin_config:
-      myPlugin:
-        service_base_url: "https://mytestpluginapi.com"
-        service_username: !env MY_TEST_PLUGIN_USERNAME
-        service_password: !env MY_TEST_PLUGIN_PASSWORD
-      otherPlugin:
-        service_base_url: "https://otherurl.com"
+    plugins:
+      - name: myPlugin
+        config:
+          service_base_url: "https://mytestpluginapi.com"
+          service_username: !env MY_TEST_PLUGIN_USERNAME
+          service_password: !env MY_TEST_PLUGIN_PASSWORD
+        targets:
+          - target1
+          - target2
+      - name: otherPlugin
+        config:
+          service_base_url: "https://otherurl.com"
+        targets:
+          - target1
+          - target2
     ```

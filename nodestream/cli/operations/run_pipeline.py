@@ -1,10 +1,11 @@
-from typing import Iterable
+from typing import Iterable, List
 
 from yaml import safe_dump
 
 from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
 from ...pipeline.meta import PipelineContext
 from ...project import Project, RunRequest
+from ...project.pipeline_definition import PipelineDefinition
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 
@@ -19,15 +20,20 @@ class RunPipeline(Operation):
     def __init__(self, project: Project) -> None:
         self.project = project
 
-    def get_pipelines_to_run(self, command: NodestreamCommand) -> Iterable[str]:
+    def get_pipelines_to_run(
+        self, command: NodestreamCommand
+    ) -> Iterable[PipelineDefinition]:
         supplied_commands = command.argument("pipelines")
-        return supplied_commands or self.project.get_all_pipeline_names()
+        if supplied_commands:
+            return [
+                self.project.get_pipeline_by_name(name) for name in supplied_commands
+            ]
+        return self.project.get_all_pipelines()
 
     async def perform(self, command: NodestreamCommand):
         pipelines_ran = 0
-
-        for pipeline_name in self.get_pipelines_to_run(command):
-            request = self.make_run_request(command, pipeline_name)
+        for pipeline in self.get_pipelines_to_run(command):
+            request = self.make_run_request(command, pipeline)
             pipelines_ran += await self.project.run(request)
 
         if pipelines_ran == 0:
@@ -35,8 +41,10 @@ class RunPipeline(Operation):
             command.line(HINT_CHECK_PIPELINE_NAME)
             command.line(HINT_USE_NODESTREAM_SHOW)
 
-    def get_writer_steps_for_specified_targets(self, command: NodestreamCommand):
-        for target_name in command.option("target"):
+    def get_writer_steps_for_specified_targets(
+        self, command: NodestreamCommand, pipeline_targets: List[str] = []
+    ):
+        for target_name in set(command.option("target")).union(pipeline_targets):
             target = self.project.get_target_by_name(target_name)
             if target:
                 yield target.make_writer()
@@ -46,7 +54,7 @@ class RunPipeline(Operation):
                 )
 
     def make_run_request(
-        self, command: NodestreamCommand, pipeline_name: str
+        self, command: NodestreamCommand, pipeline: PipelineDefinition
     ) -> RunRequest:
         def print_effective_config(config):
             if command.is_very_verbose:
@@ -54,14 +62,18 @@ class RunPipeline(Operation):
                 command.line(f"<info>{safe_dump(config)}</info>")
 
         return RunRequest(
-            pipeline_name=pipeline_name,
+            pipeline_name=pipeline.name,
             initialization_arguments=PipelineInitializationArguments(
                 annotations=command.option("annotations"),
                 step_outbox_size=int(command.option("step-outbox-size")),
                 on_effective_configuration_resolved=print_effective_config,
-                extra_steps=list(self.get_writer_steps_for_specified_targets(command)),
+                extra_steps=list(
+                    self.get_writer_steps_for_specified_targets(
+                        command, pipeline.targets
+                    )
+                ),
             ),
-            progress_reporter=self.create_progress_reporter(command, pipeline_name),
+            progress_reporter=self.create_progress_reporter(command, pipeline.name),
         )
 
     def get_progress_indicator(

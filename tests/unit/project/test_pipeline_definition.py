@@ -40,11 +40,11 @@ def test_from_file_data_complex_input():
     [
         (PipelineDefinition("test", Path("test.yaml")), "test.yaml"),
         (
-            PipelineDefinition("test", Path("test.yaml"), {"foo": True}),
+            PipelineDefinition("test", Path("test.yaml"), None, {"foo": True}),
             {"path": "test.yaml", "annotations": {"foo": True}},
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), {"foo": True}),
+            PipelineDefinition("baz", Path("test.yaml"), None, {"foo": True}),
             {"path": "test.yaml", "annotations": {"foo": True}, "name": "baz"},
         ),
         (
@@ -65,19 +65,29 @@ def test_to_file_data(definition, expected_data):
     [
         (
             PipelineDefinition("test", Path("test.yaml")),
-            {"path": "test.yaml", "annotations": {}, "name": "test"},
+            {"path": "test.yaml", "annotations": {}, "name": "test", "targets": None},
         ),
         (
-            PipelineDefinition("test", Path("test.yaml"), {"foo": True}),
-            {"path": "test.yaml", "annotations": {"foo": True}, "name": "test"},
+            PipelineDefinition("test", Path("test.yaml"), None, {"foo": True}),
+            {
+                "path": "test.yaml",
+                "annotations": {"foo": True},
+                "name": "test",
+                "targets": None,
+            },
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), {"foo": True}),
-            {"path": "test.yaml", "annotations": {"foo": True}, "name": "baz"},
+            PipelineDefinition("baz", Path("test.yaml"), None, {"foo": True}),
+            {
+                "path": "test.yaml",
+                "annotations": {"foo": True},
+                "name": "baz",
+                "targets": None,
+            },
         ),
         (
             PipelineDefinition("baz", Path("test.yaml")),
-            {"path": "test.yaml", "annotations": {}, "name": "baz"},
+            {"path": "test.yaml", "annotations": {}, "name": "baz", "targets": None},
         ),
     ],
 )

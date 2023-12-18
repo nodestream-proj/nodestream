@@ -29,6 +29,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     name: str
     file_path: Path
+    targets: str = None
     annotations: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -57,6 +58,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
                     Optional("name"): str,
                     "path": os.path.exists,
                     Optional("annotations"): {str: Or(str, int, float, bool)},
+                    Optional("targets"): list[str],
                 },
             )
         )
@@ -68,8 +70,9 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
         file_path = Path(data.pop("path"))
         name = data.pop("name", get_default_name(file_path))
+        targets = data.pop("targets", None)
         annotations = data.pop("annotations", {})
-        return cls(name, file_path, {**parent_annotations, **annotations})
+        return cls(name, file_path, targets, {**parent_annotations, **annotations})
 
     def to_file_data(self, verbose: bool = False):
         using_default_name = self.name == self.file_path.stem
@@ -81,6 +84,8 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
             result["name"] = self.name
         if self.annotations or verbose:
             result["annotations"] = self.annotations
+        if self.targets or verbose:
+            result["targets"] = self.targets
 
         return result
 

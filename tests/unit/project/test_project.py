@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
-from hamcrest import assert_that, equal_to, has_key, has_length, same_instance
+from hamcrest import assert_that, equal_to, has_length, same_instance
 
 from nodestream.pipeline import (
     PipelineInitializationArguments,
@@ -16,6 +16,7 @@ from nodestream.project import (
     RunRequest,
     Target,
 )
+from nodestream.project.plugin import PluginConfiguration
 from nodestream.schema.schema import GraphSchema
 
 
@@ -72,14 +73,28 @@ async def test_project_runs_pipeline_in_scope_when_present(
 
 
 def test_project_init_sets_up_plugin_scope_when_present(plugin_scope):
-    Project(plugin_scope, {"scope3": ScopeConfig({"PluginUsername": "bob"})})
+    Project(
+        plugin_scope,
+        [
+            PluginConfiguration(
+                name="scope3", config=ScopeConfig({"PluginUsername": "bob"})
+            )
+        ],
+    )
     assert plugin_scope[0].config == ScopeConfig({"PluginUsername": "bob"})
 
 
 def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
     plugin_scope,
 ):
-    Project(plugin_scope, {"other_scope": ScopeConfig({"PluginUsername": "bob"})})
+    Project(
+        plugin_scope,
+        [
+            PluginConfiguration(
+                name="other_scope", config=ScopeConfig({"PluginUsername": "bob"})
+            )
+        ],
+    )
     assert plugin_scope[0].config is None
 
 
@@ -95,9 +110,9 @@ def test_project_from_file_with_config(add_env_var):
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
 
-    assert_that(result.plugin_configs, has_key("test"))
+    assert_that(result.plugins[0].name, equal_to("test"))
     assert_that(
-        result.plugin_configs["test"].get_config_value("PluginUsername"),
+        result.plugins[0].get_config_value("PluginUsername"),
         equal_to("bob"),
     )
     assert_that(
@@ -106,17 +121,32 @@ def test_project_from_file_with_config(add_env_var):
     )
 
 
+def test_project_from_with_config_targets(add_env_var):
+    result = Project.read_from_file(
+        Path("tests/unit/project/fixtures/simple_project_with_config_targets.yaml")
+    )
+    assert_that(result.targets_by_name, equal_to({"t1": Target("t1", {"a": "b"})}))
+    assert_that(
+        result.scopes_by_name["perpetual"].config.get_config_value("Username"),
+        equal_to("bob"),
+    )
+    assert_that(
+        result.scopes_by_name["perpetual"].pipelines_by_name["target-pipeline"].targets,
+        equal_to(["t1"]),
+    )
+
+
 def test_project_from_file():
     file_name = Path("tests/unit/project/fixtures/simple_project.yaml")
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
     assert_that(
-        result.plugin_configs,
-        equal_to({}),
+        result.plugins,
+        equal_to([]),
     )
     assert_that(
         result.scopes_by_name["perpetual"].config,
-        equal_to(ScopeConfig(config={})),
+        equal_to(ScopeConfig(config=None)),
     )
 
 
@@ -172,7 +202,8 @@ async def test_get_snapshot_for(project, mocker):
 
 
 def test_all_pipeline_names(project):
-    assert_that(list(project.get_all_pipeline_names()), equal_to(["test", "test2"]))
+    pipeline_names = [pipeline.name for pipeline in project.get_all_pipelines()]
+    assert_that(pipeline_names, equal_to(["test", "test2"]))
 
 
 def test_get_target_present(project):
