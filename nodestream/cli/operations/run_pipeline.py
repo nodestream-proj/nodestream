@@ -1,4 +1,4 @@
-from typing import Iterable, List
+from typing import Iterable
 
 from yaml import safe_dump
 
