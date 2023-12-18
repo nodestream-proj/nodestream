@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from ..file_io import LazyLoadedTagSafeLoader, LoadsFromYamlFile
+from ..file_io import LazyLoadedTagSafeLoader, LoadsFromYamlFile, LazyLoadedArgument
 from .argument_resolvers import set_config
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
@@ -65,8 +65,14 @@ class PipelineInitializationArguments:
         effective = self.get_effective_configuration(file_data)
         if self.on_effective_configuration_resolved:
             self.on_effective_configuration_resolved(file_data)
-        in_file = [class_loader.load_class(**step_data) for step_data in effective]
+        in_file = [self.load_step(class_loader, **step_data) for step_data in effective]
         return in_file + (self.extra_steps or [])
+
+    def load_step(self, class_loader, implementation, arguments=None, factory=None):
+        arguments = LazyLoadedArgument.resolve_if_needed(arguments or {})
+        return class_loader.load_class(
+            implementation=implementation, arguments=arguments, factory=factory
+        )
 
     def get_effective_configuration(self, file_data):
         return [
@@ -99,6 +105,7 @@ class PipelineFileContents(LoadsFromYamlFile):
             [
                 {
                     "implementation": str,
+                    Optional("factory"): str,
                     Optional("annotations"): [str],
                     Optional("arguments"): {str: object},
                 }

@@ -1,8 +1,6 @@
 from importlib import import_module
 from typing import Optional, Type
 
-from ..file_io import LazyLoadedArgument
-
 DECLARATIVE_INIT_METHOD_NAME = "from_file_data"
 
 
@@ -59,10 +57,9 @@ class ClassLoader:
 
     def load_class(self, implementation, arguments=None, factory=None):
         arguments = arguments or {}
-        resolved_arguments = LazyLoadedArgument.resolve_if_needed(arguments)
         initializer = self.find_class_initializer(implementation, factory)
         try:
-            result = initializer(**resolved_arguments)
+            result = initializer(**arguments)
         except TypeError as e:
             raise PipelineComponentInitializationError(initializer, arguments) from e
 
