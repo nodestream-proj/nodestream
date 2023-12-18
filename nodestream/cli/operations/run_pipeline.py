@@ -44,9 +44,8 @@ class RunPipeline(Operation):
     def get_writer_steps_for_specified_targets(
         self, command: NodestreamCommand, pipeline_targets: List[str] = []
     ):
-        for target_name in self.combine_target_lists_without_duplicates(
-            pipeline_targets, command.option("target")
-        ):
+        
+        for target_name in set(command.option("target")).union(pipeline_targets):
             target = self.project.get_target_by_name(target_name)
             if target:
                 yield target.make_writer()
@@ -54,17 +53,6 @@ class RunPipeline(Operation):
                 command.line(
                     f"<error>Target '{target_name}' not found in project. Ignoring.</error>"
                 )
-
-    def combine_target_lists_without_duplicates(
-        self, pipeline_targets: List[str] = [], command_targets: List[str] = []
-    ):
-        if not pipeline_targets:
-            return command_targets
-        in_first = set(pipeline_targets)
-        in_second = set(command_targets)
-        in_second_but_not_in_first = in_second - in_first
-        result = pipeline_targets + list(in_second_but_not_in_first)
-        return result
 
     def make_run_request(
         self, command: NodestreamCommand, pipeline: PipelineDefinition
