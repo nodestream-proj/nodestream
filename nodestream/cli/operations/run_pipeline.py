@@ -78,9 +78,7 @@ class RunPipeline(Operation):
                 step_outbox_size=int(command.option("step-outbox-size")),
                 on_effective_configuration_resolved=print_effective_config,
                 extra_steps=list(
-                    self.get_writer_steps_for_specified_targets(
-                        command, pipeline.targets
-                    )
+                    self.get_writer_steps_for_specified_targets(command, pipeline)
                 ),
             ),
             progress_reporter=self.create_progress_reporter(command, pipeline.name),
