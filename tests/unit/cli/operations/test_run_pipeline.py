@@ -28,7 +28,9 @@ def test_make_run_request(run_pipeline_operation, mocker):
     command = mocker.Mock()
     command.option.side_effect = [annotations, "10001", targets, "10000"]
     command.argument.return_value = [pipeline_name]
-    result = run_pipeline_operation.make_run_request(command, pipeline_name)
+    pipeline = mocker.patch("nodestream.project.PipelineDefinition")
+    pipeline.name = pipeline_name
+    result = run_pipeline_operation.make_run_request(command, pipeline)
     assert_that(result.pipeline_name, equal_to(pipeline_name))
     assert_that(result.initialization_arguments.annotations, equal_to(annotations))
     assert_that(result.initialization_arguments.step_outbox_size, equal_to(10001))
