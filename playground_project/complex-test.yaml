@@ -1,0 +1,77 @@
+- implementation: nodestream.pipeline.extractors:FileExtractor
+  arguments:
+    globs:
+      - communities/*.json
+
+- implementation: nodestream.pipeline.transformers:ValueProjection
+  arguments:
+    projection: !jmespath '[*]'
+
+- implementation: nodestream.pipeline.transformers:SwitchTransformer
+  arguments:
+    switch_on: !jmespath 'community_type'
+    fail_on_unhandled: true
+    cases:
+      neighborhood:
+        implementation: nodestream.pipeline.transformers:ValueProjectionWithContext
+        arguments:
+          projection: !jmespath 'addresses'
+          additional_values: 
+            address: !jmespath 'address'
+            community_type: !jmespath 'community_type'
+      apartment_complex:
+        implementation: nodestream.pipeline.transformers:ValueProjectionWithContext
+        arguments:
+          projection: !jmespath 'apartments'
+          additional_values: 
+            address: !jmespath 'address'
+            community_type: !jmespath 'community_type'
+
+- implementation: nodestream.pipeline.transformers:SwitchTransformer
+  arguments:
+    switch_on: !jmespath 'community_type'
+    fail_on_unhandled: true
+    cases:
+      neighborhood:
+        implementation: nodestream.pipeline.transformers:ValueProjectionWithContext
+        arguments:
+          projection: !jmespath 'tenants'
+          additional_values: 
+            address: !format
+              fmt: '{street_number} {base_address}'
+              base_address: !jmespath 'address'
+              street_number: !jmespath 'street_number'
+            community_type: !jmespath 'community_type'
+
+      apartment_complex:
+        implementation: nodestream.pipeline.transformers:ValueProjectionWithContext
+        arguments:
+          projection: !jmespath 'tenants'
+          additional_values: 
+            address: !format
+              fmt: '{base_address} {apartment_number}'
+              base_address: !jmespath 'address'
+              apartment_number: !jmespath 'room_number'
+            community_type: !jmespath 'community_type'
+
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: relationship
+        iterate_on: !jmespath tenants[*]
+        node_type: Person
+        node_key:
+          first_name: !jmespath first_name
+          last_name: !jmespath last_name
+        relationship_type: LIVES
+        find_many: true
+
+      - type: source_node
+        node_type: Address
+        key:
+          address: 
+            fmt: '{address} {apartment}'
+            base_address: !jmespath 'address'
+            apartment: !jmespath 'room_number'
+
+
