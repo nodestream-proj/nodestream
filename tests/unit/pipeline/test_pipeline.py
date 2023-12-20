@@ -6,9 +6,9 @@ from nodestream.pipeline import PipelineProgressReporter
 from nodestream.pipeline.pipeline import (
     Pipeline,
     PipelineException,
+    PipelineState,
     StepException,
     StepExecutor,
-    PipelineState,
     empty_async_generator,
 )
 from nodestream.pipeline.step import PassStep
