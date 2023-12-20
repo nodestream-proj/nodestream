@@ -8,9 +8,20 @@ from nodestream.pipeline.pipeline import (
     PipelineException,
     StepException,
     StepExecutor,
+    PipelineState,
     empty_async_generator,
 )
 from nodestream.pipeline.step import PassStep
+
+
+async def async_range(size):
+    for i in range(size):
+        yield i
+
+
+@pytest.fixture
+def pipeline_state():
+    return PipelineState()
 
 
 @pytest.fixture
@@ -23,11 +34,11 @@ def pipeline(mocker):
 
 
 @pytest.fixture
-def step_executor(mocker):
+def step_executor(mocker, pipeline_state):
     step = PassStep()
     step.handle_async_record_stream = mocker.Mock(return_value=empty_async_generator())
     step.finish = mocker.AsyncMock()
-    return StepExecutor(step=step, upstream=None)
+    return StepExecutor(pipeline_state, step=step, upstream=None)
 
 
 @pytest.mark.asyncio
@@ -129,3 +140,13 @@ async def test_pipeline_errors_are_kept_in_exception(
         assert type(error) == StepException
         assert "Exception in Start Process:" in error.exceptions
         assert "Exception in Work Body:" in error.exceptions
+
+
+@pytest.mark.asyncio
+async def test_pipeline_terminates_when_step_executor_raises_exception(mocker):
+    steps = mocker.Mock(), mocker.Mock()
+    pipeline = Pipeline(steps, 100)
+    steps[0].handle_async_record_stream.return_value = async_range(1000)
+    steps[1].handle_async_record_stream.side_effect = Exception("test")
+    with pytest.raises(PipelineException):
+        await pipeline.run()

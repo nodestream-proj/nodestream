@@ -32,6 +32,7 @@ class DoneObject:
 START_EXCEPTION = "Exception in Start Process:"
 WORK_BODY_EXCEPTION = "Exception in Work Body:"
 STOP_EXCEPTION = "Exception in Stop Process:"
+OUTBOX_POLL_TIME = 0.1
 
 
 class StepException(Exception):
@@ -64,6 +65,10 @@ class StepException(Exception):
         return f"Exceptions in {self.identifier}:\n" + message
 
 
+class ForwardProgressHalted(Exception):
+    pass
+
+
 class PipelineException(Exception):
     """
     Exception in Pipeline:
@@ -90,15 +95,25 @@ class PipelineException(Exception):
         return "Exceptions in Pipeline:\n" + message
 
 
+class PipelineState:
+    def __init__(self) -> None:
+        self.has_fatal_error = False
+
+    def signal_fatal_error(self):
+        self.has_fatal_error = True
+
+
 class StepExecutor:
     def __init__(
         self,
+        pipeline_state: PipelineState,
         upstream: Optional["StepExecutor"],
         step: Step,
         outbox_size: int = 0,
         step_index: Optional[int] = 0,
         progress_reporter: Optional[PipelineProgressReporter] = None,
     ) -> None:
+        self.pipeline_state = pipeline_state
         self.outbox = asyncio.Queue(maxsize=outbox_size)
         self.upstream = upstream
         self.done = False
@@ -124,9 +139,25 @@ class StepExecutor:
         self.progress_reporter = progress_reporter
         self.end_of_line = True
 
+    def pipeline_has_died(self) -> bool:
+        return self.pipeline_state.has_fatal_error
+
+    async def submit_object_or_die_trying(self, obj):
+        should_continue = True
+        while should_continue:
+            try:
+                await asyncio.wait_for(self.outbox.put(obj), timeout=OUTBOX_POLL_TIME)
+                should_continue = False
+            except asyncio.TimeoutError:
+                # We timed out, now we need to check if the pipeline has died and if so, raise an exception.
+                if self.pipeline_has_died():
+                    raise ForwardProgressHalted(
+                        "Because of a fatal error in the pipeline, this step can no longer continue."
+                    )
+
     async def stop(self):
         self.done = True
-        await self.outbox.put(DoneObject)
+        await self.submit_object_or_die_trying(DoneObject)
         await self.step.finish()
 
         if self.progress_reporter:
@@ -140,7 +171,7 @@ class StepExecutor:
         results = self.step.handle_async_record_stream(upstream)
         async for index, record in enumerate_async(results):
             if not self.end_of_line:
-                await self.outbox.put(record)
+                await self.submit_object_or_die_trying(record)
             if self.progress_reporter:
                 self.progress_reporter.report(index, record)
 
@@ -189,6 +220,7 @@ class StepExecutor:
 
     def raise_encountered_exceptions(self):
         if self.exceptions:
+            self.pipeline_state.signal_fatal_error()
             raise StepException(errors=self.exceptions, identifier=self.identifier)
 
     async def work_loop(self):
@@ -214,8 +246,10 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
     ):
         current_executor = None
         tasks = []
+        state = PipelineState()
         for step_index, step in enumerate(self.steps):
             current_executor = StepExecutor(
+                pipeline_state=state,
                 upstream=current_executor,
                 step=step,
                 outbox_size=self.step_outbox_size,
