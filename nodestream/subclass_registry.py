@@ -18,11 +18,12 @@ class MissingFromRegistryError(ValueError):
 class SubclassRegistry:
     """A registry for subclasses of a base class."""
 
-    __slots__ = ("registry", "linked_base")
+    __slots__ = ("registry", "linked_base", "ignore_overrides")
 
-    def __init__(self) -> None:
+    def __init__(self, ignore_overrides: bool = False) -> None:
         self.registry = {}
         self.linked_base = None
+        self.ignore_overrides = ignore_overrides
 
     def connect_baseclass(self, base_class):
         """Connect a base class to this registry."""
@@ -36,7 +37,7 @@ class SubclassRegistry:
         def init_subclass(cls, alias=None, *args, **kwargs):
             alias = alias or cls.__name__
 
-            if alias in self.registry:
+            if alias in self.registry and not self.ignore_overrides:
                 raise AlreadyInRegistryError(alias)
 
             self.registry[alias] = cls
