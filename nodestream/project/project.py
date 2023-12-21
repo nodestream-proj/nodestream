@@ -118,6 +118,11 @@ class Project(
                 for scope in self.scopes_by_name.values()
                 if scope.persist
             },
+            "plugins": [plugin.to_file_data() for plugin in self.plugins or []],
+            "targets": {
+                name: target.to_file_data()
+                for name, target in self.targets_by_name.items()
+            },
         }
 
     def __init__(
