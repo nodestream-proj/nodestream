@@ -161,3 +161,7 @@ def wrap_unloaded_tag(self, node):
 
 
 LazyLoadedTagSafeLoader.add_constructor(None, wrap_unloaded_tag)
+SafeDumper.add_representer(
+    LazyLoadedArgument,
+    lambda dumper, arg: dumper.represent_scalar(arg.tag, arg.value),
+)
