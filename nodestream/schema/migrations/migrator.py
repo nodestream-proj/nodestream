@@ -82,7 +82,6 @@ class Migrator(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     async def mark_migration_as_executed(self, migration: Migration) -> None:
         """Mark a migration as executed.
 
@@ -92,17 +91,31 @@ class Migrator(ABC):
 
         This method is only called if start_transaction() was called and did
         not raise an exception.
-        """
-        raise NotImplementedError
 
-    @abstractmethod
+        By default, this method does nothing. This method should be overridden
+        by subclasses to mark a migration as executed assuming that the
+        migrations are stateful.
+
+        Args:
+            migration: The migration to mark as executed.
+        """
+        pass
+
     async def get_completed_migrations(self) -> List[Migration]:
         """Get a list of completed migrations.
+
+        This method should return a list of completed migrations. If the
+        migrations cannot be retrieved, then this method should raise an
+        exception.
+
+        By default, this method returns an empty list. This method should be
+        overridden by subclasses to return a list of completed migrations
+        assuming that the migrations are stateful.
 
         Returns:
             A list of completed migrations.
         """
-        raise NotImplementedError
+        return []
 
     @asynccontextmanager
     async def transaction(self):

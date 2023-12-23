@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 from ..state import Schema
-from .migrations import MigrationGraph, Migration
+from .migrations import MigrationGraph
 from .migrator import OperationTypeRoutingMixin, Migrator
 from .operations import (
     AddAdditionalNodePropertyIndex,
@@ -64,13 +63,6 @@ class InMemoryMigrator(OperationTypeRoutingMixin, Migrator):
 
     def __init__(self) -> None:
         self.schema = Schema()
-        self.completed_migrations = set()
-
-    async def get_completed_migrations(self) -> List[Migration]:
-        return []
-
-    async def mark_migration_as_executed(self, migration: Migration) -> None:
-        self.completed_migrations.add(migration)
 
     async def execute_create_node_type(self, operation: CreateNodeType) -> None:
         self.schema.put_node_type(operation.as_node_type())
