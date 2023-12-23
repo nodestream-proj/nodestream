@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from hamcrest import assert_that, equal_to
 
-from nodestream.schema.state import NodeType, RelationshipType, FieldIndex
+from nodestream.schema.state import NodeSchema, RelationshipSchema, FieldIndex
 from nodestream.schema.migrations.operations import (
     Operation,
     CreateNodeType,
@@ -29,39 +29,39 @@ from nodestream.schema.migrations.operations import (
 
 
 @dataclass
-class TestOperation(Operation):
+class DummyOperation(Operation):
     name: str
     age: int
 
 
 def test_operation_type_as_snake_case():
     assert_that(
-        TestOperation("John", 42).type_as_snake_case(), equal_to("test_operation")
+        DummyOperation("John", 42).type_as_snake_case(), equal_to("dummy_operation")
     )
 
 
 def test_operation_suggest_migration_name_slug():
     assert_that(
-        TestOperation("John", 42).suggest_migration_name_slug(),
-        equal_to("test_operation"),
+        DummyOperation("John", 42).suggest_migration_name_slug(),
+        equal_to("dummy_operation"),
     )
 
 
 def test_from_file_data():
     assert_that(
-        TestOperation.validate_and_load(
-            {"operation": "TestOperation", "arguments": {"name": "John", "age": 42}}
+        DummyOperation.validate_and_load(
+            {"operation": "DummyOperation", "arguments": {"name": "John", "age": 42}}
         ),
-        equal_to(TestOperation(name="John", age=42)),
+        equal_to(DummyOperation(name="John", age=42)),
     )
 
 
 def test_to_file_data():
     assert_that(
-        TestOperation(name="John", age=42).to_file_data(),
+        DummyOperation(name="John", age=42).to_file_data(),
         equal_to(
             {
-                "operation": "TestOperation",
+                "operation": "DummyOperation",
                 "arguments": {"name": "John", "age": 42},
             }
         ),
@@ -251,14 +251,14 @@ def test_relationship_key_part_renamed_suggest_migration_name_slug():
 def test_create_node_type_as_node_type():
     assert_that(
         CreateNodeType("Person", {"name"}, {"age"}).as_node_type(),
-        NodeType("Person", {"name"}, {"age"}, {}),
+        NodeSchema("Person", {"name"}, {"age"}, {}),
     )
 
 
 def test_create_relationship_type_as_relationship_type():
     assert_that(
         CreateRelationshipType("KNOWS", {"since"}, {"since"}).as_relationship_type(),
-        RelationshipType("KNOWS", {"since"}, {"since"}, {}),
+        RelationshipSchema("KNOWS", {"since"}, {"since"}, {}),
     )
 
 

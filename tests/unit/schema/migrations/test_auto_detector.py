@@ -6,12 +6,11 @@ from itertools import combinations
 from typing import Iterable
 
 import pytest
-from hamcrest import assert_that, has_items
+from hamcrest import assert_that, has_items, equal_to
 
-from nodestream.schema.migrations import (
+from nodestream.schema.migrations.auto_change_detector import (
     AutoChangeDetector,
     MigratorInput,
-    LoggingMigratorOutput,
 )
 from nodestream.schema.migrations.operations import (
     Operation,
@@ -43,6 +42,33 @@ from nodestream.schema.migrations.state_providers import (
 
 
 ALPHABET = string.ascii_lowercase + string.ascii_uppercase + string.digits
+
+
+def test_migrator_input_ask_yes_no(mocker):
+    input = MigratorInput()
+    assert_that(input.ask_yes_no("Hello, world!"), equal_to(False))
+
+
+def test_migrator_input_ask_property_renamed_asks_correct_question(mocker):
+    input = MigratorInput()
+    input.ask_yes_no = mocker.Mock(return_value=True)
+    assert_that(
+        input.ask_property_renamed("object_type", "old_property", "new_property"),
+        equal_to(True),
+    )
+    input.ask_yes_no.assert_called_once_with(
+        "Did you rename old_property to new_property on object_type?"
+    )
+
+
+def test_migrator_input_ask_type_renamed_asks_correct_question(mocker):
+    input = MigratorInput()
+    input.ask_yes_no = mocker.Mock(return_value=True)
+    assert_that(
+        input.ask_type_renamed("old_type", "new_type"),
+        equal_to(True),
+    )
+    input.ask_yes_no.assert_called_once_with("Did you rename old_type to new_type?")
 
 
 class ScenarioMigratorInput(MigratorInput):
@@ -540,7 +566,7 @@ ALL_PERMUTABLE_SCENARIOS = [
 )
 async def test_auto_change_detections_with_permutations(scenario_permutation):
     # Prepare the intial state of the schema.
-    memory_migrator = InMemoryMigrator(None, LoggingMigratorOutput())
+    memory_migrator = InMemoryMigrator()
     input = ScenarioMigratorInput()
     scenario_instances = [
         scenario(memory_migrator, input) for scenario in scenario_permutation

@@ -1,7 +1,6 @@
 from typing import List, Tuple, Set, Dict, Iterable
 
-from ..state import GraphObject
-from .io import MigratorInput
+from ..state import GraphObjectSchema
 from .operations import (
     Operation,
     AddAdditionalNodePropertyIndex,
@@ -26,6 +25,87 @@ from .operations import (
     RelationshipKeyPartRenamed,
 )
 from .state_providers import StateProvider
+
+
+class MigratorInput:
+    """Asks questions as the schema change detector works.
+
+    This class is used by the schema change detector to ask questions to the
+    user as it works. The schema change detector will ask questions to the
+    user when it is not sure about the answer.
+
+    The default implementation of this class will always answer no to all
+    questions.
+    """
+
+    def ask_yes_no(self, question: str) -> bool:
+        """Ask a yes/no question.
+
+        Args:
+            question: The question to ask.
+
+        Returns:
+            True if the user answered yes, False if the user answered no.
+        """
+        return False
+
+    def format_ask_type_renamed(self, old_type: str, new_type: str) -> str:
+        """Format a question about a type being renamed.
+
+        Args:
+            old_type: The old type name.
+            new_type: The new type name.
+
+        Returns:
+            The formatted question.
+        """
+        return f"Did you rename {old_type} to {new_type}?"
+
+    def ask_type_renamed(self, old_type: str, new_type: str) -> bool:
+        """Ask if a type was renamed.
+
+        Args:
+            old_type: The old type name.
+            new_type: The new type name.
+
+        Returns:
+            True if the user answered yes, False if the user answered no.
+        """
+        question = self.format_ask_type_renamed(old_type, new_type)
+        return self.ask_yes_no(question)
+
+    def format_ask_property_renamed(
+        self, object_type: str, old_property_name: str, new_property_name: str
+    ) -> str:
+        """Format a question about a property being renamed.
+
+        Args:
+            object_type: The type of the object that the property belongs to.
+            old_property_name: The old property name.
+            new_property_name: The new property name.
+
+        Returns:
+            The formatted question.
+        """
+        return f"Did you rename {old_property_name} to {new_property_name} on {object_type}?"
+
+    def ask_property_renamed(
+        self, object_type: str, old_property_name: str, new_property_name: str
+    ) -> bool:
+        """Ask if a property was renamed.
+
+        Args:
+            object_type: The type of the object that the property belongs to.
+            old_property_name: The old property name.
+            new_property_name: The new property name.
+
+        Returns:
+            True if the user answered yes, False if the user answered no.
+        """
+        question = self.format_ask_property_renamed(
+            object_type, old_property_name, new_property_name
+        )
+        return self.ask_yes_no(question)
 
 
 class AutoChangeDetector:
@@ -208,8 +288,8 @@ class AutoChangeDetector:
 
     def detect_node_key_changes(self):
         self.detect_property_changes(
-            from_population=self.from_state.node_types,
-            to_population=self.to_state.node_types,
+            from_population=self.from_state.nodes,
+            to_population=self.to_state.nodes,
             deleted_property_location=self.deleted_node_keys,
             renamed_property_location=self.renamed_node_keys,
             added_property_loction=self.added_node_keys,
@@ -221,8 +301,8 @@ class AutoChangeDetector:
 
     def detect_relationship_key_changes(self):
         self.detect_property_changes(
-            from_population=self.from_state.relationship_types,
-            to_population=self.to_state.relationship_types,
+            from_population=self.from_state.relationships,
+            to_population=self.to_state.relationships,
             deleted_property_location=self.deleted_relationship_keys,
             renamed_property_location=self.renamed_relationship_keys,
             added_property_loction=self.added_relationship_keys,
@@ -234,8 +314,8 @@ class AutoChangeDetector:
 
     def detect_node_type_changes(self):
         self.detect_type_changes(
-            from_population=self.from_state.node_types,
-            to_population=self.to_state.node_types,
+            from_population=self.from_state.nodes,
+            to_population=self.to_state.nodes,
             deleted_types_location=self.deleted_node_types,
             renamed_types_location=self.renamed_node_types,
             new_types_location=self.new_node_types,
@@ -243,8 +323,8 @@ class AutoChangeDetector:
 
     def detect_relationship_type_changes(self):
         self.detect_type_changes(
-            from_population=self.from_state.relationship_types,
-            to_population=self.to_state.relationship_types,
+            from_population=self.from_state.relationships,
+            to_population=self.to_state.relationships,
             deleted_types_location=self.deleted_relationship_types,
             renamed_types_location=self.renamed_relationship_types,
             new_types_location=self.new_relationship_types,
@@ -252,8 +332,8 @@ class AutoChangeDetector:
 
     def detect_node_property_changes(self):
         self.detect_property_changes(
-            from_population=self.from_state.node_types,
-            to_population=self.to_state.node_types,
+            from_population=self.from_state.nodes,
+            to_population=self.to_state.nodes,
             deleted_property_location=self.deleted_node_properties,
             renamed_property_location=self.renamed_node_properties,
             added_property_loction=self.added_node_properties,
@@ -264,8 +344,8 @@ class AutoChangeDetector:
 
     def detect_relationship_property_changes(self):
         self.detect_property_changes(
-            from_population=self.from_state.relationship_types,
-            to_population=self.to_state.relationship_types,
+            from_population=self.from_state.relationships,
+            to_population=self.to_state.relationships,
             deleted_property_location=self.deleted_relationship_properties,
             renamed_property_location=self.renamed_relationship_properties,
             added_property_loction=self.added_relationship_properties,
@@ -276,8 +356,8 @@ class AutoChangeDetector:
 
     def detect_node_index_changes(self):
         self.detect_index_changes(
-            from_population=self.from_state.node_types,
-            to_population=self.to_state.node_types,
+            from_population=self.from_state.nodes,
+            to_population=self.to_state.nodes,
             added_index_location=self.added_node_property_indexes,
             deleted_index_location=self.deleted_node_property_indexes,
             deleted_types_location=self.deleted_node_types,
@@ -287,8 +367,8 @@ class AutoChangeDetector:
 
     def detect_relationship_index_changes(self):
         self.detect_index_changes(
-            from_population=self.from_state.relationship_types,
-            to_population=self.to_state.relationship_types,
+            from_population=self.from_state.relationships,
+            to_population=self.to_state.relationships,
             added_index_location=self.added_relationship_property_indexes,
             deleted_index_location=self.deleted_relationship_property_indexes,
             deleted_types_location=self.deleted_relationship_types,
@@ -298,8 +378,8 @@ class AutoChangeDetector:
 
     def compare_types_pairwise(
         self,
-        from_population: Dict[str, GraphObject],
-        to_population: Dict[str, GraphObject],
+        from_population: Dict[str, GraphObjectSchema],
+        to_population: Dict[str, GraphObjectSchema],
         deleted_types_location: Set[str],
         new_types_location: Set[str],
         renamed_types_location: Set[Tuple[str, str]],
@@ -336,8 +416,8 @@ class AutoChangeDetector:
 
     def detect_index_changes(
         self,
-        from_population: Dict[str, GraphObject],
-        to_population: Dict[str, GraphObject],
+        from_population: Dict[str, GraphObjectSchema],
+        to_population: Dict[str, GraphObjectSchema],
         added_index_location: Set[Tuple[str, str]],
         deleted_index_location: Set[Tuple[str, str]],
         deleted_types_location: Set[str],
@@ -367,8 +447,8 @@ class AutoChangeDetector:
 
     def detect_property_changes(
         self,
-        from_population: Dict[str, GraphObject],
-        to_population: Dict[str, GraphObject],
+        from_population: Dict[str, GraphObjectSchema],
+        to_population: Dict[str, GraphObjectSchema],
         deleted_property_location: Set[Tuple[str, str]],
         renamed_property_location: Set[Tuple[str, str, str]],
         added_property_loction: Set[Tuple[str, str]],
@@ -422,8 +502,8 @@ class AutoChangeDetector:
 
     def detect_type_changes(
         self,
-        from_population: Dict[str, GraphObject],
-        to_population: Dict[str, GraphObject],
+        from_population: Dict[str, GraphObjectSchema],
+        to_population: Dict[str, GraphObjectSchema],
         deleted_types_location: Set[str],
         renamed_types_location: Set[Tuple[str, str]],
         new_types_location: Set[str],

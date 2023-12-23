@@ -66,7 +66,8 @@ class AutoMigrationMaker:
         """Make a migration from the changes that were detected.
 
         Returns:
-            A migration describing the changes that were detected.
+            A migration describing the changes that were detected. If no
+            changes were detected, then this method returns None.
         """
         operations = await self.auto_detector.detect_changes()
         if len(operations) == 0:

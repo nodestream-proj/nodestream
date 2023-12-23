@@ -4,7 +4,7 @@ from typing import Set, Optional, Any
 
 from ...subclass_registry import SubclassRegistry
 from ...file_io import LoadsFromYaml, SavesToYaml
-from ..state import NodeType, RelationshipType, FieldIndex
+from ..state import NodeSchema, RelationshipSchema, FieldIndex
 
 # TODO: Future enhancements w/ new operations or changing old ones:
 #
@@ -114,8 +114,8 @@ class CreateNodeType(Operation):
     def suggest_migration_name_slug(self) -> str:
         return f"create_node_type_{self.name}"
 
-    def as_node_type(self) -> NodeType:
-        return NodeType(
+    def as_node_type(self) -> NodeSchema:
+        return NodeSchema(
             name=self.name,
             keys=self.keys,
             properties=self.properties,
@@ -148,8 +148,8 @@ class CreateRelationshipType(Operation):
     def suggest_migration_name_slug(self) -> str:
         return f"create_relationship_type_{self.name}"
 
-    def as_relationship_type(self) -> RelationshipType:
-        return RelationshipType(
+    def as_relationship_type(self) -> RelationshipSchema:
+        return RelationshipSchema(
             name=self.name,
             keys=self.keys,
             properties=self.properties,
