@@ -301,10 +301,7 @@ class AddAdditionalNodePropertyIndex(Operation):
         return f"add_index_{self.node_type}_{self.field_name}"
 
     def as_index(self) -> FieldIndex:
-        return FieldIndex(
-            name=self.proposed_index_name,
-            field_name=self.field_name,
-        )
+        return FieldIndex(field_name=self.field_name)
 
 
 @dataclass(frozen=True, slots=True)
@@ -347,10 +344,7 @@ class AddAdditionalRelationshipPropertyIndex(Operation):
         return f"add_index_{self.relationship_type}_{self.field_name}"
 
     def as_index(self) -> FieldIndex:
-        return FieldIndex(
-            name=self.proposed_index_name,
-            field_name=self.field_name,
-        )
+        return FieldIndex(field_name=self.field_name)
 
 
 @dataclass(frozen=True, slots=True)

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from .autodetector import AutoDetector
+from .auto_change_detector import AutoChangeDetector
 from .migrations import Migration, MigrationGraph
 from .operations import Operation
 
@@ -16,7 +16,7 @@ class AutoMigrationMaker:
     def __init__(
         self,
         migration_graph: MigrationGraph,
-        auto_detector: AutoDetector,
+        auto_detector: AutoChangeDetector,
     ) -> None:
         """Initialize the migration maker.
 

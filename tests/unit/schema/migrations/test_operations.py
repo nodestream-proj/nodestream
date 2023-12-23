@@ -265,12 +265,12 @@ def test_create_relationship_type_as_relationship_type():
 def test_add_additional_node_property_index_as_index():
     assert_that(
         AddAdditionalNodePropertyIndex("Person", "name").as_index(),
-        FieldIndex("Person_name_additional_index", "name"),
+        FieldIndex("name"),
     )
 
 
 def test_add_additional_relationship_property_index_as_index():
     assert_that(
         AddAdditionalRelationshipPropertyIndex("KNOWS", "since").as_index(),
-        FieldIndex("KNOWS_since_additional_index", "since"),
+        FieldIndex("since"),
     )
