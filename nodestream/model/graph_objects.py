@@ -51,7 +51,7 @@ class PropertySet(dict):
         self,
         context: "ProviderContext",
         provider_map: "Dict[str, ValueProvider]",
-        **norm_args,
+        norm_args,
     ):
         """For every `(key, provider)` pair provided, sets the property to the values provided.
 
@@ -59,7 +59,7 @@ class PropertySet(dict):
         arguments for value normalization.
         """
         for key, provider in provider_map.items():
-            v = provider.normalize_single_value(context, **norm_args)
+            v = provider.normalize_single_value(context, norm_args)
             self.set_property(key, v)
 
 
