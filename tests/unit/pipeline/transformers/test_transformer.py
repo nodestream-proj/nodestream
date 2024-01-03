@@ -138,8 +138,7 @@ class addNTransformer(Transformer):
         self.n = N
 
     async def transform_record(self, record):
-        value = record.pop("value")
-        yield dict(**record, value=value + self.n)
+        yield dict(type=record["type"], value=record["value"] + self.n)
 
 
 TEST_PROVIDER = JmespathValueProvider.from_string_expression("type")
