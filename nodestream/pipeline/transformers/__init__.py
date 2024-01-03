@@ -1,5 +1,5 @@
 from .expand_json_field import ExpandJsonField
 from .transformer import ConcurrentTransformer, Transformer, SwitchTransformer
-from .value_projection import ValueProjection, ValueProjectionWithContext
+from .value_projection import ValueProjection
 
-__all__ = ("ExpandJsonField", "ValueProjection", "Transformer", "ConcurrentTransformer", "ValueProjectionWithContext", "SwitchTransformer")
+__all__ = ("ExpandJsonField", "ValueProjection", "Transformer", "ConcurrentTransformer", "SwitchTransformer")
