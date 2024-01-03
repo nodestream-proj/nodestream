@@ -81,7 +81,7 @@ class Neo4jQueryExecutor(QueryExecutor):
                 "uri": self.driver._pool.address.host,
             },
         )
-        await self.driver.verify_connectivity()
+
         result = await self.driver.execute_query(
             query.query_statement,
             query.parameters,
