@@ -79,36 +79,46 @@ class ConcurrentTransformer(Transformer):
                     len(pending_tasks),
                 )
 
+        async def drain_completed_tasks_async():
+            for result in drain_completed_tasks():
+                yield result
+            await self.yield_processor()
+
         async for record in record_stream:
             if record is Flush:
                 # Flush the pending tasks, then yield the flush.
                 # In order to fully respect the Flush,
                 # we need to wait for all pending tasks to complete.
+                # If we're still waiting we can yield the processor.
                 while pending_tasks:
-                    for result in drain_completed_tasks():
+                    async for result in drain_completed_tasks_async():
                         yield result
                 yield record
             else:
                 # Submit the work to the thread pool (only if we have capacity)
-                # If we don't have capacity, yield completed tasks until we do.
+                # If we don't have capacity, yield completed tasks.
+                # Once there is nothing remaining to yield from these tasks, yield the processor until capacity is available.
                 submitted = False
                 while not submitted:
                     if len(pending_tasks) < self.maximum_pending_tasks:
                         task = self.thread_pool.submit(self.do_work_on_record, record)
                         pending_tasks.append(task)
                         submitted = True
-                    for result in drain_completed_tasks():
+                    async for result in drain_completed_tasks_async():
                         yield result
 
         # After we've finished enqueuing records, we need to drain all tasks.
         # Items yielded from this loop are the final results of the step.
         self.logger.debug("Finished enqueuing records, draining pending tasks")
         while pending_tasks:
-            for result in drain_completed_tasks():
+            async for result in drain_completed_tasks_async():
                 yield result
 
     async def finish(self):
         self.thread_pool.shutdown(wait=True)
+
+    async def yield_processor(self):
+        await asyncio.sleep(0)
 
     def do_work_on_record(self, record: Any) -> Any:
         # Handles the work nessary to transform a single record.

@@ -54,7 +54,7 @@ class SingleNodeKeySearchAlgorithm(RelatedNodeKeySearchAlgorithm):
     ) -> Iterable[Dict[str, Any]]:
         return [
             {
-                k: v.normalize_single_value(context, **self.key_normalization)
+                k: v.normalize_single_value(context, self.key_normalization)
                 for k, v in self.node_key.items()
             }
         ]
@@ -65,7 +65,7 @@ class MultiNodeKeySearchAlgorithm(RelatedNodeKeySearchAlgorithm):
         # If we do not have the same length, then there is an error because
         # we do not have pairs to create keys for each node based off of.
         all_values_by_key_property = {
-            k: tuple(v.normalize_many_values(context, **self.key_normalization))
+            k: tuple(v.normalize_many_values(context, self.key_normalization))
             for k, v in self.node_key.items()
         }
         distinct_lengths = {len(vals) for vals in all_values_by_key_property.values()}
@@ -160,10 +160,10 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
     def find_relationship(self, context: ProviderContext) -> Relationship:
         rel = Relationship(type=self.relationship_type.single_value(context))
         rel.key_values.apply_providers(
-            context, self.relationship_key, **self.key_normalization
+            context, self.relationship_key, self.key_normalization
         )
         rel.properties.apply_providers(
-            context, self.relationship_properties, **self.properties_normalization
+            context, self.relationship_properties, self.properties_normalization
         )
         return rel
 
@@ -175,7 +175,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
             )
             if node.has_valid_id:
                 node.properties.apply_providers(
-                    context, self.node_properties, **self.properties_normalization
+                    context, self.node_properties, self.properties_normalization
                 )
                 yield node
 

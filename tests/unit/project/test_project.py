@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -53,6 +54,13 @@ def project(scopes, targets):
 def add_env_var() -> pytest.fixture():
     os.environ["USERNAME_ENV"] = "bob"
     return os.environ["USERNAME_ENV"]
+
+
+def test_project_dumps_and_reloads_preserves_all_data(project):
+    original_dumped = project.to_file_data()
+    reloaded = Project.from_file_data(deepcopy(original_dumped))
+    dump_after_reload = reloaded.to_file_data()
+    assert_that(dump_after_reload, equal_to(original_dumped))
 
 
 def test_pipeline_organizes_scopes_by_name(scopes, project):

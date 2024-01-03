@@ -28,3 +28,6 @@ class Target:
 
     def make_type_retriever(self):
         return self.connector.make_type_retriever()
+
+    def to_file_data(self):
+        return self.connector_config
