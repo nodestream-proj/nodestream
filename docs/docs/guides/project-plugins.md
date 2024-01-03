@@ -15,6 +15,20 @@ class MyProjectPlugin(ProjectPlugin):
         pass
 ```
 
+
+### Additional Lifecycle Methods
+
+In addition to the `activate` method, project plugins can optionally implement the following lifecycle methods: 
+
+#### `def before_project_load(self, file_path: Path) -> None`
+
+Called before a project is loaded. The `file_path` argument is the path to the project file.
+
+#### `def after_project_load(self, project: Project) -> None`
+
+Called after the project is loaded and all project plugins have been activated. 
+
+
 ### Use Case: Adding Custom Metadata to Project Pipelines
 
 Project plugins can be used to add custom metadata to project pipelines. This metadata can be used for a variety of purposes specific to your 
@@ -50,6 +64,7 @@ class MyProjectPlugin(ProjectPlugin):
         scope = PipelineScope.from_resources(name="my_plugin", package="my_plugin.pipelines")
         project.add_scope(scope)
 ```
+
 
 ### Registering the Project Plugin
 
@@ -115,11 +130,19 @@ End users can provide values for the `!config` plugin tags in their nodestream.y
 #### Plugin End-User Provided
 === "nodestream.yaml"
     ```
-    plugin_config:
-      myPlugin:
-        service_base_url: "https://mytestpluginapi.com"
-        service_username: !env MY_TEST_PLUGIN_USERNAME
-        service_password: !env MY_TEST_PLUGIN_PASSWORD
-      otherPlugin:
-        service_base_url: "https://otherurl.com"
+    plugins:
+      - name: myPlugin
+        config:
+          service_base_url: "https://mytestpluginapi.com"
+          service_username: !env MY_TEST_PLUGIN_USERNAME
+          service_password: !env MY_TEST_PLUGIN_PASSWORD
+        targets:
+          - target1
+          - target2
+      - name: otherPlugin
+        config:
+          service_base_url: "https://otherurl.com"
+        targets:
+          - target1
+          - target2
     ```

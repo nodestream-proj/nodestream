@@ -26,10 +26,12 @@ class PipelineScope(
         pipelines: List[PipelineDefinition],
         persist: bool = True,
         config: ScopeConfig = None,
+        targets: List[str] = None,
     ) -> None:
         self.persist = persist
         self.name = name
         self.config = config
+        self.targets = targets
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
         for pipeline in pipelines:
             self.add_pipeline_definition(pipeline)
@@ -38,7 +40,7 @@ class PipelineScope(
     def from_file_data(cls, scope_name, file_data):
         pipelines_data = file_data.pop("pipelines", [])
         annotations = file_data.pop("annotations", {})
-        config = file_data.pop("config", {})
+        config = file_data.pop("config", None)
         pipelines = [
             PipelineDefinition.from_file_data(pipeline_data, annotations)
             for pipeline_data in pipelines_data
@@ -82,7 +84,8 @@ class PipelineScope(
         if (name := run_request.pipeline_name) not in self:
             return 0
 
-        await run_request.execute_with_definition(self[name], self.config)
+        run_request.set_configuration(self.config)
+        await run_request.execute_with_definition(self[name])
         return 1
 
     def __getitem__(self, pipeline_name):
@@ -130,8 +133,11 @@ class PipelineScope(
 
         return True
 
-    def set_configuration(self, config):
+    def set_configuration(self, config: ScopeConfig):
         self.config = config
+
+    def set_targets(self, targets: list[str]):
+        self.targets = targets
 
     @classmethod
     def from_resources(

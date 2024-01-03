@@ -9,23 +9,14 @@ AWS secrets manager.
 ## Defining your ArgumentResolver Class
 
 ```python
-from typing import Any
-
 import boto3
 
 from nodestream.pipeline.argument_resolvers import ArgumentResolver
 
 
 class EnvironmentResolver(ArgumentResolver):
-    @classmethod
-    def install_yaml_tag(cls, loader: Type[SafeLoader]):
-        loader.add_constructor(
-            "!secrets_manager",
-            lambda loader, node: cls.get_from_secrets_manager(loader.construct_scalar(node)),
-        )
-
     @staticmethod
-    def get_from_secrets_manager(variable_name):
+    def resolve_argument(variable_name):
         client = boto3.client("secretsmanager")
         return client.get_secret_value(SecretId=variable_name)["SecretString"]
 
@@ -33,8 +24,8 @@ class EnvironmentResolver(ArgumentResolver):
 
 Note that this implementation is pretty naive. But it's the simplest we need to demonstrate the point.
 
-In this example, we register with a yaml loader that can load a tag in
-yaml to utilize our new `ArgumentResolver`. Nodestream uses [`pyyaml`](https://pyyaml.org/) to load our pipelines.
+In this example, we assume that the `variable_name` is the name of the secret in AWS Secrets Manager. 
+We then use the AWS SDK to retrieve the secret value and return it.
 
 ## Registering your ArgumentResolver
 
