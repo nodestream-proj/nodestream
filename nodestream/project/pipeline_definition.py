@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from ..file_io import LoadsFromYaml, SavesToYaml
-from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
-from ..pipeline.scope_config import ScopeConfig
+from ..pipeline import Pipeline, PipelineFile, PipelineInitializationArguments
 from ..schema.schema import IntrospectiveIngestionComponent
 
 
@@ -30,6 +29,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     name: str
     file_path: Path
+    targets: str = None
     annotations: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -58,6 +58,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
                     Optional("name"): str,
                     "path": os.path.exists,
                     Optional("annotations"): {str: Or(str, int, float, bool)},
+                    Optional("targets"): list[str],
                 },
             )
         )
@@ -69,8 +70,9 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
         file_path = Path(data.pop("path"))
         name = data.pop("name", get_default_name(file_path))
+        targets = data.pop("targets", None)
         annotations = data.pop("annotations", {})
-        return cls(name, file_path, {**parent_annotations, **annotations})
+        return cls(name, file_path, targets, {**parent_annotations, **annotations})
 
     def to_file_data(self, verbose: bool = False):
         using_default_name = self.name == self.file_path.stem
@@ -82,13 +84,13 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
             result["name"] = self.name
         if self.annotations or verbose:
             result["annotations"] = self.annotations
+        if self.targets or verbose:
+            result["targets"] = self.targets
 
         return result
 
-    def initialize(
-        self, init_args: PipelineInitializationArguments, config: ScopeConfig = None
-    ) -> Pipeline:
-        return PipelineFileLoader(self.file_path).load_pipeline(init_args, config)
+    def initialize(self, init_args: PipelineInitializationArguments) -> Pipeline:
+        return PipelineFile(self.file_path).load_pipeline(init_args)
 
     def remove_file(self, missing_ok: bool = True):
         """Remove the file associated with this `PipelineDefinition`.
@@ -102,9 +104,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         self.file_path.unlink(missing_ok=missing_ok)
 
     def initialize_for_introspection(self) -> Pipeline:
-        return self.initialize(
-            PipelineInitializationArguments.for_introspection(), ScopeConfig({})
-        )
+        return self.initialize(PipelineInitializationArguments.for_introspection())
 
     def gather_object_shapes(self):
         return self.initialize_for_introspection().gather_object_shapes()

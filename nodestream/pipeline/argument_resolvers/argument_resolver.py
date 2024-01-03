@@ -15,6 +15,20 @@ class ArgumentResolver(Pluggable, ABC):
 
     entrypoint_name = "argument_resolvers"
 
+    @staticmethod
+    def resolve_argument(value):
+        return value
+
+    @classmethod
+    def resolve_argument_with_alias(cls, tag, value):
+        ArgumentResolver.import_all()
+        resolver = ARGUMENT_RESOLVER_REGISTRY.get(tag)
+        return resolver.resolve_argument(value)
+
     @classmethod
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
-        pass
+        def construct_argument(loader, node):
+            return cls.resolve_argument(loader.construct_scalar(node))
+
+        yaml_tag = f"!{ARGUMENT_RESOLVER_REGISTRY.name_for(cls)}"
+        loader.add_constructor(yaml_tag, construct_argument)
