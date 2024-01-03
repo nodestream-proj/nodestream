@@ -41,9 +41,7 @@ class RunRequest:
             PipelineProgressReporter.for_testing(results_list),
         )
 
-    async def execute_with_definition(
-        self, definition: PipelineDefinition, config: ScopeConfig
-    ):
+    async def execute_with_definition(self, definition: PipelineDefinition):
         """Execute this run request with the given pipeline definition.
 
         This method is intended to be called by `PipelineScope` and should not be called
@@ -56,5 +54,8 @@ class RunRequest:
             definition: The pipeline definition to execute this run request with.
         """
         with start_context(self.pipeline_name):
-            pipeline = definition.initialize(self.initialization_arguments, config)
+            pipeline = definition.initialize(self.initialization_arguments)
             await pipeline.run(self.progress_reporter)
+
+    def set_configuration(self, scope_config: ScopeConfig):
+        self.initialization_arguments.effecitve_config_values = scope_config

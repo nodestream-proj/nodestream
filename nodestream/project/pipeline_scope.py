@@ -84,7 +84,8 @@ class PipelineScope(
         if (name := run_request.pipeline_name) not in self:
             return 0
 
-        await run_request.execute_with_definition(self[name], self.config)
+        run_request.set_configuration(self.config)
+        await run_request.execute_with_definition(self[name])
         return 1
 
     def __getitem__(self, pipeline_name):

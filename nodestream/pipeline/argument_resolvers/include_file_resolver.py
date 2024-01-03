@@ -1,3 +1,5 @@
+from yaml import load
+
 from .argument_resolver import ArgumentResolver
 
 
@@ -6,6 +8,7 @@ class IncludeFileResolver(ArgumentResolver, alias="include"):
 
     @staticmethod
     def resolve_argument(file_path: str):
-        from ..pipeline_file_loader import PipelineFileSafeLoader
+        from ..pipeline_file_loader import PipelineFileContents
 
-        return PipelineFileSafeLoader.load_file_by_path(file_path)
+        with open(file_path) as f:
+            return load(f, Loader=PipelineFileContents.get_loader())

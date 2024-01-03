@@ -11,10 +11,7 @@ class Target:
 
     @property
     def resolved_connector_config(self):
-        return {
-            key: LazyLoadedArgument.resolve_if_needed(value)
-            for key, value in self.connector_config.items()
-        }
+        return LazyLoadedArgument.resolve_if_needed(self.connector_config)
 
     @property
     def connector(self):

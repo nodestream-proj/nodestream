@@ -1,4 +1,4 @@
-from typing import Iterable, List
+from typing import Iterable
 
 from yaml import safe_dump
 
@@ -42,9 +42,12 @@ class RunPipeline(Operation):
             command.line(HINT_USE_NODESTREAM_SHOW)
 
     def get_writer_steps_for_specified_targets(
-        self, command: NodestreamCommand, pipeline_targets: List[str] = []
+        self, command: NodestreamCommand, pipeline: PipelineDefinition
     ):
-        for target_name in set(command.option("target")).union(pipeline_targets):
+        targets_names = self.combine_targets_from_command_and_pipeline(
+            command, pipeline
+        )
+        for target_name in targets_names:
             target = self.project.get_target_by_name(target_name)
             if target:
                 yield target.make_writer()
@@ -52,6 +55,13 @@ class RunPipeline(Operation):
                 command.line(
                     f"<error>Target '{target_name}' not found in project. Ignoring.</error>"
                 )
+
+    def combine_targets_from_command_and_pipeline(
+        self, command: NodestreamCommand, pipeline: PipelineDefinition
+    ):
+        from_cli = set(command.option("target") or {})
+        from_pipeline = set(pipeline.targets or {})
+        return from_cli.union(from_pipeline)
 
     def make_run_request(
         self, command: NodestreamCommand, pipeline: PipelineDefinition
@@ -68,9 +78,7 @@ class RunPipeline(Operation):
                 step_outbox_size=int(command.option("step-outbox-size")),
                 on_effective_configuration_resolved=print_effective_config,
                 extra_steps=list(
-                    self.get_writer_steps_for_specified_targets(
-                        command, pipeline.targets
-                    )
+                    self.get_writer_steps_for_specified_targets(command, pipeline)
                 ),
             ),
             progress_reporter=self.create_progress_reporter(command, pipeline.name),
