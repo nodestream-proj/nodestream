@@ -1,7 +1,7 @@
 import pytest
 
-from nodestream.subclass_registry import MissingFromRegistryError
 from nodestream.pipeline.value_providers import NormalizerValueProvider
+from nodestream.subclass_registry import MissingFromRegistryError
 
 from ...stubs import StubbedValueProvider
 

@@ -2,9 +2,9 @@ from typing import Any, Iterable, Type
 
 from yaml import SafeLoader
 
+from ..normalizers import Normalizer
 from .context import ProviderContext
 from .value_provider import ValueProvider
-from ..normalizers import Normalizer
 
 
 class NormalizerValueProvider(ValueProvider):
