@@ -170,3 +170,55 @@ The following interpretations would create a `Joe Smith` node with relationships
             data: !jmespath talents
             delimiter: ","
 ```
+
+# `!normalize`
+
+The `!normalize` value provider allows you to utilize the [normalization](./normalization.md) functionality to normalize an incoming value. 
+For example, if you wanted to normalize a name field in the record:
+
+```json
+{
+    "name": "Joe Smith   ",
+}
+```
+
+The following interpretation would create a node with the key `Joe Smith`:
+
+```yaml
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: source_node
+        node_type: Person
+        key:
+          name: !normalize
+            using: trim_whitespace
+            data: !jmespath name
+```
+
+While most interpretations support a `normalization` block (See the [Interpretations documentation](./interpretations.md) for more information), 
+the `!normalize` value provider allows you to normalize a value before it is returned to the interpretation. 
+This is useful when you want to normalize a value in a `key` or `property` block where the `normalization` 
+should only be applied to that value only.  For example, if you wanted to normalize the `city` field of the record but not the `state` field:
+
+```json
+{
+    "city": "New York   ",
+    "state": "NY"
+}
+```
+
+The following interpretation would create a `Locality` node with the keys of `New York` and `NY`:
+
+```yaml
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: source_node
+        node_type: Locality
+        key:
+          city: !normalize
+            using: trim_whitespace
+            data: !jmespath city
+          state: !jmespath state
+```
