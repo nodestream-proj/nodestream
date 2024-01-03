@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from ...pipeline.value_providers import ProviderContext, ValueProvider
 from .transformer import Transformer
