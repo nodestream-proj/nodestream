@@ -139,7 +139,6 @@ class SwitchTransformer(Transformer):
         "transformers",
         "default",
         "normalization",
-        "fail_on_unhandled",
     )
 
     @staticmethod
