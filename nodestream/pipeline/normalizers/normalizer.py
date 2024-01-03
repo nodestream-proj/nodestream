@@ -33,10 +33,11 @@ class Normalizer(Pluggable, ABC):
         pass
 
     @classmethod
-    def normalize_by_args(cls, value: Any, **normalizer_args) -> Any:
-        for flag_name, enabled in normalizer_args.items():
-            if enabled:
-                value = cls.by_flag_name(flag_name).normalize_value(value)
+    def normalize_by_args(cls, value: Any, normalizer_args) -> Any:
+        if normalizer_args:
+            for flag_name, enabled in normalizer_args.items():
+                if enabled:
+                    value = cls.by_flag_name(flag_name).normalize_value(value)
 
         return value
 

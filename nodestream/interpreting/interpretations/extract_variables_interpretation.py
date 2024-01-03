@@ -44,4 +44,4 @@ class ExtractVariablesInterpretation(Interpretation, alias="variables"):
         self.norm_args = normalization or {}
 
     def interpret(self, context: ProviderContext):
-        context.variables.apply_providers(context, self.variables, **self.norm_args)
+        context.variables.apply_providers(context, self.variables, self.norm_args)

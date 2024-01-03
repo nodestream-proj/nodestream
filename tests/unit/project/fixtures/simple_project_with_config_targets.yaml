@@ -5,9 +5,11 @@ scopes:
     pipelines:
       - "tests/unit/project/fixtures/pipelines/pipeline_one.yaml"
       - path: "tests/unit/project/fixtures/pipelines/pipeline_two.yaml"
-        name: "just a random value"
+        name: "target-pipeline"
         annotations:
           concurrency: 2
+        targets: 
+        - t1
     config:
       Username: !env USERNAME_ENV
 
@@ -15,3 +17,9 @@ plugins:
   - name: test
     config:
       PluginUsername: !env USERNAME_ENV
+    targets: 
+    - t1
+
+targets:
+  t1:
+    a: b

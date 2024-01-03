@@ -1,6 +1,7 @@
 from abc import ABC, abstractclassmethod, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Type
+from typing import Any, Type
 
 from schema import Schema
 from yaml import SafeDumper, SafeLoader, dump, load
@@ -125,3 +126,49 @@ class SavesToYamlFile(SavesToYaml):
                 indent=2,
                 sort_keys=True,
             )
+
+
+# This approach is inspired by https://death.andgravity.com/any-yaml
+#
+# Generally, the idea is that instead of trying to resolve the arguments at the time of parsing the yaml file,
+# we instead create a special object that will resolve the arguments at the time of use.
+#
+# This comes with the side effect that we shift the responsibility of resolving the arguments from the
+# yaml parser to the code that uses the "loaded" yaml data.
+@dataclass(frozen=True, slots=True)
+class LazyLoadedArgument:
+    tag: str
+    value: Any
+
+    def get_value(self):
+        from .pipeline.argument_resolvers import ArgumentResolver
+
+        return ArgumentResolver.resolve_argument_with_alias(self.tag, self.value)
+
+    @staticmethod
+    def resolve_if_needed(value):
+        if isinstance(value, LazyLoadedArgument):
+            return value.get_value()
+        if isinstance(value, dict):
+            return {
+                k: LazyLoadedArgument.resolve_if_needed(v) for k, v in value.items()
+            }
+        if isinstance(value, list):
+            return [LazyLoadedArgument.resolve_if_needed(v) for v in value]
+        return value
+
+
+class LazyLoadedTagSafeLoader(SafeLoader):
+    pass
+
+
+def wrap_unloaded_tag(self, node):
+    value = self.construct_scalar(node)
+    return LazyLoadedArgument(node.tag[1:], value)
+
+
+LazyLoadedTagSafeLoader.add_constructor(None, wrap_unloaded_tag)
+SafeDumper.add_representer(
+    LazyLoadedArgument,
+    lambda dumper, arg: dumper.represent_scalar(arg.tag, arg.value),
+)

@@ -104,8 +104,8 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
     def interpret(self, context: ProviderContext):
         source = context.desired_ingest.source
         source.type = self.node_type.single_value(context)
-        source.key_values.apply_providers(context, self.key, **self.norm_args)
-        source.properties.apply_providers(context, self.properties, **self.norm_args)
+        source.key_values.apply_providers(context, self.key, self.norm_args)
+        source.properties.apply_providers(context, self.properties, self.norm_args)
         source.additional_types = self.additional_types
 
     def gather_used_indexes(self) -> Iterable[Union[KeyIndex, FieldIndex]]:

@@ -28,7 +28,9 @@ def test_make_run_request(run_pipeline_operation, mocker):
     command = mocker.Mock()
     command.option.side_effect = [annotations, "10001", targets, "10000"]
     command.argument.return_value = [pipeline_name]
-    result = run_pipeline_operation.make_run_request(command, pipeline_name)
+    pipeline = mocker.patch("nodestream.project.PipelineDefinition")
+    pipeline.name = pipeline_name
+    result = run_pipeline_operation.make_run_request(command, pipeline)
     assert_that(result.pipeline_name, equal_to(pipeline_name))
     assert_that(result.initialization_arguments.annotations, equal_to(annotations))
     assert_that(result.initialization_arguments.step_outbox_size, equal_to(10001))
@@ -54,3 +56,25 @@ def test_spinner_progress_callback(mocker):
     spinner.on_start()
     spinner.progress_callback(1000, None)
     spinner.progress.set_message.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "from_cli,from_pipeline,expected",
+    [
+        (None, set(), set()),
+        (set(), None, set()),
+        (["t1", "t2"], None, {"t1", "t2"}),
+        (None, {"t1", "t2"}, {"t1", "t2"}),
+        (["t1", "t2"], {"t2", "t3"}, {"t1", "t2", "t3"}),
+    ],
+)
+def test_combine_targets_from_command_and_pipeline(
+    mocker, from_cli, from_pipeline, expected
+):
+    command, pipeline = mocker.Mock(), mocker.Mock()
+    command.option.return_value = from_cli
+    pipeline.targets = from_pipeline
+    result = RunPipeline(mocker.Mock()).combine_targets_from_command_and_pipeline(
+        command, pipeline
+    )
+    assert_that(result, equal_to(expected))

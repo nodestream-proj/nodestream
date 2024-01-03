@@ -56,19 +56,19 @@ class ValueProvider(Pluggable, ABC):
     def many_values(self, context: ProviderContext) -> Iterable[Any]:
         raise NotImplementedError
 
-    def normalize(self, value, **args):
-        return Normalizer.normalize_by_args(value, **args)
+    def normalize(self, value, args):
+        return Normalizer.normalize_by_args(value, args)
 
     def normalize_single_value(
-        self, context: ProviderContext, **normalization_args
+        self, context: ProviderContext, normalization_args
     ) -> Any:
-        return self.normalize(self.single_value(context), **normalization_args)
+        return self.normalize(self.single_value(context), normalization_args)
 
     def normalize_many_values(
-        self, context: ProviderContext, **normalization_args
+        self, context: ProviderContext, normalization_args
     ) -> Iterable[Any]:
         for value in self.many_values(context):
-            yield self.normalize(value, **normalization_args)
+            yield self.normalize(value, normalization_args)
 
     @property
     def is_static(self) -> bool:
