@@ -152,9 +152,9 @@ class SwitchTransformer(Transformer):
         switch_on: StaticValueOrValueProvider,
         cases: Dict[str, dict],
         default: Dict[str, Any] = None,
-        normalization: Dict[str, Any] = None,
-        fail_on_unhandled: bool = True,
-    ):
+        normalization: Dict[str, Any] = None
+    ):  
+        
         self.switch_on = ValueProvider.guarantee_value_provider(switch_on)
         self.transformers = {
             field_value: self.guarantee_transformer_from_file_data(
@@ -168,18 +168,15 @@ class SwitchTransformer(Transformer):
             else None
         )
         self.normalization = normalization or {}
-        self.fail_on_unhandled = fail_on_unhandled
     
     async def transform_record(self, record: Any):
         context = ProviderContext.fresh(record)
-        key = self.switch_on.normalize_single_value(context, **self.normalization)
+        key = self.switch_on.normalize_single_value(context, self.normalization)
         transformer = self.transformers.get(key, self.default)
+        # If we don't have a transformer to handle the record we just yield the record (PassTransformer)
         if transformer is None:
-            if self.fail_on_unhandled:
-                raise UnhandledBranchError(key)
-            else:
-                yield
-        
-        async for result in transformer.transform_record(record):
-            yield result
+            yield record
+        else:
+            async for result in transformer.transform_record(record):
+                yield result
             
