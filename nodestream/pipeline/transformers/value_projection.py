@@ -13,6 +13,7 @@ class ValueProjection(Transformer):
         for result in self.projection.many_values(context):
             yield result
 
+
 """
 Value projection with context:
 "context": "stuff"
@@ -30,9 +31,12 @@ Additional Values define what context we would like to keep specifically.
 If additional Values is not provided, we will assume that everything will be kept. 
 """
 
+
 class ValueProjectionWithContext(Transformer):
     def __init__(
-        self, projection: ValueProvider, additional_values: Optional[dict[str, ValueProvider]]
+        self,
+        projection: ValueProvider,
+        additional_values: Optional[dict[str, ValueProvider]],
     ) -> None:
         self.projection = projection
         self.additional_values = additional_values
@@ -47,6 +51,6 @@ class ValueProjectionWithContext(Transformer):
         context = ProviderContext.fresh(record)
         additional_values = self.get_context(context)
         for result in self.projection.many_values(context):
-            result = dict(**additional_values, **result) 
+            result = dict(**additional_values, **result)
             print(result)
             yield result

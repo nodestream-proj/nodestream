@@ -3,7 +3,6 @@ scopes:
     pipelines:
       - test.yaml
       - test2.yaml
-      - complex-test.yaml
 
 targets:
   db-one:
