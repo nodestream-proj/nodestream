@@ -2,7 +2,7 @@ import asyncio
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from logging import getLogger
-from typing import Any, AsyncGenerator, Dict, Optional
+from typing import Any, AsyncGenerator, Coroutine, Dict, Optional
 
 from ..class_loader import ClassLoader
 from ..flush import Flush
@@ -133,6 +133,11 @@ class ConcurrentTransformer(Transformer):
         raise NotImplementedError
 
 
+class PassTransformer(Transformer):
+    async def transform_record(self, record: Any) -> AsyncGenerator:
+        yield record
+
+
 class SwitchTransformer(Transformer):
     __slots__ = (
         "switch_on",
@@ -141,34 +146,33 @@ class SwitchTransformer(Transformer):
         "normalization",
     )
 
-    @staticmethod
-    def guarantee_transformer_from_file_data(file_data):
-        return ClassLoader().load_class(**file_data)
+    @classmethod
+    def from_file_data(cls, switch_on, cases, default, normalization=None):
+        transformers = {
+            field_value: ClassLoader().load_class(**transformer)
+            for field_value, transformer in cases.items()
+        }
+        default= (
+            ClassLoader().load_class(**default) if default else PassTransformer
+        )
+        return cls(switch_on, transformers, default, normalization)
 
     def __init__(
         self,
         switch_on: StaticValueOrValueProvider,
-        cases: Dict[str, dict],
-        default: Dict[str, Any] = None,
+        transformers: Dict[str, Transformer],
+        default: Transformer = PassTransformer,
         normalization: Dict[str, Any] = None,
     ):
         self.switch_on = ValueProvider.guarantee_value_provider(switch_on)
-        self.transformers = {
-            field_value: self.guarantee_transformer_from_file_data(transformer)
-            for field_value, transformer in cases.items()
-        }
-        self.default = (
-            self.guarantee_transformer_from_file_data(default) if default else None
-        )
+        self.transformers = transformers
+        self.default = default
         self.normalization = normalization or {}
 
     async def transform_record(self, record: Any):
         context = ProviderContext.fresh(record)
         key = self.switch_on.normalize_single_value(context, self.normalization)
         transformer = self.transformers.get(key, self.default)
-        # If we don't have a transformer to handle the record we just yield the record (PassTransformer)
-        if transformer is None:
-            yield record
-        else:
-            async for result in transformer.transform_record(record):
-                yield result
+        # If we don't have a transformer to handle the record we just yield the record with PassTransformer
+        async for result in transformer.transform_record(record):
+            yield result
