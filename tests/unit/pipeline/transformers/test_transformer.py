@@ -4,7 +4,13 @@ import pytest
 from hamcrest import assert_that, contains_inanyorder, has_length
 
 from nodestream.pipeline import Flush
-from nodestream.pipeline.transformers import ConcurrentTransformer
+from nodestream.pipeline.transformers import (
+    ConcurrentTransformer,
+    PassTransformer,
+    SwitchTransformer,
+    Transformer,
+)
+from nodestream.pipeline.value_providers import JmespathValueProvider
 
 
 class AddOneConcurrently(ConcurrentTransformer):
@@ -126,3 +132,81 @@ async def test_concurrent_transformer_flush(mocker):
     add = AddOneConcurrently()
     result = [r async for r in add.handle_async_record_stream(input_record_stream())]
     assert_that(result, contains_inanyorder(2, 3, Flush))
+
+
+class addNTransformer(Transformer):
+    def __init__(self, N):
+        self.n = N
+
+    async def transform_record(self, record):
+        yield dict(type=record["type"], value=record["value"] + self.n)
+
+
+TEST_PROVIDER = JmespathValueProvider.from_string_expression("type")
+TEST_CASES = {
+    "first": {
+        "implementation": "tests.unit.pipeline.transformers.test_transformer:addNTransformer",
+        "arguments": {"N": 1},
+    },
+    "second": {
+        "implementation": "tests.unit.pipeline.transformers.test_transformer:addNTransformer",
+        "arguments": {"N": 2},
+    },
+}
+DEFAULT_CASE = {
+    "implementation": "tests.unit.pipeline.transformers.test_transformer:addNTransformer",
+    "arguments": {"N": 3},
+}
+
+TEST_DATA = [
+    {"type": "first", "value": 0},
+    {"type": "second", "value": 0},
+    {"type": "third", "value": 0},
+]
+
+TEST_RESULTS_WITH_DEFAULT = [
+    {"type": "first", "value": 1},
+    {"type": "second", "value": 2},
+    {"type": "third", "value": 3},
+]
+
+TEST_RESULTS_WITH_NO_DEFAULT = [
+    {"type": "first", "value": 1},
+    {"type": "second", "value": 2},
+    {"type": "third", "value": 0},
+]
+
+
+@pytest.fixture
+def switch_transformer():
+    return SwitchTransformer.from_file_data(
+        switch_on=TEST_PROVIDER, cases=TEST_CASES, default=DEFAULT_CASE
+    )
+
+
+async def switch_input_record_stream():
+    for record in TEST_DATA:
+        yield record
+
+
+@pytest.mark.asyncio
+async def test_switch_transformer_with_default(switch_transformer):
+    results = [
+        r
+        async for r in switch_transformer.handle_async_record_stream(
+            switch_input_record_stream()
+        )
+    ]
+    assert results == TEST_RESULTS_WITH_DEFAULT
+
+
+@pytest.mark.asyncio
+async def test_switch_transformer_without_default(switch_transformer):
+    switch_transformer.default = PassTransformer()
+    results = [
+        r
+        async for r in switch_transformer.handle_async_record_stream(
+            switch_input_record_stream()
+        )
+    ]
+    assert results == TEST_RESULTS_WITH_NO_DEFAULT
