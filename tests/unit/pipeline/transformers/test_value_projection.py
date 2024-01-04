@@ -4,8 +4,8 @@ from hamcrest import assert_that, equal_to
 from nodestream.pipeline.transformers import ValueProjection
 from nodestream.pipeline.value_providers import JmespathValueProvider
 
-
 TEST_DATA = {"metadata": "stuff", "items": [{"index": 1}, {"index": 2}, {"index": 3}]}
+
 
 async def record():
     yield TEST_DATA
@@ -26,8 +26,17 @@ async def test_value_projection_with_additional_values():
         projection=JmespathValueProvider.from_string_expression("items[*]"),
         additional_values={
             "metadata": JmespathValueProvider.from_string_expression("metadata")
-        }
+        },
     )
 
     results = [r async for r in subject.handle_async_record_stream(record())]
-    assert_that(results, equal_to([{"metadata": "stuff", "index": 1}, {"metadata": "stuff","index": 2}, {"metadata": "stuff","index": 3}]))
+    assert_that(
+        results,
+        equal_to(
+            [
+                {"metadata": "stuff", "index": 1},
+                {"metadata": "stuff", "index": 2},
+                {"metadata": "stuff", "index": 3},
+            ]
+        ),
+    )

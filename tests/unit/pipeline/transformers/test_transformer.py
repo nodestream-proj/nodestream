@@ -6,9 +6,9 @@ from hamcrest import assert_that, contains_inanyorder, has_length
 from nodestream.pipeline import Flush
 from nodestream.pipeline.transformers import (
     ConcurrentTransformer,
+    PassTransformer,
     SwitchTransformer,
     Transformer,
-    PassTransformer
 )
 from nodestream.pipeline.value_providers import JmespathValueProvider
 

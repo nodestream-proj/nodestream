@@ -1,5 +1,10 @@
 from .expand_json_field import ExpandJsonField
-from .transformer import ConcurrentTransformer, SwitchTransformer, Transformer, PassTransformer
+from .transformer import (
+    ConcurrentTransformer,
+    PassTransformer,
+    SwitchTransformer,
+    Transformer,
+)
 from .value_projection import ValueProjection
 
 __all__ = (
@@ -8,5 +13,5 @@ __all__ = (
     "Transformer",
     "ConcurrentTransformer",
     "SwitchTransformer",
-    "PassTransformer"
+    "PassTransformer",
 )

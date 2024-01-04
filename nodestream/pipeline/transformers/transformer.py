@@ -2,7 +2,7 @@ import asyncio
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from logging import getLogger
-from typing import Any, AsyncGenerator, Coroutine, Dict, Optional
+from typing import Any, AsyncGenerator, Dict, Optional
 
 from ..class_loader import ClassLoader
 from ..flush import Flush
@@ -152,9 +152,7 @@ class SwitchTransformer(Transformer):
             field_value: ClassLoader().load_class(**transformer)
             for field_value, transformer in cases.items()
         }
-        default= (
-            ClassLoader().load_class(**default) if default else PassTransformer
-        )
+        default = ClassLoader().load_class(**default) if default else PassTransformer
         return cls(switch_on, transformers, default, normalization)
 
     def __init__(
