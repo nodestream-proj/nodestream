@@ -6,7 +6,7 @@ from .transformer import Transformer
 
 
 class ValueProjection(Transformer):
-    def __init__(self, projection: ValueProvider, additional_values: Optional[Dict[str, ValueProvider]]) -> None:
+    def __init__(self, projection: ValueProvider, additional_values: Dict[str, ValueProvider] = {}) -> None:
         self.projection = projection
         self.additional_values = additional_values
 
