@@ -46,17 +46,18 @@ class Normalizer(Pluggable, ABC):
         return f"do_{NORMALIZER_REGISTRY.name_for(cls)}"
 
     @classmethod
+    def from_alias(cls, alias: str) -> "Normalizer":
+        return NORMALIZER_REGISTRY.get(alias)()
+
+    @classmethod
     @cache
     def by_flag_name(cls, flag_name: str) -> "Normalizer":
-        if not flag_name.startswith("do_"):
-            raise InvalidFlagError(flag_name)
-
         try:
-            normalizer_class = NORMALIZER_REGISTRY.get(flag_name.strip("do_"))
+            if not flag_name.startswith("do_"):
+                raise InvalidFlagError(flag_name)
+            return cls.from_alias(flag_name[3:])
         except MissingFromRegistryError:
-            raise InvalidFlagError(flag_name)
-
-        return normalizer_class()
+            raise InvalidFlagError(flag_name) from None
 
     @abstractmethod
     def normalize_value(self, value: Any) -> Any:
