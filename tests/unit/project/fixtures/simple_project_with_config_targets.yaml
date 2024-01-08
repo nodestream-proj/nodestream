@@ -1,5 +1,5 @@
 scopes:
-  perpetual:
+  config_targets_only:
     annotations:
       concurrency: 1
     pipelines:
@@ -10,6 +10,22 @@ scopes:
           concurrency: 2
         targets: 
         - t1
+    config:
+      Username: !env USERNAME_ENV
+  scope_targets:
+    annotations:
+      concurrency: 1
+    pipelines:
+      - path: "tests/unit/project/fixtures/pipelines/pipeline_one.yaml"
+        name: "scope-target-pipeline"
+      - path: "tests/unit/project/fixtures/pipelines/pipeline_two.yaml"
+        name: "scope-and-config-target-pipeline"
+        annotations:
+          concurrency: 2
+        targets: 
+        - t2
+    targets: 
+    - t1
     config:
       Username: !env USERNAME_ENV
 

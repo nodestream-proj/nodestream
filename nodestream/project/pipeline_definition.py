@@ -29,7 +29,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     name: str
     file_path: Path
-    targets: str = None
+    targets: list[str] = None
     annotations: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -70,7 +70,8 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
         file_path = Path(data.pop("path"))
         name = data.pop("name", get_default_name(file_path))
-        targets = data.pop("targets", None)
+
+        targets = data.pop("targets", [])
         annotations = data.pop("annotations", {})
         return cls(name, file_path, targets, {**parent_annotations, **annotations})
 

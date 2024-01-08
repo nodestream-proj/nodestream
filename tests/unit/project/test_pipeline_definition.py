@@ -38,17 +38,17 @@ def test_from_file_data_complex_input():
 @pytest.mark.parametrize(
     "definition,expected_data",
     [
-        (PipelineDefinition("test", Path("test.yaml")), "test.yaml"),
+        (PipelineDefinition("test", Path("test.yaml"), []), "test.yaml"),
         (
-            PipelineDefinition("test", Path("test.yaml"), None, {"foo": True}),
+            PipelineDefinition("test", Path("test.yaml"), [], {"foo": True}),
             {"path": "test.yaml", "annotations": {"foo": True}},
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), None, {"foo": True}),
+            PipelineDefinition("baz", Path("test.yaml"), [], {"foo": True}),
             {"path": "test.yaml", "annotations": {"foo": True}, "name": "baz"},
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml")),
+            PipelineDefinition("baz", Path("test.yaml"), []),
             {"path": "test.yaml", "name": "baz"},
         ),
     ],
