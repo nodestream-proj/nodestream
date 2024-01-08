@@ -31,10 +31,8 @@ profile = "black"
 python = "^3.10"
 pyyaml = "^6.0"
 jmespath = "^1.0.1"
-neo4j = "^5.8.0"
 cleo = "^2.0.1"
 python-json-logger = "^2.0.4"
-cymple = "0.8.1"
 boto3 = "^1.26.137"
 confluent-kafka = "^2.3.0"
 Jinja2 = "^3"
@@ -42,9 +40,7 @@ pandas = "^2"
 schema = "^0.7.5"
 cookiecutter = "^2.1.1"
 httpx = "^0.24.1"
-testcontainers = {extras = ["neo4j"], version = "^3.7.1"}
 psutil = "^5.9.6"
-
 uvloop = [
     { version = ">=0.17.0,<=0.18.0", platform = "darwin"},
     { version = ">=0.17.0,<=0.18.0", platform = "linux"}
