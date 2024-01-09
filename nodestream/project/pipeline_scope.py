@@ -35,7 +35,7 @@ class PipelineScope(
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
         for pipeline in pipelines:
             if self.targets is not None:
-                pipeline.targets = set(pipeline.targets | self.targets)
+                pipeline.targets = pipeline.targets | self.targets
             self.add_pipeline_definition(pipeline)
 
     @classmethod
