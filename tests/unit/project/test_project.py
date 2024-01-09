@@ -191,6 +191,12 @@ def test_project_from_file_with_scope_targets(add_env_var):
         .targets,
         contains_inanyorder(*["t1", "t2"]),
     )
+    assert_that(
+        result.scopes_by_name["exclude_inherited_targets"]
+        .pipelines_by_name["scope-and-config-target-pipeline"]
+        .targets,
+        contains_inanyorder(*["t2"]),
+    )
 
 
 def test_project_from_file():

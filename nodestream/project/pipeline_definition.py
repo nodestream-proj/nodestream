@@ -30,6 +30,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
     name: str
     file_path: Path
     targets: Set[str] = frozenset()
+    exclude_inherited_targets: bool = False
     annotations: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -59,6 +60,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
                     "path": os.path.exists,
                     Optional("annotations"): {str: Or(str, int, float, bool)},
                     Optional("targets"): [str],
+                    Optional("exclude_inherited_targets"): bool,
                 },
             )
         )
@@ -70,10 +72,16 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
         file_path = Path(data.pop("path"))
         name = data.pop("name", get_default_name(file_path))
-
-        targets = data.pop("targets", [])
+        exclude_targets = data.pop("exclude_inherited_targets", False)
         annotations = data.pop("annotations", {})
-        return cls(name, file_path, set(targets), {**parent_annotations, **annotations})
+        targets = data.pop("targets", [])
+        return cls(
+            name,
+            file_path,
+            set(targets),
+            exclude_targets,
+            {**parent_annotations, **annotations},
+        )
 
     def to_file_data(self, verbose: bool = False):
         using_default_name = self.name == self.file_path.stem
