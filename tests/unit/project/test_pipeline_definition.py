@@ -38,17 +38,17 @@ def test_from_file_data_complex_input():
 @pytest.mark.parametrize(
     "definition,expected_data",
     [
-        (PipelineDefinition("test", Path("test.yaml")), "test.yaml"),
+        (PipelineDefinition("test", Path("test.yaml"), set()), "test.yaml"),
         (
-            PipelineDefinition("test", Path("test.yaml"), None, {"foo": True}),
+            PipelineDefinition("test", Path("test.yaml"), set(), {"foo": True}),
             {"path": "test.yaml", "annotations": {"foo": True}},
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), None, {"foo": True}),
+            PipelineDefinition("baz", Path("test.yaml"), set(), {"foo": True}),
             {"path": "test.yaml", "annotations": {"foo": True}, "name": "baz"},
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml")),
+            PipelineDefinition("baz", Path("test.yaml"), set()),
             {"path": "test.yaml", "name": "baz"},
         ),
     ],
@@ -65,29 +65,34 @@ def test_to_file_data(definition, expected_data):
     [
         (
             PipelineDefinition("test", Path("test.yaml")),
-            {"path": "test.yaml", "annotations": {}, "name": "test", "targets": None},
+            {
+                "path": "test.yaml",
+                "annotations": {},
+                "name": "test",
+                "targets": frozenset(),
+            },
         ),
         (
-            PipelineDefinition("test", Path("test.yaml"), None, {"foo": True}),
+            PipelineDefinition("test", Path("test.yaml"), set(), {"foo": True}),
             {
                 "path": "test.yaml",
                 "annotations": {"foo": True},
                 "name": "test",
-                "targets": None,
+                "targets": set(),
             },
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), None, {"foo": True}),
+            PipelineDefinition("baz", Path("test.yaml"), set(), {"foo": True}),
             {
                 "path": "test.yaml",
                 "annotations": {"foo": True},
                 "name": "baz",
-                "targets": None,
+                "targets": set(),
             },
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml")),
-            {"path": "test.yaml", "annotations": {}, "name": "baz", "targets": None},
+            PipelineDefinition("baz", Path("test.yaml"), targets={"t1"}),
+            {"path": "test.yaml", "annotations": {}, "name": "baz", "targets": {"t1"}},
         ),
     ],
 )
