@@ -28,6 +28,20 @@ scopes:
     - t1
     config:
       Username: !env USERNAME_ENV
+  overlapping_targets:
+    annotations:
+      concurrency: 1
+    pipelines:
+      - path: "tests/unit/project/fixtures/pipelines/pipeline_two.yaml"
+        name: "scope-and-config-target-pipeline"
+        annotations:
+          concurrency: 2
+        targets: 
+        - t1
+        - t2
+    targets: 
+    - t1
+    - t2
 
 plugins:
   - name: test
@@ -39,3 +53,5 @@ plugins:
 targets:
   t1:
     a: b
+  t2:
+    c: d

@@ -158,7 +158,10 @@ def test_project_from_with_scope_targets(add_env_var):
     result = Project.read_from_file(
         Path("tests/unit/project/fixtures/simple_project_with_config_targets.yaml")
     )
-    assert_that(result.targets_by_name, equal_to({"t1": Target("t1", {"a": "b"})}))
+    assert_that(
+        result.targets_by_name,
+        equal_to({"t1": Target("t1", {"a": "b"}), "t2": Target("t2", {"c": "d"})}),
+    )
     assert_that(
         result.scopes_by_name["scope_targets"].config.get_config_value("Username"),
         equal_to("bob"),
@@ -175,6 +178,12 @@ def test_project_from_with_scope_targets(add_env_var):
     )
     assert_that(
         result.scopes_by_name["scope_targets"]
+        .pipelines_by_name["scope-and-config-target-pipeline"]
+        .targets,
+        contains_inanyorder(*["t1", "t2"]),
+    )
+    assert_that(
+        result.scopes_by_name["overlapping_targets"]
         .pipelines_by_name["scope-and-config-target-pipeline"]
         .targets,
         contains_inanyorder(*["t1", "t2"]),
