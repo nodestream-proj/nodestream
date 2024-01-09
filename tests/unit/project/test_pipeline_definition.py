@@ -40,15 +40,15 @@ def test_from_file_data_complex_input():
     [
         (PipelineDefinition("test", Path("test.yaml"), set()), "test.yaml"),
         (
-            PipelineDefinition("test", Path("test.yaml"), set(), {"foo": True}),
+            PipelineDefinition("test", Path("test.yaml"), set(), False, {"foo": True}),
             {"path": "test.yaml", "annotations": {"foo": True}},
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), set(), {"foo": True}),
+            PipelineDefinition("baz", Path("test.yaml"), set(), False, {"foo": True}),
             {"path": "test.yaml", "annotations": {"foo": True}, "name": "baz"},
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), set()),
+            PipelineDefinition("baz", Path("test.yaml")),
             {"path": "test.yaml", "name": "baz"},
         ),
     ],
@@ -73,7 +73,7 @@ def test_to_file_data(definition, expected_data):
             },
         ),
         (
-            PipelineDefinition("test", Path("test.yaml"), set(), {"foo": True}),
+            PipelineDefinition("test", Path("test.yaml"), set(), False, {"foo": True}),
             {
                 "path": "test.yaml",
                 "annotations": {"foo": True},
@@ -82,7 +82,7 @@ def test_to_file_data(definition, expected_data):
             },
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), set(), {"foo": True}),
+            PipelineDefinition("baz", Path("test.yaml"), set(), False, {"foo": True}),
             {
                 "path": "test.yaml",
                 "annotations": {"foo": True},
@@ -91,7 +91,7 @@ def test_to_file_data(definition, expected_data):
             },
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), targets={"t1"}),
+            PipelineDefinition("baz", Path("test.yaml"), {"t1"}),
             {"path": "test.yaml", "annotations": {}, "name": "baz", "targets": {"t1"}},
         ),
     ],
