@@ -150,7 +150,7 @@ def test_project_from_with_config_targets(add_env_var):
         result.scopes_by_name["config_targets_only"]
         .pipelines_by_name["target-pipeline"]
         .targets,
-        equal_to(["t1"]),
+        contains_inanyorder(*["t1"]),
     )
 
 
@@ -165,13 +165,13 @@ def test_project_from_with_scope_targets(add_env_var):
     )
     assert_that(
         result.scopes_by_name["scope_targets"].targets,
-        equal_to(["t1"]),
+        contains_inanyorder(*["t1"]),
     )
     assert_that(
         result.scopes_by_name["scope_targets"]
         .pipelines_by_name["scope-target-pipeline"]
         .targets,
-        equal_to(["t1"]),
+        contains_inanyorder(*["t1"]),
     )
     assert_that(
         result.scopes_by_name["scope_targets"]

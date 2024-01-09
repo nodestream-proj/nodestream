@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import Set
 
 from ..file_io import LoadsFromYamlFile
 from ..pipeline.scope_config import ScopeConfig
@@ -15,7 +15,7 @@ class PluginConfiguration(LoadsFromYamlFile):
 
     name: str
     config: ScopeConfig = None
-    targets: List[str] = None
+    targets: Set[str] = None
 
     @classmethod
     def describe_yaml_schema(cls):

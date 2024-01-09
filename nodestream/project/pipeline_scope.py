@@ -1,5 +1,5 @@
 from importlib import resources
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Set
 
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline.scope_config import ScopeConfig
@@ -26,7 +26,7 @@ class PipelineScope(
         pipelines: List[PipelineDefinition],
         persist: bool = True,
         config: ScopeConfig = None,
-        targets: List[str] = [],
+        targets: Set[str] = frozenset(),
     ) -> None:
         self.persist = persist
         self.name = name
@@ -34,8 +34,8 @@ class PipelineScope(
         self.targets = targets
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
         for pipeline in pipelines:
-            if pipeline.targets is not None:
-                pipeline.targets = list(set(pipeline.targets) | set(self.targets))
+            if self.targets is not None:
+                pipeline.targets = set(pipeline.targets | self.targets)
             self.add_pipeline_definition(pipeline)
 
     @classmethod
@@ -52,7 +52,7 @@ class PipelineScope(
             scope_name,
             pipelines,
             config=ScopeConfig.from_file_data(config),
-            targets=targets,
+            targets=set(targets),
         )
 
     @classmethod
