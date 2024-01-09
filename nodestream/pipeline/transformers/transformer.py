@@ -147,7 +147,7 @@ class SwitchTransformer(Transformer):
     )
 
     @classmethod
-    def from_file_data(cls, switch_on, cases, default, normalization=None):
+    def from_file_data(cls, switch_on, cases, default=None, normalization=None):
         transformers = {
             field_value: ClassLoader().load_class(**transformer)
             for field_value, transformer in cases.items()
