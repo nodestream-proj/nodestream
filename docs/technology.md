@@ -143,3 +143,19 @@ It's interface is defined as follows:
 
 In addition to core methods, the `Migrator` class also provides additional hooks for applying a lock to the database, handling transactions, and more for databases that support additional consistency guarantees.
 
+
+## Database Connector Plugins 
+
+`Nodestream` is designed to be extensible. 
+The core of `nodestream` is designed to be as generic as possible and provide a set of extension points that allow for the creation of plugins that can be used to extend the functionality of nodestream.
+
+One of the most important extension points is the `DatabaseConnector` class.
+This class is responsible for interfacing with the database and providing a consistent interface for the rest of the application to interact with the database.
+The `DatabaseConnector` class is an abstract class that defines the interface that all database connectors must implement.
+While most projects won't need to implement their own database connector, every project will need to use one. 
+
+Prior to nodestream 0.11, `neo4j` was housed in the core of nodestream. 
+This meant that every project that used nodestream had to install `neo4j` even if they didn't use it.
+This was not ideal because it added additional dependencies to the project and increased the size of a final application.
+To address this, `nodestream` 0.11 pulled `neo4j` out of the core and into a separate package called `nodestream-neo4j`.
+
