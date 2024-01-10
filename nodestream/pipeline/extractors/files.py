@@ -8,6 +8,7 @@ from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from typing import Any, AsyncGenerator, Iterable, Union
 
+from yaml import safe_load
 from httpx import AsyncClient
 
 from ...model import JsonLikeDocument
@@ -73,6 +74,11 @@ class TextFileFormat(SupportedFileFormat, alias=".txt"):
 class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
         return DictReader(fp)
+
+
+class YamlFileFormat(SupportedFileFormat, alias=".yaml"):
+    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+        return [safe_load(fp)]
 
 
 class FileExtractor(Extractor):

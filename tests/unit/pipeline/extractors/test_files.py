@@ -5,6 +5,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import pytest
+import yaml
 from hamcrest import assert_that, equal_to, has_length
 
 from nodestream.pipeline.extractors.files import FileExtractor, RemoteFileExtractor
@@ -67,6 +68,17 @@ def txt_file(fixture_directory):
     path.unlink(missing_ok=True)
 
 
+@pytest.fixture
+def yaml_file(fixture_directory):
+    with NamedTemporaryFile(
+        "w+", suffix=".yaml", dir=fixture_directory, delete=False
+    ) as temp_file:
+        name = temp_file.name
+        yaml.dump(SIMPLE_RECORD, temp_file)
+        temp_file.seek(0)
+    yield Path(name)
+
+
 @pytest.mark.asyncio
 async def test_json_formatting(json_file):
     subject = FileExtractor([json_file])
@@ -95,9 +107,18 @@ async def test_jsonl_formatting(jsonl_file):
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
 
 
-def test_declarative_init(fixture_directory, csv_file, json_file, txt_file, jsonl_file):
+@pytest.mark.asyncio
+async def test_yaml_formatting(yaml_file):
+    subject = FileExtractor([yaml_file])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+def test_declarative_init(
+    fixture_directory, csv_file, json_file, txt_file, jsonl_file, yaml_file
+):
     subject = FileExtractor.from_file_data(globs=[f"{fixture_directory}/**"])
-    assert_that(list(subject.paths), has_length(4))
+    assert_that(list(subject.paths), has_length(5))
 
 
 @pytest.mark.asyncio
