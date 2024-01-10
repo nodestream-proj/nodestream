@@ -8,8 +8,8 @@ from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from typing import Any, AsyncGenerator, Iterable, Union
 
-from yaml import safe_load
 from httpx import AsyncClient
+from yaml import safe_load
 
 from ...model import JsonLikeDocument
 from ...pluggable import Pluggable
