@@ -5,8 +5,8 @@ from typing import Any, Callable, Dict, List, Optional, Set
 from ..file_io import (
     LazyLoadedArgument,
     LazyLoadedTagSafeLoader,
-    LoadsFromYamlFile,
     LoadsFromYaml,
+    LoadsFromYamlFile,
 )
 from .class_loader import ClassLoader
 from .normalizers import Normalizer

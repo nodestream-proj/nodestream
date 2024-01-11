@@ -1,5 +1,5 @@
 from importlib import import_module
-from typing import Optional, Type, Dict
+from typing import Dict, Optional, Type
 
 DECLARATIVE_INIT_METHOD_NAME = "from_file_data"
 
