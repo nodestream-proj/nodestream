@@ -6,7 +6,6 @@ from hamcrest import assert_that, contains_inanyorder, has_length
 from nodestream.pipeline import Flush
 from nodestream.pipeline.transformers import (
     ConcurrentTransformer,
-    PassTransformer,
     SwitchTransformer,
     Transformer,
 )
@@ -177,20 +176,17 @@ TEST_RESULTS_WITH_NO_DEFAULT = [
 ]
 
 
-@pytest.fixture
-def switch_transformer():
-    return SwitchTransformer.from_file_data(
-        switch_on=TEST_PROVIDER, cases=TEST_CASES, default=DEFAULT_CASE
-    )
-
-
 async def switch_input_record_stream():
     for record in TEST_DATA:
         yield record
 
 
 @pytest.mark.asyncio
-async def test_switch_transformer_with_default(switch_transformer):
+async def test_switch_transformer_with_default():
+    switch_transformer = SwitchTransformer.from_file_data(
+        switch_on=TEST_PROVIDER, cases=TEST_CASES, default=DEFAULT_CASE
+    )
+
     results = [
         r
         async for r in switch_transformer.handle_async_record_stream(
@@ -201,8 +197,10 @@ async def test_switch_transformer_with_default(switch_transformer):
 
 
 @pytest.mark.asyncio
-async def test_switch_transformer_without_default(switch_transformer):
-    switch_transformer.default = PassTransformer()
+async def test_switch_transformer_without_default():
+    switch_transformer = SwitchTransformer.from_file_data(
+        switch_on=TEST_PROVIDER, cases=TEST_CASES
+    )
     results = [
         r
         async for r in switch_transformer.handle_async_record_stream(
