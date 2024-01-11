@@ -1,5 +1,5 @@
 from importlib import import_module
-from typing import Optional, Type
+from typing import Optional, Type, Dict
 
 DECLARATIVE_INIT_METHOD_NAME = "from_file_data"
 
@@ -43,6 +43,17 @@ def find_class(class_path):
 
 class ClassLoader:
     """Loads a class from a string path and instantiates it with the given arguments."""
+
+    _class_loaders_by_constriant: Dict[Optional[Type], "ClassLoader"] = dict()
+
+    @staticmethod
+    def instance(constraint: Optional[Type] = None):
+        if constraint not in ClassLoader._class_loaders_by_constriant:
+            ClassLoader._class_loaders_by_constriant[constraint] = ClassLoader(
+                constraint
+            )
+
+        return ClassLoader._class_loaders_by_constriant[constraint]
 
     def __init__(self, class_constratint: Optional[Type] = None) -> None:
         self.class_constratint = class_constratint or object
