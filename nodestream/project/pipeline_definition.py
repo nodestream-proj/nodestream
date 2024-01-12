@@ -117,8 +117,11 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     def to_file_data(self, verbose: bool = False):
         using_default_name = self.name == self.file_path.stem
-        has_annotations = self.configuration and self.configuration.annotations
-        if using_default_name and not has_annotations and not verbose:
+        if (
+            using_default_name
+            and not self.get_annotations_from_config()
+            and not verbose
+        ):
             return str(self.file_path)
 
         result = {"path": str(self.file_path)}
