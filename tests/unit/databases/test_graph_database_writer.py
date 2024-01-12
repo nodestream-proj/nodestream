@@ -3,7 +3,6 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.databases import GraphDatabaseWriter
 from nodestream.model import DesiredIngestion
-from nodestream.pipeline import Flush
 
 
 @pytest.fixture
