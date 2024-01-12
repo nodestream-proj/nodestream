@@ -161,7 +161,7 @@ class PipelineScope(
     def update_pipeline_configurations(
         self, pipeline_configs: Dict[str, PipelineConfiguration]
     ):
-        print(self.pipelines_by_name.__dict__)
+        print(self.pipelines_by_name)
         for pipeline_name, config in pipeline_configs.items():
             self.pipelines_by_name[pipeline_name].configuration.merge_with(config)
 
