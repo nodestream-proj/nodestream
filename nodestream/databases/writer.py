@@ -1,4 +1,4 @@
-from ..pipeline import Flush, Writer
+from ..pipeline import Writer
 from .database_connector import DatabaseConnector
 from .debounced_ingest_strategy import DebouncedIngestStrategy
 from .ingest_strategy import INGESTION_STRATEGY_REGISTRY, IngestionStrategy
@@ -38,14 +38,7 @@ class GraphDatabaseWriter(Writer):
         self.pending_records = 0
 
     async def write_record(self, ingestible):
-        if ingestible is Flush:
-            await self.flush()
-            return
-
         await ingestible.ingest(self.ingest_strategy)
         self.pending_records += 1
         if self.pending_records >= self.batch_size:
             await self.flush()
-
-    async def finish(self):
-        await self.flush()

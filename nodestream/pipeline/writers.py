@@ -3,6 +3,7 @@ from logging import INFO, getLevelName, getLogger
 from typing import Any, AsyncGenerator
 
 from .step import Step
+from .flush import Flush
 
 
 class Writer(Step):
@@ -17,12 +18,21 @@ class Writer(Step):
         self, record_stream: AsyncGenerator[Any, Any]
     ) -> AsyncGenerator[Any, Any]:
         async for record in record_stream:
-            await self.write_record(record)
+            if record is Flush:
+                await self.flush()
+            else:
+                await self.write_record(record)
             yield record
 
     @abstractmethod
     async def write_record(self, record: Any):
         raise NotImplementedError
+
+    async def flush(self):
+        pass
+
+    async def finish(self):
+        await self.flush()
 
 
 class LoggerWriter(Writer):

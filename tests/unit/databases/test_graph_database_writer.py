@@ -12,14 +12,6 @@ def stubbed_writer(mocker):
 
 
 @pytest.mark.asyncio
-async def test_graph_database_writer_flushes_when_recieving_a_flush(stubbed_writer):
-    await stubbed_writer.write_record(DesiredIngestion())
-    await stubbed_writer.write_record(DesiredIngestion())
-    await stubbed_writer.write_record(Flush)
-    stubbed_writer.ingest_strategy.flush.assert_awaited_once()
-
-
-@pytest.mark.asyncio
 async def test_graph_database_writer_batches_appropriately(mocker):
     stubbed_writer = GraphDatabaseWriter(10, mocker.AsyncMock())
     for _ in range(100):
