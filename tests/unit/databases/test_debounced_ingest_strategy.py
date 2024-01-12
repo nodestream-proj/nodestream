@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import assert_that, equal_to, empty
+from hamcrest import assert_that, empty, equal_to
 
 from nodestream.databases import DebouncedIngestStrategy
 from nodestream.databases.query_executor import OperationOnNodeIdentity

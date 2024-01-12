@@ -2,8 +2,8 @@ from abc import abstractmethod
 from logging import INFO, getLevelName, getLogger
 from typing import Any, AsyncGenerator
 
-from .step import Step
 from .flush import Flush
+from .step import Step
 
 
 class Writer(Step):

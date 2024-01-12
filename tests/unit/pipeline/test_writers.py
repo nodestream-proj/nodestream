@@ -1,7 +1,7 @@
 import pytest
 from hamcrest import assert_that, equal_to
 
-from nodestream.pipeline.writers import LoggerWriter, Flush
+from nodestream.pipeline.writers import Flush, LoggerWriter
 
 
 @pytest.mark.asyncio
