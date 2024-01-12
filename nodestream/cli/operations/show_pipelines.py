@@ -2,6 +2,8 @@ import json
 from abc import ABC, abstractmethod
 from typing import Iterable, List, Optional, Tuple
 
+from nodestream.project.pipeline_definition import PipelineConfiguration
+
 from ...project import PipelineDefinition, Project
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
@@ -27,7 +29,7 @@ class TableOutputFormat(OutputFormat):
                 scope,
                 definition.name,
                 str(definition.file_path),
-                "".join(definition.annotations.keys()),
+                "".join(definition.get_annotations_from_config().keys()),
             ]
             for scope, definition in matching_pipelines
         ]

@@ -4,7 +4,7 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline import PipelineInitializationArguments
-from nodestream.project import PipelineDefinition
+from nodestream.project import PipelineDefinition, PipelineConfiguration
 
 
 def test_pipeline_definition_initialize(mocker):
@@ -32,24 +32,43 @@ def test_from_file_data_complex_input():
     )
     assert_that(result.name, equal_to("test"))
     assert_that(result.file_path, equal_to(Path("path/to/pipeline")))
-    assert_that(result.annotations, equal_to({"foo": "bar", "baz": "qux"}))
+    assert_that(
+        result.configuration.annotations, equal_to({"foo": "bar", "baz": "qux"})
+    )
 
 
 @pytest.mark.parametrize(
     "definition,expected_data",
     [
-        (PipelineDefinition("test", Path("test.yaml"), set()), "test.yaml"),
         (
-            PipelineDefinition("test", Path("test.yaml"), set(), False, {"foo": True}),
-            {"path": "test.yaml", "annotations": {"foo": True}},
+            (
+                PipelineDefinition(
+                    "test1", Path("test1.yaml"), PipelineConfiguration(set(), False, {})
+                ),
+                "test1.yaml",
+            )
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), set(), False, {"foo": True}),
-            {"path": "test.yaml", "annotations": {"foo": True}, "name": "baz"},
+            PipelineDefinition(
+                "test2",
+                Path("test2.yaml"),
+                PipelineConfiguration(set(), False, {"foo": True}),
+            ),
+            {"path": "test2.yaml", "annotations": {"foo": True}},
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml")),
-            {"path": "test.yaml", "name": "baz"},
+            PipelineDefinition(
+                "baz3",
+                Path("test3.yaml"),
+                PipelineConfiguration(set(), False, {"foo": True}),
+            ),
+            {"path": "test3.yaml", "annotations": {"foo": True}, "name": "baz3"},
+        ),
+        (
+            PipelineDefinition(
+                "baz4", Path("test4.yaml"), PipelineConfiguration(set(), False, {})
+            ),
+            {"path": "test4.yaml", "name": "baz4"},
         ),
     ],
 )
@@ -64,16 +83,22 @@ def test_to_file_data(definition, expected_data):
     "definition,expected_data",
     [
         (
-            PipelineDefinition("test", Path("test.yaml")),
+            PipelineDefinition(
+                "test", Path("test.yaml"), PipelineConfiguration(set(), False, {})
+            ),
             {
                 "path": "test.yaml",
                 "annotations": {},
                 "name": "test",
-                "targets": frozenset(),
+                "targets": set(),
             },
         ),
         (
-            PipelineDefinition("test", Path("test.yaml"), set(), False, {"foo": True}),
+            PipelineDefinition(
+                "test",
+                Path("test.yaml"),
+                PipelineConfiguration(set(), False, {"foo": True}),
+            ),
             {
                 "path": "test.yaml",
                 "annotations": {"foo": True},
@@ -82,7 +107,11 @@ def test_to_file_data(definition, expected_data):
             },
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), set(), False, {"foo": True}),
+            PipelineDefinition(
+                "baz",
+                Path("test.yaml"),
+                PipelineConfiguration(set(), False, {"foo": True}),
+            ),
             {
                 "path": "test.yaml",
                 "annotations": {"foo": True},
@@ -91,7 +120,9 @@ def test_to_file_data(definition, expected_data):
             },
         ),
         (
-            PipelineDefinition("baz", Path("test.yaml"), {"t1"}),
+            PipelineDefinition(
+                "baz", Path("test.yaml"), PipelineConfiguration(set(["t1"]))
+            ),
             {"path": "test.yaml", "annotations": {}, "name": "baz", "targets": {"t1"}},
         ),
     ],
@@ -107,5 +138,5 @@ def test_from_path():
     path = Path("test.yaml")
     result = PipelineDefinition.from_path(path)
     assert_that(result.name, equal_to("test"))
-    assert_that(result.annotations, equal_to({}))
+    assert_that(result.get_annotations_from_config(), equal_to({}))
     assert_that(result.file_path, equal_to(path))

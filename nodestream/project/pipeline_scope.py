@@ -1,5 +1,12 @@
+from dataclasses import field
 from importlib import resources
 from typing import Dict, Iterable, List, Set
+
+from nodestream.project.pipeline_definition import (
+    PipelineConfiguration,
+    PipelineDefinition,
+)
+
 
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline.scope_config import ScopeConfig
@@ -7,7 +14,6 @@ from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
 )
-from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest
 
 
@@ -26,7 +32,7 @@ class PipelineScope(
         pipelines: List[PipelineDefinition],
         persist: bool = True,
         config: ScopeConfig = None,
-        targets: Set[str] = frozenset(),
+        targets: Set[str] = None,
     ) -> None:
         self.persist = persist
         self.name = name
@@ -35,8 +41,8 @@ class PipelineScope(
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
         for pipeline in pipelines:
             if self.targets is not None:
-                if not pipeline.exclude_inherited_targets:
-                    pipeline.targets = pipeline.targets | self.targets
+                if not pipeline.excluded_inherited_targets():
+                    pipeline.configuration.add_targets(self.targets)
             self.add_pipeline_definition(pipeline)
 
     @classmethod
@@ -149,6 +155,16 @@ class PipelineScope(
     def set_targets(self, targets: list[str]):
         self.targets = targets
 
+    def set_annotations(self, annotations: Dict[str, str | int | float | bool]):
+        self.annotations = annotations
+
+    def update_pipeline_configurations(
+        self, pipeline_configs: Dict[str, PipelineConfiguration]
+    ):
+        print(self.pipelines_by_name.__dict__)
+        for pipeline_name, config in pipeline_configs.items():
+            self.pipelines_by_name[pipeline_name].configuration.merge_with(config)
+
     @classmethod
     def from_resources(
         cls, name: str, package: resources.Package, persist: bool = False
@@ -173,4 +189,5 @@ class PipelineScope(
             for f in resources.files(package).iterdir()
             if f.suffix == ".yaml"
         ]
+        print(pipelines)
         return cls(name, pipelines, persist=persist)
