@@ -14,7 +14,7 @@ def get_default_name(file_path: Path) -> str:
 
 @dataclass
 class PipelineConfiguration:
-    targets: Set[str] = field(default_factory=list)
+    targets: Set[str] = field(default_factory=set)
     exclude_inherited_targets: bool = False
     annotations: Dict[str, Any] = field(default_factory=dict)
 
@@ -63,7 +63,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     name: str
     file_path: Path
-    configuration: PipelineConfiguration = None
+    configuration: PipelineConfiguration = field(default_factory=PipelineConfiguration)
 
     @classmethod
     def from_path(cls, file_path: Path):
@@ -78,7 +78,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         Returns:
             PipelineDefinition: The `PipelineDefinition` object.
         """
-        return cls(get_default_name(file_path), file_path, None)
+        return cls(get_default_name(file_path), file_path)
 
     @classmethod
     def describe_yaml_schema(cls):
@@ -137,22 +137,13 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         return result
 
     def get_annotations_from_config(self):
-        annotations = {}
-        if self.configuration:
-            annotations.update(self.configuration.annotations)
-        return annotations
+        return self.configuration.annotations
 
     def get_targets_from_config(self):
-        targets = set()
-        if self.configuration:
-            targets = self.configuration.targets
-        return targets
+        return self.configuration.targets
 
     def excluded_inherited_targets(self):
-        excluded = False
-        if self.configuration:
-            excluded = self.configuration.exclude_inherited_targets
-        return excluded
+        return self.configuration.exclude_inherited_targets
 
     def initialize(self, init_args: PipelineInitializationArguments) -> Pipeline:
         return PipelineFile(self.file_path).load_pipeline(init_args)
