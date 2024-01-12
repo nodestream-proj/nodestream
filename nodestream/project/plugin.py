@@ -25,7 +25,7 @@ class PluginConfiguration(LoadsFromYamlFile):
     name: str
     pipelines: Dict[str, PipelineConfiguration] = field(default_factory=dict)
     config: ScopeConfig = None
-    targets: Set[str] = field(default_factory=list)
+    targets: Set[str] = field(default_factory=set)
     annotations: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -52,7 +52,7 @@ class PluginConfiguration(LoadsFromYamlFile):
         pipelines_data = data.pop("pipelines", {})
         annotations = pipelines_data.pop("annotations", {})
         pipelines_config = {
-            name: PipelineConfiguration.from_file_data(config)
+            name: PipelineConfiguration.from_file_data(config, annotations)
             for (name, config) in pipelines_data.items()
         }
         return cls(
@@ -67,7 +67,7 @@ class PluginConfiguration(LoadsFromYamlFile):
         return self.config.get_config_value(key)
 
     def configure_scope(self, scope: PipelineScope):
+        if scope.targets is not None:
+            self.targets = scope.targets | self.targets
         scope.set_configuration(self.config)
-        scope.set_targets(self.targets)
-        scope.set_annotations(self.annotations)
         scope.update_pipeline_configurations(self.pipelines)

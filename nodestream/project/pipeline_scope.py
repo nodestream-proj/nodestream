@@ -1,4 +1,3 @@
-from dataclasses import field
 from importlib import resources
 from typing import Dict, Iterable, List, Set
 
@@ -40,7 +39,7 @@ class PipelineScope(
         self.targets = targets
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
         for pipeline in pipelines:
-            if self.targets is not None:
+            if self.targets:
                 if not pipeline.excluded_inherited_targets():
                     pipeline.configuration.add_targets(self.targets)
             self.add_pipeline_definition(pipeline)
@@ -152,16 +151,12 @@ class PipelineScope(
     def set_configuration(self, config: ScopeConfig):
         self.config = config
 
-    def set_targets(self, targets: list[str]):
-        self.targets = targets
-
     def set_annotations(self, annotations: Dict[str, str | int | float | bool]):
         self.annotations = annotations
 
     def update_pipeline_configurations(
         self, pipeline_configs: Dict[str, PipelineConfiguration]
     ):
-        print(self.pipelines_by_name)
         for pipeline_name, config in pipeline_configs.items():
             self.pipelines_by_name[pipeline_name].configuration.merge_with(config)
 
@@ -189,5 +184,4 @@ class PipelineScope(
             for f in resources.files(package).iterdir()
             if f.suffix == ".yaml"
         ]
-        print(pipelines)
         return cls(name, pipelines, persist=persist)

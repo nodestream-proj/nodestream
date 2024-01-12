@@ -1,7 +1,7 @@
 import os.path
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Set
+from typing import Any, Dict, List, Set
 
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline import Pipeline, PipelineFile, PipelineInitializationArguments
@@ -31,11 +31,11 @@ class PipelineConfiguration:
         )
 
     @classmethod
-    def from_file_data(cls, data):
+    def from_file_data(cls, data, parent_annotations):
         annotations = data.pop("annotations", {})
         targets = data.pop("targets", [])
         exclude_targets = data.pop("exclude_inherited_targets", False)
-        return cls(set(targets), exclude_targets, annotations)
+        return cls(set(targets), exclude_targets, {**parent_annotations, **annotations})
 
     def merge_with(self, other: "PipelineConfiguration"):
         self.targets = self.targets | other.targets
@@ -130,7 +130,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         annotations = self.get_annotations_from_config()
         targets = self.get_targets_from_config()
         if targets or verbose:
-            result["targets"] = targets
+            result["targets"] = list(targets)
         if annotations or verbose:
             result["annotations"] = annotations
 
