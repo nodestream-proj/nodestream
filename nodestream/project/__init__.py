@@ -1,4 +1,4 @@
-from .pipeline_definition import PipelineDefinition, PipelineConfiguration
+from .pipeline_definition import PipelineConfiguration, PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .project import Project, ProjectPlugin
 from .run_request import RunRequest

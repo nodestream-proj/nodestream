@@ -1,17 +1,13 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, Set
+
 from schema import Or
 
-from nodestream.project.pipeline_definition import (
-    PipelineConfiguration,
-    PipelineDefinition,
-)
+from nodestream.project.pipeline_definition import PipelineConfiguration
 from nodestream.project.pipeline_scope import PipelineScope
 
 from ..file_io import LoadsFromYamlFile
 from ..pipeline.scope_config import ScopeConfig
-
-IS_PLUGIN = True
 
 
 @dataclass
@@ -50,9 +46,11 @@ class PluginConfiguration(LoadsFromYamlFile):
         targets = data.pop("targets", [])
         config = data.pop("config")
         pipelines_data = data.pop("pipelines", {})
-        annotations = pipelines_data.pop("annotations", {})
+        annotations = data.pop("annotations", {})
         pipelines_config = {
-            name: PipelineConfiguration.from_file_data(config, annotations)
+            name: PipelineConfiguration.from_file_data(
+                config, set(targets), annotations
+            )
             for (name, config) in pipelines_data.items()
         }
         return cls(
@@ -67,7 +65,5 @@ class PluginConfiguration(LoadsFromYamlFile):
         return self.config.get_config_value(key)
 
     def configure_scope(self, scope: PipelineScope):
-        if scope.targets is not None:
-            self.targets = scope.targets | self.targets
         scope.set_configuration(self.config)
         scope.update_pipeline_configurations(self.pipelines)

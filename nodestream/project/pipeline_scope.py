@@ -6,7 +6,6 @@ from nodestream.project.pipeline_definition import (
     PipelineDefinition,
 )
 
-
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline.scope_config import ScopeConfig
 from ..schema.schema import (
@@ -150,9 +149,6 @@ class PipelineScope(
 
     def set_configuration(self, config: ScopeConfig):
         self.config = config
-
-    def set_annotations(self, annotations: Dict[str, str | int | float | bool]):
-        self.annotations = annotations
 
     def update_pipeline_configurations(
         self, pipeline_configs: Dict[str, PipelineConfiguration]

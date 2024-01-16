@@ -4,7 +4,7 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline import PipelineInitializationArguments
-from nodestream.project import PipelineDefinition, PipelineConfiguration
+from nodestream.project import PipelineConfiguration, PipelineDefinition
 
 
 def test_pipeline_definition_initialize(mocker):

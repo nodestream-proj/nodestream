@@ -1,7 +1,7 @@
 import os.path
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, Set
 
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline import Pipeline, PipelineFile, PipelineInitializationArguments
@@ -31,15 +31,21 @@ class PipelineConfiguration:
         )
 
     @classmethod
-    def from_file_data(cls, data, parent_annotations):
+    def from_file_data(
+        cls, data, parent_targets: set, parent_annotations
+    ) -> "PipelineConfiguration":
         annotations = data.pop("annotations", {})
         targets = data.pop("targets", [])
         exclude_targets = data.pop("exclude_inherited_targets", False)
-        return cls(set(targets), exclude_targets, {**parent_annotations, **annotations})
+        if not exclude_targets:
+            targets = set(targets) | parent_targets
+        return cls(targets, exclude_targets, {**parent_annotations, **annotations})
 
-    def merge_with(self, other: "PipelineConfiguration"):
-        self.targets = self.targets | other.targets
-        self.exclude_inherited_targets = other.exclude_inherited_targets
+    def merge_with(
+        self,
+        other: "PipelineConfiguration",
+    ):
+        self.targets = set(other.targets) | self.targets
         self.annotations.update(other.annotations)
 
     def add_targets(self, other_targets: Set):
