@@ -19,7 +19,12 @@ class ExpandJsonField(Transformer):
     async def transform_record(self, record: JsonLikeDocument):
         item = record
         for path_segment in self.path[:-1]:
-            record = item[path_segment]
+            item = item.get(path_segment, None)
+            if item is None:
+                return record
         last_segment = self.path[-1]
-        item[last_segment] = json.loads(item[last_segment])
+        last_segment_value = item.get(last_segment, None)
+        if last_segment_value is None:
+            return record
+        item[last_segment] = json.loads(last_segment_value)
         return record

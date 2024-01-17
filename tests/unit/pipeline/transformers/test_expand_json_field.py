@@ -11,7 +11,14 @@ DEEP_OUTPUT = {"a": 1, "b": {"c": {"d": {"hello": "world"}}}}
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("input,output,path", [(SIMPLE_INPUT, SIMPLE_OUTPUT, "b")])
+@pytest.mark.parametrize(
+    "input,output,path",
+    [
+        (SIMPLE_INPUT, SIMPLE_OUTPUT, "b"),
+        (DEEP_INPUT, DEEP_OUTPUT, ["b", "c", "d"]),
+        (DEEP_INPUT, DEEP_INPUT, ["b", "f"]),
+    ],
+)
 async def test_expand_json_fields(input, output, path):
     subject = ExpandJsonField.from_file_data(path)
 
