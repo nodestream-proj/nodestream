@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
@@ -8,11 +9,7 @@ from ..pipeline import Step
 from ..pipeline.argument_resolvers.argument_resolver import ArgumentResolver
 from ..pipeline.scope_config import ScopeConfig
 from ..pluggable import Pluggable
-from ..schema.schema import (
-    AggregatedIntrospectiveIngestionComponent,
-    GraphSchema,
-    IntrospectiveIngestionComponent,
-)
+from ..schema import Schema, ExpandsSchema, ExpandsSchemaFromChildren
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .run_request import RunRequest
@@ -21,9 +18,7 @@ from .target import Target
 T = TypeVar("T", bound=Step)
 
 
-class Project(
-    AggregatedIntrospectiveIngestionComponent, LoadsFromYamlFile, SavesToYamlFile
-):
+class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
     """A `Project` represents a collection of pipelines.
 
     A project is the top-level object in a nodestream project.
@@ -57,6 +52,7 @@ class Project(
                 Optional("targets"): {
                     str: {str: object},
                 },
+                Optional("migrations"): os.path.exists,
             }
         )
 
@@ -123,16 +119,11 @@ class Project(
         for scope in scopes:
             self.add_scope(scope)
 
-    def get_target_by_name(self, target_name: str) -> Optional[Target]:
-        """Returns the target with the given name.
-
-        Args:
-            target_name (str): The name of the target to return.
-
-        Returns:
-            Optional[Target]: The target with the given name, or None if no target was found.
-        """
-        return self.targets_by_name.get(target_name)
+    def get_target_by_name(self, target_name: str) -> Target:
+        try:
+            return self.targets_by_name[target_name]
+        except KeyError as e:
+            raise ValueError(f"Target {target_name} not found.") from e
 
     async def run(self, request: RunRequest) -> int:
         """Takes a run request and runs the appropriate pipeline.
@@ -216,7 +207,7 @@ class Project(
                 missing_ok=missing_ok,
             )
 
-    def get_schema(self, type_overrides_file: Optional[Path] = None) -> GraphSchema:
+    def get_schema(self, type_overrides_file: Optional[Path] = None) -> Schema:
         """Returns a `GraphSchema` representing the project.
 
         If a `type_overrides_file` is provided, the schema will be updated with the overrides.
@@ -231,12 +222,13 @@ class Project(
         Returns:
             GraphSchema: The schema representing the project.
         """
-        schema = self.generate_graph_schema()
+        schema = self.make_schema()
         if type_overrides_file is not None:
-            schema.apply_type_overrides_from_file(type_overrides_file)
+            overrides_schema = Schema.read_from_file(type_overrides_file)
+            schema.merge(overrides_schema)
         return schema
 
-    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
+    def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return self.scopes_by_name.values()
 
     def dig_for_step_of_type(

@@ -1,7 +1,11 @@
 from .auto_change_detector import AutoChangeDetector, MigratorInput
 from .auto_migration_maker import AutoMigrationMaker
 from .migrations import MigrationGraph, Migration
-from .migrator import Migrator
+from .migrator import (
+    Migrator,
+    OperationTypeRoutingMixin,
+    OperationTypeNotSupportedError,
+)
 from .project_migrations import ProjectMigrations
 
 __all__ = (
@@ -12,4 +16,6 @@ __all__ = (
     "Migration",
     "MigrationGraph",
     "ProjectMigrations",
+    "OperationTypeRoutingMixin",
+    "OperationTypeNotSupportedError",
 )

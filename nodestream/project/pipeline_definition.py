@@ -6,7 +6,7 @@ from typing import Any, Dict
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
 from ..pipeline.scope_config import ScopeConfig
-from ..schema.schema import IntrospectiveIngestionComponent
+from ..schema import ExpandsSchema, SchemaExpansionCoordinator
 
 
 def get_default_name(file_path: Path) -> str:
@@ -14,7 +14,7 @@ def get_default_name(file_path: Path) -> str:
 
 
 @dataclass
-class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFromYaml):
+class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
     """A `PipelineDefinition` represents a pipeline that can be loaded from a file.
 
     `PipelineDefinition` objects are used to load pipelines from files. They themselves
@@ -106,11 +106,5 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
             PipelineInitializationArguments.for_introspection(), ScopeConfig({})
         )
 
-    def gather_object_shapes(self):
-        return self.initialize_for_introspection().gather_object_shapes()
-
-    def gather_present_relationships(self):
-        return self.initialize_for_introspection().gather_present_relationships()
-
-    def gather_used_indexes(self):
-        return self.initialize_for_introspection().gather_used_indexes()
+    def expand_schema(self, coordinator: SchemaExpansionCoordinator):
+        self.initialize_for_introspection().expand_schema(coordinator)

@@ -34,6 +34,8 @@ class StateProvider(ABC):
 
 
 class StaticStateProvider(StateProvider):
+    __slots__ = ("schema",)
+
     def __init__(self, schema: Schema) -> None:
         self.schema = schema
 
@@ -42,6 +44,8 @@ class StaticStateProvider(StateProvider):
 
 
 class MigrationGraphStateProvider(StateProvider):
+    __slots__ = ("migrations",)
+
     def __init__(self, migrations: MigrationGraph) -> None:
         self.migrations = migrations
 
@@ -60,6 +64,8 @@ class InMemoryMigrator(OperationTypeRoutingMixin, Migrator):
     detector as well as for generating the current application state from the
     migrations in the migration graph.
     """
+
+    __slots__ = ("schema",)
 
     def __init__(self) -> None:
         self.schema = Schema()
@@ -114,13 +120,13 @@ class InMemoryMigrator(OperationTypeRoutingMixin, Migrator):
         self, operation: AddAdditionalNodePropertyIndex
     ) -> None:
         type_def = self.schema.get_node_type_by_name(operation.node_type)
-        type_def.add_index(operation.as_index())
+        type_def.add_index(operation.field_name)
 
     async def execute_drop_additional_node_property_index(
         self, operation: DropAdditionalNodePropertyIndex
     ) -> None:
         type_def = self.schema.get_node_type_by_name(operation.node_type)
-        type_def.drop_index(type_def.get_index_by_field_name(operation.field_name))
+        type_def.drop_index(operation.field_name)
 
     async def execute_add_additional_relationship_property_index(
         self, operation: AddAdditionalRelationshipPropertyIndex
@@ -128,7 +134,7 @@ class InMemoryMigrator(OperationTypeRoutingMixin, Migrator):
         type_def = self.schema.get_relationship_type_by_name(
             operation.relationship_type
         )
-        type_def.add_index(operation.as_index())
+        type_def.add_index(operation.field_name)
 
     async def execute_drop_additional_relationship_property_index(
         self, operation: DropAdditionalRelationshipPropertyIndex
@@ -136,7 +142,7 @@ class InMemoryMigrator(OperationTypeRoutingMixin, Migrator):
         type_def = self.schema.get_relationship_type_by_name(
             operation.relationship_type
         )
-        type_def.drop_index(type_def.get_index_by_field_name(operation.field_name))
+        type_def.drop_index(operation.field_name)
 
     async def execute_add_node_property(self, operation: AddNodeProperty) -> None:
         type_def = self.schema.get_node_type_by_name(operation.node_type)
@@ -164,7 +170,7 @@ class InMemoryMigrator(OperationTypeRoutingMixin, Migrator):
 
     async def execute_node_key_extended(self, operation: NodeKeyExtended) -> None:
         type_def = self.schema.get_node_type_by_name(operation.node_type)
-        type_def.keys.add(operation.added_key_property)
+        type_def.add_key(operation.added_key_property)
 
     async def execute_relationship_key_extended(
         self, operation: RelationshipKeyExtended
@@ -172,7 +178,7 @@ class InMemoryMigrator(OperationTypeRoutingMixin, Migrator):
         type_def = self.schema.get_relationship_type_by_name(
             operation.relationship_type
         )
-        type_def.keys.add(operation.added_key_property)
+        type_def.add_key(operation.added_key_property)
 
     async def execute_node_key_part_renamed(
         self, operation: NodeKeyPartRenamed

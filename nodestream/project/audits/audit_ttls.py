@@ -22,17 +22,20 @@ class AuditTimeToLiveConfigurations(Audit):
         ]
 
     async def run(self, project: Project):
-        schema = project.generate_graph_schema()
+        schema = project.get_schema()
         unused_ttls = await self.get_all_ttl_configurations(project)
-        for object_shape in chain(
-            schema.known_node_types(), schema.known_relationship_types()
-        ):
-            for_shape = (ttl for ttl in unused_ttls if ttl.is_for_shape(object_shape))
+
+        for (graph_object_type, _), type_def in schema.type_schemas.items():
+            for_shape = (
+                ttl
+                for ttl in unused_ttls
+                if ttl.applies_to(graph_object_type, type_def)
+            )
             ttl = next(for_shape, None)
             if ttl is not None:
                 unused_ttls.remove(ttl)
             else:
-                err = f"Time to live not configured for {object_shape.graph_object_type} '{object_shape.object_type}'"
+                err = f"Time to live not configured for {graph_object_type} '{type_def.name}'"
                 self.failure(err)
 
         if unused_ttls:

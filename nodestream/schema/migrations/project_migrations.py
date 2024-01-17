@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import Optional, AsyncIterable
+from typing import Optional, AsyncIterable, Tuple
 
 from .auto_migration_maker import AutoMigrationMaker
 from .auto_change_detector import AutoChangeDetector, MigratorInput
-from .migrations import MigrationGraph
+from .migrations import MigrationGraph, Migration
 from .migrator import Migrator
 from .state_providers import MigrationGraphStateProvider, StaticStateProvider
 from ..state import Schema
@@ -36,7 +36,7 @@ class ProjectMigrations:
         graph = MigrationGraph.from_directory(directory)
         return cls(graph, directory)
 
-    async def execute_pending(self, migrator: Migrator) -> AsyncIterable[str]:
+    async def execute_pending(self, migrator: Migrator) -> AsyncIterable[Migration]:
         """Execute pending migrations.
 
         This method executes all pending (non-completed) migrations.
@@ -51,11 +51,11 @@ class ProjectMigrations:
         for migration in self.graph.get_ordered_migration_plan():
             if migration not in completed_migrations:
                 await migrator.execute_migration(migration)
-                yield migration.name
+                yield migration
 
     async def generate_migration_from_changes(
         self, input: MigratorInput, project_schema: Schema
-    ) -> Optional[Path]:
+    ) -> Optional[Tuple[Migration, Path]]:
         """Generate a migration from changes.
 
         This method generates a migration from changes in the project schema
@@ -67,8 +67,7 @@ class ProjectMigrations:
             project_schema: The schema of the project in its current state.
 
         Returns:
-            The path to the generated migration, or None if there are no
-            changes.
+            The generated migration and path to it, or None if there were no changes.
         """
 
         detector = AutoChangeDetector(
@@ -80,4 +79,5 @@ class ProjectMigrations:
         migration = await maker.make_migration()
         if not migration:
             return None
-        return migration.write_to_file_with_default_name(self.source_directory)
+        path = migration.write_to_file_with_default_name(self.source_directory)
+        return migration, path

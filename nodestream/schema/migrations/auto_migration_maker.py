@@ -13,6 +13,8 @@ class AutoMigrationMaker:
     automatically generating migrations from those changes.
     """
 
+    __slots__ = ("migration_graph", "auto_detector")
+
     def __init__(
         self,
         migration_graph: MigrationGraph,

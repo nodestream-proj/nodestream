@@ -3,14 +3,14 @@ from hamcrest import assert_that, has_length
 
 from nodestream.databases.copy import Copier
 from nodestream.model import Node, Relationship, RelationshipWithNodes
-from nodestream.schema.indexes import KeyIndex
+from nodestream.schema import GraphObjectSchema, PropertyMetadata
 
 
 @pytest.fixture
-def subject(mocker):
-    project = mocker.Mock()
-    project.gather_used_indexes.return_value = []
-    return Copier(mocker.Mock(), project, ["Person", "Address"], ["KNOWS", "LIVES_AT"])
+def subject(mocker, basic_schema):
+    return Copier(
+        mocker.Mock(), basic_schema, ["Person", "Address"], ["KNOWS", "LIVES_AT"]
+    )
 
 
 async def async_generator(*items):
@@ -70,7 +70,6 @@ async def test_extract_records(subject, mocker):
 def test_convert_node_to_ingest(subject):
     input_node = Node("Person", properties={"name": "bob", "age": 30})
     output_node = Node("Person", key_values={"name": "bob"}, properties={"age": 30})
-    subject.keys_by_node_type = {"Person": KeyIndex("Person", ["name"])}
     ingest = subject.convert_node_to_ingest(input_node)
     assert ingest == output_node.into_ingest()
 
@@ -81,6 +80,5 @@ def test_convert_relationship_to_ingest(subject):
         Node("Person", properties={"name": "Alice"}),
         Relationship("KNOWS", {"since": 2010}),
     )
-    subject.keys_by_node_type = {"Person": KeyIndex("Person", ["name"])}
     ingest = subject.convert_relationship_to_ingest(rel)
     assert ingest == rel.into_ingest()

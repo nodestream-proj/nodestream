@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
-from ..schema.schema import GraphObjectShape, GraphObjectType, KnownTypeMarker
+from ..schema import GraphObjectType, GraphObjectSchema
 
 if TYPE_CHECKING:
     from ..databases.ingest_strategy import IngestionStrategy
@@ -20,8 +20,10 @@ class TimeToLiveConfiguration:
         if self.enabled:
             await strategy.perform_ttl_operation(self)
 
-    def is_for_shape(self, shape: GraphObjectShape):
+    def applies_to(
+        self, graph_object_type: GraphObjectType, type_def: GraphObjectSchema
+    ):
         return (
-            self.graph_object_type == shape.graph_object_type
-            and KnownTypeMarker(self.object_type) == shape.object_type
+            graph_object_type == self.graph_object_type
+            and type_def.name == self.object_type
         )

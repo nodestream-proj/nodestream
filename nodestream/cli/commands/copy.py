@@ -3,7 +3,7 @@ from typing import List
 from cleo.helpers import option
 
 from ...project import Project, Target
-from ...schema.schema import GraphObjectShape
+from ...schema import GraphObjectSchema
 from ..operations import InitializeProject, RunCopy
 from .nodestream_command import NodestreamCommand
 from .shared_options import JSON_OPTION, PROJECT_FILE_OPTION
@@ -43,8 +43,8 @@ class Copy(NodestreamCommand):
             from_target = self.get_taget_from_user(project, "from")
             to_target = self.get_taget_from_user(project, "to")
             schema = project.get_schema()
-            all_node_types = schema.known_node_types()
-            all_rel_types = schema.known_relationship_types()
+            all_node_types = schema.nodes
+            all_rel_types = schema.relationships
             node_types = self.get_type_selection_from_user(all_node_types, "node")
             rel_types = self.get_type_selection_from_user(all_rel_types, "relationship")
         except UnknownTargetError:
@@ -68,16 +68,16 @@ class Copy(NodestreamCommand):
             choice = self.choice(prompt, choices)
 
         # If the target they specified is unknown, we should error out.
-        if (target := project.get_target_by_name(choice)) is None:
+        try:
+            return project.get_target_by_name(choice)
+        except ValueError:
             self.line_error(f"Unknown target: {choice}")
             raise UnknownTargetError
 
-        return target
-
     def get_type_selection_from_user(
-        self, types: List[GraphObjectShape], type_name: str
+        self, types: List[GraphObjectSchema], type_name: str
     ) -> List[str]:
-        choices = [str(t.object_type) for t in types]
+        choices = [str(t.name) for t in types]
 
         # If the user has specified the --all flag, we don't need to prompt them for
         # anything. We can just return all the types.

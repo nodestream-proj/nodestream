@@ -3,10 +3,7 @@ from typing import Dict, Iterable, List
 
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline.scope_config import ScopeConfig
-from ..schema.schema import (
-    AggregatedIntrospectiveIngestionComponent,
-    IntrospectiveIngestionComponent,
-)
+from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest
 
@@ -15,9 +12,7 @@ class MissingExpectedPipelineError(ValueError):
     pass
 
 
-class PipelineScope(
-    AggregatedIntrospectiveIngestionComponent, LoadsFromYaml, SavesToYaml
-):
+class PipelineScope(ExpandsSchemaFromChildren, LoadsFromYaml, SavesToYaml):
     """A `PipelineScope` represents a collection of pipelines subordinate to a project."""
 
     def __init__(
@@ -66,7 +61,7 @@ class PipelineScope(
             "pipelines": [ppl.to_file_data() for ppl in self.pipelines_by_name.values()]
         }
 
-    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
+    def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return self.pipelines_by_name.values()
 
     async def run_request(self, run_request: "RunRequest") -> int:

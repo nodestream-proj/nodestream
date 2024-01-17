@@ -2,7 +2,12 @@ from cleo.helpers import option
 
 from ..operations import InitializeLogger, InitializeProject, RunPipeline
 from .nodestream_command import NodestreamCommand
-from .shared_options import JSON_OPTION, MANY_PIPELINES_ARGUMENT, PROJECT_FILE_OPTION
+from .shared_options import (
+    JSON_OPTION,
+    MANY_PIPELINES_ARGUMENT,
+    PROJECT_FILE_OPTION,
+    TARGETS_OPTION,
+)
 
 
 class Run(NodestreamCommand):
@@ -12,6 +17,7 @@ class Run(NodestreamCommand):
     options = [
         PROJECT_FILE_OPTION,
         JSON_OPTION,
+        TARGETS_OPTION,
         option(
             "annotations",
             "a",
@@ -31,13 +37,6 @@ class Run(NodestreamCommand):
             "s",
             "How many records to buffer in each step's outbox before blocking",
             default=1000,
-            flag=False,
-        ),
-        option(
-            "target",
-            "t",
-            "Specify a database to target at run time.",
-            multiple=True,
             flag=False,
         ),
     ]

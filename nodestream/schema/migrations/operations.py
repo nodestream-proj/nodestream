@@ -1,10 +1,10 @@
 import re
 from dataclasses import dataclass, asdict
-from typing import Set, Optional, Any
+from typing import List, Optional, Any, Set
 
 from ...subclass_registry import SubclassRegistry
 from ...file_io import LoadsFromYaml, SavesToYaml
-from ..state import NodeSchema, RelationshipSchema, FieldIndex
+from ..state import GraphObjectSchema
 
 # TODO: Future enhancements w/ new operations or changing old ones:
 #
@@ -104,8 +104,8 @@ class CreateNodeType(Operation):
     """
 
     name: str
-    keys: Set[str]
-    properties: Set[str]
+    keys: List[str]
+    properties: List[str]
 
     @property
     def proposed_index_name(self) -> str:
@@ -114,13 +114,11 @@ class CreateNodeType(Operation):
     def suggest_migration_name_slug(self) -> str:
         return f"create_node_type_{self.name}"
 
-    def as_node_type(self) -> NodeSchema:
-        return NodeSchema(
-            name=self.name,
-            keys=self.keys,
-            properties=self.properties,
-            indexes=set(),
-        )
+    def as_node_type(self) -> GraphObjectSchema:
+        schema = GraphObjectSchema(self.name)
+        schema.add_keys(self.keys)
+        schema.add_properties(self.properties)
+        return schema
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,13 +146,11 @@ class CreateRelationshipType(Operation):
     def suggest_migration_name_slug(self) -> str:
         return f"create_relationship_type_{self.name}"
 
-    def as_relationship_type(self) -> RelationshipSchema:
-        return RelationshipSchema(
-            name=self.name,
-            keys=self.keys,
-            properties=self.properties,
-            indexes=set(),
-        )
+    def as_relationship_type(self) -> GraphObjectSchema:
+        schema = GraphObjectSchema(self.name)
+        schema.add_keys(self.keys)
+        schema.add_properties(self.properties)
+        return schema
 
 
 @dataclass(frozen=True, slots=True)
@@ -300,9 +296,6 @@ class AddAdditionalNodePropertyIndex(Operation):
     def suggest_migration_name_slug(self) -> str:
         return f"add_index_{self.node_type}_{self.field_name}"
 
-    def as_index(self) -> FieldIndex:
-        return FieldIndex(field_name=self.field_name)
-
 
 @dataclass(frozen=True, slots=True)
 class DropAdditionalNodePropertyIndex(Operation):
@@ -317,6 +310,10 @@ class DropAdditionalNodePropertyIndex(Operation):
 
     node_type: str
     field_name: str
+
+    @property
+    def proposed_index_name(self) -> str:
+        return f"{self.node_type}_{self.field_name}_additional_index"
 
     def suggest_migration_name_slug(self) -> str:
         return f"drop_index_{self.node_type}_{self.field_name}"
@@ -343,9 +340,6 @@ class AddAdditionalRelationshipPropertyIndex(Operation):
     def suggest_migration_name_slug(self) -> str:
         return f"add_index_{self.relationship_type}_{self.field_name}"
 
-    def as_index(self) -> FieldIndex:
-        return FieldIndex(field_name=self.field_name)
-
 
 @dataclass(frozen=True, slots=True)
 class DropAdditionalRelationshipPropertyIndex(Operation):
@@ -360,6 +354,10 @@ class DropAdditionalRelationshipPropertyIndex(Operation):
 
     relationship_type: str
     field_name: str
+
+    @property
+    def proposed_index_name(self) -> str:
+        return f"{self.relationship_type}_{self.field_name}_additional_index"
 
     def suggest_migration_name_slug(self) -> str:
         return f"drop_index_{self.relationship_type}_{self.field_name}"

@@ -1,19 +1,21 @@
 import asyncio
+import tempfile
+from pathlib import Path
 
 import pytest
 
 from nodestream.model import DesiredIngestion
+from nodestream.project import PipelineDefinition, PipelineScope, Project
 from nodestream.pipeline.value_providers import ProviderContext
-from nodestream.schema.schema import (
+from nodestream.schema import (
     Cardinality,
-    GraphObjectShape,
-    GraphObjectType,
-    GraphSchema,
-    KnownTypeMarker,
-    PresentRelationship,
+    Schema,
+    GraphObjectSchema,
     PropertyMetadata,
-    PropertyMetadataSet,
     PropertyType,
+    AdjacencyCardinality,
+    Adjacency,
+    SchemaExpansionCoordinator,
 )
 
 DECENT_DOCUMENT = {
@@ -50,61 +52,72 @@ def async_return():
 
 @pytest.fixture
 def basic_schema():
-    return GraphSchema(
-        [
-            GraphObjectShape(
-                GraphObjectType.NODE,
-                KnownTypeMarker("Person"),
-                PropertyMetadataSet(
-                    {
-                        "name": PropertyMetadata("name", PropertyType.STRING),
-                        "age": PropertyMetadata("age", PropertyType.INTEGER),
-                    }
-                ),
-            ),
-            GraphObjectShape(
-                GraphObjectType.NODE,
-                KnownTypeMarker("Organization"),
-                PropertyMetadataSet(
-                    {
-                        "name": PropertyMetadata("name", PropertyType.STRING),
-                        "industry": PropertyMetadata("industry", PropertyType.STRING),
-                    }
-                ),
-            ),
-            GraphObjectShape(
-                GraphObjectType.RELATIONSHIP,
-                KnownTypeMarker("BEST_FRIEND_OF"),
-                PropertyMetadataSet(
-                    {
-                        "since": PropertyMetadata("since", PropertyType.DATETIME),
-                    }
-                ),
-            ),
-            GraphObjectShape(
-                GraphObjectType.RELATIONSHIP,
-                KnownTypeMarker("HAS_EMPLOYEE"),
-                PropertyMetadataSet(
-                    {
-                        "since": PropertyMetadata("since", PropertyType.DATETIME),
-                    }
-                ),
-            ),
-        ],
-        [
-            PresentRelationship(
-                KnownTypeMarker("Person"),
-                KnownTypeMarker("Person"),
-                KnownTypeMarker("BEST_FRIEND_OF"),
-                from_side_cardinality=Cardinality.SINGLE,
-                to_side_cardinality=Cardinality.MANY,
-            ),
-            PresentRelationship(
-                KnownTypeMarker("Organization"),
-                KnownTypeMarker("Person"),
-                KnownTypeMarker("HAS_EMPLOYEE"),
-                from_side_cardinality=Cardinality.MANY,
-                to_side_cardinality=Cardinality.MANY,
-            ),
-        ],
+    schema = Schema()
+    person = GraphObjectSchema(
+        name="Person",
+        properties={
+            "name": PropertyMetadata(PropertyType.STRING, is_key=True),
+            "age": PropertyMetadata(PropertyType.INTEGER),
+        },
     )
+    organization = GraphObjectSchema(
+        name="Organization",
+        properties={
+            "name": PropertyMetadata(PropertyType.STRING),
+            "industry": PropertyMetadata(PropertyType.STRING),
+        },
+    )
+    best_friend_of = GraphObjectSchema(
+        name="BEST_FRIEND_OF",
+        properties={
+            "since": PropertyMetadata(PropertyType.DATETIME),
+        },
+    )
+    has_employee = GraphObjectSchema(
+        name="HAS_EMPLOYEE",
+        properties={
+            "since": PropertyMetadata(PropertyType.DATETIME),
+        },
+    )
+
+    schema.put_node_type(person)
+    schema.put_node_type(organization)
+    schema.put_relationship_type(best_friend_of)
+    schema.put_relationship_type(has_employee)
+
+    schema.add_adjacency(
+        adjacency=Adjacency("Person", "Person", "BEST_FRIEND_OF"),
+        cardinality=AdjacencyCardinality(Cardinality.SINGLE, Cardinality.MANY),
+    )
+    schema.add_adjacency(
+        adjacency=Adjacency("Organization", "Person", "HAS_EMPLOYEE"),
+        cardinality=AdjacencyCardinality(Cardinality.MANY, Cardinality.MANY),
+    )
+
+    return schema
+
+
+@pytest.fixture
+def pipeline_definition(project_dir):
+    return PipelineDefinition("dummy", project_dir / "dummy.yaml")
+
+
+@pytest.fixture
+def project_dir():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        yield Path(temp_dir)
+
+
+@pytest.fixture
+def default_scope(pipeline_definition):
+    return PipelineScope("default", [pipeline_definition])
+
+
+@pytest.fixture
+def project_with_default_scope(default_scope):
+    return Project([default_scope])
+
+
+@pytest.fixture
+def schema_coordinator():
+    return SchemaExpansionCoordinator(Schema())

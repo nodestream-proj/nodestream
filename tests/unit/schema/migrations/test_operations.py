@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from hamcrest import assert_that, equal_to
 
-from nodestream.schema.state import NodeSchema, RelationshipSchema, FieldIndex
+from nodestream.schema.state import GraphObjectSchema, PropertyMetadata
 from nodestream.schema.migrations.operations import (
     Operation,
     CreateNodeType,
@@ -251,26 +251,14 @@ def test_relationship_key_part_renamed_suggest_migration_name_slug():
 def test_create_node_type_as_node_type():
     assert_that(
         CreateNodeType("Person", {"name"}, {"age"}).as_node_type(),
-        NodeSchema("Person", {"name"}, {"age"}, {}),
+        GraphObjectSchema(
+            "Person", {"name": PropertyMetadata(is_key=True), "age": PropertyMetadata()}
+        ),
     )
 
 
 def test_create_relationship_type_as_relationship_type():
     assert_that(
         CreateRelationshipType("KNOWS", {"since"}, {"since"}).as_relationship_type(),
-        RelationshipSchema("KNOWS", {"since"}, {"since"}, {}),
-    )
-
-
-def test_add_additional_node_property_index_as_index():
-    assert_that(
-        AddAdditionalNodePropertyIndex("Person", "name").as_index(),
-        FieldIndex("name"),
-    )
-
-
-def test_add_additional_relationship_property_index_as_index():
-    assert_that(
-        AddAdditionalRelationshipPropertyIndex("KNOWS", "since").as_index(),
-        FieldIndex("since"),
+        GraphObjectSchema("KNOWS", {"since": PropertyMetadata(is_key=True)}),
     )

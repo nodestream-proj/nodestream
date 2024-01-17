@@ -3,7 +3,7 @@ import string
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from itertools import combinations
-from typing import Iterable
+from typing import Iterable, Type
 
 import pytest
 from hamcrest import assert_that, has_items, equal_to
@@ -491,9 +491,6 @@ class AddedRelationshipPropertyIndex(Scenario):
         )
 
 
-# TODO: Make the indexes be actual index objects instead of just strings.
-
-
 class DroppedNodePropertyIndex(Scenario):
     """Tests that the detector detects a dropped node index."""
 
@@ -564,7 +561,9 @@ ALL_PERMUTABLE_SCENARIOS = [
 @pytest.mark.parametrize(
     "scenario_permutation", tuple(combinations(ALL_PERMUTABLE_SCENARIOS, 3))
 )
-async def test_auto_change_detections_with_permutations(scenario_permutation):
+async def test_auto_change_detections_with_permutations(
+    scenario_permutation: Iterable[Type[Scenario]],
+):
     # Prepare the intial state of the schema.
     memory_migrator = InMemoryMigrator()
     input = ScenarioMigratorInput()

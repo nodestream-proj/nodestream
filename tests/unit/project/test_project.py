@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 import pytest
-from hamcrest import assert_that, equal_to, has_length, same_instance
+from hamcrest import assert_that, equal_to, has_length, same_instance, raises, calling
 
 from nodestream.pipeline import (
     PipelineInitializationArguments,
@@ -16,7 +16,7 @@ from nodestream.project import (
     RunRequest,
     Target,
 )
-from nodestream.schema.schema import GraphSchema
+from nodestream.schema.state import Schema
 
 
 @pytest.fixture
@@ -147,18 +147,19 @@ def test_delete_pipeline_forwards_deletes_to_appropriate_scope(project, scopes, 
 
 
 def test_get_schema_no_overrides(project, mocker):
-    project.generate_graph_schema = mocker.Mock(GraphSchema)
+    project.make_schema = mocker.Mock(Schema)
     project.get_schema()
-    project.generate_graph_schema.assert_called_once()
-    project.generate_graph_schema.return_value.apply_overrides.assert_not_called()
+    project.make_schema.assert_called_once()
+    project.make_schema.return_value.apply_overrides.assert_not_called()
 
 
 def test_get_schema_with_overrides(project, mocker):
-    project.generate_graph_schema = mocker.Mock(GraphSchema)
-    project.get_schema("some/path")
-    project.generate_graph_schema.assert_called_once()
-    project.generate_graph_schema.return_value.apply_type_overrides_from_file.assert_called_once_with(
-        "some/path"
+    project.make_schema = mocker.Mock(Schema)
+    Schema.read_from_file = mocker.Mock(Schema)
+    project.get_schema(path := Path("some/path"))
+    project.make_schema.assert_called_once()
+    project.make_schema.return_value.merge.assert_called_once_with(
+        Schema.read_from_file.return_value
     )
 
 
@@ -178,4 +179,6 @@ def test_get_target_present(project):
 
 
 def test_get_target_missing(project):
-    assert_that(project.get_target_by_name("missing"), equal_to(None))
+    assert_that(
+        calling(project.get_target_by_name).with_args("missing"), raises(ValueError)
+    )

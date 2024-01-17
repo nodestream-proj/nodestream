@@ -138,7 +138,7 @@ class Migrator(ABC):
                 await self.execute_operation(operation)
 
         async with self.transaction():
-            await self.mark_migration_as_executed()
+            await self.mark_migration_as_executed(migration)
 
 
 class OperationTypeNotSupportedError(Exception):

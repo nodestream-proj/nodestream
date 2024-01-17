@@ -116,6 +116,36 @@ class AutoChangeDetector:
     second schema.
     """
 
+    __slots__ = (
+        "input",
+        "from_state_provider",
+        "to_state_provider",
+        "from_state",
+        "to_state",
+        "new_node_types",
+        "renamed_node_types",
+        "deleted_node_types",
+        "new_relationship_types",
+        "renamed_relationship_types",
+        "deleted_relationship_types",
+        "deleted_relationship_properties",
+        "renamed_relationship_properties",
+        "added_relationship_properties",
+        "deleted_node_properties",
+        "renamed_node_properties",
+        "added_node_properties",
+        "deleted_relationship_keys",
+        "renamed_relationship_keys",
+        "added_relationship_keys",
+        "deleted_node_keys",
+        "renamed_node_keys",
+        "added_node_keys",
+        "added_node_property_indexes",
+        "deleted_node_property_indexes",
+        "added_relationship_property_indexes",
+        "deleted_relationship_property_indexes",
+    )
+
     def __init__(
         self,
         input: MigratorInput,
@@ -254,7 +284,7 @@ class AutoChangeDetector:
             yield CreateNodeType(
                 name=new_type,
                 keys=type_def.keys,
-                properties=type_def.properties,
+                properties=type_def.non_key_properties,
             )
 
     def make_relationship_type_change_operations(self) -> Iterable[Operation]:
@@ -269,7 +299,7 @@ class AutoChangeDetector:
             yield CreateRelationshipType(
                 name=new_type,
                 keys=type_def.keys,
-                properties=type_def.properties,
+                properties=type_def.non_key_properties,
             )
 
     def make_relationship_index_change_operations(self) -> Iterable[Operation]:
@@ -288,8 +318,8 @@ class AutoChangeDetector:
 
     def detect_node_key_changes(self):
         self.detect_property_changes(
-            from_population=self.from_state.nodes,
-            to_population=self.to_state.nodes,
+            from_population=self.from_state.nodes_by_name,
+            to_population=self.to_state.nodes_by_name,
             deleted_property_location=self.deleted_node_keys,
             renamed_property_location=self.renamed_node_keys,
             added_property_loction=self.added_node_keys,
@@ -301,8 +331,8 @@ class AutoChangeDetector:
 
     def detect_relationship_key_changes(self):
         self.detect_property_changes(
-            from_population=self.from_state.relationships,
-            to_population=self.to_state.relationships,
+            from_population=self.from_state.relationships_by_name,
+            to_population=self.to_state.relationships_by_name,
             deleted_property_location=self.deleted_relationship_keys,
             renamed_property_location=self.renamed_relationship_keys,
             added_property_loction=self.added_relationship_keys,
@@ -314,8 +344,8 @@ class AutoChangeDetector:
 
     def detect_node_type_changes(self):
         self.detect_type_changes(
-            from_population=self.from_state.nodes,
-            to_population=self.to_state.nodes,
+            from_population=self.from_state.nodes_by_name,
+            to_population=self.to_state.nodes_by_name,
             deleted_types_location=self.deleted_node_types,
             renamed_types_location=self.renamed_node_types,
             new_types_location=self.new_node_types,
@@ -323,8 +353,8 @@ class AutoChangeDetector:
 
     def detect_relationship_type_changes(self):
         self.detect_type_changes(
-            from_population=self.from_state.relationships,
-            to_population=self.to_state.relationships,
+            from_population=self.from_state.relationships_by_name,
+            to_population=self.to_state.relationships_by_name,
             deleted_types_location=self.deleted_relationship_types,
             renamed_types_location=self.renamed_relationship_types,
             new_types_location=self.new_relationship_types,
@@ -332,8 +362,8 @@ class AutoChangeDetector:
 
     def detect_node_property_changes(self):
         self.detect_property_changes(
-            from_population=self.from_state.nodes,
-            to_population=self.to_state.nodes,
+            from_population=self.from_state.nodes_by_name,
+            to_population=self.to_state.nodes_by_name,
             deleted_property_location=self.deleted_node_properties,
             renamed_property_location=self.renamed_node_properties,
             added_property_loction=self.added_node_properties,
@@ -344,8 +374,8 @@ class AutoChangeDetector:
 
     def detect_relationship_property_changes(self):
         self.detect_property_changes(
-            from_population=self.from_state.relationships,
-            to_population=self.to_state.relationships,
+            from_population=self.from_state.relationships_by_name,
+            to_population=self.to_state.relationships_by_name,
             deleted_property_location=self.deleted_relationship_properties,
             renamed_property_location=self.renamed_relationship_properties,
             added_property_loction=self.added_relationship_properties,
@@ -356,8 +386,8 @@ class AutoChangeDetector:
 
     def detect_node_index_changes(self):
         self.detect_index_changes(
-            from_population=self.from_state.nodes,
-            to_population=self.to_state.nodes,
+            from_population=self.from_state.nodes_by_name,
+            to_population=self.to_state.nodes_by_name,
             added_index_location=self.added_node_property_indexes,
             deleted_index_location=self.deleted_node_property_indexes,
             deleted_types_location=self.deleted_node_types,
@@ -367,8 +397,8 @@ class AutoChangeDetector:
 
     def detect_relationship_index_changes(self):
         self.detect_index_changes(
-            from_population=self.from_state.relationships,
-            to_population=self.to_state.relationships,
+            from_population=self.from_state.relationships_by_name,
+            to_population=self.to_state.relationships_by_name,
             added_index_location=self.added_relationship_property_indexes,
             deleted_index_location=self.deleted_relationship_property_indexes,
             deleted_types_location=self.deleted_relationship_types,
@@ -383,11 +413,15 @@ class AutoChangeDetector:
         deleted_types_location: Set[str],
         new_types_location: Set[str],
         renamed_types_location: Set[Tuple[str, str]],
+        ignore_created_and_deleted: bool = True,
     ) -> Iterable[Tuple[str, str]]:
         all_types = set(from_population).union(to_population)
         for type in all_types:
             # If the type is new or deleted, we can ignore it.
-            if type in new_types_location or type in deleted_types_location:
+            new_or_removed = (
+                type in new_types_location or type in deleted_types_location
+            )
+            if new_or_removed and ignore_created_and_deleted:
                 continue
 
             # If the type has been renamed, we can compare the old an
@@ -424,16 +458,26 @@ class AutoChangeDetector:
         renamed_types_location: Set[str],
         new_types_location: Set[Tuple[str, str]],
     ):
+        def get_indexed_properties_or_empty_set(
+            type_name, population: Dict[str, GraphObjectSchema]
+        ):
+            if type_name in population:
+                return population[type_name].indexed_properties
+            else:
+                return set()
+
         def detect_changes_between_types(from_type_name, to_type_name):
-            from_type_indexes = from_population[from_type_name].indexes
-            to_type_indexes = to_population[to_type_name].indexes
+            from_type_indexes = get_indexed_properties_or_empty_set(
+                from_type_name, from_population
+            )
+            to_type_indexes = get_indexed_properties_or_empty_set(
+                to_type_name, to_population
+            )
             added_indexes = to_type_indexes - from_type_indexes
             deleted_indexes = from_type_indexes - to_type_indexes
-            added_index_location.update(
-                (to_type_name, idx.field_name) for idx in added_indexes
-            )
+            added_index_location.update((to_type_name, idx) for idx in added_indexes)
             deleted_index_location.update(
-                (to_type_name, idx.field_name) for idx in deleted_indexes
+                (to_type_name, idx) for idx in deleted_indexes
             )
 
         for from_type_name, to_type_name in self.compare_types_pairwise(
@@ -442,6 +486,7 @@ class AutoChangeDetector:
             deleted_types_location,
             new_types_location,
             renamed_types_location,
+            ignore_created_and_deleted=False,
         ):
             detect_changes_between_types(from_type_name, to_type_name)
 
@@ -455,7 +500,7 @@ class AutoChangeDetector:
         deleted_types_location: Set[str],
         renamed_types_location: Set[str],
         new_types_location: Set[Tuple[str, str]],
-        properties_attr: str = "properties",
+        properties_attr: str = "non_key_properties",
     ):
         def detect_changes_between_types(from_type_name, to_type_name):
             from_type_props = getattr(from_population[from_type_name], properties_attr)

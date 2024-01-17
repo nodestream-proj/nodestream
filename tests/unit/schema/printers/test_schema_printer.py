@@ -4,11 +4,11 @@ from pathlib import Path
 import pytest
 
 from nodestream.schema.printers import SchemaPrinter
-from nodestream.schema.schema import GraphSchema
+from nodestream.schema import Schema
 
 
 def test_schema_printer_print_schema_to_stdout(mocker):
-    schema = GraphSchema([], [])
+    schema = Schema()
     schema_printer = SchemaPrinter()
     schema_printer.print_schema_to_string = mocker.Mock(return_value="schema")
     schema_printer.print_schema_to_stdout(schema, print_mock := mocker.Mock())
@@ -25,7 +25,7 @@ def target_file():
 
 
 def test_schema_printer_print_schema_to_file(mocker, target_file):
-    schema = GraphSchema([], [])
+    schema = Schema()
     schema_printer = SchemaPrinter()
     schema_printer.print_schema_to_string = mocker.Mock(return_value="schema")
     schema_printer.print_schema_to_file(schema, target_file)

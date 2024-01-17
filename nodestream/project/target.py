@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, Dict
 
+from ..schema.migrations import Migrator
+
 
 @dataclass(slots=True, frozen=True)
 class Target:
@@ -22,3 +24,6 @@ class Target:
 
     def make_type_retriever(self):
         return self.connector.make_type_retriever()
+
+    def make_migrator(self) -> "Migrator":
+        return self.connector.make_migrator()
