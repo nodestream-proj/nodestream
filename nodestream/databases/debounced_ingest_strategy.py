@@ -73,3 +73,4 @@ class DebouncedIngestStrategy(IngestionStrategy, alias="debounced"):
         # a time.
         for hook in self.hooks_saved_for_after_ingest:
             await self.executor.execute_hook(hook)
+        self.hooks_saved_for_after_ingest.clear()

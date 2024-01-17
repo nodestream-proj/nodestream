@@ -1,0 +1,70 @@
+scopes:
+  config_targets_only:
+    annotations:
+      concurrency: 1
+    pipelines:
+      - "tests/unit/project/fixtures/pipelines/pipeline_one.yaml"
+      - path: "tests/unit/project/fixtures/pipelines/pipeline_two.yaml"
+        name: "target-pipeline"
+        annotations:
+          concurrency: 2
+        targets: 
+        - t1
+    config:
+      Username: !env USERNAME_ENV
+  scope_targets:
+    annotations:
+      concurrency: 1
+    pipelines:
+      - path: "tests/unit/project/fixtures/pipelines/pipeline_one.yaml"
+        name: "scope-target-pipeline"
+      - path: "tests/unit/project/fixtures/pipelines/pipeline_two.yaml"
+        name: "scope-and-config-target-pipeline"
+        annotations:
+          concurrency: 2
+        targets: 
+        - t2
+    targets: 
+    - t1
+    config:
+      Username: !env USERNAME_ENV
+  overlapping_targets:
+    annotations:
+      concurrency: 1
+    pipelines:
+      - path: "tests/unit/project/fixtures/pipelines/pipeline_two.yaml"
+        name: "scope-and-config-target-pipeline"
+        annotations:
+          concurrency: 2
+        targets: 
+        - t1
+        - t2
+    targets: 
+    - t1
+    - t2
+  exclude_inherited_targets:
+    annotations:
+      concurrency: 1
+    pipelines:
+      - path: "tests/unit/project/fixtures/pipelines/pipeline_two.yaml"
+        name: "scope-and-config-target-pipeline"
+        annotations:
+          concurrency: 2
+        targets:
+        - t2
+        exclude_inherited_targets: true
+    targets:
+    - t1
+
+plugins:
+  - name: test
+    config:
+      PluginUsername: !env USERNAME_ENV
+    targets: 
+    - t1
+
+targets:
+  t1:
+    a: b
+  t2:
+    c: d

@@ -4,15 +4,21 @@ from functools import wraps
 class AlreadyInRegistryError(ValueError):
     """Raised when a subclass with the same name is already in the subclass registry."""
 
-    def __init__(self, name, *args: object) -> None:
-        super().__init__(f"{name} is already registered", *args)
+    def __init__(self, name, registry: "SubclassRegistry", *args: object) -> None:
+        super().__init__(
+            f"{name} is already registered inside registry for: {registry.linked_base.__name__}",
+            *args,
+        )
 
 
 class MissingFromRegistryError(ValueError):
     """Raised when a subclass is not in the subclass registry."""
 
-    def __init__(self, name, *args: object) -> None:
-        super().__init__(f"{name} is not in the subclass registry", *args)
+    def __init__(self, name, registry: "SubclassRegistry", *args: object) -> None:
+        super().__init__(
+            f"{name} is not in the subclass registry for: {registry.linked_base.__name__}",
+            *args,
+        )
 
 
 class SubclassRegistry:
@@ -38,7 +44,7 @@ class SubclassRegistry:
             alias = alias or cls.__name__
 
             if alias in self.registry and not self.ignore_overrides:
-                raise AlreadyInRegistryError(alias)
+                raise AlreadyInRegistryError(alias, self)
 
             self.registry[alias] = cls
             return old_init_subclass(*args, **kwargs)
@@ -60,7 +66,7 @@ class SubclassRegistry:
         try:
             return self.registry[name]
         except KeyError:
-            raise MissingFromRegistryError(name)
+            raise MissingFromRegistryError(name, self)
 
     @property
     def all_subclasses(self):

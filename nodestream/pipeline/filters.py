@@ -52,11 +52,11 @@ class ValueMatcher:
 
     def does_match(self, context: ProviderContext):
         actual_value = self.value_provider.normalize_single_value(
-            context, **self.normalization
+            context, self.normalization
         )
 
         return any(
-            possibility_provider.normalize_single_value(context, **self.normalization)
+            possibility_provider.normalize_single_value(context, self.normalization)
             == actual_value
             for possibility_provider in self.possibilities
         )
@@ -123,7 +123,7 @@ class RegexMatcher:
 
     def should_include(self, context: ProviderContext) -> bool:
         actual_value = self.value_provider.normalize_single_value(
-            context, **self.normalization
+            context, self.normalization
         )
         match = self.regex.match(actual_value) is not None
         return not match if self.include else match

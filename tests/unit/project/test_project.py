@@ -1,8 +1,17 @@
 import os
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
-from hamcrest import assert_that, equal_to, has_length, same_instance, raises, calling
+from hamcrest import (
+    assert_that,
+    contains_inanyorder,
+    equal_to,
+    has_length,
+    same_instance,
+    raises,
+    calling,
+)
 
 from nodestream.pipeline import (
     PipelineInitializationArguments,
@@ -16,7 +25,8 @@ from nodestream.project import (
     RunRequest,
     Target,
 )
-from nodestream.schema.state import Schema
+from nodestream.schema import Schema
+from nodestream.project.plugin import PluginConfiguration
 
 
 @pytest.fixture
@@ -54,6 +64,13 @@ def add_env_var() -> pytest.fixture():
     return os.environ["USERNAME_ENV"]
 
 
+def test_project_dumps_and_reloads_preserves_all_data(project):
+    original_dumped = project.to_file_data()
+    reloaded = Project.from_file_data(deepcopy(original_dumped))
+    dump_after_reload = reloaded.to_file_data()
+    assert_that(dump_after_reload, equal_to(original_dumped))
+
+
 def test_pipeline_organizes_scopes_by_name(scopes, project):
     assert_that(project.scopes_by_name["scope1"], same_instance(scopes[0]))
     assert_that(project.scopes_by_name["scope2"], same_instance(scopes[1]))
@@ -72,14 +89,28 @@ async def test_project_runs_pipeline_in_scope_when_present(
 
 
 def test_project_init_sets_up_plugin_scope_when_present(plugin_scope):
-    Project(plugin_scope, {"scope3": ScopeConfig({"PluginUsername": "bob"})})
+    Project(
+        plugin_scope,
+        [
+            PluginConfiguration(
+                name="scope3", config=ScopeConfig({"PluginUsername": "bob"})
+            )
+        ],
+    )
     assert plugin_scope[0].config == ScopeConfig({"PluginUsername": "bob"})
 
 
 def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
     plugin_scope,
 ):
-    Project(plugin_scope, {"other_scope": ScopeConfig({"PluginUsername": "bob"})})
+    Project(
+        plugin_scope,
+        [
+            PluginConfiguration(
+                name="other_scope", config=ScopeConfig({"PluginUsername": "bob"})
+            )
+        ],
+    )
     assert plugin_scope[0].config is None
 
 
@@ -94,13 +125,79 @@ def test_project_from_file_with_config(add_env_var):
     file_name = Path("tests/unit/project/fixtures/simple_project_with_config.yaml")
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
+
+    assert_that(result.plugins[0].name, equal_to("test"))
     assert_that(
-        result.plugin_configs,
-        equal_to({"test": ScopeConfig({"PluginUsername": "bob"})}),
+        result.plugins[0].get_config_value("PluginUsername"),
+        equal_to("bob"),
     )
     assert_that(
-        result.scopes_by_name["perpetual"].config,
-        equal_to(ScopeConfig({"Username": "bob"})),
+        result.scopes_by_name["perpetual"].config.get_config_value("Username"),
+        equal_to("bob"),
+    )
+
+
+def test_project_from_file_with_config_targets(add_env_var):
+    result = Project.read_from_file(
+        Path("tests/unit/project/fixtures/simple_project_with_config_targets.yaml")
+    )
+    assert_that(
+        result.targets_by_name,
+        equal_to({"t1": Target("t1", {"a": "b"}), "t2": Target("t2", {"c": "d"})}),
+    )
+    assert_that(
+        result.scopes_by_name["config_targets_only"].config.get_config_value(
+            "Username"
+        ),
+        equal_to("bob"),
+    )
+    assert_that(
+        result.scopes_by_name["config_targets_only"]
+        .pipelines_by_name["target-pipeline"]
+        .targets,
+        contains_inanyorder(*["t1"]),
+    )
+
+
+def test_project_from_file_with_scope_targets(add_env_var):
+    result = Project.read_from_file(
+        Path("tests/unit/project/fixtures/simple_project_with_config_targets.yaml")
+    )
+    assert_that(
+        result.targets_by_name,
+        equal_to({"t1": Target("t1", {"a": "b"}), "t2": Target("t2", {"c": "d"})}),
+    )
+    assert_that(
+        result.scopes_by_name["scope_targets"].config.get_config_value("Username"),
+        equal_to("bob"),
+    )
+    assert_that(
+        result.scopes_by_name["scope_targets"].targets,
+        contains_inanyorder(*["t1"]),
+    )
+    assert_that(
+        result.scopes_by_name["scope_targets"]
+        .pipelines_by_name["scope-target-pipeline"]
+        .targets,
+        contains_inanyorder(*["t1"]),
+    )
+    assert_that(
+        result.scopes_by_name["scope_targets"]
+        .pipelines_by_name["scope-and-config-target-pipeline"]
+        .targets,
+        contains_inanyorder(*["t1", "t2"]),
+    )
+    assert_that(
+        result.scopes_by_name["overlapping_targets"]
+        .pipelines_by_name["scope-and-config-target-pipeline"]
+        .targets,
+        contains_inanyorder(*["t1", "t2"]),
+    )
+    assert_that(
+        result.scopes_by_name["exclude_inherited_targets"]
+        .pipelines_by_name["scope-and-config-target-pipeline"]
+        .targets,
+        contains_inanyorder(*["t2"]),
     )
 
 
@@ -109,12 +206,12 @@ def test_project_from_file():
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
     assert_that(
-        result.plugin_configs,
-        equal_to({}),
+        result.plugins,
+        equal_to([]),
     )
     assert_that(
         result.scopes_by_name["perpetual"].config,
-        equal_to(ScopeConfig(config={})),
+        equal_to(ScopeConfig(config=None)),
     )
 
 
@@ -171,7 +268,8 @@ async def test_get_snapshot_for(project, mocker):
 
 
 def test_all_pipeline_names(project):
-    assert_that(list(project.get_all_pipeline_names()), equal_to(["test", "test2"]))
+    pipeline_names = [pipeline.name for pipeline in project.get_all_pipelines()]
+    assert_that(pipeline_names, equal_to(["test", "test2"]))
 
 
 def test_get_target_present(project):
@@ -182,3 +280,19 @@ def test_get_target_missing(project):
     assert_that(
         calling(project.get_target_by_name).with_args("missing"), raises(ValueError)
     )
+
+
+def test_project_load_lifecycle_hooks_calls_all_hooks_on_all_plugins(mocker):
+    plugins = [mocker.Mock(), mocker.Mock()]
+    mocker.patch(
+        "nodestream.project.project.ProjectPlugin.all_active",
+        return_value=plugins,
+    )
+
+    file_path = Path("tests/unit/project/fixtures/simple_project.yaml")
+    project = Project.read_from_file(file_path)
+
+    for plugin in plugins:
+        plugin.before_project_load.assert_called_once_with(file_path)
+        plugin.activate.assert_called_once_with(project)
+        plugin.after_project_load.assert_called_once_with(project)

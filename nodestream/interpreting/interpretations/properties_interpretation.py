@@ -25,7 +25,7 @@ class PropertiesInterpretation(Interpretation, alias="properties"):
 
     def interpret(self, context: ProviderContext):
         source = context.desired_ingest.source
-        source.properties.apply_providers(context, self.properties, **self.norm_args)
+        source.properties.apply_providers(context, self.properties, self.norm_args)
 
     def expand_schema(self, coordinator: SchemaExpansionCoordinator):
         coordinator.on_node_schema(

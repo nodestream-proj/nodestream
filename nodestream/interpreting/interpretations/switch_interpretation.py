@@ -69,7 +69,7 @@ class SwitchInterpretation(ExpandsSchemaFromChildren, Interpretation, alias="swi
             yield from self.default
 
     def interpret(self, context: ProviderContext):
-        key = self.switch_on.normalize_single_value(context, **self.normalization)
+        key = self.switch_on.normalize_single_value(context, self.normalization)
         interpretations = self.interpretations.get(key, self.default)
 
         if interpretations is None:

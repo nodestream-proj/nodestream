@@ -4,14 +4,18 @@ from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from yaml import SafeLoader
 
-from ..file_io import LoadsFromYamlFile, SavesToYamlFile
+from ..file_io import (
+    LazyLoadedTagSafeLoader,
+    LoadsFromYaml,
+    LoadsFromYamlFile,
+    SavesToYamlFile,
+)
 from ..pipeline import Step
-from ..pipeline.argument_resolvers.argument_resolver import ArgumentResolver
-from ..pipeline.scope_config import ScopeConfig
 from ..pluggable import Pluggable
 from ..schema import Schema, ExpandsSchema, ExpandsSchemaFromChildren
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
+from .plugin import PluginConfiguration
 from .run_request import RunRequest
 from .target import Target
 
@@ -28,14 +32,18 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
     """
 
     @classmethod
+    def read_from_file(cls, file_path: Path) -> LoadsFromYaml:
+        ProjectPlugin.execute_before_project_load(file_path)
+        return super().read_from_file(file_path)
+
+    @classmethod
     def get_loader(cls) -> Type[SafeLoader]:
         """Get the YAML loader to use when reading this object from a file.
 
         Returns:
             The YAML loader to use when reading this object from a file.
         """
-        NodestreamProjectFileSafeLoader.configure()
-        return NodestreamProjectFileSafeLoader
+        return LazyLoadedTagSafeLoader
 
     @classmethod
     def describe_yaml_schema(cls):
@@ -46,9 +54,9 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 Optional("scopes"): {
                     str: PipelineScope.describe_yaml_schema(),
                 },
-                Optional("plugin_config"): {
-                    str: ScopeConfig.describe_yaml_schema(),
-                },
+                Optional("plugins"): [
+                    PluginConfiguration.describe_yaml_schema(),
+                ],
                 Optional("targets"): {
                     str: {str: object},
                 },
@@ -78,17 +86,18 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
             for scope_data in scopes_data.items()
         ]
 
-        plugins = data.pop("plugin_config", {})
-        plugin_cfgs = {
-            name: ScopeConfig.from_file_data(value) for name, value in plugins.items()
-        }
+        plugins_list = data.pop("plugins", {})
+        plugins = [
+            PluginConfiguration.from_file_data(plugins_data)
+            for plugins_data in plugins_list
+        ]
 
         targets = data.pop("targets", {})
         target_cfgs = {name: Target(name, value) for name, value in targets.items()}
 
-        project = cls(scopes, plugin_cfgs, target_cfgs)
-        for plugin in ProjectPlugin.all():
-            plugin().activate(project)
+        project = cls(scopes, plugins, target_cfgs)
+        ProjectPlugin.execute_activate(project)
+        ProjectPlugin.execute_after_project_load(project)
         return project
 
     def to_file_data(self) -> dict:
@@ -105,16 +114,21 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 for scope in self.scopes_by_name.values()
                 if scope.persist
             },
+            "plugins": [plugin.to_file_data() for plugin in self.plugins or []],
+            "targets": {
+                name: target.to_file_data()
+                for name, target in self.targets_by_name.items()
+            },
         }
 
     def __init__(
         self,
         scopes: List[PipelineScope],
-        plugin_configs: Dict[str, ScopeConfig] = None,
+        plugins: List[PluginConfiguration] = None,
         targets: Dict[str, Target] = None,
     ):
         self.scopes_by_name: Dict[str, PipelineScope] = {}
-        self.plugin_configs = plugin_configs
+        self.plugins = plugins
         self.targets_by_name = targets
         for scope in scopes:
             self.add_scope(scope)
@@ -158,9 +172,11 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         Args:
             scope (PipelineScope): The scope to add.
         """
-
-        if self.plugin_configs and self.plugin_configs.get(scope.name):
-            scope.set_configuration(self.plugin_configs[scope.name])
+        if self.plugins is not None:
+            for plugin in self.plugins:
+                if plugin.name == scope.name:
+                    scope.set_configuration(plugin.config)
+                    scope.set_targets(plugin.targets)
         self.scopes_by_name[scope.name] = scope
 
     def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:
@@ -176,11 +192,18 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
 
         return [self.scopes_by_name[scope_name]]
 
-    def get_all_pipeline_names(self) -> Iterable[str]:
-        """Returns all pipeline names in the project."""
+    def get_all_pipelines(self) -> Iterable[PipelineDefinition]:
+        """Returns all pipeline objects in the project."""
         for scope in self.scopes_by_name.values():
             for pipeline in scope.pipelines_by_name.values():
-                yield pipeline.name
+                yield pipeline
+
+    def get_pipeline_by_name(self, pipeline_name: str) -> PipelineDefinition:
+        """Returns pipeline object in the project."""
+        for scope in self.scopes_by_name.values():
+            pipeline = scope.pipelines_by_name.get(pipeline_name, None)
+            if pipeline is not None:
+                return pipeline
 
     def delete_pipeline(
         self,
@@ -254,21 +277,6 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                         yield pipeline_definition, idx, step
 
 
-class NodestreamProjectFileSafeLoader(SafeLoader):
-    """A YAML loader that can load nodestream project files.""" ""
-
-    was_configured = False
-
-    @classmethod
-    def configure(cls):
-        if cls.was_configured:
-            return
-        for argument_resolver in ArgumentResolver.all():
-            argument_resolver.install_yaml_tag(cls)
-
-        cls.was_configured = True
-
-
 class ProjectPlugin(Pluggable):
     """A plugin that can be used to modify a project.
 
@@ -281,6 +289,41 @@ class ProjectPlugin(Pluggable):
 
     entrypoint_name = "projects"
 
+    _active: List["ProjectPlugin"] = None
+
+    @classmethod
+    def all_active(cls) -> List["ProjectPlugin"]:
+        """Returns all instances of all registered plugins."""
+        if cls._active is None:
+            cls._active = [plugin() for plugin in cls.all()]
+        return cls._active
+
+    @classmethod
+    def execute_before_project_load(cls, project_file: Path):
+        """Executes the `before_project_load` method on all registered plugins."""
+        for plugin in cls.all_active():
+            plugin.before_project_load(project_file)
+
+    @classmethod
+    def execute_after_project_load(cls, project: Project):
+        """Executes the `after_project_load` method on all registered plugins."""
+        for plugin in cls.all_active():
+            plugin.after_project_load(project)
+
+    @classmethod
+    def execute_activate(cls, project: Project):
+        """Executes the `activate` method on all registered plugins."""
+        for plugin in cls.all_active():
+            plugin.activate(project)
+
+    def before_project_load(self, project_file: Path):
+        """Called before a project is loaded from disk."""
+        pass
+
+    def after_project_load(self, project: Project):
+        """Called after a project is loaded from disk and after each plugin is activated."""
+        pass
+
     def activate(self, project: Project):
         """Called when a project is loaded from disk.
 
@@ -288,4 +331,4 @@ class ProjectPlugin(Pluggable):
         or modify an existing scope. The plugin should not modify the project file on disk. Instead, it
         should modify the project object in memory.
         """
-        raise NotImplementedError
+        pass

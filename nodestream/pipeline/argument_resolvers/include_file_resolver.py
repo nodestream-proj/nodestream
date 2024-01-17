@@ -1,22 +1,16 @@
-from typing import Type
+from yaml import load
 
-from yaml import SafeLoader
-
+from ...file_io import LazyLoadedArgument
 from .argument_resolver import ArgumentResolver
 
 
-class IncludeFileResolver(ArgumentResolver):
+class IncludeFileResolver(ArgumentResolver, alias="include"):
     """An `IncludeFileResolver` is an `ArgumentResolver` that can resolve a file path into a file's contents."""
 
-    @classmethod
-    def install_yaml_tag(cls, loader: Type[SafeLoader]):
-        loader.add_constructor(
-            "!include",
-            lambda loader, node: cls.include_file(loader.construct_scalar(node)),
-        )
-
     @staticmethod
-    def include_file(file_path: str):
-        from ..pipeline_file_loader import PipelineFileSafeLoader
+    def resolve_argument(file_path: str):
+        from ..pipeline_file_loader import PipelineFileContents
 
-        return PipelineFileSafeLoader.load_file_by_path(file_path)
+        with open(file_path) as f:
+            data = load(f, Loader=PipelineFileContents.get_loader())
+            return LazyLoadedArgument.resolve_if_needed(data)

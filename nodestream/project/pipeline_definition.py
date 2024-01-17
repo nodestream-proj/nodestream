@@ -1,11 +1,10 @@
 import os.path
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Set
 
 from ..file_io import LoadsFromYaml, SavesToYaml
-from ..pipeline import Pipeline, PipelineFileLoader, PipelineInitializationArguments
-from ..pipeline.scope_config import ScopeConfig
+from ..pipeline import Pipeline, PipelineInitializationArguments, PipelineFile
 from ..schema import ExpandsSchema, SchemaExpansionCoordinator
 
 
@@ -30,6 +29,8 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
 
     name: str
     file_path: Path
+    targets: Set[str] = frozenset()
+    exclude_inherited_targets: bool = False
     annotations: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -58,6 +59,8 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
                     Optional("name"): str,
                     "path": os.path.exists,
                     Optional("annotations"): {str: Or(str, int, float, bool)},
+                    Optional("targets"): [str],
+                    Optional("exclude_inherited_targets"): bool,
                 },
             )
         )
@@ -69,8 +72,16 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
 
         file_path = Path(data.pop("path"))
         name = data.pop("name", get_default_name(file_path))
+        exclude_targets = data.pop("exclude_inherited_targets", False)
         annotations = data.pop("annotations", {})
-        return cls(name, file_path, {**parent_annotations, **annotations})
+        targets = data.pop("targets", [])
+        return cls(
+            name,
+            file_path,
+            set(targets),
+            exclude_targets,
+            {**parent_annotations, **annotations},
+        )
 
     def to_file_data(self, verbose: bool = False):
         using_default_name = self.name == self.file_path.stem
@@ -82,13 +93,13 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
             result["name"] = self.name
         if self.annotations or verbose:
             result["annotations"] = self.annotations
+        if self.targets or verbose:
+            result["targets"] = self.targets
 
         return result
 
-    def initialize(
-        self, init_args: PipelineInitializationArguments, config: ScopeConfig = None
-    ) -> Pipeline:
-        return PipelineFileLoader(self.file_path).load_pipeline(init_args, config)
+    def initialize(self, init_args: PipelineInitializationArguments) -> Pipeline:
+        return PipelineFile(self.file_path).load_pipeline(init_args)
 
     def remove_file(self, missing_ok: bool = True):
         """Remove the file associated with this `PipelineDefinition`.
@@ -102,9 +113,7 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
         self.file_path.unlink(missing_ok=missing_ok)
 
     def initialize_for_introspection(self) -> Pipeline:
-        return self.initialize(
-            PipelineInitializationArguments.for_introspection(), ScopeConfig({})
-        )
+        return self.initialize(PipelineInitializationArguments.for_introspection())
 
     def expand_schema(self, coordinator: SchemaExpansionCoordinator):
         self.initialize_for_introspection().expand_schema(coordinator)

@@ -28,3 +28,8 @@ You will get a record in the following shape:
 ```json
 {"name": "bob", "age": 29}
 ```
+
+## `.yaml`
+
+`.yaml` files are loaded using `yaml.load` and the one record is returned per file.
+The record is the entire parsed contents of the `.yaml` file.

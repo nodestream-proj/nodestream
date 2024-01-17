@@ -11,6 +11,7 @@ scopes:
     config:
       Username: !env USERNAME_ENV
 
-plugin_config:
-  test:
-    PluginUsername: !env USERNAME_ENV
+plugins:
+  - name: test
+    config:
+      PluginUsername: !env USERNAME_ENV

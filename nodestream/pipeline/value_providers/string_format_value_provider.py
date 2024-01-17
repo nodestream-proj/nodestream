@@ -34,6 +34,9 @@ class StringFormattingValueProvider(ValueProvider):
             for field, provider in self.subs.items()
         }
 
+        if not all(value is not None for value in subs.values()):
+            return None
+
         return fmt.format(**subs)
 
     def many_values(self, context: ProviderContext) -> Iterable[Any]:

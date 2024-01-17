@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, empty, equal_to
 
 from nodestream.databases import DebouncedIngestStrategy
 from nodestream.databases.query_executor import (
@@ -104,8 +104,7 @@ async def test_flush_relationships(ingest_strategy):
 async def test_flush_hooks_after_ingest_calls_executor(ingest_strategy, mocker):
     ingest_strategy.debouncer.drain_node_groups.return_value = []
     ingest_strategy.debouncer.drain_relationship_groups.return_value = []
-    ingest_strategy.hooks_saved_for_after_ingest = [mocker.AsyncMock()]
+    ingest_strategy.hooks_saved_for_after_ingest = [hook := mocker.AsyncMock()]
     await ingest_strategy.flush()
-    ingest_strategy.executor.execute_hook.assert_awaited_once_with(
-        ingest_strategy.hooks_saved_for_after_ingest[0]
-    )
+    ingest_strategy.executor.execute_hook.assert_awaited_once_with(hook)
+    assert_that(ingest_strategy.hooks_saved_for_after_ingest, empty())
