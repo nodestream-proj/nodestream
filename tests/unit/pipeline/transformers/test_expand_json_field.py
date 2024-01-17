@@ -17,6 +17,7 @@ DEEP_OUTPUT = {"a": 1, "b": {"c": {"d": {"hello": "world"}}}}
         (SIMPLE_INPUT, SIMPLE_OUTPUT, "b"),
         (DEEP_INPUT, DEEP_OUTPUT, ["b", "c", "d"]),
         (DEEP_INPUT, DEEP_INPUT, ["b", "f"]),
+        (DEEP_INPUT, DEEP_INPUT, ["b", "f", "d"]),
     ],
 )
 async def test_expand_json_fields(input, output, path):
