@@ -1,6 +1,6 @@
 from .operation import Operation, NodestreamCommand
-from ...project import Project
-from ...schema.migrations import MigratorInput
+from ...schema import Schema
+from ...schema.migrations import MigratorInput, ProjectMigrations
 
 
 class CleoMigrationInput(MigratorInput):
@@ -12,14 +12,17 @@ class CleoMigrationInput(MigratorInput):
 
 
 class GenerateMigration(Operation):
-    def __init__(self, project: Project):
-        self.project = project
+    def __init__(self, migrations: ProjectMigrations, current_state: Schema):
+        self.current_state = current_state
+        self.migrations = migrations
 
     async def perform(self, command: NodestreamCommand):
         input = CleoMigrationInput(command)
-        result = await self.project.generate_migration_from_changes(input)
+        result = await self.migrations.generate_migration_from_changes(
+            input, self.current_state
+        )
         if result is None:
-            command.line("No changes to apply")
+            command.line("No changes to migrate")
         else:
             migration, path = result
             num_changes = len(migration.operations)

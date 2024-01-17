@@ -84,6 +84,20 @@ class MigrationGraph:
 
     migrations_by_name: Dict[str, Migration]
 
+    def get_migration(self, name: str) -> Migration:
+        """Get a migration by name.
+
+        Args:
+            name: The name of the migration to get.
+
+        Returns:
+            The migration with the given name.
+
+        Raises:
+            KeyError: If there is no migration with the given name.
+        """
+        return self.migrations_by_name[name]
+
     def get_ordered_migration_plan(self) -> List[Migration]:
         plan_order = []
 

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from typing import List
 
-from .migrations import Migration
+from .migrations import Migration, MigrationGraph
 from .operations import Operation
 
 
@@ -101,7 +101,7 @@ class Migrator(ABC):
         """
         pass
 
-    async def get_completed_migrations(self) -> List[Migration]:
+    async def get_completed_migrations(self, graph: MigrationGraph) -> List[Migration]:
         """Get a list of completed migrations.
 
         This method should return a list of completed migrations. If the

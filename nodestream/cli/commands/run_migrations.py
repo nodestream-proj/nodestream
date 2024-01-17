@@ -13,3 +13,5 @@ class RunMigrations(NodestreamCommand):
         targets = self.option("target")
         for target in targets:
             await self.run_operation(ExecuteMigrations(project, target))
+        else:
+            self.info("No targets specified, nothing to do.")

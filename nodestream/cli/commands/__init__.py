@@ -8,6 +8,7 @@ from .remove import Remove
 from .run_migrations import RunMigrations
 from .run import Run
 from .scaffold import Scaffold
+from .show_migrations import ShowMigrations
 from .show import Show
 
 __all__ = (
@@ -21,5 +22,6 @@ __all__ = (
     "RunMigrations",
     "Run",
     "Scaffold",
+    "ShowMigrations",
     "Show",
 )

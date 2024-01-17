@@ -33,6 +33,9 @@ class NodestreamCommand(Command, Pluggable):
         path = self.option("project")
         return DEFAULT_PROJECT_FILE if path is None else Path(path)
 
+    def get_migrations_path(self) -> Path:
+        return self.get_project_path().parent / "migrations"
+
     def get_project(self) -> Project:
         return Project.read_from_file(self.get_project_path())
 
