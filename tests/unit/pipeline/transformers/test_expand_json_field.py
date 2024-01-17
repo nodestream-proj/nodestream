@@ -6,8 +6,8 @@ from nodestream.pipeline.transformers import ExpandJsonField
 SIMPLE_INPUT = {"a": 1, "b": '{"hello": "world"}'}
 SIMPLE_OUTPUT = {"a": 1, "b": {"hello": "world"}}
 
-DEEP_INPUT = {"a": 1, "b": {"c": {"d": '{"hello": "world"}'}}}
-DEEP_OUTPUT = {"a": 1, "b": {"c": {"d": {"hello": "world"}}}}
+DEEP_INPUT = {"a": 1, "d": "d", "b": {"c": {"d": '{"hello": "world"}'}}}
+DEEP_OUTPUT = {"a": 1, "d": "d", "b": {"c": {"d": {"hello": "world"}}}}
 
 
 @pytest.mark.asyncio

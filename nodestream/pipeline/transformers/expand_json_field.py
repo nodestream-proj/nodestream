@@ -16,15 +16,25 @@ class ExpandJsonField(Transformer):
     def __init__(self, path: List[str]) -> None:
         self.path = path
 
+    def dig_to_path(self, record: JsonLikeDocument, path: List[str]):
+        value_at_path = record
+        for path_segment in path:
+            value_at_path = value_at_path.get(path_segment, None)
+            if value_at_path is None:
+                return None
+
+        return value_at_path
+
+    def replace_json_value(self, innermost_dictionary, key):
+        json_string = innermost_dictionary.get(key, None)
+        if json_string is None:
+            return
+        innermost_dictionary[key] = json.loads(json_string)
+
     async def transform_record(self, record: JsonLikeDocument):
-        item = record
-        for path_segment in self.path[:-1]:
-            item = item.get(path_segment, None)
-            if item is None:
-                return record
         last_segment = self.path[-1]
-        last_segment_value = item.get(last_segment, None)
-        if last_segment_value is None:
+        innermost_dictionary = self.dig_to_path(record, self.path[:-1])
+        if innermost_dictionary is None:
             return record
-        item[last_segment] = json.loads(last_segment_value)
+        self.replace_json_value(innermost_dictionary, last_segment)
         return record
