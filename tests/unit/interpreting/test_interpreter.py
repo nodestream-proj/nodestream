@@ -42,17 +42,6 @@ def single_pass_interpreter():
     )
 
 
-@pytest.mark.asyncio
-async def test_test_single_interpreter_yields_index(single_pass_interpreter):
-    results = [
-        r
-        async for r in single_pass_interpreter.handle_async_record_stream(
-            empty_async_generator()
-        )
-    ]
-    assert_that(results, has_length(2))
-
-
 def test_null_interpretation_pass_pass_returns_passed_context():
     null_pass = NullInterpretationPass()
     assert_that(list(null_pass.apply_interpretations(None)), equal_to([None]))

@@ -2,17 +2,16 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Iterable
 
-from ..pipeline import Flush, Step
+from nodestream.schema.state import SchemaExpansionCoordinator
+
+from ..pipeline import Transformer
 from ..pipeline.value_providers import ProviderContext
-from ..schema.schema import (
-    AggregatedIntrospectiveIngestionComponent,
-    IntrospectiveIngestionComponent,
-)
+from ..schema import ExpandsSchemaFromChildren, ExpandsSchema
 from .interpretations import Interpretation
 from .record_decomposers import RecordDecomposer
 
 
-class InterpretationPass(IntrospectiveIngestionComponent, ABC):
+class InterpretationPass(ExpandsSchema, ABC):
     @classmethod
     def from_file_data(self, args):
         if args is None:
@@ -28,21 +27,12 @@ class InterpretationPass(IntrospectiveIngestionComponent, ABC):
         pass
 
 
-class NullInterpretationPass(
-    AggregatedIntrospectiveIngestionComponent, InterpretationPass
-):
+class NullInterpretationPass(InterpretationPass):
     def apply_interpretations(self, context: ProviderContext):
         yield context
 
-    def all_subordinate_components(
-        self,
-    ) -> Iterable[IntrospectiveIngestionComponent]:
-        return []
 
-
-class MultiSequenceInterpretationPass(
-    AggregatedIntrospectiveIngestionComponent, InterpretationPass
-):
+class MultiSequenceInterpretationPass(ExpandsSchemaFromChildren, InterpretationPass):
     __slots__ = ("passes",)
 
     @classmethod
@@ -58,13 +48,11 @@ class MultiSequenceInterpretationPass(
             for res in interpretation_pass.apply_interpretations(provided_subcontext):
                 yield res
 
-    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
+    def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         yield from self.passes
 
 
-class SingleSequenceInterpretationPass(
-    AggregatedIntrospectiveIngestionComponent, InterpretationPass
-):
+class SingleSequenceInterpretationPass(ExpandsSchemaFromChildren, InterpretationPass):
     __slots__ = ("interpretations",)
 
     @classmethod
@@ -82,11 +70,11 @@ class SingleSequenceInterpretationPass(
             interpretation.interpret(context)
         yield context
 
-    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
+    def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         yield from self.interpretations
 
 
-class Interpreter(Step, AggregatedIntrospectiveIngestionComponent):
+class Interpreter(Transformer, ExpandsSchema):
     __slots__ = (
         "before_iteration",
         "interpretations",
@@ -114,20 +102,9 @@ class Interpreter(Step, AggregatedIntrospectiveIngestionComponent):
         self.interpretations = interpretations
         self.decomposer = decomposer
 
-    async def handle_async_record_stream(self, record_stream):
-        # Step 1: Emit any indexes that need to be created.
-        # Step 2: Iterate through the stream and emit the appropriate ingestible objects.
-        # NOTE: If any record is a flush, do nothing and pass it down stream.
-        for index in self.gather_used_indexes():
-            yield index
-
-        async for record in record_stream:
-            if record is Flush:
-                yield record
-                continue
-
-            for output_context in self.interpret_record(record):
-                yield output_context.desired_ingest
+    async def transform_record(self, record):
+        for output_context in self.interpret_record(record):
+            yield output_context.desired_ingest
 
     def interpret_record(self, record):
         context = ProviderContext.fresh(record)
@@ -135,6 +112,7 @@ class Interpreter(Step, AggregatedIntrospectiveIngestionComponent):
             for sub_context in self.decomposer.decompose_record(base_context):
                 yield from self.interpretations.apply_interpretations(sub_context)
 
-    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
-        yield self.before_iteration
-        yield self.interpretations
+    def expand_schema(self, coordinator: SchemaExpansionCoordinator):
+        self.before_iteration.expand_schema(coordinator)
+        self.interpretations.expand_schema(coordinator)
+        coordinator.clear_aliases()

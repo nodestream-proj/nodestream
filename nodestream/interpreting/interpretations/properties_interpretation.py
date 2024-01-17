@@ -1,17 +1,13 @@
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Optional
 
 from ...pipeline.value_providers import (
     ProviderContext,
     StaticValueOrValueProvider,
     ValueProvider,
 )
-from ...schema.schema import (
-    GraphObjectShape,
-    GraphObjectType,
-    PropertyMetadataSet,
-    UnknownTypeMarker,
-)
+from ...schema import GraphObjectSchema, SchemaExpansionCoordinator
 from .interpretation import Interpretation
+from .source_node_interpretation import SourceNodeInterpretation
 
 
 class PropertiesInterpretation(Interpretation, alias="properties"):
@@ -31,9 +27,11 @@ class PropertiesInterpretation(Interpretation, alias="properties"):
         source = context.desired_ingest.source
         source.properties.apply_providers(context, self.properties, **self.norm_args)
 
-    def gather_object_shapes(self) -> Iterable[GraphObjectShape]:
-        yield GraphObjectShape(
-            graph_object_type=GraphObjectType.NODE,
-            object_type=UnknownTypeMarker.source_node(),
-            properties=PropertyMetadataSet.from_names(self.properties.keys()),
+    def expand_schema(self, coordinator: SchemaExpansionCoordinator):
+        coordinator.on_node_schema(
+            self.expand_source_node_schema,
+            alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
         )
+
+    def expand_source_node_schema(self, schema: GraphObjectSchema):
+        schema.add_properties(self.properties)

@@ -1,11 +1,13 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List
+
+from nodestream.schema.state import ExpandsSchema
 
 from ...pipeline.value_providers import (
     ProviderContext,
     StaticValueOrValueProvider,
     ValueProvider,
 )
-from ...schema.schema import AggregatedIntrospectiveIngestionComponent
+from ...schema import ExpandsSchemaFromChildren
 from .interpretation import Interpretation
 
 
@@ -18,9 +20,7 @@ class UnhandledBranchError(ValueError):
         )
 
 
-class SwitchInterpretation(
-    AggregatedIntrospectiveIngestionComponent, Interpretation, alias="switch"
-):
+class SwitchInterpretation(ExpandsSchemaFromChildren, Interpretation, alias="switch"):
     __slots__ = (
         "switch_on",
         "interpretations",
@@ -62,7 +62,7 @@ class SwitchInterpretation(
         self.normalization = normalization or {}
         self.fail_on_unhandled = fail_on_unhandled
 
-    def all_subordinate_components(self):
+    def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         for child in self.interpretations.values():
             yield from child
         if self.default:

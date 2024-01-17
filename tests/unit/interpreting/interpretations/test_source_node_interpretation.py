@@ -1,15 +1,15 @@
-from hamcrest import assert_that, equal_to, has_entries, has_length
+from hamcrest import assert_that, equal_to, has_entries
 
 from nodestream.interpreting.interpretations import SourceNodeInterpretation
-from nodestream.schema.indexes import FieldIndex, KeyIndex
-from nodestream.schema.schema import (
-    GraphObjectShape,
-    GraphObjectType,
-    KnownTypeMarker,
-    PropertyMetadataSet,
-)
 
 from ...stubs import StubbedValueProvider
+from .matchers import (
+    has_node_indexes,
+    has_node_keys,
+    has_node_properties,
+    has_no_defined_nodes,
+    has_no_defined_relationships,
+)
 
 EXPECTED_NODE_TYPE = "Person"
 
@@ -91,52 +91,27 @@ def test_keys_are_lower_cased_by_default(blank_context):
     assert_that(blank_context.desired_ingest.source.key_values, equal_to(expected_keys))
 
 
-def test_gather_used_indexes_non_static():
+def test_non_static_node_type_skips_node_description(schema_coordinator):
     dynamic_type = StubbedValueProvider(values=["zach"])
     subject = SourceNodeInterpretation(node_type=dynamic_type, key={})
-    assert_that(list(subject.gather_used_indexes()), has_length(0))
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_no_defined_nodes())
 
 
-def test_gather_object_shapes_non_static():
-    dynamic_type = StubbedValueProvider(values=["zach"])
-    subject = SourceNodeInterpretation(node_type=dynamic_type, key={})
-    assert_that(list(subject.gather_object_shapes()), has_length(0))
-
-
-def test_gather_present_relationships():
+def test_source_node_defines_no_relationships(schema_coordinator):
     subject = SourceNodeInterpretation(node_type="test", key={"first_name": "test"})
-    assert_that(list(subject.gather_present_relationships()), has_length(0))
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_no_defined_relationships())
 
 
-def test_gather_used_indexes_static():
+def test_introspectable_definition_updates_schema(schema_coordinator):
     subject = SourceNodeInterpretation(
         node_type="test",
         key={"foo": 1, "bar": False},
         additional_indexes=("baz",),
         properties={"baz": False},
     )
-
-    key_index, timestamp_index, field_index = subject.gather_used_indexes()
-    expected_key_index = KeyIndex("test", frozenset(("foo", "bar")))
-    expected_ts_index = FieldIndex("test", "last_ingested_at", GraphObjectType.NODE)
-    expected_field_index = FieldIndex("test", "baz", GraphObjectType.NODE)
-
-    assert_that(key_index, equal_to(expected_key_index))
-    assert_that(timestamp_index, equal_to(expected_ts_index))
-    assert_that(field_index, equal_to(expected_field_index))
-
-
-def test_gather_object_shapes():
-    subject = SourceNodeInterpretation(
-        node_type="test",
-        key={"foo": 1, "bar": False},
-        properties={"baz": False},
-    )
-    object_shape = next(subject.gather_object_shapes())
-    expected_object_shape = GraphObjectShape(
-        graph_object_type=GraphObjectType.NODE,
-        object_type=KnownTypeMarker.fulfilling_source_node("test"),
-        properties=PropertyMetadataSet.from_names(("foo", "bar", "baz")),
-    )
-
-    assert_that(object_shape, equal_to(expected_object_shape))
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_node_keys("test", ("foo", "bar")))
+    assert_that(schema_coordinator, has_node_properties("test", ("baz",)))
+    assert_that(schema_coordinator, has_node_indexes("test", ("baz",)))
