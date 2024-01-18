@@ -2,8 +2,6 @@ import json
 from abc import ABC, abstractmethod
 from typing import Iterable, List, Optional, Tuple
 
-from nodestream.project.pipeline_definition import PipelineConfiguration
-
 from ...project import PipelineDefinition, Project
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation

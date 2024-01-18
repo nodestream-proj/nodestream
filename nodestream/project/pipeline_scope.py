@@ -1,12 +1,9 @@
 from importlib import resources
 from typing import Dict, Iterable, List
 
-from ..project.pipeline_definition import (
-    PipelineDefinition,
-)
-
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline.scope_config import ScopeConfig
+from ..project.pipeline_definition import PipelineDefinition
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,

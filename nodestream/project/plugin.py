@@ -1,15 +1,13 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Set
 from importlib import resources
+from typing import Any, Dict, Set
 
 from schema import Or
 
-from ..project.pipeline_definition import (
-    PipelineDefinition,
-)
-from ..project.pipeline_scope import PipelineScope
 from ..file_io import LoadsFromYamlFile
 from ..pipeline.scope_config import ScopeConfig
+from ..project.pipeline_definition import PipelineDefinition
+from ..project.pipeline_scope import PipelineScope
 
 
 @dataclass
