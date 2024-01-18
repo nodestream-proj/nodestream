@@ -61,8 +61,7 @@ from nodestream.project import Project, ProjectPlugin, PipelineScope, PipelineDe
 
 class MyProjectPlugin(ProjectPlugin):
     def activate(self, project: Project) -> None:
-        scope = PipelineScope.from_resources(name="my_plugin", package="my_plugin.pipelines")
-        project.add_scope(scope)
+        project.add_plugin_scope_from_pipeline_resources(name="my_plugin", package="my_plugin.pipelines")
 ```
 
 
@@ -145,4 +144,23 @@ End users can provide values for the `!config` plugin tags in their nodestream.y
         targets:
           - target1
           - target2
+    ```
+#### Plugin Pipeline Configurations
+End users can provide configuration for each of the plugin provided pipelines by adding the piplines section under the imported plugin in their nodestream.yaml file. The configuration includes annotations targets and exlude_inherited_targets properties the same way as these properties are provided in pipelines defined in the scopes section.
+=== "nodestream.yaml"
+    ```
+    plugins:
+      - name: myplugin
+        config:
+          service_base_url: "https://otherurl.com"
+        targets:
+          - target1
+          - target2
+        pipelines:
+        - name: plugin_pipeline_1
+            exclude_inherited_targets: True
+            annotations:
+                my_annoation: True
+            targets:
+            - target3
     ```

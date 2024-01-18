@@ -37,13 +37,6 @@ class PipelineConfiguration:
         exclude_targets = data.pop("exclude_inherited_targets", False)
         return cls(targets, exclude_targets, annotations)
 
-    def merge_with(
-        self,
-        other: "PipelineConfiguration",
-    ):
-        self.targets = set(other.targets) | self.targets
-        self.annotations.update(other.annotations)
-
 
 @dataclass
 class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFromYaml):
@@ -88,7 +81,7 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
                 str,
                 {
                     Optional("name"): str,
-                    "path": os.path.exists,
+                    Optional("path"): os.path.exists,
                     Optional("annotations"): {str: Or(str, int, float, bool)},
                     Optional("targets"): [str],
                     Optional("exclude_inherited_targets"): bool,
@@ -126,7 +119,6 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
     def from_plugin_data(
         cls, data, parent_targets: set, parent_annotations
     ) -> "PipelineDefinition":
-        print(data)
         name = data.pop("name")
         exclude_targets = data.pop("exclude_inherited_targets", False)
         annotations = data.pop("annotations", {})
@@ -166,16 +158,8 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
         return result
 
-    def to_plugin_file_data(self):
-        result = {"path": str(self.file_path)}
-        result["name"] = self.name
-        annotations = self.get_annotations_from_config()
-        targets = self.get_targets_from_config()
-        if targets:
-            result["targets"] = list(targets)
-        if annotations:
-            result["annotations"] = annotations
-        return result
+    def use_configuration(self, config: PipelineConfiguration):
+        self.configuration = config
 
     def get_annotations_from_config(self):
         return self.configuration.annotations

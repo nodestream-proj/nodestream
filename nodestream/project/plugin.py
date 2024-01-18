@@ -1,13 +1,13 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, Set
 from importlib import resources
 
 from schema import Or
 
-from nodestream.project.pipeline_definition import (
-    PipelineConfiguration,
+from ..project.pipeline_definition import (
     PipelineDefinition,
 )
+from ..project.pipeline_scope import PipelineScope
 from ..file_io import LoadsFromYamlFile
 from ..pipeline.scope_config import ScopeConfig
 
@@ -21,7 +21,6 @@ class PluginConfiguration(LoadsFromYamlFile):
     """
 
     name: str
-    pipelines: List[PipelineDefinition]
     pipelines_by_name: Dict[str, PipelineDefinition] = field(default_factory=dict)
     config: ScopeConfig = None
     targets: Set[str] = field(default_factory=set)
@@ -37,9 +36,7 @@ class PluginConfiguration(LoadsFromYamlFile):
                 Optional("config"): ScopeConfig.describe_yaml_schema(),
                 Optional("targets"): [str],
                 Optional("annotations"): {str: Or(str, int, float, bool)},
-                Optional("pipelines"): {
-                    str: PipelineConfiguration.describe_yaml_schema()
-                },
+                Optional("pipelines"): [PipelineDefinition.describe_yaml_schema()],
             }
         )
 
@@ -49,42 +46,37 @@ class PluginConfiguration(LoadsFromYamlFile):
         targets = data.pop("targets", [])
         config = data.pop("config")
         annotations = data.pop("annotations", {})
-        pipelines_data = data.pop("pipelines", {})
-        pipelines = [
-            PipelineDefinition.from_plugin_data(
-                {"name": name, **pipeline}, set(targets), annotations
-            )
-            for name, pipeline in pipelines_data.items()
-        ]
+        pipelines_data = data.pop("pipelines", [])
         pipelines_by_name = {
-            name: PipelineDefinition.from_plugin_data(
-                {"name": name, **pipeline}, set(targets), annotations
+            pipeline["name"]: PipelineDefinition.from_plugin_data(
+                pipeline, set(targets), annotations
             )
-            for name, pipeline in pipelines_data.items()
+            for pipeline in pipelines_data
         }
-        return cls(name, pipelines, pipelines_by_name, config, targets, annotations)
-
-    def to_file_data(self):
-        return {
-            "name": self.name,
-            "pipelines": [
-                pipeline.to_plugin_file_data() for pipeline in self.pipelines
-            ],
-            "targets": self.targets,
-            "annotations": self.annotations,
-            "config": self.config,
-        }
+        return cls(
+            name,
+            pipelines_by_name,
+            ScopeConfig.from_file_data(config),
+            targets,
+            annotations,
+        )
 
     def get_config_value(self, key):
         return self.config.get_config_value(key)
 
-    def merge_pipeline_data(self, other: "PluginConfiguration"):
+    def update_pipeline_configurations(self, other: "PluginConfiguration"):
         for name, pipeline in self.pipelines_by_name.items():
-            other_pipeline = other.pipelines_by_name.get(name)
-            pipeline.configuration.targets = set(other.targets)
+            pipeline.configuration.targets = other.targets
             pipeline.configuration.annotations = other.annotations
+
+            other_pipeline = other.pipelines_by_name.get(name)
             if other_pipeline is not None:
-                pipeline.configuration.merge_with(other_pipeline.configuration)
+                pipeline.use_configuration(other_pipeline.configuration)
+
+    def make_scope(self) -> PipelineScope:
+        return PipelineScope(
+            self.name, self.pipelines_by_name.values(), False, self.config
+        )
 
     @classmethod
     def from_resources(
@@ -111,4 +103,4 @@ class PluginConfiguration(LoadsFromYamlFile):
             if f.suffix == ".yaml"
         ]
         pipelines_by_name = {pipeline.name: pipeline for pipeline in pipelines}
-        return cls(name, pipelines, pipelines_by_name)
+        return cls(name, pipelines_by_name)

@@ -20,7 +20,7 @@ def test_pipeline_definition_initialize(mocker):
 
 
 def test_from_file_data_string_input():
-    result = PipelineDefinition.from_file_data("path/to/pipeline", {})
+    result = PipelineDefinition.from_file_data("path/to/pipeline", set(), {})
     assert_that(result.name, equal_to("pipeline"))
     assert_that(result.file_path, equal_to(Path("path/to/pipeline")))
 
@@ -28,6 +28,7 @@ def test_from_file_data_string_input():
 def test_from_file_data_complex_input():
     result = PipelineDefinition.from_file_data(
         {"path": "path/to/pipeline", "name": "test", "annotations": {"foo": "bar"}},
+        set(),
         {"baz": "qux"},
     )
     assert_that(result.name, equal_to("test"))
@@ -75,7 +76,8 @@ def test_from_file_data_complex_input():
 def test_to_file_data(definition, expected_data):
     assert_that(definition.to_file_data(), equal_to(expected_data))
     assert_that(
-        PipelineDefinition.from_file_data(expected_data, {}), equal_to(definition)
+        PipelineDefinition.from_file_data(expected_data, set(), {}),
+        equal_to(definition),
     )
 
 
@@ -88,9 +90,9 @@ def test_to_file_data(definition, expected_data):
             ),
             {
                 "path": "test.yaml",
-                "annotations": {},
                 "name": "test",
-                "targets": set(),
+                "targets": [],
+                "annotations": {},
             },
         ),
         (
@@ -101,9 +103,9 @@ def test_to_file_data(definition, expected_data):
             ),
             {
                 "path": "test.yaml",
-                "annotations": {"foo": True},
                 "name": "test",
-                "targets": set(),
+                "targets": [],
+                "annotations": {"foo": True},
             },
         ),
         (
@@ -114,23 +116,24 @@ def test_to_file_data(definition, expected_data):
             ),
             {
                 "path": "test.yaml",
-                "annotations": {"foo": True},
                 "name": "baz",
-                "targets": set(),
+                "targets": [],
+                "annotations": {"foo": True},
             },
         ),
         (
             PipelineDefinition(
                 "baz", Path("test.yaml"), PipelineConfiguration(set(["t1"]))
             ),
-            {"path": "test.yaml", "annotations": {}, "name": "baz", "targets": {"t1"}},
+            {"path": "test.yaml", "name": "baz", "targets": ["t1"], "annotations": {}},
         ),
     ],
 )
 def test_to_file_data_verbose(definition, expected_data):
     assert_that(definition.to_file_data(verbose=True), equal_to(expected_data))
     assert_that(
-        PipelineDefinition.from_file_data(expected_data, {}), equal_to(definition)
+        PipelineDefinition.from_file_data(expected_data, set(), {}),
+        equal_to(definition),
     )
 
 

@@ -1,8 +1,7 @@
 from importlib import resources
-from typing import Dict, Iterable, List, Set
+from typing import Dict, Iterable, List
 
-from nodestream.project.pipeline_definition import (
-    PipelineConfiguration,
+from ..project.pipeline_definition import (
     PipelineDefinition,
 )
 

@@ -136,8 +136,9 @@ class Project(
         self.targets_by_name = targets
         for scope in scopes:
             self.add_scope(scope)
-        for plugin in plugins:
-            self.add_plugin(plugin)
+        if plugins:
+            for plugin in plugins:
+                self.add_plugin(plugin)
 
     def get_target_by_name(self, target_name: str) -> Optional[Target]:
         """Returns the target with the given name.
@@ -194,22 +195,24 @@ class Project(
 
         self.plugins_by_name[plugin.name] = plugin
 
-    def add_plugin_pipeline_scope_from_resources(self, name: str, package: str):
-        """Adds a scope to the project.
+    def add_plugin_scope_from_pipeline_resources(self, name: str, package: str):
+        """Adds a plugin from external pipeline resources to the project.
 
         Args:
-            scope (PipelineScope): The scope to add.
+            name (str): The plugin name.
+            package (str): the package location from the plugin repo root.
         """
         plugin_from_resources = PluginConfiguration.from_resources(
             name=name, package=package
         )
-        plugin_from_project_file = self.plugins_by_name[name]
+        self.add_plugin_scope(name, plugin_from_resources)
 
-        plugin_from_resources.merge_pipeline_data(plugin_from_project_file)
-        scope = PipelineScope.from_file_data(
-            plugin_from_resources.name, plugin_from_resources.to_file_data()
-        )
-        self.scopes_by_name[name] = scope
+    def add_plugin_scope(self, name: str, plugin: PluginConfiguration):
+        project_plugin_configuration = self.plugins_by_name.get(name)
+        if project_plugin_configuration:
+            plugin.update_pipeline_configurations(project_plugin_configuration)
+            scope = plugin.make_scope()
+            self.add_scope(scope)
 
     def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:
         """Returns the scopes with the given name.
