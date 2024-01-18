@@ -14,8 +14,8 @@ def get_default_name(file_path: Path) -> str:
 
 @dataclass
 class PipelineConfiguration:
-    """A `PipelineConfiguration` represents a group of configurable options for a pipeline.
-    """
+    """A `PipelineConfiguration` represents a group of configurable options for a pipeline."""
+
     targets: Set[str] = field(default_factory=set)
     exclude_inherited_targets: bool = False
     annotations: Dict[str, Any] = field(default_factory=dict)
@@ -141,18 +141,14 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     def to_file_data(self, verbose: bool = False):
         using_default_name = self.name == self.file_path.stem
-        if (
-            using_default_name
-            and not self.get_annotations_from_config()
-            and not verbose
-        ):
+        if using_default_name and not self.configuration.annotations and not verbose:
             return str(self.file_path)
 
         result = {"path": str(self.file_path)}
         if not using_default_name or verbose:
             result["name"] = self.name
-        annotations = self.get_annotations_from_config()
-        targets = self.get_targets_from_config()
+        annotations = self.configuration.annotations
+        targets = self.configuration.targets
         if targets or verbose:
             result["targets"] = list(targets)
         if annotations or verbose:
@@ -162,15 +158,6 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     def use_configuration(self, config: PipelineConfiguration):
         self.configuration = config
-
-    def get_annotations_from_config(self):
-        return self.configuration.annotations
-
-    def get_targets_from_config(self):
-        return self.configuration.targets
-
-    def excluded_inherited_targets(self):
-        return self.configuration.exclude_inherited_targets
 
     def initialize(self, init_args: PipelineInitializationArguments) -> Pipeline:
         return PipelineFile(self.file_path).load_pipeline(init_args)

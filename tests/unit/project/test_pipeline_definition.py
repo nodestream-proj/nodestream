@@ -141,5 +141,5 @@ def test_from_path():
     path = Path("test.yaml")
     result = PipelineDefinition.from_path(path)
     assert_that(result.name, equal_to("test"))
-    assert_that(result.get_annotations_from_config(), equal_to({}))
+    assert_that(result.configuration.annotations, equal_to({}))
     assert_that(result.file_path, equal_to(path))

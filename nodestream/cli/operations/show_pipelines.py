@@ -29,8 +29,8 @@ class TableOutputFormat(OutputFormat):
                 scope,
                 definition.name,
                 str(definition.file_path),
-                ",".join(definition.get_targets_from_config()),
-                ",".join(definition.get_annotations_from_config().keys()),
+                ",".join(definition.configuration.targets),
+                ",".join(definition.configuration.annotations.keys()),
             ]
             for scope, definition in matching_pipelines
         ]
