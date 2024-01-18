@@ -69,9 +69,11 @@ class PluginConfiguration(LoadsFromYamlFile):
         Used for merging project plugin configuration with loaded plugin pipeline resources.
         """
         for name, pipeline in self.pipelines_by_name.items():
+            # set the plugin configuration level targets and annotations
             pipeline.configuration.targets = other.targets
             pipeline.configuration.annotations = other.annotations
 
+            # override the pipeline configuration if they are available
             other_pipeline = other.pipelines_by_name.get(name)
             if other_pipeline is not None:
                 pipeline.use_configuration(other_pipeline.configuration)

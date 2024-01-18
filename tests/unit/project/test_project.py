@@ -295,3 +295,12 @@ def test_project_load_lifecycle_hooks_calls_all_hooks_on_all_plugins(mocker):
         plugin.before_project_load.assert_called_once_with(file_path)
         plugin.activate.assert_called_once_with(project)
         plugin.after_project_load.assert_called_once_with(project)
+
+
+def test_load_plugin_from_resources():
+    file_path = Path("tests/unit/project/fixtures/simple_project_with_config.yaml")
+    project = Project.read_from_file(file_path)
+    project.add_plugin_scope_from_pipeline_resources(
+        "test", "tests.unit.project.fixtures.pipelines"
+    )
+    assert_that(project.plugins_by_name["test"].name, equal_to("test"))

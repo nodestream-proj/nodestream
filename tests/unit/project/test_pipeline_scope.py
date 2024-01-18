@@ -63,3 +63,7 @@ def test_delete_pipleine_did_not_remove_file_when_told_to_ignore(scope, mocker):
         scope.delete_pipeline("pipeline1", remove_pipeline_file=False), is_(True)
     )
     rm.assert_not_called()
+
+
+def test_all_subordinate_components(scope, pipelines):
+    assert_that(list(scope.all_subordinate_components()), is_(pipelines))
