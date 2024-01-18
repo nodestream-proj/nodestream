@@ -14,6 +14,8 @@ def get_default_name(file_path: Path) -> str:
 
 @dataclass
 class PipelineConfiguration:
+    """A `PipelineConfiguration` represents a group of configurable options for a pipeline.
+    """
     targets: Set[str] = field(default_factory=set)
     exclude_inherited_targets: bool = False
     annotations: Dict[str, Any] = field(default_factory=dict)

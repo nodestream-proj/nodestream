@@ -65,6 +65,11 @@ class PluginConfiguration(LoadsFromYamlFile):
         return self.config.get_config_value(key)
 
     def update_pipeline_configurations(self, other: "PluginConfiguration"):
+        """Updates the `PluginConfiguration` pipelines using the
+        PipelineConfiguration from the same named pipelines in a different PluginConfiguration object
+
+        Used for merging project plugin configuration with loaded plugin pipeline resources.
+        """
         for name, pipeline in self.pipelines_by_name.items():
             pipeline.configuration.targets = other.targets
             pipeline.configuration.annotations = other.annotations
@@ -74,6 +79,7 @@ class PluginConfiguration(LoadsFromYamlFile):
                 pipeline.use_configuration(other_pipeline.configuration)
 
     def make_scope(self) -> PipelineScope:
+        """Creates a `PipelineScope` object from the `PluginConfiguration` object"""
         return PipelineScope(
             self.name, self.pipelines_by_name.values(), False, self.config
         )
