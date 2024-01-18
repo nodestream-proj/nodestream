@@ -59,9 +59,6 @@ class PluginConfiguration(LoadsFromYamlFile):
             annotations,
         )
 
-    def get_config_value(self, key):
-        return self.config.get_config_value(key)
-
     def update_pipeline_configurations(self, other: "PluginConfiguration"):
         """Updates the `PluginConfiguration` pipelines using the
         PipelineConfiguration from the same named pipelines in a different PluginConfiguration object
