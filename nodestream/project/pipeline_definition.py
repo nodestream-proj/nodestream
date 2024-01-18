@@ -21,18 +21,6 @@ class PipelineConfiguration:
     annotations: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def describe_yaml_schema(cls):
-        from schema import Optional, Or, Schema
-
-        return Schema(
-            {
-                Optional("annotations"): {str: Or(str, int, float, bool)},
-                Optional("targets"): [str],
-                Optional("exclude_inherited_targets"): bool,
-            },
-        )
-
-    @classmethod
     def from_file_data(cls, data) -> "PipelineConfiguration":
         annotations = data.pop("annotations", {})
         targets = data.pop("targets", [])

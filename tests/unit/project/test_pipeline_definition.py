@@ -38,6 +38,41 @@ def test_from_file_data_complex_input():
     )
 
 
+def test_from_plugin_data_complex_input():
+    result = PipelineDefinition.from_plugin_data(
+        {
+            "name": "test",
+            "annotations": {"foo": "bar"},
+            "targets": ["target2"],
+            "exclude_inherited_targets": True,
+        },
+        set("target1"),
+        {"baz": "qux"},
+    )
+    assert_that(result.name, equal_to("test"))
+    assert_that(result.configuration.targets, equal_to(["target2"]))
+    assert_that(
+        result.configuration.annotations, equal_to({"foo": "bar", "baz": "qux"})
+    )
+
+
+def test_use_configuration():
+    result = PipelineDefinition.from_plugin_data(
+        {
+            "name": "test",
+            "annotations": {"foo": "bar"},
+            "targets": ["target2"],
+            "exclude_inherited_targets": True,
+        },
+        set("target1"),
+        {"baz": "qux"},
+    )
+    new_config = PipelineConfiguration(set(["other_target"]), False, {"foo": "bar"})
+    result.use_configuration(new_config)
+
+    assert_that(result.configuration, equal_to(new_config))
+
+
 @pytest.mark.parametrize(
     "definition,expected_data",
     [
