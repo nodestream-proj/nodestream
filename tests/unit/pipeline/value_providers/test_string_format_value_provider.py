@@ -36,3 +36,10 @@ def test_string_format_dump():
             "!format\na: !static 'a'\nb: !static 'b'\nc: !static 'c'\nfmt: !static '{a}'\n"
         ),
     )
+
+
+def test_string_format_empty(blank_context):
+    subject = StringFormattingValueProvider(
+        fmt="{a}{b}", a=StaticValueProvider("a"), b=StaticValueProvider(None)
+    )
+    assert_that(subject.single_value(blank_context), equal_to(None))
