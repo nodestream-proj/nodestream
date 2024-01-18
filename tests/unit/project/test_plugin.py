@@ -1,4 +1,5 @@
 from hamcrest import assert_that, equal_to
+
 from nodestream.pipeline.scope_config import ScopeConfig
 from nodestream.project.plugin import PluginConfiguration
 
