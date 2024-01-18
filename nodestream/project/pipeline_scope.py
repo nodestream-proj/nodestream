@@ -137,9 +137,6 @@ class PipelineScope(
 
         return True
 
-    def set_configuration(self, config: ScopeConfig):
-        self.config = config
-
     @classmethod
     def from_resources(
         cls, name: str, package: resources.Package, persist: bool = False
