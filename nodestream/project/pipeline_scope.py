@@ -30,17 +30,12 @@ class PipelineScope(
         pipelines: List[PipelineDefinition],
         persist: bool = True,
         config: ScopeConfig = None,
-        targets: Set[str] = None,
     ) -> None:
         self.persist = persist
         self.name = name
         self.config = config
-        self.targets = targets
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
         for pipeline in pipelines:
-            if self.targets:
-                if not pipeline.excluded_inherited_targets():
-                    pipeline.configuration.add_targets(self.targets)
             self.add_pipeline_definition(pipeline)
 
     @classmethod
@@ -50,14 +45,13 @@ class PipelineScope(
         config = file_data.pop("config", None)
         targets = file_data.pop("targets", [])
         pipelines = [
-            PipelineDefinition.from_file_data(pipeline_data, annotations)
+            PipelineDefinition.from_file_data(pipeline_data, set(targets), annotations)
             for pipeline_data in pipelines_data
         ]
         return cls(
             scope_name,
             pipelines,
             config=ScopeConfig.from_file_data(config),
-            targets=set(targets),
         )
 
     @classmethod
@@ -149,12 +143,6 @@ class PipelineScope(
 
     def set_configuration(self, config: ScopeConfig):
         self.config = config
-
-    def update_pipeline_configurations(
-        self, pipeline_configs: Dict[str, PipelineConfiguration]
-    ):
-        for pipeline_name, config in pipeline_configs.items():
-            self.pipelines_by_name[pipeline_name].configuration.merge_with(config)
 
     @classmethod
     def from_resources(

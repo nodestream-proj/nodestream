@@ -31,15 +31,11 @@ class PipelineConfiguration:
         )
 
     @classmethod
-    def from_file_data(
-        cls, data, parent_targets: set, parent_annotations
-    ) -> "PipelineConfiguration":
+    def from_file_data(cls, data) -> "PipelineConfiguration":
         annotations = data.pop("annotations", {})
         targets = data.pop("targets", [])
         exclude_targets = data.pop("exclude_inherited_targets", False)
-        if not exclude_targets:
-            targets = set(targets) | parent_targets
-        return cls(targets, exclude_targets, {**parent_annotations, **annotations})
+        return cls(targets, exclude_targets, annotations)
 
     def merge_with(
         self,
@@ -47,9 +43,6 @@ class PipelineConfiguration:
     ):
         self.targets = set(other.targets) | self.targets
         self.annotations.update(other.annotations)
-
-    def add_targets(self, other_targets: Set):
-        self.targets = other_targets | self.targets
 
 
 @dataclass
@@ -104,7 +97,9 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         )
 
     @classmethod
-    def from_file_data(cls, data, parent_annotations) -> "PipelineDefinition":
+    def from_file_data(
+        cls, data, parent_targets: set, parent_annotations
+    ) -> "PipelineDefinition":
         if isinstance(data, str):
             data = {"path": data}
 
@@ -113,11 +108,40 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         exclude_targets = data.pop("exclude_inherited_targets", False)
         annotations = data.pop("annotations", {})
         targets = data.pop("targets", [])
+        if not exclude_targets:
+            targets = set(targets) | parent_targets
         return cls(
             name,
             file_path,
-            PipelineConfiguration(
-                set(targets), exclude_targets, {**parent_annotations, **annotations}
+            PipelineConfiguration.from_file_data(
+                {
+                    "targets": targets,
+                    "annotations": {**parent_annotations, **annotations},
+                    "exclude_inherited_targets": exclude_targets,
+                },
+            ),
+        )
+
+    @classmethod
+    def from_plugin_data(
+        cls, data, parent_targets: set, parent_annotations
+    ) -> "PipelineDefinition":
+        print(data)
+        name = data.pop("name")
+        exclude_targets = data.pop("exclude_inherited_targets", False)
+        annotations = data.pop("annotations", {})
+        targets = data.pop("targets", [])
+        if not exclude_targets:
+            targets = set(targets) | parent_targets
+        return cls(
+            name,
+            None,
+            PipelineConfiguration.from_file_data(
+                {
+                    "targets": targets,
+                    "annotations": {**parent_annotations, **annotations},
+                    "exclude_inherited_targets": exclude_targets,
+                },
             ),
         )
 
@@ -140,6 +164,17 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         if annotations or verbose:
             result["annotations"] = annotations
 
+        return result
+
+    def to_plugin_file_data(self):
+        result = {"path": str(self.file_path)}
+        result["name"] = self.name
+        annotations = self.get_annotations_from_config()
+        targets = self.get_targets_from_config()
+        if targets:
+            result["targets"] = list(targets)
+        if annotations:
+            result["annotations"] = annotations
         return result
 
     def get_annotations_from_config(self):

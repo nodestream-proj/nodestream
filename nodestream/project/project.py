@@ -3,6 +3,8 @@ from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from yaml import SafeLoader
 
+from nodestream.project.plugin import PluginConfiguration
+
 from ..file_io import (
     LazyLoadedTagSafeLoader,
     LoadsFromYaml,
@@ -18,7 +20,6 @@ from ..schema.schema import (
 )
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
-from .plugin import PluginConfiguration
 from .run_request import RunRequest
 from .target import Target
 
@@ -118,7 +119,6 @@ class Project(
                 for scope in self.scopes_by_name.values()
                 if scope.persist
             },
-            "plugins": [plugin.to_file_data() for plugin in self.plugins or []],
             "targets": {
                 name: target.to_file_data()
                 for name, target in self.targets_by_name.items()
@@ -132,10 +132,12 @@ class Project(
         targets: Dict[str, Target] = None,
     ):
         self.scopes_by_name: Dict[str, PipelineScope] = {}
-        self.plugins = plugins
+        self.plugins_by_name: Dict[str, PluginConfiguration] = {}
         self.targets_by_name = targets
         for scope in scopes:
             self.add_scope(scope)
+        for plugin in plugins:
+            self.add_plugin(plugin)
 
     def get_target_by_name(self, target_name: str) -> Optional[Target]:
         """Returns the target with the given name.
@@ -181,11 +183,33 @@ class Project(
         Args:
             scope (PipelineScope): The scope to add.
         """
-        if self.plugins is not None:
-            for plugin in self.plugins:
-                if plugin.name == scope.name:
-                    plugin.configure_scope(scope)
         self.scopes_by_name[scope.name] = scope
+
+    def add_plugin(self, plugin: PluginConfiguration):
+        """Adds a plugin to the project.
+
+        Args:
+            plugin (PluginConfiguration): The pluginto add.
+        """
+
+        self.plugins_by_name[plugin.name] = plugin
+
+    def add_plugin_pipeline_scope_from_resources(self, name: str, package: str):
+        """Adds a scope to the project.
+
+        Args:
+            scope (PipelineScope): The scope to add.
+        """
+        plugin_from_resources = PluginConfiguration.from_resources(
+            name=name, package=package
+        )
+        plugin_from_project_file = self.plugins_by_name[name]
+
+        plugin_from_resources.merge_pipeline_data(plugin_from_project_file)
+        scope = PipelineScope.from_file_data(
+            plugin_from_resources.name, plugin_from_resources.to_file_data()
+        )
+        self.scopes_by_name[name] = scope
 
     def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:
         """Returns the scopes with the given name.
