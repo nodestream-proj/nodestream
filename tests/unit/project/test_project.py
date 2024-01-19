@@ -56,9 +56,22 @@ def plugins():
 @pytest.fixture
 def scopes():
     return [
-        PipelineScope("scope1", [PipelineDefinition("test", Path("path/to/pipeline"))]),
         PipelineScope(
-            "scope2", [PipelineDefinition("test2", Path("path/to/pipeline"))]
+            "scope1",
+            [
+                PipelineDefinition(
+                    "test",
+                    Path(
+                        "path/to/pipeline",
+                    ),
+                    PipelineConfiguration(["t1"], False, {"foo": "bar"}),
+                )
+            ],
+        ),
+        PipelineScope(
+            "scope2",
+            [PipelineDefinition("test2", Path("path/to/pipeline"))],
+            config=ScopeConfig({"baz": "qux"}),
         ),
     ]
 
