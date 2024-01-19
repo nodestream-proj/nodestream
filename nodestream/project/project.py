@@ -11,7 +11,6 @@ from ..file_io import (
 )
 from ..pipeline import Step
 from ..pluggable import Pluggable
-from ..project.plugin import PluginConfiguration
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     GraphSchema,
@@ -19,6 +18,7 @@ from ..schema.schema import (
 )
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
+from .plugin import PluginConfiguration
 from .run_request import RunRequest
 from .target import Target
 
@@ -119,7 +119,7 @@ class Project(
                 if scope.persist
             },
             "plugins": [
-                plugin.to_file_data() for plugin in self.plugins_by_name.values() or []
+                plugin.to_file_data() for plugin in self.plugins_by_name.values()
             ],
             "targets": {
                 name: target.to_file_data()

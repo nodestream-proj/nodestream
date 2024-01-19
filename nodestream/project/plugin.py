@@ -6,8 +6,8 @@ from schema import Or
 
 from ..file_io import LoadsFromYamlFile
 from ..pipeline.scope_config import ScopeConfig
-from ..project.pipeline_definition import PipelineConfiguration, PipelineDefinition
-from ..project.pipeline_scope import PipelineScope
+from .pipeline_definition import PipelineConfiguration, PipelineDefinition
+from .pipeline_scope import PipelineScope
 
 
 @dataclass
@@ -92,7 +92,7 @@ class PluginConfiguration(LoadsFromYamlFile):
     def from_resources(
         cls, name: str, package: resources.Package
     ) -> "PluginConfiguration":
-        """Load a `PipelineScope` from a package's resources.
+        """Load a `PluginConfiguration` from a package's resources.
 
         Each `.yaml` file in the package's resources will be loaded as a pipeline.
         Internally, this uses `importlib.resources` to load the files and calls
@@ -102,10 +102,9 @@ class PluginConfiguration(LoadsFromYamlFile):
         Args:
             name: The name of the scope.
             package: The name of the package to load from.
-            persist: Whether or not to save the scope when the project is saved.
 
         Returns:
-            A `PipelineScope` instance with the pipelines defined in the package.
+            A `PluginConfiguration` instance with the pipelines defined in the package.
         """
         pipelines = [
             PipelineDefinition.from_path(f)

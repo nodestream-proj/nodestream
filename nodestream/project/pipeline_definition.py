@@ -42,6 +42,18 @@ class PipelineConfiguration:
             annotations.update(self.parent.effective_annotations)
         return annotations
 
+    def to_file_data(self, verbose: bool = False):
+        annotations = self.annotations
+        targets = self.targets
+        result = {}
+        if targets or verbose:
+            result["targets"] = list(targets)
+        if annotations or verbose:
+            result["annotations"] = annotations
+        if self.exclude_inherited_targets or verbose:
+            result["exclude_inherited_targets"] = self.exclude_inherited_targets
+        return result
+
 
 @dataclass
 class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFromYaml):
@@ -125,31 +137,12 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         result = {"path": str(self.file_path)}
         if not using_default_name or verbose:
             result["name"] = self.name
-        annotations = self.configuration.effective_annotations
-        targets = self.configuration.effective_targets
-        if targets or verbose:
-            result["targets"] = list(targets)
-        if annotations or verbose:
-            result["annotations"] = annotations
-        if self.configuration.exclude_inherited_targets or verbose:
-            result[
-                "exclude_inherited_targets"
-            ] = self.configuration.exclude_inherited_targets
-
+        result.update(self.configuration.to_file_data(verbose))
         return result
 
     def to_plugin_file_data(self, verbose: bool = False):
         result = {"name": self.name}
-        annotations = self.configuration.annotations
-        targets = self.configuration.targets
-        if targets or verbose:
-            result["targets"] = list(targets)
-        if annotations or verbose:
-            result["annotations"] = annotations
-        if self.configuration.exclude_inherited_targets or verbose:
-            result[
-                "exclude_inherited_targets"
-            ] = self.configuration.exclude_inherited_targets
+        result.update(self.configuration.to_file_data(verbose))
         return result
 
     def use_configuration(self, config: PipelineConfiguration):
