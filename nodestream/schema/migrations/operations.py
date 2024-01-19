@@ -169,6 +169,10 @@ class DropNodeType(Operation):
 
     name: str
 
+    @property
+    def proposed_index_name(self) -> str:
+        return f"{self.name}_node_key"
+
     def suggest_migration_name_slug(self) -> str:
         return f"drop_node_{self.name}"
 
@@ -250,6 +254,14 @@ class RenameNodeType(Operation):
 
     old_type: str
     new_type: str
+
+    @property
+    def old_proposed_index_name(self) -> str:
+        return f"{self.old_type}_node_key"
+
+    @property
+    def new_proposed_index_name(self) -> str:
+        return f"{self.new_type}_node_key"
 
     def suggest_migration_name_slug(self) -> str:
         return f"rename_node_type_{self.old_type}_to_{self.new_type}"
@@ -465,6 +477,10 @@ class NodeKeyExtended(Operation):
     added_key_property: str
     default: Any
 
+    @property
+    def proposed_index_name(self) -> str:
+        return f"{self.node_type}_node_key"
+
     def suggest_migration_name_slug(self) -> str:
         return f"extend_key_{self.node_type}_{self.added_key_property}"
 
@@ -509,6 +525,10 @@ class NodeKeyPartRenamed(Operation):
     node_type: str
     old_key_part_name: str
     new_key_part_name: str
+
+    @property
+    def proposed_index_name(self) -> str:
+        return f"{self.node_type}_node_key"
 
     def suggest_migration_name_slug(self) -> str:
         return f"rename_key_part_{self.node_type}_{self.old_key_part_name}_to_{self.new_key_part_name}"
