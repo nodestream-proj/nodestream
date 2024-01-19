@@ -3,7 +3,7 @@ from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from yaml import SafeLoader
 
-from nodestream.project.plugin import PluginConfiguration
+from ..project.plugin import PluginConfiguration
 
 from ..file_io import (
     LazyLoadedTagSafeLoader,
@@ -213,7 +213,6 @@ class Project(
         if project_plugin_configuration:
             plugin.update_pipeline_configurations(project_plugin_configuration)
             scope = plugin.make_scope()
-            print(scope.__dict__)
             self.add_scope(scope)
 
     def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:
