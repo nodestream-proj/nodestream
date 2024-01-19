@@ -56,6 +56,17 @@ class PluginConfiguration(LoadsFromYamlFile):
             configuration,
         )
 
+    def to_file_data(self):
+        return {
+            "name": self.name,
+            "config": self.config.to_file_data(),
+            "targets": self.pipeline_configuration.effective_targets,
+            "annotations": self.pipeline_configuration.effective_annotations,
+            "pipelines": [
+                ppl.to_plugin_file_data() for ppl in self.pipelines_by_name.values()
+            ],
+        }
+
     def update_pipeline_configurations(self, other: "PluginConfiguration"):
         """Updates the `PluginConfiguration` pipelines using the
         PipelineConfiguration from the same named pipelines in a different PluginConfiguration object

@@ -3,8 +3,6 @@ from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
 from yaml import SafeLoader
 
-from ..project.plugin import PluginConfiguration
-
 from ..file_io import (
     LazyLoadedTagSafeLoader,
     LoadsFromYaml,
@@ -13,6 +11,7 @@ from ..file_io import (
 )
 from ..pipeline import Step
 from ..pluggable import Pluggable
+from ..project.plugin import PluginConfiguration
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     GraphSchema,
@@ -119,6 +118,9 @@ class Project(
                 for scope in self.scopes_by_name.values()
                 if scope.persist
             },
+            "plugins": [
+                plugin.to_file_data() for plugin in self.plugins_by_name.values() or []
+            ],
             "targets": {
                 name: target.to_file_data()
                 for name, target in self.targets_by_name.items()

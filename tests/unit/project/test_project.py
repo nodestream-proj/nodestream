@@ -23,6 +23,7 @@ from nodestream.project import (
     RunRequest,
     Target,
 )
+from nodestream.project.pipeline_definition import PipelineConfiguration
 from nodestream.project.plugin import PluginConfiguration
 from nodestream.schema.schema import GraphSchema
 
@@ -32,6 +33,24 @@ def targets():
     return {
         "t1": Target("t1", {"a": "b"}),
     }
+
+
+@pytest.fixture
+def plugins():
+    return [
+        PluginConfiguration(
+            "plugin-name",
+            {
+                "plugin-pipeline": PipelineDefinition(
+                    "plugin-pipeline",
+                    Path("path/to/pipeline"),
+                    PipelineConfiguration(["t2"], True, {"pipeline-annotations": True}),
+                )
+            },
+            ScopeConfig({"baz": "qux"}),
+            PipelineConfiguration(["t1"], False, {"foo": "bar"}),
+        )
+    ]
 
 
 @pytest.fixture
@@ -52,8 +71,8 @@ def plugin_scope():
 
 
 @pytest.fixture
-def project(scopes, targets):
-    return Project(scopes, targets=targets)
+def project(scopes, plugins, targets):
+    return Project(scopes, plugins=plugins, targets=targets)
 
 
 @pytest.fixture

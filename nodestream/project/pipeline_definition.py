@@ -131,7 +131,25 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
             result["targets"] = list(targets)
         if annotations or verbose:
             result["annotations"] = annotations
+        if self.configuration.exclude_inherited_targets or verbose:
+            result[
+                "exclude_inherited_targets"
+            ] = self.configuration.exclude_inherited_targets
 
+        return result
+
+    def to_plugin_file_data(self, verbose: bool = False):
+        result = {"name": self.name}
+        annotations = self.configuration.annotations
+        targets = self.configuration.targets
+        if targets or verbose:
+            result["targets"] = list(targets)
+        if annotations or verbose:
+            result["annotations"] = annotations
+        if self.configuration.exclude_inherited_targets or verbose:
+            result[
+                "exclude_inherited_targets"
+            ] = self.configuration.exclude_inherited_targets
         return result
 
     def use_configuration(self, config: PipelineConfiguration):

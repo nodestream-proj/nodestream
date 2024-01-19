@@ -137,6 +137,7 @@ def test_to_file_data(definition, expected_data):
                 "name": "test",
                 "targets": [],
                 "annotations": {},
+                "exclude_inherited_targets": False,
             },
         ),
         (
@@ -150,6 +151,7 @@ def test_to_file_data(definition, expected_data):
                 "name": "test",
                 "targets": [],
                 "annotations": {"foo": True},
+                "exclude_inherited_targets": False,
             },
         ),
         (
@@ -163,11 +165,18 @@ def test_to_file_data(definition, expected_data):
                 "name": "baz",
                 "targets": [],
                 "annotations": {"foo": True},
+                "exclude_inherited_targets": False,
             },
         ),
         (
             PipelineDefinition("baz", Path("test.yaml"), PipelineConfiguration(["t1"])),
-            {"path": "test.yaml", "name": "baz", "targets": ["t1"], "annotations": {}},
+            {
+                "path": "test.yaml",
+                "name": "baz",
+                "targets": ["t1"],
+                "annotations": {},
+                "exclude_inherited_targets": False,
+            },
         ),
     ],
 )
