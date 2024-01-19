@@ -146,7 +146,7 @@ End users can provide values for the `!config` plugin tags in their nodestream.y
           - target2
     ```
 #### Plugin Pipeline Configurations
-End users can provide configuration for each of the plugin provided pipelines by adding the piplines section under the imported plugin in their nodestream.yaml file. The configuration includes annotations targets and exlude_inherited_targets properties the same way as these properties are provided in pipelines defined in the scopes section.
+To configure each plugin provided pipeline, end users can add a "pipelines" key under the imported plugin in their nodestream.yaml file. This configuration can include annotations, targets, and exclude_inherited_targets per pipeline. These properties are defined in the same way as those in pipelines under the scopes section.
 === "nodestream.yaml"
     ```
     plugins:
@@ -157,10 +157,10 @@ End users can provide configuration for each of the plugin provided pipelines by
           - target1
           - target2
         pipelines:
-        - name: plugin_pipeline_1
-            exclude_inherited_targets: True
-            annotations:
-                my_annoation: True
-            targets:
-            - target3
+            - name: plugin_pipeline_1
+                exclude_inherited_targets: True
+                annotations:
+                    my_annoation: True
+                targets:
+                    - target3
     ```
