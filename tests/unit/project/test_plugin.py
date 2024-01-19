@@ -15,8 +15,12 @@ def test_from_plugin_data_complex_input():
     )
 
     assert_that(result.name, equal_to("test"))
-    assert_that(result.targets, equal_to(["target2"]))
-    assert_that(result.annotations, equal_to({"foo": "bar"}))
+    assert_that(
+        result.pipeline_configuration.effective_targets, equal_to(set(["target2"]))
+    )
+    assert_that(
+        result.pipeline_configuration.effective_annotations, equal_to({"foo": "bar"})
+    )
     assert_that(result.config, equal_to(ScopeConfig({"username": "bob"})))
 
 
@@ -54,5 +58,7 @@ def test_update_pipeline_configurations():
     )
 
     result.update_pipeline_configurations(other)
-    assert_that(result.annotations, equal_to({"1": "2"}))
+    assert_that(
+        result.pipeline_configuration.effective_annotations, equal_to({"1": "2"})
+    )
     assert_that(result.pipelines_by_name, equal_to(other.pipelines_by_name))

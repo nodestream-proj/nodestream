@@ -209,9 +209,11 @@ class Project(
 
     def add_plugin_scope(self, name: str, plugin: PluginConfiguration):
         project_plugin_configuration = self.plugins_by_name.get(name)
+
         if project_plugin_configuration:
             plugin.update_pipeline_configurations(project_plugin_configuration)
             scope = plugin.make_scope()
+            print(scope.__dict__)
             self.add_scope(scope)
 
     def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:

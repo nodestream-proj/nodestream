@@ -3,7 +3,7 @@ from typing import Dict, Iterable, List
 
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline.scope_config import ScopeConfig
-from ..project.pipeline_definition import PipelineDefinition
+from ..project.pipeline_definition import PipelineConfiguration, PipelineDefinition
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
@@ -37,11 +37,10 @@ class PipelineScope(
     @classmethod
     def from_file_data(cls, scope_name, file_data):
         pipelines_data = file_data.pop("pipelines", [])
-        annotations = file_data.pop("annotations", {})
         config = file_data.pop("config", None)
-        targets = file_data.pop("targets", [])
+        configuration = PipelineConfiguration.from_file_data(file_data)
         pipelines = [
-            PipelineDefinition.from_file_data(pipeline_data, set(targets), annotations)
+            PipelineDefinition.from_file_data(pipeline_data, configuration)
             for pipeline_data in pipelines_data
         ]
         return cls(

@@ -20,7 +20,9 @@ def test_pipeline_definition_initialize(mocker):
 
 
 def test_from_file_data_string_input():
-    result = PipelineDefinition.from_file_data("path/to/pipeline", set(), {})
+    result = PipelineDefinition.from_file_data(
+        "path/to/pipeline", PipelineConfiguration()
+    )
     assert_that(result.name, equal_to("pipeline"))
     assert_that(result.file_path, equal_to(Path("path/to/pipeline")))
 
@@ -28,13 +30,13 @@ def test_from_file_data_string_input():
 def test_from_file_data_complex_input():
     result = PipelineDefinition.from_file_data(
         {"path": "path/to/pipeline", "name": "test", "annotations": {"foo": "bar"}},
-        set(),
-        {"baz": "qux"},
+        PipelineConfiguration(annotations={"baz": "qux"}),
     )
     assert_that(result.name, equal_to("test"))
     assert_that(result.file_path, equal_to(Path("path/to/pipeline")))
     assert_that(
-        result.configuration.annotations, equal_to({"foo": "bar", "baz": "qux"})
+        result.configuration.effective_annotations,
+        equal_to({"foo": "bar", "baz": "qux"}),
     )
 
 
@@ -46,13 +48,17 @@ def test_from_plugin_data_complex_input():
             "targets": ["target2"],
             "exclude_inherited_targets": True,
         },
-        set("target1"),
-        {"baz": "qux"},
+        PipelineConfiguration(
+            ["target1"],
+            False,
+            {"baz": "qux"},
+        ),
     )
     assert_that(result.name, equal_to("test"))
-    assert_that(result.configuration.targets, equal_to(["target2"]))
+    assert_that(result.configuration.effective_targets, equal_to({"target2"}))
     assert_that(
-        result.configuration.annotations, equal_to({"foo": "bar", "baz": "qux"})
+        result.configuration.effective_annotations,
+        equal_to({"foo": "bar", "baz": "qux"}),
     )
 
 
@@ -64,8 +70,11 @@ def test_use_configuration():
             "targets": ["target2"],
             "exclude_inherited_targets": True,
         },
-        set("target1"),
-        {"baz": "qux"},
+        PipelineConfiguration(
+            ["target1"],
+            False,
+            {"baz": "qux"},
+        ),
     )
     new_config = PipelineConfiguration(set(["other_target"]), False, {"foo": "bar"})
     result.use_configuration(new_config)
@@ -79,7 +88,7 @@ def test_use_configuration():
         (
             (
                 PipelineDefinition(
-                    "test1", Path("test1.yaml"), PipelineConfiguration(set(), False, {})
+                    "test1", Path("test1.yaml"), PipelineConfiguration([], False, {})
                 ),
                 "test1.yaml",
             )
@@ -88,7 +97,7 @@ def test_use_configuration():
             PipelineDefinition(
                 "test2",
                 Path("test2.yaml"),
-                PipelineConfiguration(set(), False, {"foo": True}),
+                PipelineConfiguration([], False, {"foo": True}),
             ),
             {"path": "test2.yaml", "annotations": {"foo": True}},
         ),
@@ -96,13 +105,13 @@ def test_use_configuration():
             PipelineDefinition(
                 "baz3",
                 Path("test3.yaml"),
-                PipelineConfiguration(set(), False, {"foo": True}),
+                PipelineConfiguration([], False, {"foo": True}),
             ),
             {"path": "test3.yaml", "annotations": {"foo": True}, "name": "baz3"},
         ),
         (
             PipelineDefinition(
-                "baz4", Path("test4.yaml"), PipelineConfiguration(set(), False, {})
+                "baz4", Path("test4.yaml"), PipelineConfiguration([], False, {})
             ),
             {"path": "test4.yaml", "name": "baz4"},
         ),
@@ -111,7 +120,7 @@ def test_use_configuration():
 def test_to_file_data(definition, expected_data):
     assert_that(definition.to_file_data(), equal_to(expected_data))
     assert_that(
-        PipelineDefinition.from_file_data(expected_data, set(), {}),
+        PipelineDefinition.from_file_data(expected_data, None),
         equal_to(definition),
     )
 
@@ -121,7 +130,7 @@ def test_to_file_data(definition, expected_data):
     [
         (
             PipelineDefinition(
-                "test", Path("test.yaml"), PipelineConfiguration(set(), False, {})
+                "test", Path("test.yaml"), PipelineConfiguration([], False, {})
             ),
             {
                 "path": "test.yaml",
@@ -134,7 +143,7 @@ def test_to_file_data(definition, expected_data):
             PipelineDefinition(
                 "test",
                 Path("test.yaml"),
-                PipelineConfiguration(set(), False, {"foo": True}),
+                PipelineConfiguration([], False, {"foo": True}),
             ),
             {
                 "path": "test.yaml",
@@ -147,7 +156,7 @@ def test_to_file_data(definition, expected_data):
             PipelineDefinition(
                 "baz",
                 Path("test.yaml"),
-                PipelineConfiguration(set(), False, {"foo": True}),
+                PipelineConfiguration([], False, {"foo": True}),
             ),
             {
                 "path": "test.yaml",
@@ -157,9 +166,7 @@ def test_to_file_data(definition, expected_data):
             },
         ),
         (
-            PipelineDefinition(
-                "baz", Path("test.yaml"), PipelineConfiguration(set(["t1"]))
-            ),
+            PipelineDefinition("baz", Path("test.yaml"), PipelineConfiguration(["t1"])),
             {"path": "test.yaml", "name": "baz", "targets": ["t1"], "annotations": {}},
         ),
     ],
@@ -167,7 +174,7 @@ def test_to_file_data(definition, expected_data):
 def test_to_file_data_verbose(definition, expected_data):
     assert_that(definition.to_file_data(verbose=True), equal_to(expected_data))
     assert_that(
-        PipelineDefinition.from_file_data(expected_data, set(), {}),
+        PipelineDefinition.from_file_data(expected_data, None),
         equal_to(definition),
     )
 

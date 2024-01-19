@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
 from importlib import resources
-from typing import Any, Dict, Set
+from typing import Dict
 
 from schema import Or
 
 from ..file_io import LoadsFromYamlFile
 from ..pipeline.scope_config import ScopeConfig
-from ..project.pipeline_definition import PipelineDefinition
+from ..project.pipeline_definition import PipelineConfiguration, PipelineDefinition
 from ..project.pipeline_scope import PipelineScope
 
 
@@ -21,8 +21,7 @@ class PluginConfiguration(LoadsFromYamlFile):
     name: str
     pipelines_by_name: Dict[str, PipelineDefinition] = field(default_factory=dict)
     config: ScopeConfig = None
-    targets: Set[str] = field(default_factory=set)
-    annotations: Dict[str, Any] = field(default_factory=dict)
+    pipeline_configuration: PipelineConfiguration = None
 
     @classmethod
     def describe_yaml_schema(cls):
@@ -41,13 +40,12 @@ class PluginConfiguration(LoadsFromYamlFile):
     @classmethod
     def from_file_data(cls, data) -> "PluginConfiguration":
         name = data.pop("name")
-        targets = data.pop("targets", [])
         config = data.pop("config")
-        annotations = data.pop("annotations", {})
         pipelines_data = data.pop("pipelines", [])
+        configuration = PipelineConfiguration.from_file_data(data)
         pipelines_by_name = {
             pipeline["name"]: PipelineDefinition.from_plugin_data(
-                pipeline, set(targets), annotations
+                pipeline, configuration
             )
             for pipeline in pipelines_data
         }
@@ -55,8 +53,7 @@ class PluginConfiguration(LoadsFromYamlFile):
             name,
             pipelines_by_name,
             ScopeConfig.from_file_data(config),
-            targets,
-            annotations,
+            configuration,
         )
 
     def update_pipeline_configurations(self, other: "PluginConfiguration"):
@@ -65,10 +62,10 @@ class PluginConfiguration(LoadsFromYamlFile):
 
         Used for merging project plugin configuration with loaded plugin pipeline resources.
         """
+        print(self.pipelines_by_name)
         for name, pipeline in self.pipelines_by_name.items():
             # set the plugin configuration level targets and annotations
-            pipeline.configuration.targets = other.targets
-            pipeline.configuration.annotations = other.annotations
+            pipeline.configuration.parent = other.pipeline_configuration
 
             # override the pipeline configuration if they are available
             other_pipeline = other.pipelines_by_name.get(name)

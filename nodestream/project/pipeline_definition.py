@@ -1,7 +1,7 @@
 import os.path
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Set
+from typing import Any, Dict, Optional, Set
 
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline import Pipeline, PipelineFile, PipelineInitializationArguments
@@ -19,6 +19,7 @@ class PipelineConfiguration:
     targets: Set[str] = field(default_factory=set)
     exclude_inherited_targets: bool = False
     annotations: Dict[str, Any] = field(default_factory=dict)
+    parent: Optional["PipelineConfiguration"] = None
 
     @classmethod
     def from_file_data(cls, data) -> "PipelineConfiguration":
@@ -26,6 +27,20 @@ class PipelineConfiguration:
         targets = data.pop("targets", [])
         exclude_targets = data.pop("exclude_inherited_targets", False)
         return cls(targets, exclude_targets, annotations)
+
+    @property
+    def effective_targets(self) -> Set[str]:
+        targets = set(self.targets)
+        if not self.exclude_inherited_targets and self.parent is not None:
+            targets.update(self.parent.effective_targets)
+        return targets
+
+    @property
+    def effective_annotations(self) -> Dict[str, Any]:
+        annotations = dict(self.annotations)
+        if self.parent is not None:
+            annotations.update(self.parent.effective_annotations)
+        return annotations
 
 
 @dataclass
@@ -81,51 +96,26 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
 
     @classmethod
     def from_file_data(
-        cls, data, parent_targets: set, parent_annotations
+        cls, data, parent_configuration: PipelineConfiguration
     ) -> "PipelineDefinition":
         if isinstance(data, str):
             data = {"path": data}
 
         file_path = Path(data.pop("path"))
         name = data.pop("name", get_default_name(file_path))
-        exclude_targets = data.pop("exclude_inherited_targets", False)
-        annotations = data.pop("annotations", {})
-        targets = data.pop("targets", [])
-        if not exclude_targets:
-            targets = set(targets) | parent_targets
-        return cls(
-            name,
-            file_path,
-            PipelineConfiguration.from_file_data(
-                {
-                    "targets": targets,
-                    "annotations": {**parent_annotations, **annotations},
-                    "exclude_inherited_targets": exclude_targets,
-                },
-            ),
-        )
+
+        configuration = PipelineConfiguration.from_file_data(data)
+        configuration.parent = parent_configuration
+        return cls(name, file_path, configuration)
 
     @classmethod
     def from_plugin_data(
-        cls, data, parent_targets: set, parent_annotations
+        cls, data, parent_configuration: PipelineConfiguration
     ) -> "PipelineDefinition":
         name = data.pop("name")
-        exclude_targets = data.pop("exclude_inherited_targets", False)
-        annotations = data.pop("annotations", {})
-        targets = data.pop("targets", [])
-        if not exclude_targets:
-            targets = set(targets) | parent_targets
-        return cls(
-            name,
-            None,
-            PipelineConfiguration.from_file_data(
-                {
-                    "targets": targets,
-                    "annotations": {**parent_annotations, **annotations},
-                    "exclude_inherited_targets": exclude_targets,
-                },
-            ),
-        )
+        configuration = PipelineConfiguration.from_file_data(data)
+        configuration.parent = parent_configuration
+        return cls(name, None, configuration)
 
     def to_file_data(self, verbose: bool = False):
         using_default_name = self.name == self.file_path.stem
@@ -135,8 +125,8 @@ class PipelineDefinition(IntrospectiveIngestionComponent, SavesToYaml, LoadsFrom
         result = {"path": str(self.file_path)}
         if not using_default_name or verbose:
             result["name"] = self.name
-        annotations = self.configuration.annotations
-        targets = self.configuration.targets
+        annotations = self.configuration.effective_annotations
+        targets = self.configuration.effective_targets
         if targets or verbose:
             result["targets"] = list(targets)
         if annotations or verbose:
