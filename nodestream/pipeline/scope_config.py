@@ -38,5 +38,8 @@ class ScopeConfig(LoadsFromYamlFile):
 
         return cls(data)
 
+    def to_file_data(self):
+        return self.config
+
     def get_config_value(self, key):
         return LazyLoadedArgument.resolve_if_needed(self.config.get(key))

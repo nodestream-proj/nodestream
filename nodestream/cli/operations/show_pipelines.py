@@ -17,7 +17,7 @@ class OutputFormat(ABC):
 
 
 class TableOutputFormat(OutputFormat):
-    HEADERS = ["scope", "name", "file", "annotations"]
+    HEADERS = ["scope", "name", "file", "targets", "annotations"]
 
     def get_data_rows(
         self, matching_pipelines: Iterable[Tuple[str, PipelineDefinition]]
@@ -27,7 +27,8 @@ class TableOutputFormat(OutputFormat):
                 scope,
                 definition.name,
                 str(definition.file_path),
-                "".join(definition.annotations.keys()),
+                ",".join(definition.configuration.effective_targets),
+                ",".join(definition.configuration.effective_annotations.keys()),
             ]
             for scope, definition in matching_pipelines
         ]

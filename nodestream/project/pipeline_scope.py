@@ -1,13 +1,13 @@
 from importlib import resources
-from typing import Dict, Iterable, List, Set
+from typing import Dict, Iterable, List
 
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline.scope_config import ScopeConfig
+from ..project.pipeline_definition import PipelineConfiguration, PipelineDefinition
 from ..schema.schema import (
     AggregatedIntrospectiveIngestionComponent,
     IntrospectiveIngestionComponent,
 )
-from .pipeline_definition import PipelineDefinition
 from .run_request import RunRequest
 
 
@@ -26,34 +26,27 @@ class PipelineScope(
         pipelines: List[PipelineDefinition],
         persist: bool = True,
         config: ScopeConfig = None,
-        targets: Set[str] = frozenset(),
     ) -> None:
         self.persist = persist
         self.name = name
         self.config = config
-        self.targets = targets
         self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
         for pipeline in pipelines:
-            if self.targets is not None:
-                if not pipeline.exclude_inherited_targets:
-                    pipeline.targets = pipeline.targets | self.targets
             self.add_pipeline_definition(pipeline)
 
     @classmethod
     def from_file_data(cls, scope_name, file_data):
         pipelines_data = file_data.pop("pipelines", [])
-        annotations = file_data.pop("annotations", {})
         config = file_data.pop("config", None)
-        targets = file_data.pop("targets", [])
+        configuration = PipelineConfiguration.from_file_data(file_data)
         pipelines = [
-            PipelineDefinition.from_file_data(pipeline_data, annotations)
+            PipelineDefinition.from_file_data(pipeline_data, configuration)
             for pipeline_data in pipelines_data
         ]
         return cls(
             scope_name,
             pipelines,
             config=ScopeConfig.from_file_data(config),
-            targets=set(targets),
         )
 
     @classmethod
@@ -142,12 +135,6 @@ class PipelineScope(
             definition.remove_file(missing_ok=missing_ok)
 
         return True
-
-    def set_configuration(self, config: ScopeConfig):
-        self.config = config
-
-    def set_targets(self, targets: list[str]):
-        self.targets = targets
 
     @classmethod
     def from_resources(

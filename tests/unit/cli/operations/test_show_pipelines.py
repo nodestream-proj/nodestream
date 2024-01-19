@@ -59,8 +59,8 @@ def test_output_table_format(project_with_two_scopes, project_dir, mocker):
     results = ShowPipelines(project_with_two_scopes, "another").get_matching_pipelines()
     subject = TableOutputFormat(command := mocker.Mock())
     subject.output(results)
-    expected_headers = ["scope", "name", "file", "annotations"]
-    expected_rows = [["another", "test", str(project_dir / "test.yaml"), ""]]
+    expected_headers = ["scope", "name", "file", "targets", "annotations"]
+    expected_rows = [["another", "test", str(project_dir / "test.yaml"), "", ""]]
     command.table.assert_called_once_with(expected_headers, expected_rows)
     command.table.return_value.render.assert_called_once()
 
