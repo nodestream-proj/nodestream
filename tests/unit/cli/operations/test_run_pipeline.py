@@ -3,7 +3,7 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations.run_pipeline import RunPipeline, SpinnerProgressIndicator
 from nodestream.pipeline.meta import PipelineContext
-from nodestream.project import Project, PipelineDefinition, PipelineConfiguration
+from nodestream.project import PipelineConfiguration, PipelineDefinition, Project
 
 
 @pytest.fixture
