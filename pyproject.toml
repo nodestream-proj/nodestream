@@ -34,7 +34,6 @@ jmespath = "^1.0.1"
 neo4j = "^5.8.0"
 cleo = "^2.0.1"
 python-json-logger = "^2.0.4"
-cymple = "0.8.1"
 boto3 = "^1.26.137"
 confluent-kafka = "^2.3.0"
 Jinja2 = "^3"
@@ -97,7 +96,6 @@ nodestream = 'nodestream.cli.application:run'
 "commands" = "nodestream.cli.commands"                      
 "audits" = "nodestream.project.audits"                      
 "schema_printers" = "nodestream.schema.printers"
-"databases" = "nodestream.databases.neo4j"
 
 [tool.ruff]
 ignore = ["E501"]

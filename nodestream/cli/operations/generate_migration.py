@@ -18,7 +18,7 @@ class GenerateMigration(Operation):
 
     async def perform(self, command: NodestreamCommand):
         input = CleoMigrationInput(command)
-        result = await self.migrations.generate_migration_from_changes(
+        result = await self.migrations.create_migration_from_changes(
             input, self.current_state
         )
         if result is None:
