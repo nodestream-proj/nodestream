@@ -1,28 +1,28 @@
-from typing import List, Tuple, Set, Dict, Iterable
+from typing import Dict, Iterable, List, Set, Tuple
 
 from ..state import GraphObjectSchema
 from .operations import (
-    Operation,
     AddAdditionalNodePropertyIndex,
-    DropAdditionalNodePropertyIndex,
     AddAdditionalRelationshipPropertyIndex,
-    DropAdditionalRelationshipPropertyIndex,
     AddNodeProperty,
     AddRelationshipProperty,
-    RenameNodeProperty,
-    RenameRelationshipProperty,
-    DropNodeProperty,
-    DropRelationshipProperty,
-    RenameNodeType,
-    RenameRelationshipType,
     CreateNodeType,
     CreateRelationshipType,
+    DropAdditionalNodePropertyIndex,
+    DropAdditionalRelationshipPropertyIndex,
+    DropNodeProperty,
     DropNodeType,
+    DropRelationshipProperty,
     DropRelationshipType,
     NodeKeyExtended,
-    RelationshipKeyExtended,
     NodeKeyPartRenamed,
+    Operation,
+    RelationshipKeyExtended,
     RelationshipKeyPartRenamed,
+    RenameNodeProperty,
+    RenameNodeType,
+    RenameRelationshipProperty,
+    RenameRelationshipType,
 )
 from .state_providers import StateProvider
 

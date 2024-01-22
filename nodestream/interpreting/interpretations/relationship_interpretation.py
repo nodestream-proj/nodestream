@@ -9,11 +9,7 @@ from ...pipeline.value_providers import (
     StaticValueOrValueProvider,
     ValueProvider,
 )
-from ...schema import (
-    SchemaExpansionCoordinator,
-    GraphObjectSchema,
-    Cardinality,
-)
+from ...schema import Cardinality, GraphObjectSchema, SchemaExpansionCoordinator
 from ..record_decomposers import RecordDecomposer
 from .interpretation import Interpretation
 from .source_node_interpretation import SourceNodeInterpretation

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Set
 
 from ..file_io import LoadsFromYaml, SavesToYaml
-from ..pipeline import Pipeline, PipelineInitializationArguments, PipelineFile
+from ..pipeline import Pipeline, PipelineFile, PipelineInitializationArguments
 from ..schema import ExpandsSchema, SchemaExpansionCoordinator
 
 

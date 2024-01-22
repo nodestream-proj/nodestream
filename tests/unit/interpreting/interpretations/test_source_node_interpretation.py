@@ -4,11 +4,11 @@ from nodestream.interpreting.interpretations import SourceNodeInterpretation
 
 from ...stubs import StubbedValueProvider
 from .matchers import (
+    has_no_defined_nodes,
+    has_no_defined_relationships,
     has_node_indexes,
     has_node_keys,
     has_node_properties,
-    has_no_defined_nodes,
-    has_no_defined_relationships,
 )
 
 EXPECTED_NODE_TYPE = "Person"

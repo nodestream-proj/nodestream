@@ -5,12 +5,12 @@ from pathlib import Path
 import pytest
 from hamcrest import (
     assert_that,
+    calling,
     contains_inanyorder,
     equal_to,
     has_length,
-    same_instance,
     raises,
-    calling,
+    same_instance,
 )
 
 from nodestream.pipeline import (
@@ -25,8 +25,8 @@ from nodestream.project import (
     RunRequest,
     Target,
 )
-from nodestream.schema import Schema
 from nodestream.project.plugin import PluginConfiguration
+from nodestream.schema import Schema
 
 
 @pytest.fixture

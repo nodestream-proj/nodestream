@@ -3,7 +3,7 @@ import pytest
 from nodestream.cli.commands import NodestreamCommand
 from nodestream.cli.operations import ExecuteMigrations
 from nodestream.project import Target
-from nodestream.schema.migrations import ProjectMigrations, Migration
+from nodestream.schema.migrations import Migration, ProjectMigrations
 
 
 @pytest.mark.asyncio

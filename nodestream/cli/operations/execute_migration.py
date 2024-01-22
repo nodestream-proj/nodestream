@@ -1,6 +1,6 @@
-from .operation import Operation, NodestreamCommand
 from ...project import Target
 from ...schema.migrations import ProjectMigrations
+from .operation import NodestreamCommand, Operation
 
 
 class ExecuteMigrations(Operation):

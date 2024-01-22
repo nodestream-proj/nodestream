@@ -6,40 +6,39 @@ from itertools import combinations
 from typing import Iterable, Type
 
 import pytest
-from hamcrest import assert_that, has_items, equal_to
+from hamcrest import assert_that, equal_to, has_items
 
 from nodestream.schema.migrations.auto_change_detector import (
     AutoChangeDetector,
     MigratorInput,
 )
 from nodestream.schema.migrations.operations import (
-    Operation,
-    CreateNodeType,
-    CreateRelationshipType,
-    DropNodeType,
-    DropRelationshipType,
+    AddAdditionalNodePropertyIndex,
+    AddAdditionalRelationshipPropertyIndex,
     AddNodeProperty,
     AddRelationshipProperty,
-    DropNodeProperty,
-    DropRelationshipProperty,
-    RenameNodeProperty,
-    RenameRelationshipProperty,
-    RenameNodeType,
-    RenameRelationshipType,
-    AddAdditionalNodePropertyIndex,
+    CreateNodeType,
+    CreateRelationshipType,
     DropAdditionalNodePropertyIndex,
-    AddAdditionalRelationshipPropertyIndex,
     DropAdditionalRelationshipPropertyIndex,
+    DropNodeProperty,
+    DropNodeType,
+    DropRelationshipProperty,
+    DropRelationshipType,
     NodeKeyExtended,
-    RelationshipKeyExtended,
     NodeKeyPartRenamed,
+    Operation,
+    RelationshipKeyExtended,
     RelationshipKeyPartRenamed,
+    RenameNodeProperty,
+    RenameNodeType,
+    RenameRelationshipProperty,
+    RenameRelationshipType,
 )
 from nodestream.schema.migrations.state_providers import (
     InMemoryMigrator,
     StaticStateProvider,
 )
-
 
 ALPHABET = string.ascii_lowercase + string.ascii_uppercase + string.digits
 

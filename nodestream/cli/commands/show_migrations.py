@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Dict, Iterable
+from typing import Dict, Iterable, List
 
 from ...project import Project, Target
 from ...schema.migrations import ProjectMigrations

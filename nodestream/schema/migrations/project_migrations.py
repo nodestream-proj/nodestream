@@ -1,12 +1,12 @@
 from pathlib import Path
-from typing import Optional, AsyncIterable, Tuple
+from typing import AsyncIterable, Optional, Tuple
 
-from .auto_migration_maker import AutoMigrationMaker
+from ..state import Schema
 from .auto_change_detector import AutoChangeDetector, MigratorInput
-from .migrations import MigrationGraph, Migration
+from .auto_migration_maker import AutoMigrationMaker
+from .migrations import Migration, MigrationGraph
 from .migrator import Migrator
 from .state_providers import MigrationGraphStateProvider, StaticStateProvider
-from ..state import Schema
 
 
 class ProjectMigrations:

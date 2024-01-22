@@ -1,5 +1,5 @@
-from .schema_printer import SchemaPrinter
 from ..state import Schema
+from .schema_printer import SchemaPrinter
 
 
 class PlainTestSchemaPrinter(SchemaPrinter, alias="plain"):

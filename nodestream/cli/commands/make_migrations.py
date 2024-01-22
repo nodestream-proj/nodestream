@@ -1,7 +1,7 @@
+from ...schema.migrations import ProjectMigrations
+from ..operations import GenerateMigration
 from .nodestream_command import NodestreamCommand
 from .shared_options import PROJECT_FILE_OPTION
-from ..operations import GenerateMigration
-from ...schema.migrations import ProjectMigrations
 
 
 class MakeMigration(NodestreamCommand):

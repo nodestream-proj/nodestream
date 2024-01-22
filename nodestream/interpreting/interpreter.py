@@ -6,7 +6,7 @@ from nodestream.schema.state import SchemaExpansionCoordinator
 
 from ..pipeline import Transformer
 from ..pipeline.value_providers import ProviderContext
-from ..schema import ExpandsSchemaFromChildren, ExpandsSchema
+from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .interpretations import Interpretation
 from .record_decomposers import RecordDecomposer
 

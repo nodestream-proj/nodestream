@@ -8,13 +8,13 @@ from nodestream.interpreting.interpretations.relationship_interpretation import 
 
 from ...stubs import StubbedValueProvider
 from .matchers import (
+    has_adjaceny,
     has_defined_relationships,
     has_no_defined_nodes,
     has_no_defined_relationships,
     has_node_keys,
     has_node_properties,
     has_relationship_keys,
-    has_adjaceny,
 )
 
 

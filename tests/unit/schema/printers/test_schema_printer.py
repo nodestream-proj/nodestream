@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from nodestream.schema.printers import SchemaPrinter
 from nodestream.schema import Schema
+from nodestream.schema.printers import SchemaPrinter
 
 
 def test_schema_printer_print_schema_to_stdout(mocker):

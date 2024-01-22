@@ -3,9 +3,7 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.model import TimeToLiveConfiguration
 from nodestream.project.audits import AuditPrinter, AuditTimeToLiveConfigurations
-from nodestream.schema import (
-    GraphObjectType,
-)
+from nodestream.schema import GraphObjectType
 
 
 @pytest.mark.asyncio

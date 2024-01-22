@@ -2,28 +2,28 @@ from abc import ABC, abstractmethod
 
 from ..state import Schema
 from .migrations import MigrationGraph
-from .migrator import OperationTypeRoutingMixin, Migrator
+from .migrator import Migrator, OperationTypeRoutingMixin
 from .operations import (
     AddAdditionalNodePropertyIndex,
-    DropAdditionalNodePropertyIndex,
     AddAdditionalRelationshipPropertyIndex,
-    DropAdditionalRelationshipPropertyIndex,
-    RenameNodeProperty,
-    RenameRelationshipProperty,
-    RenameNodeType,
-    RenameRelationshipType,
-    CreateNodeType,
-    CreateRelationshipType,
-    DropNodeType,
-    DropRelationshipType,
     AddNodeProperty,
     AddRelationshipProperty,
+    CreateNodeType,
+    CreateRelationshipType,
+    DropAdditionalNodePropertyIndex,
+    DropAdditionalRelationshipPropertyIndex,
     DropNodeProperty,
+    DropNodeType,
     DropRelationshipProperty,
+    DropRelationshipType,
     NodeKeyExtended,
-    RelationshipKeyExtended,
     NodeKeyPartRenamed,
+    RelationshipKeyExtended,
     RelationshipKeyPartRenamed,
+    RenameNodeProperty,
+    RenameNodeType,
+    RenameRelationshipProperty,
+    RenameRelationshipType,
 )
 
 

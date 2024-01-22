@@ -1,9 +1,9 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Set, Iterable, Optional, Callable, Tuple
+from typing import Callable, Dict, Iterable, Optional, Set, Tuple
 
-from ..file_io import LoadsFromYaml, LoadsFromYamlFile, SavesToYamlFile, SavesToYaml
+from ..file_io import LoadsFromYaml, LoadsFromYamlFile, SavesToYaml, SavesToYamlFile
 
 
 class GraphObjectType(str, Enum):
@@ -390,7 +390,7 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
 
     @classmethod
     def describe_yaml_schema(cls):
-        from schema import Schema, Optional
+        from schema import Optional, Schema
 
         return Schema(
             {

@@ -6,7 +6,7 @@ from ...pipeline.value_providers import (
     StaticValueOrValueProvider,
     ValueProvider,
 )
-from ...schema import SchemaExpansionCoordinator, GraphObjectSchema
+from ...schema import GraphObjectSchema, SchemaExpansionCoordinator
 from .interpretation import Interpretation
 
 # By default, data gathered from this interpretation is lower cased when a string.

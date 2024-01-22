@@ -2,7 +2,7 @@ import pytest
 from freezegun import freeze_time
 from hamcrest import assert_that, equal_to
 
-from nodestream.schema.migrations import Migration, AutoMigrationMaker
+from nodestream.schema.migrations import AutoMigrationMaker, Migration
 
 
 @pytest.fixture

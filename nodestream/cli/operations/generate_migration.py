@@ -1,6 +1,6 @@
-from .operation import Operation, NodestreamCommand
 from ...schema import Schema
 from ...schema.migrations import MigratorInput, ProjectMigrations
+from .operation import NodestreamCommand, Operation
 
 
 class CleoMigrationInput(MigratorInput):

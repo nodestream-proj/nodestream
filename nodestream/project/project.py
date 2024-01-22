@@ -12,7 +12,7 @@ from ..file_io import (
 )
 from ..pipeline import Step
 from ..pluggable import Pluggable
-from ..schema import Schema, ExpandsSchema, ExpandsSchemaFromChildren
+from ..schema import ExpandsSchema, ExpandsSchemaFromChildren, Schema
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .plugin import PluginConfiguration

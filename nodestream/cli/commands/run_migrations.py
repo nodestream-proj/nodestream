@@ -1,6 +1,6 @@
+from ..operations import ExecuteMigrations
 from .nodestream_command import NodestreamCommand
 from .shared_options import PROJECT_FILE_OPTION, TARGETS_OPTION
-from ..operations import ExecuteMigrations
 
 
 class RunMigrations(NodestreamCommand):

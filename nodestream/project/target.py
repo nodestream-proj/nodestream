@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, Dict
 
-from ..schema.migrations import Migrator
 from ..file_io import LazyLoadedArgument
+from ..schema.migrations import Migrator
 
 
 @dataclass(slots=True, frozen=True)

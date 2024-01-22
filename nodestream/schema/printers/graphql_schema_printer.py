@@ -2,13 +2,7 @@ import re
 
 from jinja2 import Environment
 
-from ..state import (
-    Cardinality,
-    GraphObjectSchema,
-    Schema,
-    Adjacency,
-    PropertyType,
-)
+from ..state import Adjacency, Cardinality, GraphObjectSchema, PropertyType, Schema
 from .schema_printer import SchemaPrinter
 
 NODE_TYPE_DEF_TEMPLATE = """

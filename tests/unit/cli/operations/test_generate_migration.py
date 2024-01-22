@@ -3,7 +3,7 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.cli.commands import NodestreamCommand
 from nodestream.cli.operations import GenerateMigration
-from nodestream.schema.migrations import ProjectMigrations, Migration
+from nodestream.schema.migrations import Migration, ProjectMigrations
 
 
 @pytest.mark.asyncio

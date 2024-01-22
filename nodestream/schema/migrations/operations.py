@@ -1,9 +1,9 @@
 import re
-from dataclasses import dataclass, asdict
-from typing import List, Optional, Any, Set
+from dataclasses import asdict, dataclass
+from typing import Any, List, Optional, Set
 
-from ...subclass_registry import SubclassRegistry
 from ...file_io import LoadsFromYaml, SavesToYaml
+from ...subclass_registry import SubclassRegistry
 from ..state import GraphObjectSchema
 
 # TODO: Future enhancements w/ new operations or changing old ones:

@@ -2,30 +2,30 @@ from dataclasses import dataclass
 
 from hamcrest import assert_that, equal_to
 
-from nodestream.schema.state import GraphObjectSchema, PropertyMetadata
 from nodestream.schema.migrations.operations import (
-    Operation,
-    CreateNodeType,
-    CreateRelationshipType,
-    DropNodeType,
-    DropRelationshipType,
-    RenameNodeType,
-    RenameRelationshipType,
-    RenameNodeProperty,
-    RenameRelationshipProperty,
-    AddNodeProperty,
-    AddRelationshipProperty,
-    DropNodeProperty,
-    DropRelationshipProperty,
     AddAdditionalNodePropertyIndex,
     AddAdditionalRelationshipPropertyIndex,
+    AddNodeProperty,
+    AddRelationshipProperty,
+    CreateNodeType,
+    CreateRelationshipType,
     DropAdditionalNodePropertyIndex,
     DropAdditionalRelationshipPropertyIndex,
+    DropNodeProperty,
+    DropNodeType,
+    DropRelationshipProperty,
+    DropRelationshipType,
     NodeKeyExtended,
     NodeKeyPartRenamed,
+    Operation,
     RelationshipKeyExtended,
     RelationshipKeyPartRenamed,
+    RenameNodeProperty,
+    RenameNodeType,
+    RenameRelationshipProperty,
+    RenameRelationshipType,
 )
+from nodestream.schema.state import GraphObjectSchema, PropertyMetadata
 
 
 @dataclass

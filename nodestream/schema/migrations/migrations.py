@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Iterable
+from typing import Dict, Iterable, List
 
-from .operations import Operation
 from ...file_io import LoadsFromYamlFile, SavesToYamlFile
+from .operations import Operation
 
 
 @dataclass(frozen=True, slots=True)

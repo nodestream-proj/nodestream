@@ -5,16 +5,16 @@ from pathlib import Path
 import pytest
 
 from nodestream.model import DesiredIngestion
-from nodestream.project import PipelineDefinition, PipelineScope, Project
 from nodestream.pipeline.value_providers import ProviderContext
+from nodestream.project import PipelineDefinition, PipelineScope, Project
 from nodestream.schema import (
+    Adjacency,
+    AdjacencyCardinality,
     Cardinality,
-    Schema,
     GraphObjectSchema,
     PropertyMetadata,
     PropertyType,
-    AdjacencyCardinality,
-    Adjacency,
+    Schema,
     SchemaExpansionCoordinator,
 )
 

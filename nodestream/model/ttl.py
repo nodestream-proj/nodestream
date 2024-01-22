@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
-from ..schema import GraphObjectType, GraphObjectSchema
+from ..schema import GraphObjectSchema, GraphObjectType
 
 if TYPE_CHECKING:
     from ..databases.ingest_strategy import IngestionStrategy

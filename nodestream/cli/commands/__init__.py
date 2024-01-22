@@ -5,11 +5,11 @@ from .new import New
 from .nodestream_command import NodestreamCommand
 from .print_schema import PrintSchema
 from .remove import Remove
-from .run_migrations import RunMigrations
 from .run import Run
+from .run_migrations import RunMigrations
 from .scaffold import Scaffold
-from .show_migrations import ShowMigrations
 from .show import Show
+from .show_migrations import ShowMigrations
 
 __all__ = (
     "AuditCommand",
