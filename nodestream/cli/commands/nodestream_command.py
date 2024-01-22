@@ -7,6 +7,7 @@ from cleo.io.outputs.output import Verbosity
 
 from ...pluggable import Pluggable
 from ...project import Project
+from ...schema.migrations import ProjectMigrations
 
 if TYPE_CHECKING:
     from ..operations import Operation
@@ -38,6 +39,9 @@ class NodestreamCommand(Command, Pluggable):
 
     def get_project(self) -> Project:
         return Project.read_from_file(self.get_project_path())
+
+    def get_migrations(self) -> ProjectMigrations:
+        return ProjectMigrations.from_directory(self.get_migrations_path())
 
     @property
     def has_json_logging_set(self) -> bool:
