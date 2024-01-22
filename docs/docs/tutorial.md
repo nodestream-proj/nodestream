@@ -308,6 +308,18 @@ Here we tell the interpreter that we want to relate to an `Employee` node with a
 nodestream to know which `Employee` node to relate to, we need to specify the key of the related node. In our case,
 we can do that by extracting the value of `reports_to`  and mapping it to the `employee_id` key.
 
+## Managing the Database 
+
+`nodestream` uses the concept of migrations to manage the schema and state of the database. Every time you make a change
+to the schema of the data, you need to make and run migrations. To do so, run:
+
+```bash
+nodestream migratations make
+```
+
+This will create a new `.yaml` migration file in the `migrations` directory. Each migration file is named with a
+timestamp and (sometimes) a description of the migration. For example:
+
 ## Testing it Out
 
 Alright! We've done a lot of work. Lets see if our results can pay off. But before we get started, we need to have
@@ -321,6 +333,12 @@ docker run \
     --env NEO4J_AUTH=neo4j/neo4j123 \
     --env NEO4J_PLUGINS='["apoc","bloom"]' \
     neo4j:5
+```
+
+Then we can run our migrations:
+
+```bash
+nodestream migrations run --target my-dd
 ```
 
 
