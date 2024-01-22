@@ -1,6 +1,6 @@
 from .nodestream_command import NodestreamCommand
 from .shared_options import PROJECT_FILE_OPTION
-from ..operations import InitializeProject, GenerateMigration
+from ..operations import GenerateMigration
 from ...schema.migrations import ProjectMigrations
 
 
@@ -10,7 +10,7 @@ class MakeMigration(NodestreamCommand):
     options = [PROJECT_FILE_OPTION]
 
     async def handle_async(self):
-        project = await self.run_operation(InitializeProject())
+        project = self.get_project()
         schema = project.get_schema()
         migrations = ProjectMigrations.from_directory(self.get_migrations_path())
         await self.run_operation(GenerateMigration(migrations, schema))

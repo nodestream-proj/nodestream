@@ -10,9 +10,9 @@ class ExecuteMigrations(Operation):
 
     async def perform(self, command: NodestreamCommand):
         migrator = self.target.make_migrator()
-        async with command.spin(
-            f"Executing migrations on target {self.target}...",
-            f"Migrations executed on target {self.target}.",
+        with command.spin(
+            f"Executing migrations on target {self.target.name}...",
+            f"Migrations executed on target {self.target.name}.",
         ):
             async for migration in self.migrations.execute_pending(migrator):
                 command.info(f"Migration {migration.name} executed successfully.")

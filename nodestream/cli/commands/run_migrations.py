@@ -1,6 +1,6 @@
 from .nodestream_command import NodestreamCommand
 from .shared_options import PROJECT_FILE_OPTION, TARGETS_OPTION
-from ..operations import InitializeProject, ExecuteMigrations
+from ..operations import ExecuteMigrations
 
 
 class RunMigrations(NodestreamCommand):
@@ -9,9 +9,8 @@ class RunMigrations(NodestreamCommand):
     options = [PROJECT_FILE_OPTION, TARGETS_OPTION]
 
     async def handle_async(self):
-        project = await self.run_operation(InitializeProject())
-        targets = self.option("target")
-        for target in targets:
+        project = self.get_project()
+        for target in self.option("target"):
             await self.run_operation(ExecuteMigrations(project, target))
         else:
             self.info("No targets specified, nothing to do.")
