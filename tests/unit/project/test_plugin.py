@@ -57,7 +57,7 @@ def test_update_pipeline_configurations():
         },
     )
 
-    result.update_pipeline_configurations(other)
+    result.update_configurations(other)
     assert_that(
         result.pipeline_configuration.effective_annotations, equal_to({"1": "2"})
     )
