@@ -13,7 +13,7 @@ from .query_executor import (
 
 
 class NullMigrator(Migrator):
-    def execute_operation(self, _: Operation):
+    async def execute_operation(self, _: Operation):
         pass
 
 

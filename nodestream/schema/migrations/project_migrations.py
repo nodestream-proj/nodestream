@@ -65,7 +65,7 @@ class ProjectMigrations:
         Yields:
             The names of the migrations that were executed.
         """
-        async for migration, pending in self.determine_pending():
+        async for migration, pending in self.determine_pending(migrator):
             if pending:
                 await migrator.execute_migration(migration)
                 yield migration

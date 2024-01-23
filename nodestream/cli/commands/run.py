@@ -1,6 +1,11 @@
 from cleo.helpers import option
 
-from ..operations import InitializeLogger, InitializeProject, RunPipeline
+from ..operations import (
+    InitializeLogger,
+    InitializeProject,
+    RunPipeline,
+    ExecuteMigrations,
+)
 from .nodestream_command import NodestreamCommand
 from .shared_options import (
     JSON_OPTION,
@@ -39,9 +44,25 @@ class Run(NodestreamCommand):
             default=1000,
             flag=False,
         ),
+        option(
+            "auto-migrate",
+            description="Ensuree all specified targets are migrated before running specified pipelines",
+            flag=True,
+        ),
     ]
+
+    async def auto_migrate_targets_if_needed(self, project):
+        if not self.option("auto-migrate"):
+            return
+
+        targets = self.option("targets")
+        migrations = self.get_migrations()
+        for target_name in targets:
+            target = project.get_target_by_name(target_name)
+            await self.run_operation(ExecuteMigrations(migrations, target))
 
     async def handle_async(self):
         await self.run_operation(InitializeLogger())
         project = await self.run_operation(InitializeProject())
+        await self.auto_migrate_targets_if_needed(project)
         await self.run_operation(RunPipeline(project))

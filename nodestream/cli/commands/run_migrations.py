@@ -10,7 +10,13 @@ class RunMigrations(NodestreamCommand):
 
     async def handle_async(self):
         project = self.get_project()
-        for target in self.option("target"):
-            await self.run_operation(ExecuteMigrations(project, target))
-        else:
+        migrations = self.get_migrations()
+        targets = self.option("target")
+
+        if len(targets) == 0:
             self.info("No targets specified, nothing to do.")
+            return
+
+        for target_name in targets:
+            target = project.get_target_by_name(target_name)
+            await self.run_operation(ExecuteMigrations(migrations, target))
