@@ -67,12 +67,13 @@ class PluginConfiguration(LoadsFromYamlFile):
             ],
         }
 
-    def update_pipeline_configurations(self, other: "PluginConfiguration"):
-        """Updates the `PluginConfiguration` pipelines using the
-        PipelineConfiguration from the same named pipelines in a different PluginConfiguration object
+    def update_configurations(self, other: "PluginConfiguration"):
+        """Updates the `PluginConfiguration` using the
+        PluginConfiguration from the provided PluginConfiguration object.
 
-        Used for merging project plugin configuration with loaded plugin pipeline resources.
+        Used for adding project plugin configurations to plugins pipelines loaded from resources.
         """
+        self.config = other.config
         for name, pipeline in self.pipelines_by_name.items():
             # set the plugin configuration level targets and annotations
             pipeline.configuration.parent = other.pipeline_configuration
