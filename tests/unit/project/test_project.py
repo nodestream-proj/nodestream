@@ -336,10 +336,13 @@ def test_load_plugin_from_resources():
     project.add_plugin_scope_from_pipeline_resources(
         "test", "tests.unit.project.fixtures.pipelines"
     )
+    plugin_scope = project.scopes_by_name["test"]
+    assert_that(project.plugins_by_name["test"].name, equal_to("test"))
 
-    # loads config into scope properly
+    # loads scope properly
+    assert_that(plugin_scope.name, equal_to("test"))
     assert_that(
-        project.scopes_by_name["test"].config,
+        plugin_scope.config,
         equal_to(
             ScopeConfig(
                 config={
