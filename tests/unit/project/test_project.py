@@ -11,6 +11,7 @@ from hamcrest import (
     same_instance,
 )
 
+from nodestream.file_io import LazyLoadedArgument
 from nodestream.pipeline import (
     PipelineInitializationArguments,
     PipelineProgressReporter,
@@ -335,4 +336,17 @@ def test_load_plugin_from_resources():
     project.add_plugin_scope_from_pipeline_resources(
         "test", "tests.unit.project.fixtures.pipelines"
     )
-    assert_that(project.plugins_by_name["test"].name, equal_to("test"))
+
+    # loads config into scope properly
+    assert_that(
+        project.scopes_by_name["test"].config,
+        equal_to(
+            ScopeConfig(
+                config={
+                    "PluginUsername": LazyLoadedArgument(
+                        tag="env", value="USERNAME_ENV"
+                    )
+                }
+            )
+        ),
+    )

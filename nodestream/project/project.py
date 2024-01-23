@@ -213,6 +213,7 @@ class Project(
         project_plugin_configuration = self.plugins_by_name.get(name)
 
         if project_plugin_configuration:
+            plugin.config = self.plugins_by_name.get(name).config
             plugin.update_pipeline_configurations(project_plugin_configuration)
             scope = plugin.make_scope()
             self.add_scope(scope)
