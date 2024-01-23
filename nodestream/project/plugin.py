@@ -69,7 +69,7 @@ class PluginConfiguration(LoadsFromYamlFile):
 
     def update_configurations(self, other: "PluginConfiguration"):
         """Updates the `PluginConfiguration` using the
-        PluginConfiguration using the provided PluginConfiguration object.
+        PluginConfiguration from the provided PluginConfiguration object.
 
         Used for adding project plugin configurations to plugins pipelines loaded from resources.
         """
