@@ -49,7 +49,7 @@ class PipelineScope(
 
     @classmethod
     def describe_yaml_schema(cls):
-        from schema import Optional, Or, Schema, Use, And
+        from schema import And, Optional, Or, Schema, Use
 
         return Schema(
             {

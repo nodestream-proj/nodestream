@@ -25,7 +25,7 @@ class PluginConfiguration(LoadsFromYamlFile):
 
     @classmethod
     def describe_yaml_schema(cls):
-        from schema import Optional, Schema, And, Use
+        from schema import And, Optional, Schema, Use
 
         return Schema(
             {
