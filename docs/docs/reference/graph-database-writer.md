@@ -29,3 +29,9 @@ The name of the logical database to use. If not specified, the default database 
 #### `use_enterprise_features`
 
 If set to `true`, the Neo4j Enterprise features will be used. Defaults to `false`.
+
+#### `**kwargs`
+
+Any additional keyword arguments will be passed to the [neo4j driver](https://neo4j.com/docs/api/python-driver/current/api.html#driver-configuration-ref). 
+
+For example, you can set `max_connection_lifetime` to `60` seconds by setting `max_connection_lifetime: 60` in the configuration.
