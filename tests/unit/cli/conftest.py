@@ -19,9 +19,9 @@ def project_dir():
 
 @pytest.fixture
 def default_scope(pipeline_definition):
-    return PipelineScope("default", [pipeline_definition])
+    return PipelineScope("default", {pipeline_definition.name: pipeline_definition})
 
 
 @pytest.fixture
 def project_with_default_scope(default_scope):
-    return Project([default_scope])
+    return Project({default_scope.name: default_scope})

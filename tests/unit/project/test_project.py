@@ -59,19 +59,19 @@ def scopes():
     return [
         PipelineScope(
             "scope1",
-            [
-                PipelineDefinition(
+            {
+                "test": PipelineDefinition(
                     "test",
                     Path(
                         "path/to/pipeline",
                     ),
                     PipelineConfiguration(["t1"], False, {"foo": "bar"}),
                 )
-            ],
+            },
         ),
         PipelineScope(
             "scope2",
-            [PipelineDefinition("test2", Path("path/to/pipeline"))],
+            {"test2": PipelineDefinition("test2", Path("path/to/pipeline"))},
             config=ScopeConfig({"baz": "qux"}),
         ),
     ]
@@ -79,14 +79,14 @@ def scopes():
 
 @pytest.fixture
 def plugin_scope():
-    return [
-        PipelineScope("scope3", []),
-    ]
+    return PipelineScope("scope3", {})
 
 
 @pytest.fixture
 def project(scopes, plugins, targets):
-    return Project(scopes, plugins=plugins, targets=targets)
+    scopes_by_name = {scope.name: scope for scope in scopes}
+    plugins_by_name = {plugin.name: plugin for plugin in plugins}
+    return Project(scopes_by_name, plugins_by_name, targets)
 
 
 @pytest.fixture
@@ -121,8 +121,8 @@ async def test_project_runs_pipeline_in_scope_when_present(
 
 def test_project_init_sets_up_plugin_scope_when_present(plugin_scope):
     project = Project(
-        plugin_scope,
-        [],
+        {plugin_scope.name: plugin_scope},
+        {},
     )
     plugin_config = PluginConfiguration(
         name="plugin_scope",
@@ -145,8 +145,8 @@ def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
     plugin_scope,
 ):
     project = Project(
-        plugin_scope,
-        [],
+        {plugin_scope.name: plugin_scope},
+        {},
     )
     plugin_config = PluginConfiguration(
         name="other",
@@ -246,7 +246,7 @@ def test_project_from_file():
     assert_that(result.scopes_by_name, has_length(1))
     assert_that(
         result.scopes_by_name["perpetual"].config,
-        equal_to(ScopeConfig(config=None)),
+        equal_to(None),
     )
 
 

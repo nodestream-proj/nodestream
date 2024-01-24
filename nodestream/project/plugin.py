@@ -93,9 +93,7 @@ class PluginConfiguration(LoadsFromYamlFile):
 
     def make_scope(self) -> PipelineScope:
         """Creates a `PipelineScope` object from the `PluginConfiguration` object"""
-        return PipelineScope(
-            self.name, self.pipelines_by_name.values(), False, self.config
-        )
+        return PipelineScope(self.name, self.pipelines_by_name, False, self.config)
 
     @classmethod
     def from_resources(

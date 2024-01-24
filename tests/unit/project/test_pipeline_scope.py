@@ -21,12 +21,8 @@ def pipelines():
 
 @pytest.fixture
 def scope(pipelines):
-    return PipelineScope("scope", pipelines)
-
-
-def test_pipeline_scope_organizes_pipeines_by_name(scope, pipelines):
-    assert_that(scope["pipeline1"], same_instance(pipelines[0]))
-    assert_that(scope["pipeline2"], same_instance(pipelines[1]))
+    pipelines_by_name = {p.name: p for p in pipelines}
+    return PipelineScope("scope", pipelines_by_name)
 
 
 @pytest.mark.asyncio
