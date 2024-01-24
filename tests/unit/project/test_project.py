@@ -353,3 +353,12 @@ def test_load_plugin_from_resources():
             )
         ),
     )
+
+
+def test_project_load_and_reload():
+    project = Project.read_from_file(
+        Path("tests/unit/project/fixtures/simple_project_with_config_targets.yaml")
+    )
+    project_data = project.to_file_data()
+    reloaded = Project.validate_and_load(project_data)
+    assert_that(reloaded, equal_to(project))

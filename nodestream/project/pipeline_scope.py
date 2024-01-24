@@ -1,5 +1,6 @@
+from dataclasses import dataclass, field
 from importlib import resources
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, Optional
 
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline.scope_config import ScopeConfig
@@ -15,43 +16,40 @@ class MissingExpectedPipelineError(ValueError):
     pass
 
 
+@dataclass
 class PipelineScope(
     AggregatedIntrospectiveIngestionComponent, LoadsFromYaml, SavesToYaml
 ):
     """A `PipelineScope` represents a collection of pipelines subordinate to a project."""
 
-    def __init__(
-        self,
-        name: str,
-        pipelines: List[PipelineDefinition],
-        persist: bool = True,
-        config: ScopeConfig = None,
-    ) -> None:
-        self.persist = persist
-        self.name = name
-        self.config = config
-        self.pipelines_by_name: Dict[str, PipelineDefinition] = {}
-        for pipeline in pipelines:
-            self.add_pipeline_definition(pipeline)
+    name: str
+    pipelines_by_name: Dict[str, PipelineDefinition] = field(default_factory=dict)
+    persist: bool = True
+    config: Optional[ScopeConfig] = None
+    pipeline_configuration: PipelineConfiguration = field(
+        default_factory=PipelineConfiguration
+    )
 
     @classmethod
     def from_file_data(cls, scope_name, file_data):
         pipelines_data = file_data.pop("pipelines", [])
         config = file_data.pop("config", None)
         configuration = PipelineConfiguration.from_file_data(file_data)
-        pipelines = [
-            PipelineDefinition.from_file_data(pipeline_data, configuration)
-            for pipeline_data in pipelines_data
-        ]
-        return cls(
+        instance = cls(
             scope_name,
-            pipelines,
-            config=ScopeConfig.from_file_data(config),
+            config=ScopeConfig.from_file_data(config) if config else None,
+            pipeline_configuration=configuration,
         )
+
+        for pipeline_data in pipelines_data:
+            definition = PipelineDefinition.from_file_data(pipeline_data, configuration)
+            instance.add_pipeline_definition(definition)
+
+        return instance
 
     @classmethod
     def describe_yaml_schema(cls):
-        from schema import Optional, Or, Schema
+        from schema import Optional, Or, Schema, Use, And
 
         return Schema(
             {
@@ -62,14 +60,22 @@ class PipelineScope(
                     str: Or(str, int, float, bool),
                 },
                 Optional("config"): ScopeConfig.describe_yaml_schema(),
-                Optional("targets"): [str],
+                Optional("targets"): And(Use(set), {str}),
             }
         )
 
     def to_file_data(self):
-        return {
+        data = {
             "pipelines": [ppl.to_file_data() for ppl in self.pipelines_by_name.values()]
         }
+        if self.config:
+            data["config"] = self.config.to_file_data()
+        if self.pipeline_configuration.annotations:
+            data["annotations"] = self.pipeline_configuration.annotations
+        if self.pipeline_configuration.targets:
+            data["targets"] = list(self.pipeline_configuration.targets)
+
+        return data
 
     def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         return self.pipelines_by_name.values()
