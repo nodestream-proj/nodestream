@@ -3,11 +3,11 @@ from copy import deepcopy
 from hamcrest import assert_that, equal_to, has_key, not_
 
 from nodestream.schema import (
-    Schema,
     Adjacency,
     AdjacencyCardinality,
     Cardinality,
     PropertyType,
+    Schema,
 )
 
 

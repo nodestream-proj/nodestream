@@ -1,7 +1,7 @@
 from typing import AsyncGenerator, Iterable
 
-from ..pipeline.pipeline import empty_async_generator
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
+from ..pipeline.pipeline import empty_async_generator
 from ..schema.migrations import Migrator
 from ..schema.migrations.operations import Operation
 from .copy import TypeRetriever

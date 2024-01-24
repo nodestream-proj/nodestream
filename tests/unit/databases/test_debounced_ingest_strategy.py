@@ -2,10 +2,7 @@ import pytest
 from hamcrest import assert_that, empty, equal_to
 
 from nodestream.databases import DebouncedIngestStrategy
-from nodestream.databases.query_executor import (
-    OperationOnNodeIdentity,
-    OperationOnRelationshipIdentity,
-)
+from nodestream.databases.query_executor import OperationOnNodeIdentity
 from nodestream.model import (
     IngestionHookRunRequest,
     Node,
@@ -15,7 +12,7 @@ from nodestream.model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
-from nodestream.schema import GraphObjectSchema, GraphObjectType
+from nodestream.schema import GraphObjectType
 
 
 @pytest.fixture

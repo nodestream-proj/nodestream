@@ -5,9 +5,8 @@ from typing import Dict, Iterable, Optional
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline.scope_config import ScopeConfig
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
-from .pipeline_definition import PipelineDefinition
+from .pipeline_definition import PipelineConfiguration, PipelineDefinition
 from .run_request import RunRequest
-from .pipeline_definition import PipelineConfiguration
 
 
 class MissingExpectedPipelineError(ValueError):

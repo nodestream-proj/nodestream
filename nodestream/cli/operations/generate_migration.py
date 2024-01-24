@@ -1,5 +1,5 @@
 from ...schema import Schema
-from ...schema.migrations import MigratorInput, ProjectMigrations, Migration
+from ...schema.migrations import Migration, MigratorInput, ProjectMigrations
 from .operation import NodestreamCommand, Operation
 
 

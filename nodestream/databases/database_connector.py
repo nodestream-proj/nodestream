@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
 from ..pluggable import Pluggable
-from ..schema.migrations import Migrator
 from ..subclass_registry import SubclassRegistry
 from .copy import TypeRetriever
 from .query_executor import QueryExecutor

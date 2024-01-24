@@ -3,7 +3,6 @@ from hamcrest import assert_that, has_length
 
 from nodestream.databases.copy import Copier
 from nodestream.model import Node, Relationship, RelationshipWithNodes
-from nodestream.schema import GraphObjectSchema, PropertyMetadata
 
 
 @pytest.fixture

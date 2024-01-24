@@ -44,7 +44,7 @@ class PropertyMetadata(LoadsFromYaml, SavesToYaml):
 
     @classmethod
     def describe_yaml_schema(cls):
-        from schema import Schema, Optional
+        from schema import Optional, Schema
 
         return Schema(
             {

@@ -1,7 +1,7 @@
 import pytest
 from hamcrest import assert_that, equal_to, has_length
 
-from nodestream.schema.migrations import Migrator, ProjectMigrations, MigratorInput
+from nodestream.schema.migrations import Migrator, MigratorInput, ProjectMigrations
 
 
 @pytest.fixture

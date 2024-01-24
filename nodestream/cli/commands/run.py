@@ -1,10 +1,10 @@
 from cleo.helpers import option
 
 from ..operations import (
+    ExecuteMigrations,
     InitializeLogger,
     InitializeProject,
     RunPipeline,
-    ExecuteMigrations,
 )
 from .nodestream_command import NodestreamCommand
 from .shared_options import (

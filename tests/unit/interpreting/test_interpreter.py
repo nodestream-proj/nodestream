@@ -2,7 +2,7 @@ from unittest.mock import call
 
 import pytest
 from freezegun import freeze_time
-from hamcrest import assert_that, equal_to, has_length, instance_of
+from hamcrest import assert_that, equal_to, instance_of
 
 from nodestream.interpreting.interpretations import SourceNodeInterpretation
 from nodestream.interpreting.interpreter import (
@@ -18,7 +18,6 @@ from nodestream.interpreting.record_decomposers import (
 )
 from nodestream.model import DesiredIngestion
 from nodestream.pipeline import IterableExtractor
-from nodestream.pipeline.pipeline import empty_async_generator
 from nodestream.pipeline.value_providers import ProviderContext
 
 

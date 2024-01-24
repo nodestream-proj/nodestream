@@ -290,7 +290,7 @@ def test_get_schema_no_overrides(project, mocker):
 def test_get_schema_with_overrides(project, mocker):
     project.make_schema = mocker.Mock(Schema)
     Schema.read_from_file = mocker.Mock(Schema)
-    project.get_schema(path := Path("some/path"))
+    project.get_schema(Path("some/path"))
     project.make_schema.assert_called_once()
     project.make_schema.return_value.merge.assert_called_once_with(
         Schema.read_from_file.return_value

@@ -1,6 +1,5 @@
 import pytest
 
-
 from nodestream.schema.migrations import Migration, MigrationGraph
 
 
