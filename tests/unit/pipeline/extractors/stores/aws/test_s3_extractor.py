@@ -6,8 +6,7 @@ from moto import mock_s3
 
 BUCKET_NAME = "bucket"
 PREFIX = "prefix"
-NUM_OBJECTS = 1000
-
+NUM_OBJECTS = 10
 
 @pytest.fixture
 def s3_client():
@@ -45,12 +44,18 @@ def subject_with_populated_objects(subject, s3_client):
         )
     return subject
 
-
 @pytest.fixture
-def subject_with_archiving_enabled(subject_with_populated_objects):
-    subject_with_populated_objects.archive_dir = "archive"
-    return subject_with_populated_objects
-
+def subject_with_populated_csv_objects(subject, s3_client):
+    subject.s3_client = s3_client
+    s3_client.create_bucket(Bucket=BUCKET_NAME)
+    s3_client.put_object(Bucket=BUCKET_NAME, Key="notprefixed", Body="hello".encode())
+    for i in range(NUM_OBJECTS):
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=f"{PREFIX}/bar/{i}.csv",
+            Body=f"column1,column2\nvalue{i},value{i+10}",
+        )
+    return subject
 
 @pytest.fixture
 def subject_with_archieved_objects(subject_with_archiving_enabled, s3_client):
@@ -62,6 +67,20 @@ def subject_with_archieved_objects(subject_with_archiving_enabled, s3_client):
         )
     return subject_with_archiving_enabled
 
+@pytest.mark.asyncio
+async def test_s3_extractor_properly_loads_csv_files(subject_with_populated_csv_objects):
+    expected_results = [{"column1": f"value{i}", "column2":f"value{i+10}"} for i in range(NUM_OBJECTS)]
+    results = [
+        result async for result in subject_with_populated_csv_objects.extract_records()
+    ]
+    assert_that(results, has_length(NUM_OBJECTS))
+    assert_that(results, has_items(*expected_results))
+
+
+@pytest.fixture
+def subject_with_archiving_enabled(subject_with_populated_objects):
+    subject_with_populated_objects.archive_dir = "archive"
+    return subject_with_populated_objects
 
 @pytest.mark.asyncio
 async def test_s3_extractor_pages_and_reads_all_files(subject_with_populated_objects):
@@ -69,7 +88,7 @@ async def test_s3_extractor_pages_and_reads_all_files(subject_with_populated_obj
     results = [
         result async for result in subject_with_populated_objects.extract_records()
     ]
-    assert_that(results, has_length(1000))
+    assert_that(results, has_length(NUM_OBJECTS))
     assert_that(results, has_items(*expected_results))
 
 

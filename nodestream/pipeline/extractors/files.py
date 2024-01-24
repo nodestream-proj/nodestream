@@ -73,7 +73,10 @@ class TextFileFormat(SupportedFileFormat, alias=".txt"):
 
 class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
-        return DictReader(TextIOWrapper(fp))
+        print(type(fp))
+        if not isinstance(fp, TextIOWrapper):
+            return DictReader(TextIOWrapper(fp))
+        return DictReader(fp)
 
 
 class YamlFileFormat(SupportedFileFormat, alias=".yaml"):
