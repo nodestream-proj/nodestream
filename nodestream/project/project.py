@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
@@ -25,6 +26,7 @@ from .target import Target
 T = TypeVar("T", bound=Step)
 
 
+@dataclass
 class Project(
     AggregatedIntrospectiveIngestionComponent, LoadsFromYamlFile, SavesToYamlFile
 ):
@@ -35,6 +37,10 @@ class Project(
     When interacting with nodestream programmatically, you will typically interact with a project object.
     This is where pipeline execution begins and where all data about the project is stored.
     """
+
+    scopes_by_name: Dict[str, PipelineScope] = field(default_factory=dict)
+    plugins_by_name: Dict[str, PluginConfiguration] = field(default_factory=dict)
+    targets_by_name: Dict[str, Target] = field(default_factory=dict)
 
     @classmethod
     def read_from_file(cls, file_path: Path) -> LoadsFromYaml:
@@ -99,7 +105,11 @@ class Project(
         targets = data.pop("targets", {})
         target_cfgs = {name: Target(name, value) for name, value in targets.items()}
 
-        project = cls(scopes, plugins, target_cfgs)
+        project = cls(targets_by_name=target_cfgs)
+        for plugin in plugins:
+            project.add_plugin(plugin)
+        for scope in scopes:
+            project.add_scope(scope)
         ProjectPlugin.execute_activate(project)
         ProjectPlugin.execute_after_project_load(project)
         return project
@@ -126,21 +136,6 @@ class Project(
                 for name, target in self.targets_by_name.items()
             },
         }
-
-    def __init__(
-        self,
-        scopes: List[PipelineScope],
-        plugins: List[PluginConfiguration] = None,
-        targets: Dict[str, Target] = None,
-    ):
-        self.scopes_by_name: Dict[str, PipelineScope] = {}
-        self.plugins_by_name: Dict[str, PluginConfiguration] = {}
-        self.targets_by_name = targets
-        for scope in scopes:
-            self.add_scope(scope)
-        if plugins:
-            for plugin in plugins:
-                self.add_plugin(plugin)
 
     def get_target_by_name(self, target_name: str) -> Optional[Target]:
         """Returns the target with the given name.

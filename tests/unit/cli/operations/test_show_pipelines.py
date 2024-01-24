@@ -12,7 +12,7 @@ from nodestream.project import PipelineDefinition, PipelineScope
 @pytest.fixture
 def project_with_two_scopes(project_with_default_scope, project_dir):
     another_pipeline = PipelineDefinition("test", project_dir / "test.yaml")
-    another_scope = PipelineScope("another", [another_pipeline])
+    another_scope = PipelineScope("another", {another_pipeline.name: another_pipeline})
     project_with_default_scope.add_scope(another_scope)
     return project_with_default_scope
 
