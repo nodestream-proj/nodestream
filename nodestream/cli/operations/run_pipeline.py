@@ -60,7 +60,7 @@ class RunPipeline(Operation):
         self, command: NodestreamCommand, pipeline: PipelineDefinition
     ):
         from_cli = set(command.option("target") or {})
-        from_pipeline = set(pipeline.targets or {})
+        from_pipeline = set(pipeline.configuration.effective_targets or {})
         return from_cli.union(from_pipeline)
 
     def make_run_request(

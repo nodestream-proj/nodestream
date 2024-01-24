@@ -147,24 +147,24 @@ class SwitchTransformer(Transformer):
     )
 
     @classmethod
-    def from_file_data(cls, switch_on, cases, default, normalization=None):
+    def from_file_data(cls, switch_on, cases, default=None, normalization=None):
         transformers = {
             field_value: ClassLoader().load_class(**transformer)
             for field_value, transformer in cases.items()
         }
-        default = ClassLoader().load_class(**default) if default else PassTransformer
+        default = ClassLoader().load_class(**default) if default else None
         return cls(switch_on, transformers, default, normalization)
 
     def __init__(
         self,
         switch_on: StaticValueOrValueProvider,
         transformers: Dict[str, Transformer],
-        default: Transformer = PassTransformer,
+        default: Transformer = None,
         normalization: Dict[str, Any] = None,
     ):
         self.switch_on = ValueProvider.guarantee_value_provider(switch_on)
         self.transformers = transformers
-        self.default = default
+        self.default = default if default else PassTransformer()
         self.normalization = normalization or {}
 
     async def transform_record(self, record: Any):

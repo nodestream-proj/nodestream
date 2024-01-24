@@ -20,8 +20,11 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
         database_name: str = "neo4j",
         use_enterprise_features: bool = False,
         use_apoc: bool = True,
+        **driver_kwargs
     ):
-        driver = AsyncGraphDatabase.driver(uri, auth=(username, password))
+        driver = AsyncGraphDatabase.driver(
+            uri, auth=(username, password), **driver_kwargs
+        )
         if use_enterprise_features:
             index_query_builder = Neo4jEnterpriseIndexQueryBuilder()
         else:

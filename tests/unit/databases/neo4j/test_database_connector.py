@@ -56,3 +56,16 @@ def test_from_file_data_with_enterprise_features():
     assert_that(
         connector.index_query_builder, instance_of(Neo4jEnterpriseIndexQueryBuilder)
     )
+
+
+def test_from_file_data_additional_driver_args():
+    connector = Neo4jDatabaseConnector.from_file_data(
+        uri="bolt://localhost:7687",
+        username="neo4j",
+        password="password",
+        database_name="neo4j",
+        use_enterprise_features=True,
+        use_apoc=False,
+        encrypted=True,
+    )
+    assert_that(connector.driver.encrypted, equal_to(True))

@@ -3,7 +3,7 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations.run_pipeline import RunPipeline, SpinnerProgressIndicator
 from nodestream.pipeline.meta import PipelineContext
-from nodestream.project import Project
+from nodestream.project import PipelineConfiguration, PipelineDefinition, Project
 
 
 @pytest.fixture
@@ -61,20 +61,21 @@ def test_spinner_progress_callback(mocker):
 @pytest.mark.parametrize(
     "from_cli,from_pipeline,expected",
     [
-        (None, set(), set()),
-        (set(), None, set()),
-        (["t1", "t2"], None, {"t1", "t2"}),
-        (None, {"t1", "t2"}, {"t1", "t2"}),
+        (set(), set(), set()),
+        (["t1", "t2"], set(), {"t1", "t2"}),
+        (set(), {"t1", "t2"}, {"t1", "t2"}),
         (["t1", "t2"], {"t2", "t3"}, {"t1", "t2", "t3"}),
     ],
 )
 def test_combine_targets_from_command_and_pipeline(
     mocker, from_cli, from_pipeline, expected
 ):
-    command, pipeline = mocker.Mock(), mocker.Mock()
+    command = mocker.Mock()
+    pipeline = PipelineDefinition(
+        None, None, configuration=PipelineConfiguration(targets=from_pipeline)
+    )
     command.option.return_value = from_cli
-    pipeline.targets = from_pipeline
-    result = RunPipeline(mocker.Mock()).combine_targets_from_command_and_pipeline(
+    result = RunPipeline(None).combine_targets_from_command_and_pipeline(
         command, pipeline
     )
     assert_that(result, equal_to(expected))

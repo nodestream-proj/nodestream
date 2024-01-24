@@ -3,8 +3,15 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
-from hamcrest import assert_that, equal_to, has_length, same_instance
+from hamcrest import (
+    assert_that,
+    contains_inanyorder,
+    equal_to,
+    has_length,
+    same_instance,
+)
 
+from nodestream.file_io import LazyLoadedArgument
 from nodestream.pipeline import (
     PipelineInitializationArguments,
     PipelineProgressReporter,
@@ -17,6 +24,7 @@ from nodestream.project import (
     RunRequest,
     Target,
 )
+from nodestream.project.pipeline_definition import PipelineConfiguration
 from nodestream.project.plugin import PluginConfiguration
 from nodestream.schema.schema import GraphSchema
 
@@ -29,25 +37,56 @@ def targets():
 
 
 @pytest.fixture
+def plugins():
+    return [
+        PluginConfiguration(
+            "plugin-name",
+            {
+                "plugin-pipeline": PipelineDefinition(
+                    "plugin-pipeline",
+                    Path("path/to/pipeline"),
+                    PipelineConfiguration(["t2"], True, {"pipeline-annotations": True}),
+                )
+            },
+            ScopeConfig({"baz": "qux"}),
+            PipelineConfiguration(["t1"], False, {"foo": "bar"}),
+        )
+    ]
+
+
+@pytest.fixture
 def scopes():
     return [
-        PipelineScope("scope1", [PipelineDefinition("test", Path("path/to/pipeline"))]),
         PipelineScope(
-            "scope2", [PipelineDefinition("test2", Path("path/to/pipeline"))]
+            "scope1",
+            {
+                "test": PipelineDefinition(
+                    "test",
+                    Path(
+                        "path/to/pipeline",
+                    ),
+                    PipelineConfiguration(["t1"], False, {"foo": "bar"}),
+                )
+            },
+        ),
+        PipelineScope(
+            "scope2",
+            {"test2": PipelineDefinition("test2", Path("path/to/pipeline"))},
+            config=ScopeConfig({"baz": "qux"}),
         ),
     ]
 
 
 @pytest.fixture
 def plugin_scope():
-    return [
-        PipelineScope("scope3", []),
-    ]
+    return PipelineScope("scope3", {})
 
 
 @pytest.fixture
-def project(scopes, targets):
-    return Project(scopes, targets=targets)
+def project(scopes, plugins, targets):
+    scopes_by_name = {scope.name: scope for scope in scopes}
+    plugins_by_name = {plugin.name: plugin for plugin in plugins}
+    return Project(scopes_by_name, plugins_by_name, targets)
 
 
 @pytest.fixture
@@ -81,29 +120,41 @@ async def test_project_runs_pipeline_in_scope_when_present(
 
 
 def test_project_init_sets_up_plugin_scope_when_present(plugin_scope):
-    Project(
-        plugin_scope,
-        [
-            PluginConfiguration(
-                name="scope3", config=ScopeConfig({"PluginUsername": "bob"})
-            )
-        ],
+    project = Project(
+        {plugin_scope.name: plugin_scope},
+        {},
     )
-    assert plugin_scope[0].config == ScopeConfig({"PluginUsername": "bob"})
+    plugin_config = PluginConfiguration(
+        name="plugin_scope",
+        config=ScopeConfig({"PluginUsername": "bob"}),
+    )
+    project.add_plugin(plugin_config)
+    project.add_plugin_scope("plugin_scope", plugin_config)
+    assert project.plugins_by_name["plugin_scope"].config == ScopeConfig(
+        {"PluginUsername": "bob"}
+    )
+    assert_that(
+        project.scopes_by_name["plugin_scope"].config.get_config_value(
+            "PluginUsername"
+        ),
+        equal_to("bob"),
+    )
 
 
 def test_project_init_doesnt_set_up_plugin_scope_when_non_matching_name_present(
     plugin_scope,
 ):
-    Project(
-        plugin_scope,
-        [
-            PluginConfiguration(
-                name="other_scope", config=ScopeConfig({"PluginUsername": "bob"})
-            )
-        ],
+    project = Project(
+        {plugin_scope.name: plugin_scope},
+        {},
     )
-    assert plugin_scope[0].config is None
+    plugin_config = PluginConfiguration(
+        name="other",
+        config=ScopeConfig({"PluginUsername": "bob"}),
+    )
+    project.add_plugin(plugin_config)
+    project.add_plugin_scope("plugin_scope", plugin_config)
+    assert project.scopes_by_name.get("plugin_scope") is None
 
 
 def test_project_from_with_with_targets():
@@ -115,12 +166,12 @@ def test_project_from_with_with_targets():
 
 def test_project_from_file_with_config(add_env_var):
     file_name = Path("tests/unit/project/fixtures/simple_project_with_config.yaml")
-    result = Project.read_from_file(file_name)
+    result: Project = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
 
-    assert_that(result.plugins[0].name, equal_to("test"))
+    assert_that(result.plugins_by_name["test"].name, equal_to("test"))
     assert_that(
-        result.plugins[0].get_config_value("PluginUsername"),
+        result.plugins_by_name["test"].config.get_config_value("PluginUsername"),
         equal_to("bob"),
     )
     assert_that(
@@ -129,18 +180,63 @@ def test_project_from_file_with_config(add_env_var):
     )
 
 
-def test_project_from_with_config_targets(add_env_var):
+def test_project_from_file_with_config_targets(add_env_var):
     result = Project.read_from_file(
         Path("tests/unit/project/fixtures/simple_project_with_config_targets.yaml")
     )
-    assert_that(result.targets_by_name, equal_to({"t1": Target("t1", {"a": "b"})}))
     assert_that(
-        result.scopes_by_name["perpetual"].config.get_config_value("Username"),
+        result.targets_by_name,
+        equal_to({"t1": Target("t1", {"a": "b"}), "t2": Target("t2", {"c": "d"})}),
+    )
+    assert_that(
+        result.scopes_by_name["config_targets_only"].config.get_config_value(
+            "Username"
+        ),
         equal_to("bob"),
     )
     assert_that(
-        result.scopes_by_name["perpetual"].pipelines_by_name["target-pipeline"].targets,
-        equal_to(["t1"]),
+        result.scopes_by_name["config_targets_only"]
+        .pipelines_by_name["target-pipeline"]
+        .configuration.effective_targets,
+        contains_inanyorder(*["t1"]),
+    )
+
+
+def test_project_from_file_with_scope_targets(add_env_var):
+    result = Project.read_from_file(
+        Path("tests/unit/project/fixtures/simple_project_with_config_targets.yaml")
+    )
+    assert_that(
+        result.targets_by_name,
+        equal_to({"t1": Target("t1", {"a": "b"}), "t2": Target("t2", {"c": "d"})}),
+    )
+    assert_that(
+        result.scopes_by_name["scope_targets"].config.get_config_value("Username"),
+        equal_to("bob"),
+    )
+    assert_that(
+        result.scopes_by_name["scope_targets"]
+        .pipelines_by_name["scope-target-pipeline"]
+        .configuration.effective_targets,
+        contains_inanyorder(*["t1"]),
+    )
+    assert_that(
+        result.scopes_by_name["scope_targets"]
+        .pipelines_by_name["scope-and-config-target-pipeline"]
+        .configuration.effective_targets,
+        contains_inanyorder(*["t1", "t2"]),
+    )
+    assert_that(
+        result.scopes_by_name["overlapping_targets"]
+        .pipelines_by_name["scope-and-config-target-pipeline"]
+        .configuration.effective_targets,
+        contains_inanyorder(*["t1", "t2"]),
+    )
+    assert_that(
+        result.scopes_by_name["exclude_inherited_targets"]
+        .pipelines_by_name["scope-and-config-target-pipeline"]
+        .configuration.effective_targets,
+        contains_inanyorder(*["t2"]),
     )
 
 
@@ -149,12 +245,8 @@ def test_project_from_file():
     result = Project.read_from_file(file_name)
     assert_that(result.scopes_by_name, has_length(1))
     assert_that(
-        result.plugins,
-        equal_to([]),
-    )
-    assert_that(
         result.scopes_by_name["perpetual"].config,
-        equal_to(ScopeConfig(config=None)),
+        equal_to(None),
     )
 
 
@@ -236,3 +328,37 @@ def test_project_load_lifecycle_hooks_calls_all_hooks_on_all_plugins(mocker):
         plugin.before_project_load.assert_called_once_with(file_path)
         plugin.activate.assert_called_once_with(project)
         plugin.after_project_load.assert_called_once_with(project)
+
+
+def test_load_plugin_from_resources():
+    file_path = Path("tests/unit/project/fixtures/simple_project_with_config.yaml")
+    project = Project.read_from_file(file_path)
+    project.add_plugin_scope_from_pipeline_resources(
+        "test", "tests.unit.project.fixtures.pipelines"
+    )
+    plugin_scope = project.scopes_by_name["test"]
+    assert_that(project.plugins_by_name["test"].name, equal_to("test"))
+
+    # loads scope properly
+    assert_that(plugin_scope.name, equal_to("test"))
+    assert_that(
+        plugin_scope.config,
+        equal_to(
+            ScopeConfig(
+                config={
+                    "PluginUsername": LazyLoadedArgument(
+                        tag="env", value="USERNAME_ENV"
+                    )
+                }
+            )
+        ),
+    )
+
+
+def test_project_load_and_reload():
+    project = Project.read_from_file(
+        Path("tests/unit/project/fixtures/simple_project_with_config_targets.yaml")
+    )
+    project_data = project.to_file_data()
+    reloaded = Project.validate_and_load(project_data)
+    assert_that(reloaded, equal_to(project))

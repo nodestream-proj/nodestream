@@ -1,5 +1,6 @@
 from yaml import load
 
+from ...file_io import LazyLoadedArgument
 from .argument_resolver import ArgumentResolver
 
 
@@ -11,4 +12,5 @@ class IncludeFileResolver(ArgumentResolver, alias="include"):
         from ..pipeline_file_loader import PipelineFileContents
 
         with open(file_path) as f:
-            return load(f, Loader=PipelineFileContents.get_loader())
+            data = load(f, Loader=PipelineFileContents.get_loader())
+            return LazyLoadedArgument.resolve_if_needed(data)
