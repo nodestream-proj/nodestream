@@ -42,7 +42,9 @@ class S3Extractor(Extractor):
         self.logger = getLogger(__name__)
 
     def get_object_as_io(self, key: str) -> StringIO:
-        return self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"].read().decode('utf-8')
+        data = self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"].read().decode('utf-8')
+        print(data, type(data))
+        return data
 
     def archive_s3_object(self, key: str):
         if self.archive_dir:

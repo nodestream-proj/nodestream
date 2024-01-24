@@ -58,7 +58,7 @@ class SupportedFileFormat(Pluggable, ABC):
 
 class JsonFileFormat(SupportedFileFormat, alias=".json"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
-        return [json.load(fp)]
+        return [json.loads(fp)]
 
 
 class LineSeperatedJsonFileFormat(SupportedFileFormat, alias=".jsonl"):
