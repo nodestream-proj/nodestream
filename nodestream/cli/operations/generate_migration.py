@@ -28,7 +28,7 @@ class GenerateMigration(Operation):
         command.line(f"The migration contains {num_changes} schema changes.")
 
         for operation in migration.operations:
-            command.line(f"  - {operation.suggest_migration_name_slug()}")
+            command.line(f"  - {operation.describe()}")
 
     async def perform(self, command: NodestreamCommand):
         input = CleoMigrationInput(command)

@@ -296,7 +296,7 @@ def test_rename_node_type_old_name():
 
 
 def test_rename_node_type_new_name():
-    name = RenameNodeType("Person", "Human").old_proposed_index_name
+    name = RenameNodeType("Person", "Human").new_proposed_index_name
     assert_that(name, equal_to("Human_node_key"))
 
 
