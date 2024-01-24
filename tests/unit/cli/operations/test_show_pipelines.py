@@ -12,7 +12,7 @@ from nodestream.project import PipelineDefinition, PipelineScope
 @pytest.fixture
 def project_with_two_scopes(project_with_default_scope, project_dir):
     another_pipeline = PipelineDefinition("test", project_dir / "test.yaml")
-    another_scope = PipelineScope("another", [another_pipeline])
+    another_scope = PipelineScope("another", {another_pipeline.name: another_pipeline})
     project_with_default_scope.add_scope(another_scope)
     return project_with_default_scope
 
@@ -59,8 +59,8 @@ def test_output_table_format(project_with_two_scopes, project_dir, mocker):
     results = ShowPipelines(project_with_two_scopes, "another").get_matching_pipelines()
     subject = TableOutputFormat(command := mocker.Mock())
     subject.output(results)
-    expected_headers = ["scope", "name", "file", "annotations"]
-    expected_rows = [["another", "test", str(project_dir / "test.yaml"), ""]]
+    expected_headers = ["scope", "name", "file", "targets", "annotations"]
+    expected_rows = [["another", "test", str(project_dir / "test.yaml"), "", ""]]
     command.table.assert_called_once_with(expected_headers, expected_rows)
     command.table.return_value.render.assert_called_once()
 

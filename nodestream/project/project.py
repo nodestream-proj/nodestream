@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple, Type, TypeVar
 
@@ -22,6 +23,7 @@ from .target import Target
 T = TypeVar("T", bound=Step)
 
 
+@dataclass
 class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
     """A `Project` represents a collection of pipelines.
 
@@ -30,6 +32,10 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
     When interacting with nodestream programmatically, you will typically interact with a project object.
     This is where pipeline execution begins and where all data about the project is stored.
     """
+
+    scopes_by_name: Dict[str, PipelineScope] = field(default_factory=dict)
+    plugins_by_name: Dict[str, PluginConfiguration] = field(default_factory=dict)
+    targets_by_name: Dict[str, Target] = field(default_factory=dict)
 
     @classmethod
     def read_from_file(cls, file_path: Path) -> LoadsFromYaml:
@@ -95,7 +101,11 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         targets = data.pop("targets", {})
         target_cfgs = {name: Target(name, value) for name, value in targets.items()}
 
-        project = cls(scopes, plugins, target_cfgs)
+        project = cls(targets_by_name=target_cfgs)
+        for plugin in plugins:
+            project.add_plugin(plugin)
+        for scope in scopes:
+            project.add_scope(scope)
         ProjectPlugin.execute_activate(project)
         ProjectPlugin.execute_after_project_load(project)
         return project
@@ -114,30 +124,28 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 for scope in self.scopes_by_name.values()
                 if scope.persist
             },
-            "plugins": [plugin.to_file_data() for plugin in self.plugins or []],
+            "plugins": [
+                plugin.to_file_data() for plugin in self.plugins_by_name.values()
+            ],
             "targets": {
                 name: target.to_file_data()
                 for name, target in self.targets_by_name.items()
             },
         }
 
-    def __init__(
-        self,
-        scopes: List[PipelineScope],
-        plugins: List[PluginConfiguration] = None,
-        targets: Dict[str, Target] = None,
-    ):
-        self.scopes_by_name: Dict[str, PipelineScope] = {}
-        self.plugins = plugins
-        self.targets_by_name = targets
-        for scope in scopes:
-            self.add_scope(scope)
-
     def get_target_by_name(self, target_name: str) -> Target:
+        """Returns the target with the given name.
+
+        Args:
+            target_name (str): The name of the target to return.
+
+        Returns:
+            Optional[Target]: The target with the given name, or None if no target was found.
+        """
         try:
             return self.targets_by_name[target_name]
-        except KeyError as e:
-            raise ValueError(f"Target {target_name} not found.") from e
+        except KeyError:
+            raise ValueError(f"Target {target_name} not specified in the project.")
 
     async def run(self, request: RunRequest) -> int:
         """Takes a run request and runs the appropriate pipeline.
@@ -172,12 +180,35 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         Args:
             scope (PipelineScope): The scope to add.
         """
-        if self.plugins is not None:
-            for plugin in self.plugins:
-                if plugin.name == scope.name:
-                    scope.set_configuration(plugin.config)
-                    scope.set_targets(plugin.targets)
         self.scopes_by_name[scope.name] = scope
+
+    def add_plugin(self, plugin: PluginConfiguration):
+        """Adds a plugin to the project.
+
+        Args:
+            plugin (PluginConfiguration): The pluginto add.
+        """
+
+        self.plugins_by_name[plugin.name] = plugin
+
+    def add_plugin_scope_from_pipeline_resources(self, name: str, package: str):
+        """Adds a plugin from external pipeline resources to the project.
+
+        Args:
+            name (str): The plugin name.
+            package (str): the package location from the plugin repo root.
+        """
+        plugin_from_resources = PluginConfiguration.from_resources(
+            name=name, package=package
+        )
+        self.add_plugin_scope(name, plugin_from_resources)
+
+    def add_plugin_scope(self, name: str, plugin: PluginConfiguration):
+        project_plugin_configuration = self.plugins_by_name.get(name)
+        if project_plugin_configuration:
+            plugin.update_configurations(project_plugin_configuration)
+            scope = plugin.make_scope()
+            self.add_scope(scope)
 
     def get_scopes_by_name(self, scope_name: Optional[str]) -> Iterable[PipelineScope]:
         """Returns the scopes with the given name.
