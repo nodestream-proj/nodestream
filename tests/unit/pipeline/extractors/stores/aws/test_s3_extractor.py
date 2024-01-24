@@ -8,6 +8,7 @@ BUCKET_NAME = "bucket"
 PREFIX = "prefix"
 NUM_OBJECTS = 10
 
+
 @pytest.fixture
 def s3_client():
     with mock_s3():
@@ -44,6 +45,7 @@ def subject_with_populated_objects(subject, s3_client):
         )
     return subject
 
+
 @pytest.fixture
 def subject_with_populated_csv_objects(subject, s3_client):
     subject.s3_client = s3_client
@@ -57,6 +59,7 @@ def subject_with_populated_csv_objects(subject, s3_client):
         )
     return subject
 
+
 @pytest.fixture
 def subject_with_archieved_objects(subject_with_archiving_enabled, s3_client):
     for i in range(NUM_OBJECTS):
@@ -67,9 +70,14 @@ def subject_with_archieved_objects(subject_with_archiving_enabled, s3_client):
         )
     return subject_with_archiving_enabled
 
+
 @pytest.mark.asyncio
-async def test_s3_extractor_properly_loads_csv_files(subject_with_populated_csv_objects):
-    expected_results = [{"column1": f"value{i}", "column2":f"value{i+10}"} for i in range(NUM_OBJECTS)]
+async def test_s3_extractor_properly_loads_csv_files(
+    subject_with_populated_csv_objects,
+):
+    expected_results = [
+        {"column1": f"value{i}", "column2": f"value{i+10}"} for i in range(NUM_OBJECTS)
+    ]
     results = [
         result async for result in subject_with_populated_csv_objects.extract_records()
     ]
@@ -81,6 +89,7 @@ async def test_s3_extractor_properly_loads_csv_files(subject_with_populated_csv_
 def subject_with_archiving_enabled(subject_with_populated_objects):
     subject_with_populated_objects.archive_dir = "archive"
     return subject_with_populated_objects
+
 
 @pytest.mark.asyncio
 async def test_s3_extractor_pages_and_reads_all_files(subject_with_populated_objects):
