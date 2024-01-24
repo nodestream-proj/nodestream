@@ -5,37 +5,25 @@ from nodestream.schema.migrations import Migration, MigrationGraph
 from nodestream.schema.migrations.operations import CreateNodeType
 
 
-def test_migration_is_root_migration():
-    migration = Migration(name="test_migration", operations=[], dependencies=[])
-    assert_that(migration.is_root_migration(), is_(equal_to(True)))
+def test_migration_is_root_migration(root_migration):
+    assert_that(root_migration.is_root_migration(), is_(equal_to(True)))
 
 
-def test_migration_is_not_root_migration():
-    migration = Migration(
-        name="test_migration", operations=[], dependencies=["other_migration"]
-    )
-    assert_that(migration.is_root_migration(), is_(equal_to(False)))
+def test_migration_is_not_root_migration(leaf_migration):
+    assert_that(leaf_migration.is_root_migration(), is_(equal_to(False)))
 
 
-def test_migration_is_leaf_migration():
-    migration = Migration(name="test_migration", operations=[], dependencies=[])
-    graph = MigrationGraph.from_iterable([migration])
-    assert_that(migration.is_leaf_migration(graph), is_(equal_to(True)))
+def test_migration_is_leaf_migration(leaf_migration, migration_graph):
+    assert_that(leaf_migration.is_leaf_migration(migration_graph), is_(equal_to(True)))
 
 
-def test_migration_is_not_leaf_migration():
-    migration = Migration(name="test_migration", operations=[], dependencies=[])
-    child = Migration(
-        name="other_migration", operations=[], dependencies=["test_migration"]
-    )
-    graph = MigrationGraph.from_iterable([migration, child])
-    assert_that(migration.is_leaf_migration(graph), is_(equal_to(False)))
+def test_migration_is_not_leaf_migration(migration_graph, root_migration):
+    assert_that(root_migration.is_leaf_migration(migration_graph), is_(equal_to(False)))
 
 
-def test_migration_write_to_file_with_default_name(tmp_path):
-    migration = Migration(name="test_migration", operations=[], dependencies=[])
-    migration.write_to_file_with_default_name(tmp_path)
-    assert_that((tmp_path / "test_migration.yaml").exists(), is_(equal_to(True)))
+def test_migration_write_to_file_with_default_name(tmp_path, root_migration):
+    root_migration.write_to_file_with_default_name(tmp_path)
+    assert_that((tmp_path / "root_migration.yaml").exists(), is_(equal_to(True)))
 
 
 def test_migration_to_and_from_file_data():
@@ -68,11 +56,11 @@ def test_migration_to_and_from_file_data():
         ),
         MigrationGraph.from_iterable(
             [
-                Migration(name="a", operations=[], dependencies=[]),
                 Migration(name="b", operations=[], dependencies=["a"]),
+                Migration(name="a", operations=[], dependencies=[]),
                 Migration(name="c", operations=[], dependencies=["b"]),
-                Migration(name="d", operations=[], dependencies=["b"]),
                 Migration(name="e", operations=[], dependencies=["c", "d"]),
+                Migration(name="d", operations=[], dependencies=["b"]),
             ]
         ),
     ],

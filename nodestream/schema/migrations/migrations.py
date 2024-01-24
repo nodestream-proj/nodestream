@@ -104,7 +104,7 @@ class MigrationGraph:
         for migration in self.all_migrations():
             for required_migration in self.plan_to_execute_migration(migration):
                 if required_migration not in plan_order:
-                    plan_order.append(migration)
+                    plan_order.append(required_migration)
 
         return plan_order
 

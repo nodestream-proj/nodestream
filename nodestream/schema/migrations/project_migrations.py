@@ -17,8 +17,6 @@ class ProjectMigrations:
     from changes in the project schema.
     """
 
-    __slots__ = ("graph", "source_directory")
-
     def __init__(self, graph: MigrationGraph, source_directory: Path) -> None:
         self.graph = graph
         self.source_directory = source_directory

@@ -44,7 +44,7 @@ class PropertyMetadata(LoadsFromYaml, SavesToYaml):
 
     @classmethod
     def describe_yaml_schema(cls):
-        from schema import Schema
+        from schema import Schema, Optional
 
         return Schema(
             {
@@ -306,71 +306,20 @@ class GraphObjectSchema(LoadsFromYaml, SavesToYaml):
 
 
 @dataclass(slots=True, frozen=True)
-class Adjacency(LoadsFromYaml, SavesToYaml):
+class Adjacency:
     """An adjacency between two node types."""
 
     from_node_type: str
     to_node_type: str
     relationship_type: str
 
-    @classmethod
-    def describe_yaml_schema(cls):
-        from schema import Schema
-
-        return Schema(
-            {
-                "from": str,
-                "to": str,
-                "relationship": str,
-            }
-        )
-
-    @classmethod
-    def from_file_data(cls, yaml_data):
-        return cls(
-            from_node_type=yaml_data["from"],
-            to_node_type=yaml_data["to"],
-            relationship_type=yaml_data["relationship"],
-        )
-
-    def to_file_data(self):
-        return {
-            "from": self.from_node_type,
-            "to": self.to_node_type,
-            "relationship": self.relationship_type,
-        }
-
 
 @dataclass(slots=True, frozen=True)
-class AdjacencyCardinality(LoadsFromYaml, SavesToYaml):
+class AdjacencyCardinality:
     """An adjacency cardinality."""
 
     from_side_cardinality: Cardinality = Cardinality.SINGLE
     to_side_cardinality: Cardinality = Cardinality.SINGLE
-
-    @classmethod
-    def describe_yaml_schema(cls):
-        from schema import Schema
-
-        return Schema(
-            {
-                "from": str,
-                "to": str,
-            }
-        )
-
-    @classmethod
-    def from_file_data(cls, yaml_data):
-        return cls(
-            from_side_cardinality=Cardinality(yaml_data["from"]),
-            to_side_cardinality=Cardinality(yaml_data["to"]),
-        )
-
-    def to_file_data(self):
-        return {
-            "from": self.from_side_cardinality.value,
-            "to": self.to_side_cardinality.value,
-        }
 
 
 @dataclass(slots=True, frozen=True)
@@ -581,7 +530,7 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
         all_types = set(self.type_schemas).union(set(other.type_schemas))
         for obj_type, type in all_types:
             us = self.get_by_type_and_object_type(obj_type, type)
-            them = self.get_by_type_and_object_type(obj_type, type)
+            them = other.get_by_type_and_object_type(obj_type, type)
             us.merge(them)
 
     def has_node_of_type(self, node_type_name: str) -> bool:
