@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from importlib import resources
-from typing import Dict
+from typing import Dict, Optional
 
 from schema import Or
 
@@ -20,18 +20,18 @@ class PluginConfiguration(LoadsFromYamlFile):
 
     name: str
     pipelines_by_name: Dict[str, PipelineDefinition] = field(default_factory=dict)
-    config: ScopeConfig = None
+    config: Optional[ScopeConfig] = None
     pipeline_configuration: PipelineConfiguration = None
 
     @classmethod
     def describe_yaml_schema(cls):
-        from schema import Optional, Schema
+        from schema import And, Optional, Schema, Use
 
         return Schema(
             {
                 "name": str,
                 Optional("config"): ScopeConfig.describe_yaml_schema(),
-                Optional("targets"): [str],
+                Optional("targets"): And(Use(set), {str}),
                 Optional("annotations"): {str: Or(str, int, float, bool)},
                 Optional("pipelines"): [PipelineDefinition.describe_yaml_schema()],
             }
@@ -52,20 +52,28 @@ class PluginConfiguration(LoadsFromYamlFile):
         return cls(
             name,
             pipelines_by_name,
-            ScopeConfig.from_file_data(config),
+            ScopeConfig.from_file_data(config) if config else None,
             configuration,
         )
 
     def to_file_data(self):
-        return {
-            "name": self.name,
-            "config": self.config.to_file_data(),
-            "targets": self.pipeline_configuration.effective_targets,
-            "annotations": self.pipeline_configuration.effective_annotations,
-            "pipelines": [
+        data = {"name": self.name}
+
+        if self.config is not None:
+            data["config"] = self.config.to_file_data()
+
+        if annotations := self.pipeline_configuration.annotations:
+            data["annotations"] = annotations
+
+        if targets := self.pipeline_configuration.targets:
+            data["targets"] = list(targets)
+
+        if self.pipelines_by_name:
+            data["pipelines"] = [
                 ppl.to_plugin_file_data() for ppl in self.pipelines_by_name.values()
-            ],
-        }
+            ]
+
+        return data
 
     def update_configurations(self, other: "PluginConfiguration"):
         """Updates the `PluginConfiguration` using the
@@ -85,9 +93,7 @@ class PluginConfiguration(LoadsFromYamlFile):
 
     def make_scope(self) -> PipelineScope:
         """Creates a `PipelineScope` object from the `PluginConfiguration` object"""
-        return PipelineScope(
-            self.name, self.pipelines_by_name.values(), False, self.config
-        )
+        return PipelineScope(self.name, self.pipelines_by_name, False, self.config)
 
     @classmethod
     def from_resources(
