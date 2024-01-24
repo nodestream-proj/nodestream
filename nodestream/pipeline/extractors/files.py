@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
 from glob import glob
-from io import StringIO
+from io import StringIO, TextIOWrapper
 from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from typing import Any, AsyncGenerator, Iterable, Union
@@ -58,7 +58,7 @@ class SupportedFileFormat(Pluggable, ABC):
 
 class JsonFileFormat(SupportedFileFormat, alias=".json"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
-        return [json.loads(fp)]
+        return [json.load(fp)]
 
 
 class LineSeperatedJsonFileFormat(SupportedFileFormat, alias=".jsonl"):
@@ -73,7 +73,7 @@ class TextFileFormat(SupportedFileFormat, alias=".txt"):
 
 class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
-        return DictReader(fp)
+        return DictReader(TextIOWrapper(fp))
 
 
 class YamlFileFormat(SupportedFileFormat, alias=".yaml"):
