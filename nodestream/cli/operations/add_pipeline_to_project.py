@@ -24,6 +24,6 @@ class AddPipelineToProject(Operation):
         if self.scope_name in self.project.scopes_by_name:
             return self.project.scopes_by_name[self.scope_name]
 
-        scope = PipelineScope(self.scope_name, [])
+        scope = PipelineScope(self.scope_name, {})
         self.project.add_scope(scope)
         return scope

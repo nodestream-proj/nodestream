@@ -1,3 +1,4 @@
+import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.model import (
@@ -40,3 +41,18 @@ def test_relationship_into_ingest():
             ]
         ),
     )
+
+
+@pytest.mark.parametrize(
+    "keys,expected",
+    [
+        ({"name": "John"}, True),
+        ({"name": None}, False),
+        ({"name": "John", "age": 30}, True),
+        ({"name": "John", "age": None}, False),
+        ({"name": None, "age": None}, False),
+    ],
+)
+def test_node_key_validity(keys, expected):
+    node = Node("Person", keys)
+    assert_that(node.has_valid_id, equal_to(expected))
