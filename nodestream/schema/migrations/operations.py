@@ -67,6 +67,9 @@ class Operation(LoadsFromYaml, SavesToYaml):
         Returns:
             A migration name slug.
         """
+        return "_".join(self.describe().lower().split(" "))
+
+    def describe(self) -> str:
         return self.type_as_snake_case()
 
     @classmethod
@@ -111,8 +114,8 @@ class CreateNodeType(Operation):
     def proposed_index_name(self) -> str:
         return f"{self.name}_node_key"
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"create_node_type_{self.name}"
+    def describe(self) -> str:
+        return f"Create node type {self.name}"
 
     def as_node_type(self) -> GraphObjectSchema:
         schema = GraphObjectSchema(self.name)
@@ -143,8 +146,8 @@ class CreateRelationshipType(Operation):
     def proposed_index_name(self) -> str:
         return f"{self.name}_relationship_key"
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"create_relationship_type_{self.name}"
+    def describe(self) -> str:
+        return f"Create relationship type {self.name}"
 
     def as_relationship_type(self) -> GraphObjectSchema:
         schema = GraphObjectSchema(self.name)
@@ -173,8 +176,8 @@ class DropNodeType(Operation):
     def proposed_index_name(self) -> str:
         return f"{self.name}_node_key"
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"drop_node_{self.name}"
+    def describe(self) -> str:
+        return f"Drop node type {self.name}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -191,8 +194,8 @@ class DropRelationshipType(Operation):
 
     name: str
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"drop_relationship_{self.name}"
+    def describe(self) -> str:
+        return f"Drop relationship {self.name}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -213,8 +216,8 @@ class RenameNodeProperty(Operation):
     old_property_name: str
     new_property_name: str
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"rename_{self.node_type}_{self.old_property_name}_to_{self.new_property_name}"
+    def describe(self) -> str:
+        return f"Rename node property {self.old_property_name} to {self.new_property_name} on node type {self.node_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -235,8 +238,8 @@ class RenameRelationshipProperty(Operation):
     old_property_name: str
     new_property_name: str
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"rename_{self.relationship_type}_{self.old_property_name}_to_{self.new_property_name}"
+    def describe(self) -> str:
+        return f"Rename relationship property {self.old_property_name} to {self.new_property_name} on relationship type {self.relationship_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -263,8 +266,8 @@ class RenameNodeType(Operation):
     def new_proposed_index_name(self) -> str:
         return f"{self.new_type}_node_key"
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"rename_node_type_{self.old_type}_to_{self.new_type}"
+    def describe(self) -> str:
+        return f"Rename node type {self.old_type} to {self.new_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -283,8 +286,8 @@ class RenameRelationshipType(Operation):
     old_type: str
     new_type: str
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"rename_relationship_type_{self.old_type}_to_{self.new_type}"
+    def describe(self) -> str:
+        return f"Rename relationship type {self.old_type} to {self.new_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -305,8 +308,8 @@ class AddAdditionalNodePropertyIndex(Operation):
     def proposed_index_name(self) -> str:
         return f"{self.node_type}_{self.field_name}_additional_index"
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"add_index_{self.node_type}_{self.field_name}"
+    def describe(self) -> str:
+        return f"Add additional index for node type {self.node_type} on field {self.field_name}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -327,8 +330,8 @@ class DropAdditionalNodePropertyIndex(Operation):
     def proposed_index_name(self) -> str:
         return f"{self.node_type}_{self.field_name}_additional_index"
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"drop_index_{self.node_type}_{self.field_name}"
+    def describe(self) -> str:
+        return f"Drop additional index for node type {self.node_type} on field {self.field_name}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -349,8 +352,8 @@ class AddAdditionalRelationshipPropertyIndex(Operation):
     def proposed_index_name(self) -> str:
         return f"{self.relationship_type}_{self.field_name}_additional_index"
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"add_index_{self.relationship_type}_{self.field_name}"
+    def describe(self) -> str:
+        return f"Add additional index for relationship type {self.relationship_type} on field {self.field_name}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -371,8 +374,8 @@ class DropAdditionalRelationshipPropertyIndex(Operation):
     def proposed_index_name(self) -> str:
         return f"{self.relationship_type}_{self.field_name}_additional_index"
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"drop_index_{self.relationship_type}_{self.field_name}"
+    def describe(self) -> str:
+        return f"Drop additional index for relationship type {self.relationship_type} on field {self.field_name}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -394,8 +397,8 @@ class AddNodeProperty(Operation):
     property_name: str
     default: Optional[Any] = None
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"add_property_{self.node_type}_{self.property_name}"
+    def describe(self) -> str:
+        return f"Add property {self.property_name} to node type {self.node_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -417,8 +420,8 @@ class AddRelationshipProperty(Operation):
     property_name: str
     default: Optional[Any] = None
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"add_property_{self.relationship_type}_{self.property_name}"
+    def describe(self) -> str:
+        return f"Add property {self.property_name} to relationship type {self.relationship_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -436,8 +439,8 @@ class DropNodeProperty(Operation):
     node_type: str
     property_name: str
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"drop_property_{self.node_type}_{self.property_name}"
+    def describe(self) -> str:
+        return f"Drop property {self.property_name} from node type {self.node_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -455,8 +458,8 @@ class DropRelationshipProperty(Operation):
     relationship_type: str
     property_name: str
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"drop_property_{self.relationship_type}_{self.property_name}"
+    def describe(self) -> str:
+        return f"Drop property {self.property_name} from relationship type {self.relationship_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -481,8 +484,8 @@ class NodeKeyExtended(Operation):
     def proposed_index_name(self) -> str:
         return f"{self.node_type}_node_key"
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"extend_key_{self.node_type}_{self.added_key_property}"
+    def describe(self) -> str:
+        return f"Extend key {self.added_key_property} on node type {self.node_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -504,8 +507,8 @@ class RelationshipKeyExtended(Operation):
     added_key_property: str
     default: Any
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"extend_key_{self.relationship_type}_{self.added_key_property}"
+    def describe(self) -> str:
+        return f"Extend key {self.added_key_property} on relationship type {self.relationship_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -530,8 +533,8 @@ class NodeKeyPartRenamed(Operation):
     def proposed_index_name(self) -> str:
         return f"{self.node_type}_node_key"
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"rename_key_part_{self.node_type}_{self.old_key_part_name}_to_{self.new_key_part_name}"
+    def describe(self) -> str:
+        return f"Rename key part {self.old_key_part_name} to {self.new_key_part_name} on node type {self.node_type}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -552,5 +555,5 @@ class RelationshipKeyPartRenamed(Operation):
     old_key_part_name: str
     new_key_part_name: str
 
-    def suggest_migration_name_slug(self) -> str:
-        return f"rename_key_part_{self.relationship_type}_{self.old_key_part_name}_to_{self.new_key_part_name}"
+    def describe(self) -> str:
+        return f"Rename key part {self.old_key_part_name} to {self.new_key_part_name} on relationship type {self.relationship_type}"
