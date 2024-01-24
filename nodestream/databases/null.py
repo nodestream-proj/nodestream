@@ -1,5 +1,6 @@
 from typing import AsyncGenerator, Iterable
 
+from ..pipeline.pipeline import empty_async_generator
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from ..schema.migrations import Migrator
 from ..schema.migrations.operations import Operation
@@ -39,12 +40,12 @@ class NullQueryExecutor(QueryExecutor):
 
 class NullRetriver(TypeRetriever):
     def get_nodes_of_type(self, _: str) -> AsyncGenerator[Node, None]:
-        raise NotImplementedError
+        return empty_async_generator()
 
     def get_relationships_of_type(
         self, _: str
     ) -> AsyncGenerator[RelationshipWithNodes, None]:
-        raise NotImplementedError
+        return empty_async_generator()
 
 
 class NullConnector(DatabaseConnector, alias="null"):
