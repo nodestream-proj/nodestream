@@ -3,8 +3,8 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.schema.migrations.migrator import (
     Migrator,
-    OperationTypeRoutingMixin,
     OperationTypeNotSupportedError,
+    OperationTypeRoutingMixin,
 )
 from nodestream.schema.migrations.operations import CreateNodeType
 

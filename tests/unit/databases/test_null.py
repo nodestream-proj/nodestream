@@ -1,10 +1,10 @@
 import pytest
-from hamcrest import assert_that, instance_of, empty
+from hamcrest import assert_that, empty, instance_of
 
 from nodestream.databases.null import (
-    NullQueryExecutor,
-    NullMigrator,
     NullConnector,
+    NullMigrator,
+    NullQueryExecutor,
     NullRetriver,
 )
 
