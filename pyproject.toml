@@ -40,7 +40,6 @@ pandas = "^2"
 schema = "^0.7.5"
 cookiecutter = "^2.1.1"
 httpx = "^0.24.1"
-testcontainers = {extras = ["neo4j"], version = "^3.7.1"}
 psutil = "^5.9.6"
 
 uvloop = [
