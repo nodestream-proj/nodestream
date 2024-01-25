@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from typing import List
 
@@ -6,7 +5,7 @@ from .migrations import Migration, MigrationGraph
 from .operations import Operation
 
 
-class Migrator(ABC):
+class Migrator:
     """Abstract class for executing migrations.
 
     This class is used by the schema change detector to execute migrations
@@ -65,7 +64,6 @@ class Migrator(ABC):
         """
         pass
 
-    @abstractmethod
     async def execute_operation(self, operation: Operation) -> None:
         """Execute an operation.
 
@@ -80,7 +78,7 @@ class Migrator(ABC):
         Args:
             operation: The operation to execute.
         """
-        raise NotImplementedError
+        pass
 
     async def mark_migration_as_executed(self, migration: Migration) -> None:
         """Mark a migration as executed.
@@ -134,11 +132,17 @@ class Migrator(ABC):
             migration: The migration to execute.
         """
         async with self.transaction():
+            await self.acquire_lock()
+
+        async with self.transaction():
             for operation in migration.operations:
                 await self.execute_operation(operation)
 
         async with self.transaction():
             await self.mark_migration_as_executed(migration)
+
+        async with self.transaction():
+            await self.release_lock()
 
 
 class OperationTypeNotSupportedError(Exception):
