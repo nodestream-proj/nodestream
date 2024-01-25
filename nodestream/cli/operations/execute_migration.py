@@ -13,6 +13,8 @@ class ExecuteMigrations(Operation):
         with command.spin(
             f"Executing migrations on target {self.target.name}...",
             f"Migrations executed on target {self.target.name}.",
-        ):
+        ) as indicator:
             async for migration in self.migrations.execute_pending(migrator):
-                command.info(f"Migration {migration.name} executed successfully.")
+                indicator.set_message(
+                    f"Migration {migration.name} executed successfully."
+                )
