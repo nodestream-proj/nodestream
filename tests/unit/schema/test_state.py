@@ -1,11 +1,14 @@
 from copy import deepcopy
 
+import pytest
 from hamcrest import assert_that, equal_to, has_key, not_
 
 from nodestream.schema import (
     Adjacency,
     AdjacencyCardinality,
     Cardinality,
+    GraphObjectSchema,
+    PropertyMetadata,
     PropertyType,
     Schema,
 )
@@ -79,3 +82,35 @@ def test_has_matching_properties(basic_schema):
     organization = basic_schema.get_node_type_by_name("Organization")
     assert_that(person.has_matching_properties(person), equal_to(True))
     assert_that(person.has_matching_properties(organization), equal_to(False))
+
+
+def test_rename_property_with_invalid_old_name(basic_schema):
+    person = basic_schema.get_node_type_by_name("Person")
+    with pytest.raises(ValueError):
+        person.rename_property("salary", "wage")
+
+
+def test_rename_key_when_not_key(basic_schema):
+    person = basic_schema.get_node_type_by_name("Person")
+    with pytest.raises(ValueError):
+        person.rename_key("age", "years_old")
+
+
+def test_add_keys_when_keys_are_already_defined(basic_schema):
+    person = basic_schema.get_node_type_by_name("Person")
+    with pytest.raises(ValueError):
+        person.add_keys(("name", "ssn"))
+
+
+def test_invalid_merge_wrong_type(basic_schema):
+    person = basic_schema.get_node_type_by_name("Person")
+    org = basic_schema.get_node_type_by_name("Organization")
+    with pytest.raises(ValueError):
+        person.merge(org)
+
+
+def test_invalid_merge_mismatched_keys(basic_schema):
+    person = basic_schema.get_node_type_by_name("Person")
+    other_person = GraphObjectSchema("Person", {"ssn": PropertyMetadata(is_key=True)})
+    with pytest.raises(ValueError):
+        person.merge(other_person)

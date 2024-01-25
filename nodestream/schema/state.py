@@ -397,10 +397,6 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
     def adjacencies(self) -> Iterable[Adjacency]:
         return self.cardinalities.keys()
 
-    @property
-    def all_object_types(self) -> Iterable[GraphObjectSchema]:
-        return self.type_schemas.values()
-
     def put_node_type(self, node_type: GraphObjectSchema):
         """Add a node type to the schema.
 
@@ -612,10 +608,6 @@ class SchemaExpansionCoordinator:
         elif node_type:
             node_schema = self.schema.get_node_type_by_name(node_type)
             fn(node_schema)
-
-        # If neither the node_type_name nor the alias are provided, this is an error.
-        else:
-            raise ValueError("Either node_type_name or alias must be provided.")
 
     def on_relationship_schema(
         self,

@@ -35,6 +35,13 @@ async def test_create_migration_from_changes(subject, mocker, leaf_migration):
 
 
 @pytest.mark.asyncio
+async def test_create_migration_from_changes_no_changes(subject, mocker):
+    subject.detect_changes = mocker.AsyncMock(return_value=None)
+    result = await subject.create_migration_from_changes(None, None)
+    assert_that(result, equal_to(None))
+
+
+@pytest.mark.asyncio
 async def test_detect_changes(subject, basic_schema):
     # The migration graph does not do anything to the schema, therefore,
     # all the changes in basic_schema should be operations. This is a bit more of an

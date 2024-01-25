@@ -105,3 +105,8 @@ def test_migration_graph_from_directory(tmp_path):
     assert_that(
         migration_graph, is_(equal_to(MigrationGraph.from_iterable([migration])))
     )
+
+
+def test_migration_graph_get_by_name(migration_graph, root_migration):
+    result = migration_graph.get_migration("root_migration")
+    assert_that(result, equal_to(root_migration))
