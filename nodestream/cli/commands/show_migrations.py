@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, Iterable, List
 
-from ...project import Project, Target
+from ...project import Project
 from ...schema.migrations import ProjectMigrations
 from .nodestream_command import NodestreamCommand
 from .shared_options import PROJECT_FILE_OPTION, TARGETS_OPTION
