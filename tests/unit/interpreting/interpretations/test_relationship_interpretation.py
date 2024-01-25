@@ -201,6 +201,20 @@ def test_relationship_interpretation_gather_used_indexes_not_static_node(
     assert_that(schema_coordinator, has_relationship_keys("AlsoStatic", []))
 
 
+def test_relationship_interpretation_gather_used_indexes_static_node_reversed(
+    schema_coordinator,
+):
+    subject = RelationshipInterpretation(
+        node_type="Static",
+        node_key={"hello": "world"},
+        relationship_type="AlsoStatic",
+        outbound=False,
+    )
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_node_keys("Static", ("hello",)))
+    assert_that(schema_coordinator, has_relationship_keys("AlsoStatic", []))
+
+
 def test_relationship_interpretation_gather_object_shapes_not_static_relationship(
     schema_coordinator,
 ):
