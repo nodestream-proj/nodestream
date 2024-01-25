@@ -13,9 +13,9 @@ RETURN batches, committedOperations, failedOperations, errorMessages
 """
 
 NON_APOCH_COMMIT_QUERY = """
-UNWIND $param_sets AS param
-CALL apoc.cypher.doIt($batched_query, {params: param}) 
-YIELD value 
+UNWIND $iterate_params.batched_parameter_sets AS param
+CALL apoc.cypher.doIt($batched_query, {params: param})
+YIELD value
 RETURN value
 """
 
