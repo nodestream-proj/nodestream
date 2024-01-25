@@ -30,8 +30,7 @@ class GenerateMigration(Operation):
         for operation in migration.operations:
             command.line(f"  - {operation.describe()}")
 
-    async def perform(self, command: NodestreamCommand):
-        input = CleoMigrationInput(command)
+    async def generate_migration(self, input: CleoMigrationInput):
         migration = path = None
 
         # If we are dry running, just get the changes as a migration.
@@ -44,6 +43,12 @@ class GenerateMigration(Operation):
             )
             if (result := await result) is not None:
                 migration, path = result
+
+        return migration, path
+
+    async def perform(self, command: NodestreamCommand):
+        input = CleoMigrationInput(command)
+        migration, path = await self.generate_migration(input)
 
         # Describe any changes that were made if they were made.
         schema_has_changes = migration is not None
