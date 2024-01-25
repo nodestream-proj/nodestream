@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
 from glob import glob
-from io import StringIO
+from io import StringIO, TextIOWrapper
 from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from typing import Any, AsyncGenerator, Iterable, Union
@@ -73,6 +73,8 @@ class TextFileFormat(SupportedFileFormat, alias=".txt"):
 
 class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+        if not isinstance(fp, TextIOWrapper):
+            return DictReader(TextIOWrapper(fp))
         return DictReader(fp)
 
 
