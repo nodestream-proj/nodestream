@@ -20,7 +20,7 @@ class ShowMigrations(NodestreamCommand):
     async def get_migration_status_by_target(
         self,
         project: Project,
-        target_names: Iterable[Target],
+        target_names: Iterable[str],
         migrations: ProjectMigrations,
     ) -> Dict[str, Dict[str, str]]:
         migration_status_by_target = defaultdict(dict)

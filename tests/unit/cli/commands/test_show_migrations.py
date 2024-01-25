@@ -2,6 +2,8 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.cli.commands import ShowMigrations
+from nodestream.project import Target
+from nodestream.schema.migrations import ProjectMigrations
 
 
 @pytest.mark.asyncio
@@ -60,3 +62,27 @@ def test_specify_targets_cli_specified(mocker, project_with_default_scope):
     project_with_default_scope.targets_by_name = {"t1": "t1", "t2": "t2"}
     result = show.get_target_names(project_with_default_scope)
     assert_that(list(result), equal_to(["t2"]))
+
+
+@pytest.mark.asyncio
+async def test_get_migration_status_by_target(
+    project_with_default_scope, migration_graph, project_dir
+):
+    t1 = Target("t1", {"database": "null"})
+    t2 = Target("t2", {"database": "null"})
+    project_with_default_scope.targets_by_name["t1"] = t1
+    project_with_default_scope.targets_by_name["t2"] = t2
+    migrations = ProjectMigrations(migration_graph, project_dir)
+    show = ShowMigrations()
+    result = await show.get_migration_status_by_target(
+        project_with_default_scope, ["t1", "t2"], migrations
+    )
+    assert_that(
+        result,
+        equal_to(
+            {
+                "root_migration": {"t1": True, "t2": True},
+                "leaf_migration": {"t1": True, "t2": True},
+            }
+        ),
+    )
