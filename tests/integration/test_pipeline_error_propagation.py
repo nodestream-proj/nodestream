@@ -1,7 +1,5 @@
 import asyncio
 import time
-import timeit
-
 import pytest
 
 from nodestream.interpreting import Interpreter
@@ -9,18 +7,20 @@ from nodestream.pipeline import Pipeline, Writer
 from nodestream.pipeline.extractors import Extractor
 from nodestream.pipeline.pipeline import PipelineException
 
-QUEUE_LIB = "asyncio.Queue"
 MAX_WAIT_TIME = 2
 
 """
 Method -> 
-    Create 2 steps, a graph database writer and a kafka streamer. 
-    The graph database writer will simply throw an exception. 
-    Assert that the stream also throws and exception.
-
-    Step 1: iteratable extractor
-    Step 2: Transformer that passes
+    Step 1: Infinite extractor
+    Step 2: Ingestion that passes
     Step 3: A writer that fails.
+
+    The first test is for the case where the extractor fills up the outbox with a bottlenecked writer that fails.
+    Without checking for pipeline failure with a full outbox, the program will freeze waiting for an outbox to obtain space it will never recieve.
+
+    The second test is for a slow extractor on a writer that fails. 
+    The propagation of the error should not occur only when the outbox is full.
+
 
 """
 
@@ -36,9 +36,7 @@ class ImmediateFailureWriter(Writer):
         self.item_count = 0
 
     async def write_record(self, _):
-        if self.item_count >= 3:
-            raise Exception
-        self.item_count += 1
+        raise Exception
 
 
 class ExtractQuickly(Extractor):
@@ -69,23 +67,17 @@ def interpreter():
 
 @pytest.mark.asyncio
 async def test_error_propagation_on_full_buffer(interpreter):
+    pipeline = Pipeline(
+        [ExtractQuickly(), interpreter, EventualFailureWriter()], 1000
+    )
     with pytest.raises(PipelineException):
-        pipeline = Pipeline(
-            [ExtractQuickly(), interpreter, EventualFailureWriter()], 1000
-        )
-        begin = timeit.timeit()
         await pipeline.run()
-        end = timeit.timeit()
-        assert begin - end < MAX_WAIT_TIME
 
 
 @pytest.mark.asyncio
 async def test_immediate_error_propogation(interpreter):
+    pipeline = Pipeline(
+        [ExtractSlowly(), interpreter, ImmediateFailureWriter()], 1000
+    )
     with pytest.raises(PipelineException):
-        pipeline = Pipeline(
-            [ExtractSlowly(), interpreter, ImmediateFailureWriter()], 1000
-        )
-        begin = timeit.timeit()
         await pipeline.run()
-        end = timeit.timeit()
-        assert begin - end < MAX_WAIT_TIME
