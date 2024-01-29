@@ -1,5 +1,6 @@
 import asyncio
 import time
+
 import pytest
 
 from nodestream.interpreting import Interpreter
@@ -67,17 +68,13 @@ def interpreter():
 
 @pytest.mark.asyncio
 async def test_error_propagation_on_full_buffer(interpreter):
-    pipeline = Pipeline(
-        [ExtractQuickly(), interpreter, EventualFailureWriter()], 1000
-    )
+    pipeline = Pipeline([ExtractQuickly(), interpreter, EventualFailureWriter()], 1000)
     with pytest.raises(PipelineException):
         await pipeline.run()
 
 
 @pytest.mark.asyncio
 async def test_immediate_error_propogation(interpreter):
-    pipeline = Pipeline(
-        [ExtractSlowly(), interpreter, ImmediateFailureWriter()], 1000
-    )
+    pipeline = Pipeline([ExtractSlowly(), interpreter, ImmediateFailureWriter()], 1000)
     with pytest.raises(PipelineException):
         await pipeline.run()
