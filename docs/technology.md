@@ -46,7 +46,7 @@ This allows for the extractor and interpreter to continue processing data and no
 
 ## Migrations 
 
-Nodestream from versions `0.1`` through `0.10`` automatically requested the creation of indexes and constraints on the database. 
+`nodestream` from versions `0.1`` through `0.11` automatically requested the creation of indexes and constraints on the database. 
 This was done by introspecting the schema of the entire project and generating the appropriate queries to create the indexes and constraints.
 This was a very powerful feature but it had a few drawbacks:
 - **It was redundant.** The same indexes and constraints were being created with `IF NOT EXISTS` clauses every time the pipeline was run.
@@ -54,7 +54,7 @@ This was a very powerful feature but it had a few drawbacks:
 - **It was error prone.** If the database was not in a state that allowed for the creation of the indexes and constraints, the pipeline would fail.
 - **It was high friction.** There was no way to refactor the database without manual intervention. If the schema changed, the pipeline would fail and the user would have to manually remove the indexes, constraints, and sometimes data before running the pipeline again.
 
-To address these issues, nodestream 0.11 introduced the concept of migrations.
+To address these issues, `nodestream` 0.12 introduced the concept of migrations.
 Migrations are a way of encapsulating changes to the database schema in a way that can be applied incrementally. 
 Conceptually, they are similar to the migrations in the [Django](https://docs.djangoproject.com/en/5.0/topics/migrations/), [Rails](https://guides.rubyonrails.org/v3.2/migrations.html), [Neo4j Migrations](https://neo4j.com/labs/neo4j-migrations/2.0/), and [Flyway](https://documentation.red-gate.com/fd/migrations-184127470.html) frameworks.
 
@@ -116,14 +116,14 @@ To achieve these goals, `nodestream` provides a set of commands that allow the d
 - `nodestream migrations show -t <target>` - Show the migrations that will be applied to the target database.
 - `nodestream run --auto-migrate` - Run the pipeline and apply any migrations that need to be applied before. 
 
-Additionally, when migrating to nodestream 0.11, the developer can run `nodestream migrations make` to generate the initial set of migrations for the project that will be compatible with 0.10 and below indexes and constraints.
+Additionally, when migrating to `nodestream` 0.12, the developer can run `nodestream migrations make` to generate the initial set of migrations for the project that will be compatible with 0.11 and below indexes and constraints.
 
 
 ### Connector API
 
 The connector API for migrations defines how the database backend should interface with the migrations framework.
 It is an extensions of the existing `nodestream.databases:DatabaseConnector` class. 
-Starting with `0.11`, the `DatabaseConnector` class will be extended with the following optional method:
+Starting with `0.12`, the `DatabaseConnector` class will be extended with the following optional method:
 
 ```python
 from nodestream.schema.migrations import Migrator
@@ -154,8 +154,8 @@ This class is responsible for interfacing with the database and providing a cons
 The `DatabaseConnector` class is an abstract class that defines the interface that all database connectors must implement.
 While most projects won't need to implement their own database connector, every project will need to use one. 
 
-Prior to nodestream 0.11, `neo4j` was housed in the core of nodestream. 
+Prior to nodestream 0.12, `neo4j` was housed in the core of nodestream. 
 This meant that every project that used nodestream had to install `neo4j` even if they didn't use it.
 This was not ideal because it added additional dependencies to the project and increased the size of a final application.
-To address this, `nodestream` 0.11 pulled `neo4j` out of the core and into a separate package called `nodestream-neo4j`.
+To address this, `nodestream` 0.12 pulled `neo4j` out of the core and into a separate package called `nodestream-plugin-neo4j`.
 
