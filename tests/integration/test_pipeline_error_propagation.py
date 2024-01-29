@@ -1,14 +1,13 @@
-import pytest
-from unittest.mock import patch
-
-from nodestream.databases import GraphDatabaseWriter
-from nodestream.interpreting import Interpreter
-from nodestream.pipeline.extractors import Extractor
-from nodestream.pipeline import Pipeline, Writer
-from nodestream.pipeline.pipeline import PipelineException
 import asyncio
 import time
 import timeit
+
+import pytest
+
+from nodestream.interpreting import Interpreter
+from nodestream.pipeline import Pipeline, Writer
+from nodestream.pipeline.extractors import Extractor
+from nodestream.pipeline.pipeline import PipelineException
 
 QUEUE_LIB = "asyncio.Queue"
 MAX_WAIT_TIME = 2
@@ -25,30 +24,29 @@ Method ->
 
 """
 
+
 class EventualFailureWriter(Writer):
     async def write_record(self, _):
         await asyncio.sleep(1)
         raise Exception
-    
+
 
 class ImmediateFailureWriter(Writer):
     def __init__(self):
         self.item_count = 0
 
-
     async def write_record(self, _):
         if self.item_count >= 3:
             raise Exception
         self.item_count += 1
-    
-    
+
 
 class ExtractQuickly(Extractor):
     def __init__(self):
         self.item_count = 0
-    
+
     async def extract_records(self):
-        while(True):
+        while True:
             yield self.item_count
             self.item_count += 1
 
@@ -56,9 +54,9 @@ class ExtractQuickly(Extractor):
 class ExtractSlowly(Extractor):
     def __init__(self):
         self.item_count = 0
-    
+
     async def extract_records(self):
-        while(True):
+        while True:
             yield self.item_count
             self.item_count += 1
             time.sleep(0.1)
@@ -72,19 +70,22 @@ def interpreter():
 @pytest.mark.asyncio
 async def test_error_propagation_on_full_buffer(interpreter):
     with pytest.raises(PipelineException):
-        
-        pipeline = Pipeline([ExtractQuickly(), interpreter, EventualFailureWriter()], 1000)
+        pipeline = Pipeline(
+            [ExtractQuickly(), interpreter, EventualFailureWriter()], 1000
+        )
         begin = timeit.timeit()
         await pipeline.run()
-        end =  timeit.timeit()
+        end = timeit.timeit()
         assert begin - end < MAX_WAIT_TIME
 
 
 @pytest.mark.asyncio
 async def test_immediate_error_propogation(interpreter):
     with pytest.raises(PipelineException):
-        pipeline = Pipeline([ExtractSlowly(), interpreter, ImmediateFailureWriter()], 1000)
+        pipeline = Pipeline(
+            [ExtractSlowly(), interpreter, ImmediateFailureWriter()], 1000
+        )
         begin = timeit.timeit()
         await pipeline.run()
-        end =  timeit.timeit()
+        end = timeit.timeit()
         assert begin - end < MAX_WAIT_TIME
