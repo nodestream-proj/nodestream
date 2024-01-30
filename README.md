@@ -30,7 +30,6 @@ Install nodestream with `pip`
   nodestream run sample -v
 ```
 
-
 ## Documentation
 
 Visit our [Documentation](https://nodestream-proj.github.io/nodestream) on Github Pages.
