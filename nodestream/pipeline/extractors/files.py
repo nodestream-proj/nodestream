@@ -1,5 +1,6 @@
 import json
 import tempfile
+import pandas as pd
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
@@ -82,6 +83,12 @@ class LineSeperatedJsonFileFormat(SupportedFileFormat, alias=".jsonl"):
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
         return (json.loads(line.strip()) for line in reader.readlines())
+
+
+class ParquetFileFormat(SupportedFileFormat, alias=".parquet"):
+    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+        df = pd.read_parquet(fp, engine='pyarrow')
+        return  df.to_dict(orient="records")
 
 
 class TextFileFormat(SupportedFileFormat, alias=".txt"):
