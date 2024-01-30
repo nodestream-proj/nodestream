@@ -32,7 +32,7 @@ Method ->
 
 class EventualFailureWriter(Writer):
     async def write_record(self, _):
-        await asyncio.sleep(1)
+        await asyncio.sleep(3)
         raise Exception
 
 
@@ -73,10 +73,10 @@ def interpreter():
 # Test that the pipeline throws an exception as soon as the buffer is full (1.0) and the outbox.put timeout is reached (0.1).
 @pytest.mark.asyncio
 async def test_error_propagation_on_full_buffer(interpreter):
-    pipeline = Pipeline([ExtractQuickly(), interpreter, EventualFailureWriter()], 1000)
+    pipeline = Pipeline([ExtractQuickly(), interpreter, EventualFailureWriter()], 20)
     did_except = False
     try:
-        await asyncio.wait_for(pipeline.run(), timeout=1.2 * 2)
+        await asyncio.wait_for(pipeline.run(), timeout=3.2 * 2)
     except PipelineException as exception:
         executor_work_body_exception = exception.errors[0].exceptions[
             WORK_BODY_EXCEPTION
