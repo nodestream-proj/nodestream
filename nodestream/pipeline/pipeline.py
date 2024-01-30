@@ -146,9 +146,9 @@ class StepExecutor:
 
     async def submit_object_or_die_trying(self, obj):
         should_continue = True
-        if self.pipeline_has_died():
-            raise ForwardProgressHalted(PRECHECK_MESSAGE)
         while should_continue:
+            if self.pipeline_has_died():
+                raise ForwardProgressHalted(PRECHECK_MESSAGE)
             try:
                 await asyncio.wait_for(self.outbox.put(obj), timeout=OUTBOX_POLL_TIME)
                 should_continue = False
