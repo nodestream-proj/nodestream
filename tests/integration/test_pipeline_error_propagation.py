@@ -89,6 +89,7 @@ async def test_error_propagation_on_full_buffer(interpreter):
         did_except = True
     assert did_except
 
+
 """
 (0) -> Executor, Interpreter, Writer (Fails)
 (0.1) -> Executor, Interpreter (Fails), Writer (Failed)
