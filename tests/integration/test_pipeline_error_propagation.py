@@ -76,7 +76,7 @@ async def test_error_propagation_on_full_buffer(interpreter):
     pipeline = Pipeline([ExtractQuickly(), interpreter, EventualFailureWriter()], 1000)
     did_except = False
     try:
-        await asyncio.wait_for(pipeline.run(), timeout=1.2*2)
+        await asyncio.wait_for(pipeline.run(), timeout=1.2 * 2)
     except PipelineException as exception:
         executor_work_body_exception = exception.errors[0].exceptions[
             WORK_BODY_EXCEPTION
@@ -119,4 +119,4 @@ async def test_immediate_error_propogation(interpreter):
     assert did_except
     ending_time = datetime.now()
     difference = ending_time - beginning_time
-    assert difference.total_seconds() < 0.4*2
+    assert difference.total_seconds() < 0.4 * 2
