@@ -74,6 +74,7 @@ def interpreter():
 @pytest.mark.asyncio
 async def test_error_propagation_on_full_buffer(interpreter):
     pipeline = Pipeline([ExtractQuickly(), interpreter, EventualFailureWriter()], 1000)
+    did_except = False
     try:
         await asyncio.wait_for(pipeline.run(), timeout=1.2)
     except PipelineException as exception:
@@ -85,7 +86,8 @@ async def test_error_propagation_on_full_buffer(interpreter):
         ]
         assert str(executor_work_body_exception) == TIMEOUT_MESSAGE
         assert str(interpreter_work_body_exception) == TIMEOUT_MESSAGE
-
+        did_except = True
+    assert did_except
 
 """
 (0) -> Executor, Interpreter, Writer (Fails)
@@ -100,6 +102,7 @@ async def test_error_propagation_on_full_buffer(interpreter):
 async def test_immediate_error_propogation(interpreter):
     pipeline = Pipeline([ExtractSlowly(), interpreter, ImmediateFailureWriter()], 20)
     beginning_time = datetime.now()
+    did_except = False
     try:
         await pipeline.run()
     except PipelineException as exception:
@@ -111,6 +114,8 @@ async def test_immediate_error_propogation(interpreter):
         ]
         assert str(executor_work_body_exception) == PRECHECK_MESSAGE
         assert str(interpreter_work_body_exception) == PRECHECK_MESSAGE
+        did_except = True
+    assert did_except
     ending_time = datetime.now()
     difference = ending_time - beginning_time
     assert difference.total_seconds() < 0.4
