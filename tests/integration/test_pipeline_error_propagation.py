@@ -1,14 +1,18 @@
 import asyncio
 import time
+from datetime import datetime
 
 import pytest
 
 from nodestream.interpreting import Interpreter
 from nodestream.pipeline import Pipeline, Writer
 from nodestream.pipeline.extractors import Extractor
-from nodestream.pipeline.pipeline import PipelineException
-
-MAX_WAIT_TIME = 2
+from nodestream.pipeline.pipeline import (
+    PRECHECK_MESSAGE,
+    TIMEOUT_MESSAGE,
+    WORK_BODY_EXCEPTION,
+    PipelineException,
+)
 
 """
 Method -> 
@@ -66,15 +70,47 @@ def interpreter():
     return Interpreter.from_file_data(interpretations=[])
 
 
+# Test that the pipeline throws an exception as soon as the buffer is full (1.0) and the outbox.put timeout is reached (0.1).
 @pytest.mark.asyncio
 async def test_error_propagation_on_full_buffer(interpreter):
     pipeline = Pipeline([ExtractQuickly(), interpreter, EventualFailureWriter()], 1000)
-    with pytest.raises(PipelineException):
-        await pipeline.run()
+    try:
+        await asyncio.wait_for(pipeline.run(), timeout=1.2)
+    except PipelineException as exception:
+        executor_work_body_exception = exception.errors[0].exceptions[
+            WORK_BODY_EXCEPTION
+        ]
+        interpreter_work_body_exception = exception.errors[1].exceptions[
+            WORK_BODY_EXCEPTION
+        ]
+        assert str(executor_work_body_exception) == TIMEOUT_MESSAGE
+        assert str(interpreter_work_body_exception) == TIMEOUT_MESSAGE
+
+
+"""
+(0) -> Executor, Interpreter, Writer (Fails)
+(0.1) -> Executor, Interpreter (Fails), Writer (Failed)
+(0.2) -> Executer (Fails), Interpreter (Failed), Writer(Failed)
+(0.3) -> PipelineException
+
+"""
 
 
 @pytest.mark.asyncio
 async def test_immediate_error_propogation(interpreter):
-    pipeline = Pipeline([ExtractSlowly(), interpreter, ImmediateFailureWriter()], 1000)
-    with pytest.raises(PipelineException):
+    pipeline = Pipeline([ExtractSlowly(), interpreter, ImmediateFailureWriter()], 20)
+    beginning_time = datetime.now()
+    try:
         await pipeline.run()
+    except PipelineException as exception:
+        executor_work_body_exception = exception.errors[0].exceptions[
+            WORK_BODY_EXCEPTION
+        ]
+        interpreter_work_body_exception = exception.errors[1].exceptions[
+            WORK_BODY_EXCEPTION
+        ]
+        assert str(executor_work_body_exception) == PRECHECK_MESSAGE
+        assert str(interpreter_work_body_exception) == PRECHECK_MESSAGE
+    ending_time = datetime.now()
+    difference = ending_time - beginning_time
+    assert difference.total_seconds() < 0.4
