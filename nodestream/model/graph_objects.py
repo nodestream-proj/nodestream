@@ -88,7 +88,10 @@ class Node(DeduplicatableObject):
     @property
     def has_valid_id(self) -> bool:
         # Return that some of the ID values are defined.
-        return all(value is not None for value in self.key_values.values())
+        all_key_parts_defined = all(
+            value is not None for value in self.key_values.values()
+        )
+        return len(self.key_values) > 0 and all_key_parts_defined
 
     @property
     def is_valid(self) -> bool:
