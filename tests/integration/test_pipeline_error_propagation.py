@@ -1,5 +1,4 @@
 import asyncio
-import time
 from datetime import datetime
 
 import pytest
@@ -9,10 +8,12 @@ from nodestream.pipeline import Pipeline, Writer
 from nodestream.pipeline.extractors import Extractor
 from nodestream.pipeline.pipeline import (
     PRECHECK_MESSAGE,
+    STOP_EXCEPTION,
     TIMEOUT_MESSAGE,
     WORK_BODY_EXCEPTION,
     PipelineException,
 )
+from nodestream.pipeline.transformers import PassTransformer
 
 """
 Method -> 
@@ -28,6 +29,10 @@ Method ->
 
 
 """
+
+
+class StopException(Exception):
+    pass
 
 
 class EventualFailureWriter(Writer):
@@ -62,7 +67,12 @@ class ExtractSlowly(Extractor):
         while True:
             yield self.item_count
             self.item_count += 1
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
+
+
+class FailTransformer(PassTransformer):
+    async def finish(self):
+        raise StopException
 
 
 @pytest.fixture
@@ -110,12 +120,43 @@ async def test_immediate_error_propogation(interpreter):
         executor_work_body_exception = exception.errors[0].exceptions[
             WORK_BODY_EXCEPTION
         ]
-        interpreter_work_body_exception = exception.errors[1].exceptions[
+        writer_work_body_exception = exception.errors[1].exceptions[WORK_BODY_EXCEPTION]
+        assert str(executor_work_body_exception) == PRECHECK_MESSAGE
+        assert isinstance(writer_work_body_exception, Exception)
+        did_except = True
+    assert did_except
+    ending_time = datetime.now()
+    difference = ending_time - beginning_time
+    assert difference.total_seconds() < 0.4 * 2
+
+
+# Testing that the exception is propagated. Also testing that we would see a failure in the stop-process if necessary.
+@pytest.mark.asyncio
+async def test_immediate_error_propagation_fails_all_steps():
+    steps = (
+        [ExtractSlowly()]
+        + [PassTransformer() for _ in range(10)]
+        + [FailTransformer()]
+        + [ImmediateFailureWriter()]
+    )
+    pipeline = Pipeline(steps, 20)
+    beginning_time = datetime.now()
+    did_except = False
+
+    try:
+        await asyncio.wait_for(pipeline.run(), timeout=3.2 * 2)
+    except PipelineException as exception:
+        # Every step should have a Stepexeption except for the last one that has a Exception
+        extractor_work_body_exception = exception.errors[0].exceptions[
             WORK_BODY_EXCEPTION
         ]
-        assert str(executor_work_body_exception) == PRECHECK_MESSAGE
-        assert str(interpreter_work_body_exception) == PRECHECK_MESSAGE
+        fail_transformer_stop_exception = exception.errors[1].exceptions[STOP_EXCEPTION]
+        writer_body_exception = exception.errors[2].exceptions[WORK_BODY_EXCEPTION]
+        assert str(extractor_work_body_exception) == PRECHECK_MESSAGE
+        assert isinstance(fail_transformer_stop_exception, StopException)
+        assert isinstance(writer_body_exception, Exception)
         did_except = True
+
     assert did_except
     ending_time = datetime.now()
     difference = ending_time - beginning_time
