@@ -314,7 +314,7 @@ we can do that by extracting the value of `reports_to`  and mapping it to the `e
 to the schema of the data, you need to make and run migrations. To do so, run:
 
 ```bash
-nodestream migratations make
+nodestream migrations make
 ```
 
 This will create a new `.yaml` migration file in the `migrations` directory. Each migration file is named with a
