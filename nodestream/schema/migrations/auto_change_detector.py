@@ -564,12 +564,7 @@ class AutoChangeDetector:
         # where the type names are different but the keys are the same.
         for new_type_name in new_types_location:
             for prev_type_name in previous_types:
-                new_type_def = to_population[new_type_name]
-                prev_type_def = from_population[prev_type_name]
-                keys_match = new_type_def.has_matching_keys(prev_type_def)
-                if keys_match and self.input.ask_type_renamed(
-                    prev_type_name, new_type_name
-                ):
+                if self.input.ask_type_renamed(prev_type_name, new_type_name):
                     renamed_types_location.add((prev_type_name, new_type_name))
                     break
 
