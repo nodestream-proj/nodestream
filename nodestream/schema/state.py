@@ -554,6 +554,37 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
             relationship_type_name,
         ) in self.type_schemas
 
+    def diff_node_types(self, other: "Schema") -> Tuple[Set[str], Set[str]]:
+        """Diff node types with another schema.
+
+        Args:
+            other: The other schema.
+
+        Returns:
+            A tuple of sets. The first set contains the node types that are in
+            this schema but not in the other schema. The second set contains
+            the node types that are in the other schema but not in this schema.
+        """
+        us = {node.name for node in self.nodes}
+        them = {node.name for node in other.nodes}
+        return us - them, them - us
+
+    def diff_relationship_types(self, other: "Schema") -> Tuple[Set[str], Set[str]]:
+        """Diff relationship types with another schema.
+
+        Args:
+            other: The other schema.
+
+        Returns:
+            A tuple of sets. The first set contains the relationship types that
+            are in this schema but not in the other schema. The second set
+            contains the relationship types that are in the other schema but not
+            in this schema.
+        """
+        us = {relationship.name for relationship in self.relationships}
+        them = {relationship.name for relationship in other.relationships}
+        return us - them, them - us
+
 
 @dataclass(slots=True, frozen=True)
 class SchemaExpansionCoordinator:

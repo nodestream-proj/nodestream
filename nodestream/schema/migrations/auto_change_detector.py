@@ -343,22 +343,34 @@ class AutoChangeDetector:
         )
 
     def detect_node_type_changes(self):
-        self.detect_type_changes(
-            from_population=self.from_state.nodes_by_name,
-            to_population=self.to_state.nodes_by_name,
-            deleted_types_location=self.deleted_node_types,
-            renamed_types_location=self.renamed_node_types,
-            new_types_location=self.new_node_types,
+        self.deleted_node_types, self.new_node_types = self.from_state.diff_node_types(
+            self.to_state
         )
 
+        for new_type_name in self.new_node_types:
+            for prev_type_name in self.deleted_node_types:
+                if self.input.ask_type_renamed(prev_type_name, new_type_name):
+                    self.renamed_node_types.add((prev_type_name, new_type_name))
+                    break
+
+        for previous, new in self.renamed_node_types:
+            self.deleted_node_types.remove(previous)
+            self.new_node_types.remove(new)
+
     def detect_relationship_type_changes(self):
-        self.detect_type_changes(
-            from_population=self.from_state.relationships_by_name,
-            to_population=self.to_state.relationships_by_name,
-            deleted_types_location=self.deleted_relationship_types,
-            renamed_types_location=self.renamed_relationship_types,
-            new_types_location=self.new_relationship_types,
+        self.deleted_relationship_types, self.new_relationship_types = (
+            self.from_state.diff_relationship_types(self.to_state)
         )
+
+        for new_type_name in self.new_relationship_types:
+            for prev_type_name in self.deleted_relationship_types:
+                if self.input.ask_type_renamed(prev_type_name, new_type_name):
+                    self.renamed_relationship_types.add((prev_type_name, new_type_name))
+                    break
+
+        for previous, new in self.renamed_relationship_types:
+            self.deleted_relationship_types.remove(previous)
+            self.new_relationship_types.remove(new)
 
     def detect_node_property_changes(self):
         self.detect_property_changes(
@@ -544,32 +556,3 @@ class AutoChangeDetector:
             renamed_types_location,
         ):
             detect_changes_between_types(from_type_name, to_type_name)
-
-    def detect_type_changes(
-        self,
-        from_population: Dict[str, GraphObjectSchema],
-        to_population: Dict[str, GraphObjectSchema],
-        deleted_types_location: Set[str],
-        renamed_types_location: Set[Tuple[str, str]],
-        new_types_location: Set[str],
-    ):
-        # To start, we assume that all types missing from one side or
-        # the other were created or deleted.
-        current_types = set(to_population)
-        previous_types = set(from_population)
-        deleted_types_location.update(previous_types - current_types)
-        new_types_location.update(current_types - previous_types)
-
-        # After that, check for types that appear to have been renamed
-        # where the type names are different but the keys are the same.
-        for new_type_name in new_types_location:
-            for prev_type_name in previous_types:
-                if self.input.ask_type_renamed(prev_type_name, new_type_name):
-                    renamed_types_location.add((prev_type_name, new_type_name))
-                    break
-
-        # Once we have found the renamed types, we can simply remove them
-        # from the new and deleted sets.
-        for previous, new in renamed_types_location:
-            deleted_types_location.remove(previous)
-            new_types_location.remove(new)
