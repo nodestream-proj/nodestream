@@ -114,10 +114,10 @@ class MigrationGraph:
         stack = [(start_node, False)]
 
         while stack:
-            node, proccessed = stack.pop()
+            node, processed = stack.pop()
             if node.name in visited_set:
                 continue
-            if proccessed:
+            if processed:
                 visited_order.append(node)
                 visited_set.add(node.name)
                 continue
