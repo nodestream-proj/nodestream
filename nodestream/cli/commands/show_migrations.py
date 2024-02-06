@@ -15,7 +15,7 @@ class ShowMigrations(NodestreamCommand):
     options = [PROJECT_FILE_OPTION, TARGETS_OPTION]
 
     def get_target_names(self, project: Project) -> List[str]:
-        return self.option("target") or project.targets_by_name.keys()
+        return self.option(TARGETS_OPTION.name) or project.targets_by_name.keys()
 
     async def get_migration_status_by_target(
         self,

@@ -11,7 +11,7 @@ class RunMigrations(NodestreamCommand):
     async def handle_async(self):
         project = self.get_project()
         migrations = self.get_migrations()
-        targets = self.option("target")
+        targets = self.option(TARGETS_OPTION.name)
 
         if len(targets) == 0:
             self.info("No targets specified, nothing to do.")
