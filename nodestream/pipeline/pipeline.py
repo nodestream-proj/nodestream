@@ -30,6 +30,8 @@ START_EXCEPTION = "Exception in Start Process:"
 WORK_BODY_EXCEPTION = "Exception in Work Body:"
 STOP_EXCEPTION = "Exception in Stop Process:"
 OUTBOX_POLL_TIME = 0.1
+PRECHECK_MESSAGE = "Detected fatal error in pipeline while attempting to process record, this step can no longer continue."
+TIMEOUT_MESSAGE = "Unable to place record into outbox because the pipeline has failed, this step can no longer continue."
 
 
 class StepException(Exception):
@@ -142,15 +144,15 @@ class StepExecutor:
     async def submit_object_or_die_trying(self, obj):
         should_continue = True
         while should_continue:
+            if self.pipeline_has_died() and not self.done:
+                raise ForwardProgressHalted(PRECHECK_MESSAGE)
             try:
                 await asyncio.wait_for(self.outbox.put(obj), timeout=OUTBOX_POLL_TIME)
                 should_continue = False
             except asyncio.TimeoutError:
                 # We timed out, now we need to check if the pipeline has died and if so, raise an exception.
                 if self.pipeline_has_died():
-                    raise ForwardProgressHalted(
-                        "Because of a fatal error in the pipeline, this step can no longer continue."
-                    )
+                    raise ForwardProgressHalted(TIMEOUT_MESSAGE)
 
     async def stop(self):
         self.done = True

@@ -48,7 +48,7 @@ class S3Extractor(Extractor):
         if self.archive_dir:
             self.logger.info("Archiving S3 Object", extra=dict(key=key))
             filename = Path(key).name
-            self.s3_client.copy_object(
+            self.s3_client.copy(
                 Bucket=self.bucket,
                 Key=f"{self.archive_dir}/{filename}",
                 CopySource={"Bucket": self.bucket, "Key": key},
