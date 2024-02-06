@@ -66,7 +66,6 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 Optional("targets"): {
                     str: {str: object},
                 },
-                Optional("migrations"): os.path.exists,
             }
         )
 
