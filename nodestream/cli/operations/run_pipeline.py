@@ -26,7 +26,9 @@ class RunPipeline(Operation):
         supplied_commands = command.argument("pipelines")
         if supplied_commands:
             return [
-                self.project.get_pipeline_by_name(name) for name in supplied_commands
+                ppl
+                for name in supplied_commands
+                if (ppl := self.project.get_pipeline_by_name(name))
             ]
         return self.project.get_all_pipelines()
 
