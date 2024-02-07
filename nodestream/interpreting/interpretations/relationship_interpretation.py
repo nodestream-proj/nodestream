@@ -151,7 +151,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         self.key_search_algorithm = key_search_algorithm(
             self.node_key, self.key_normalization
         )
-        self.node_additional_types = node_additional_types or tuple()
+        self.node_additional_types = tuple(node_additional_types or tuple())
 
     def interpret(self, context: ProviderContext):
         for sub_context in self.decomposer.decompose_record(context):
