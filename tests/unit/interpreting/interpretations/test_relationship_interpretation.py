@@ -263,3 +263,17 @@ def test_relationship_interpretation_gather_object_shapess_static_values():
         relationship_type="Static",
     )
     assert_that(list(subject.gather_object_shapes()), has_length(2))
+
+
+def test_relationship_interpretation_addtional_node_types(blank_context):
+    subject = RelationshipInterpretation(
+        node_type="Static",
+        node_key={"hello": "world"},
+        relationship_type="Static",
+        node_additional_types=["SomethingElse"],
+    )
+    subject.interpret(blank_context)
+    assert_that(
+        blank_context.desired_ingest.relationships[0].to_node.additional_types,
+        equal_to(["SomethingElse"]),
+    )
