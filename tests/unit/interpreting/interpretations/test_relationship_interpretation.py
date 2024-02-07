@@ -275,5 +275,5 @@ def test_relationship_interpretation_addtional_node_types(blank_context):
     subject.interpret(blank_context)
     assert_that(
         blank_context.desired_ingest.relationships[0].to_node.additional_types,
-        equal_to(["SomethingElse"]),
+        equal_to(("SomethingElse",)),
     )
