@@ -317,8 +317,21 @@ to the schema of the data, you need to make and run migrations. To do so, run:
 nodestream migrations make
 ```
 
+Which will produce output like this:
+
+```
+Generated migration 20240209081151.
+The migration contains 4 schema changes.
+  - Create node type Employee
+  - Add additional index for node type Employee on field last_ingested_at
+  - Create relationship type REPORTS_TO
+  - Add additional index for relationship type REPORTS_TO on field last_ingested_at
+Migration written to migrations/20240209081151.yaml
+Run `nodestream migrations run` to apply the migration.
+```
+
 This will create a new `.yaml` migration file in the `migrations` directory. Each migration file is named with a
-timestamp and (sometimes) a description of the migration. For example:
+timestamp and (sometimes) a description of the migration. The file contains the instructions to apply the migration.
 
 ## Testing it Out
 
@@ -335,12 +348,17 @@ docker run \
     neo4j:5
 ```
 
-Then we can run our migrations:
+Then we can run our migrations to prepare the database:
 
 ```bash
 nodestream migrations run --target my-dd
 ```
 
+Which should produce output like this after a moment:
+
+```
+ - Migrations executed on target db-one.
+```
 
 After that, we are finally ready! Drum roll please...
 
