@@ -557,17 +557,15 @@ class AutoChangeDetector:
         self,
         from_population: Dict[str, GraphObjectSchema],
         to_population: Dict[str, GraphObjectSchema],
-        deleted_types_location: Set[str],
-        new_types_location: Set[str],
-        renamed_types_location: Set[Tuple[str, str]],
+        deleted_types: Set[str],
+        new_types: Set[str],
+        renamed_types: Set[Tuple[str, str]],
         ignore_created_and_deleted: bool,
     ) -> Iterable[TypePairing]:
         all_types = set(from_population).union(to_population)
         for type in all_types:
             # If the type is new or deleted, we can ignore it.
-            new_or_removed = (
-                type in new_types_location or type in deleted_types_location
-            )
+            new_or_removed = type in new_types or type in deleted_types
             if new_or_removed and ignore_created_and_deleted:
                 continue
 
@@ -575,11 +573,11 @@ class AutoChangeDetector:
             # new type definitions. We only want to consider the type once,
             # so we'll ignore it if type is the old value.
             renamed_from = next(
-                (old for old, new in renamed_types_location if new == type),
+                (old for old, new in renamed_types if new == type),
                 None,
             )
             renamed_to = next(
-                (new for old, new in renamed_types_location if old == type),
+                (new for old, new in renamed_types if old == type),
                 None,
             )
             if renamed_to:
@@ -589,11 +587,12 @@ class AutoChangeDetector:
             # diffing logic the two types. If it wasn't, it can be the
             # same name.
             if renamed_from:
-                from_type_name, to_type_name = renamed_from, type
+                yield TypePairing(
+                    from_type=from_population.get(renamed_from),
+                    to_type=to_population.get(type),
+                )
             else:
-                from_type_name = to_type_name = type
-
-            yield TypePairing(
-                from_type=from_population.get(from_type_name),
-                to_type=to_population.get(to_type_name),
-            )
+                yield TypePairing(
+                    from_type=from_population.get(type),
+                    to_type=to_population.get(type),
+                )
