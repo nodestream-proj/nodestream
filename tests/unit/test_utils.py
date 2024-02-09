@@ -2,7 +2,6 @@ import pytest
 
 from nodestream.utils import StringSuggester
 
-
 FRUITS = ["apple", "banana", "cherry"]
 
 

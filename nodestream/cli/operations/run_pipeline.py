@@ -2,11 +2,11 @@ from typing import Iterable, Optional
 
 from yaml import safe_dump
 
-from ...utils import StringSuggester
 from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
 from ...pipeline.meta import PipelineContext
 from ...project import Project, RunRequest
 from ...project.pipeline_definition import PipelineDefinition
+from ...utils import StringSuggester
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 
