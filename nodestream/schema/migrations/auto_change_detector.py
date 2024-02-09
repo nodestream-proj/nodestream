@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, List, Set, Tuple, Optional
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from ..state import GraphObjectSchema
 from .operations import (
@@ -473,9 +473,10 @@ class AutoChangeDetector:
             self.new_node_types.remove(new)
 
     def detect_relationship_type_changes(self):
-        self.deleted_relationship_types, self.new_relationship_types = (
-            self.from_state.diff_relationship_types(self.to_state)
-        )
+        (
+            self.deleted_relationship_types,
+            self.new_relationship_types,
+        ) = self.from_state.diff_relationship_types(self.to_state)
 
         self.renamed_relationship_types = self.input.determine_renamed_types(
             self.new_relationship_types, self.deleted_relationship_types
@@ -487,9 +488,11 @@ class AutoChangeDetector:
 
     def detect_node_property_changes(self):
         for pair in self.get_node_pairs():
-            deleted_properties, added_properties, renamed_properties = (
-                pair.get_property_drift(self.input)
-            )
+            (
+                deleted_properties,
+                added_properties,
+                renamed_properties,
+            ) = pair.get_property_drift(self.input)
             for prop in deleted_properties:
                 self.deleted_node_properties.add((pair.to_type.name, prop))
             for prop in added_properties:
@@ -499,9 +502,11 @@ class AutoChangeDetector:
 
     def detect_relationship_property_changes(self):
         for pair in self.get_relationship_pairs():
-            deleted_properties, added_properties, renamed_properties = (
-                pair.get_property_drift(self.input)
-            )
+            (
+                deleted_properties,
+                added_properties,
+                renamed_properties,
+            ) = pair.get_property_drift(self.input)
             for prop in deleted_properties:
                 self.deleted_relationship_properties.add((pair.to_type.name, prop))
             for prop in added_properties:
