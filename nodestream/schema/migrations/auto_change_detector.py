@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, List, Set, Tuple
+from typing import Dict, Iterable, List, Set, Tuple, Optional
 
 from ..state import GraphObjectSchema
 from .operations import (
@@ -106,6 +106,129 @@ class MigratorInput:
             object_type, old_property_name, new_property_name
         )
         return self.ask_yes_no(question)
+
+    def determine_renamed_types(
+        self, presumed_added_types: Set[str], presumed_deleted_types: Set[str]
+    ) -> Set[Tuple[str, str]]:
+        """Determine which types have been renamed.
+
+        Args:
+            presumed_added_types: The types that are presumed to have been
+                added which may have been renamed.
+            presumed_deleted_types: The types that are presumed to have been
+                deleted which may have been renamed.
+
+        Returns:
+            A set of tuples containing the old and new type names.
+        """
+        renamed = set()
+
+        for new_type_name in presumed_added_types:
+            for prev_type_name in presumed_deleted_types:
+                if self.ask_type_renamed(prev_type_name, new_type_name):
+                    renamed.add((prev_type_name, new_type_name))
+                    break
+
+        return renamed
+
+    def determine_renamed_properties(
+        self,
+        object_type: str,
+        presumed_added_properties: Set[str],
+        presumed_deleted_properties: Set[str],
+    ) -> Set[Tuple[str, str]]:
+        """Determine which properties have been renamed.
+
+        Args:
+            presumed_added_properties: The properties that are presumed to have been
+                added which may have been renamed.
+            presumed_deleted_properties: The properties that are presumed to have been
+                deleted which may have been renamed.
+
+        Returns:
+            A set of tuples containing the old and new property names.
+        """
+        renamed = set()
+
+        for new_property_name in presumed_added_properties:
+            for prev_property_name in presumed_deleted_properties:
+                if self.ask_property_renamed(
+                    object_type, prev_property_name, new_property_name
+                ):
+                    renamed.add((prev_property_name, new_property_name))
+                    break
+
+        return renamed
+
+
+class TypePairing:
+    """A pair of types from two different states.
+
+    This class represents a pair of types from two different states. It
+    is used to compare the two types and determine what has changed.
+    """
+
+    __slots__ = ("from_type", "to_type")
+
+    def __init__(
+        self,
+        from_type: Optional[GraphObjectSchema],
+        to_type: Optional[GraphObjectSchema],
+    ) -> None:
+        """Initialize the type bridge.
+
+        Args:
+            from_type: The name of the type before the migration.
+            to_type: The name of the type after the migration.
+        """
+        self.from_type = from_type or GraphObjectSchema(name="")
+        self.to_type = to_type or GraphObjectSchema(name="")
+
+    def get_property_drift(
+        self, input: MigratorInput
+    ) -> Tuple[Set[str], Set[str], Set[Tuple[str, str]]]:
+        """Get the property drift between the two types.
+
+        Returns:
+            A tuple containing the set of properties that were deleted, the
+            set of properties that were added, and the set of properties that
+            were renamed.
+        """
+        deleted = self.from_type.non_key_properties - self.to_type.non_key_properties
+        added = self.to_type.non_key_properties - self.from_type.non_key_properties
+        renamed = input.determine_renamed_properties(self.to_type.name, added, deleted)
+        deleted = deleted - {item[0] for item in renamed}
+        added = added - {item[1] for item in renamed}
+        return deleted, added, renamed
+
+    def get_key_drift(
+        self, input: MigratorInput
+    ) -> Tuple[Set[str], Set[str], Set[Tuple[str, str]]]:
+        """Get the key drift between the two types.
+
+        Returns:
+            A tuple containing the set of keys that were deleted, the
+            set of keys that were added, and the set of keys that
+            were renamed.
+        """
+        deleted = self.from_type.keys - self.to_type.keys
+        added = self.to_type.keys - self.from_type.keys
+        renamed = input.determine_renamed_properties(self.to_type.name, added, deleted)
+        deleted = deleted - {item[0] for item in renamed}
+        added = added - {item[1] for item in renamed}
+        return deleted, added, renamed
+
+    def get_index_drift(self) -> Tuple[Set[str], Set[str]]:
+        """Get the index drift between the two types.
+
+        Returns:
+            A tuple containing the set of indexed properties that were deleted,
+            the set of indexed properties that were added, and the set of indexed
+            properties that were renamed.
+        """
+        deleted = self.from_type.indexed_properties - self.to_type.indexed_properties
+        added = self.to_type.indexed_properties - self.from_type.indexed_properties
+        return deleted, added
 
 
 class AutoChangeDetector:
@@ -317,93 +440,117 @@ class AutoChangeDetector:
             yield AddAdditionalNodePropertyIndex(new_type, new_field)
 
     def detect_node_key_changes(self):
-        self.detect_property_changes(
-            from_population=self.from_state.nodes_by_name,
-            to_population=self.to_state.nodes_by_name,
-            deleted_property_location=self.deleted_node_keys,
-            renamed_property_location=self.renamed_node_keys,
-            added_property_loction=self.added_node_keys,
-            deleted_types_location=self.deleted_node_types,
-            renamed_types_location=self.renamed_node_types,
-            new_types_location=self.new_node_types,
-            properties_attr="keys",
-        )
+        for pair in self.get_node_pairs():
+            deleted_keys, added_keys, renamed_keys = pair.get_key_drift(self.input)
+            for key in deleted_keys:
+                self.deleted_node_keys.add((pair.to_type.name, key))
+            for old, new in renamed_keys:
+                self.renamed_node_keys.add((pair.to_type.name, old, new))
+            for key in added_keys:
+                self.added_node_keys.add((pair.to_type.name, key))
 
     def detect_relationship_key_changes(self):
-        self.detect_property_changes(
-            from_population=self.from_state.relationships_by_name,
-            to_population=self.to_state.relationships_by_name,
-            deleted_property_location=self.deleted_relationship_keys,
-            renamed_property_location=self.renamed_relationship_keys,
-            added_property_loction=self.added_relationship_keys,
-            deleted_types_location=self.deleted_relationship_types,
-            renamed_types_location=self.renamed_relationship_types,
-            new_types_location=self.new_relationship_types,
-            properties_attr="keys",
-        )
+        for pair in self.get_relationship_pairs():
+            deleted_keys, added_keys, renamed_keys = pair.get_key_drift(self.input)
+            for key in deleted_keys:
+                self.deleted_relationship_keys.add((pair.to_type.name, key))
+            for old, new in renamed_keys:
+                self.renamed_relationship_keys.add((pair.to_type.name, old, new))
+            for key in added_keys:
+                self.added_relationship_keys.add((pair.to_type.name, key))
 
     def detect_node_type_changes(self):
-        self.detect_type_changes(
-            from_population=self.from_state.nodes_by_name,
-            to_population=self.to_state.nodes_by_name,
-            deleted_types_location=self.deleted_node_types,
-            renamed_types_location=self.renamed_node_types,
-            new_types_location=self.new_node_types,
+        self.deleted_node_types, self.new_node_types = self.from_state.diff_node_types(
+            self.to_state
         )
+
+        self.renamed_node_types = self.input.determine_renamed_types(
+            self.new_node_types, self.deleted_node_types
+        )
+
+        for previous, new in self.renamed_node_types:
+            self.deleted_node_types.remove(previous)
+            self.new_node_types.remove(new)
 
     def detect_relationship_type_changes(self):
-        self.detect_type_changes(
-            from_population=self.from_state.relationships_by_name,
-            to_population=self.to_state.relationships_by_name,
-            deleted_types_location=self.deleted_relationship_types,
-            renamed_types_location=self.renamed_relationship_types,
-            new_types_location=self.new_relationship_types,
+        self.deleted_relationship_types, self.new_relationship_types = (
+            self.from_state.diff_relationship_types(self.to_state)
         )
+
+        self.renamed_relationship_types = self.input.determine_renamed_types(
+            self.new_relationship_types, self.deleted_relationship_types
+        )
+
+        for previous, new in self.renamed_relationship_types:
+            self.deleted_relationship_types.remove(previous)
+            self.new_relationship_types.remove(new)
 
     def detect_node_property_changes(self):
-        self.detect_property_changes(
-            from_population=self.from_state.nodes_by_name,
-            to_population=self.to_state.nodes_by_name,
-            deleted_property_location=self.deleted_node_properties,
-            renamed_property_location=self.renamed_node_properties,
-            added_property_loction=self.added_node_properties,
-            deleted_types_location=self.deleted_node_types,
-            renamed_types_location=self.renamed_node_types,
-            new_types_location=self.new_node_types,
-        )
+        for pair in self.get_node_pairs():
+            deleted_properties, added_properties, renamed_properties = (
+                pair.get_property_drift(self.input)
+            )
+            for prop in deleted_properties:
+                self.deleted_node_properties.add((pair.to_type.name, prop))
+            for prop in added_properties:
+                self.added_node_properties.add((pair.to_type.name, prop))
+            for old, new in renamed_properties:
+                self.renamed_node_properties.add((pair.to_type.name, old, new))
 
     def detect_relationship_property_changes(self):
-        self.detect_property_changes(
-            from_population=self.from_state.relationships_by_name,
-            to_population=self.to_state.relationships_by_name,
-            deleted_property_location=self.deleted_relationship_properties,
-            renamed_property_location=self.renamed_relationship_properties,
-            added_property_loction=self.added_relationship_properties,
-            deleted_types_location=self.deleted_relationship_types,
-            renamed_types_location=self.renamed_relationship_types,
-            new_types_location=self.new_relationship_types,
-        )
+        for pair in self.get_relationship_pairs():
+            deleted_properties, added_properties, renamed_properties = (
+                pair.get_property_drift(self.input)
+            )
+            for prop in deleted_properties:
+                self.deleted_relationship_properties.add((pair.to_type.name, prop))
+            for prop in added_properties:
+                self.added_relationship_properties.add((pair.to_type.name, prop))
+            for old, new in renamed_properties:
+                self.renamed_relationship_properties.add((pair.to_type.name, old, new))
 
     def detect_node_index_changes(self):
-        self.detect_index_changes(
-            from_population=self.from_state.nodes_by_name,
-            to_population=self.to_state.nodes_by_name,
-            added_index_location=self.added_node_property_indexes,
-            deleted_index_location=self.deleted_node_property_indexes,
-            deleted_types_location=self.deleted_node_types,
-            renamed_types_location=self.renamed_node_types,
-            new_types_location=self.new_node_types,
-        )
+        for pair in self.get_node_pairs(ignore_created_and_deleted=False):
+            deleted_indexes, added_indexes = pair.get_index_drift()
+            self.deleted_node_property_indexes.update(
+                (pair.to_type.name, idx) for idx in deleted_indexes
+            )
+            self.added_node_property_indexes.update(
+                (pair.to_type.name, idx) for idx in added_indexes
+            )
 
     def detect_relationship_index_changes(self):
-        self.detect_index_changes(
-            from_population=self.from_state.relationships_by_name,
-            to_population=self.to_state.relationships_by_name,
-            added_index_location=self.added_relationship_property_indexes,
-            deleted_index_location=self.deleted_relationship_property_indexes,
-            deleted_types_location=self.deleted_relationship_types,
-            renamed_types_location=self.renamed_relationship_types,
-            new_types_location=self.new_relationship_types,
+        for pair in self.get_relationship_pairs(ignore_created_and_deleted=False):
+            deleted_indexes, added_indexes = pair.get_index_drift()
+            self.deleted_relationship_property_indexes.update(
+                (pair.to_type.name, idx) for idx in deleted_indexes
+            )
+            self.added_relationship_property_indexes.update(
+                (pair.to_type.name, idx) for idx in added_indexes
+            )
+
+    def get_node_pairs(
+        self, ignore_created_and_deleted: bool = True
+    ) -> Iterable[TypePairing]:
+        return self.compare_types_pairwise(
+            self.from_state.nodes_by_name,
+            self.to_state.nodes_by_name,
+            self.deleted_node_types,
+            self.new_node_types,
+            self.renamed_node_types,
+            ignore_created_and_deleted,
+        )
+
+    def get_relationship_pairs(
+        self, ignore_created_and_deleted: bool = True
+    ) -> Iterable[TypePairing]:
+        return self.compare_types_pairwise(
+            self.from_state.relationships_by_name,
+            self.to_state.relationships_by_name,
+            self.deleted_relationship_types,
+            self.new_relationship_types,
+            self.renamed_relationship_types,
+            ignore_created_and_deleted,
         )
 
     def compare_types_pairwise(
@@ -413,8 +560,8 @@ class AutoChangeDetector:
         deleted_types_location: Set[str],
         new_types_location: Set[str],
         renamed_types_location: Set[Tuple[str, str]],
-        ignore_created_and_deleted: bool = True,
-    ) -> Iterable[Tuple[str, str]]:
+        ignore_created_and_deleted: bool,
+    ) -> Iterable[TypePairing]:
         all_types = set(from_population).union(to_population)
         for type in all_types:
             # If the type is new or deleted, we can ignore it.
@@ -446,130 +593,7 @@ class AutoChangeDetector:
             else:
                 from_type_name = to_type_name = type
 
-            yield from_type_name, to_type_name
-
-    def detect_index_changes(
-        self,
-        from_population: Dict[str, GraphObjectSchema],
-        to_population: Dict[str, GraphObjectSchema],
-        added_index_location: Set[Tuple[str, str]],
-        deleted_index_location: Set[Tuple[str, str]],
-        deleted_types_location: Set[str],
-        renamed_types_location: Set[str],
-        new_types_location: Set[Tuple[str, str]],
-    ):
-        def get_indexed_properties_or_empty_set(
-            type_name, population: Dict[str, GraphObjectSchema]
-        ):
-            if type_name in population:
-                return population[type_name].indexed_properties
-            else:
-                return set()
-
-        def detect_changes_between_types(from_type_name, to_type_name):
-            from_type_indexes = get_indexed_properties_or_empty_set(
-                from_type_name, from_population
+            yield TypePairing(
+                from_type=from_population.get(from_type_name),
+                to_type=to_population.get(to_type_name),
             )
-            to_type_indexes = get_indexed_properties_or_empty_set(
-                to_type_name, to_population
-            )
-            added_indexes = to_type_indexes - from_type_indexes
-            deleted_indexes = from_type_indexes - to_type_indexes
-            added_index_location.update((to_type_name, idx) for idx in added_indexes)
-            deleted_index_location.update(
-                (to_type_name, idx) for idx in deleted_indexes
-            )
-
-        for from_type_name, to_type_name in self.compare_types_pairwise(
-            from_population,
-            to_population,
-            deleted_types_location,
-            new_types_location,
-            renamed_types_location,
-            ignore_created_and_deleted=False,
-        ):
-            detect_changes_between_types(from_type_name, to_type_name)
-
-    def detect_property_changes(
-        self,
-        from_population: Dict[str, GraphObjectSchema],
-        to_population: Dict[str, GraphObjectSchema],
-        deleted_property_location: Set[Tuple[str, str]],
-        renamed_property_location: Set[Tuple[str, str, str]],
-        added_property_loction: Set[Tuple[str, str]],
-        deleted_types_location: Set[str],
-        renamed_types_location: Set[str],
-        new_types_location: Set[Tuple[str, str]],
-        properties_attr: str = "non_key_properties",
-    ):
-        def detect_changes_between_types(from_type_name, to_type_name):
-            from_type_props = getattr(from_population[from_type_name], properties_attr)
-            to_type_props = getattr(to_population[to_type_name], properties_attr)
-            # To start, we assume that all properties missing from one side or
-            # the other were created or deleted.
-            deleted = from_type_props - to_type_props
-            added = to_type_props - from_type_props
-            renamed = set()
-
-            # We don't have any smart way to ascertain what is probably
-            # a rename, so we are just going to have to ask about every
-            # combination of properties
-            for added_property in added:
-                for deleted_property in deleted:
-                    if self.input.ask_property_renamed(
-                        to_type_name, deleted_property, added_property
-                    ):
-                        renamed.add((to_type_name, deleted_property, added_property))
-
-            # For renamed properties, we can remove them from the
-            # added and removed sets and add it to to the final renamed set.
-            for item in renamed:
-                _, deleted_property, added_property = item
-                deleted.remove(deleted_property)
-                added.remove(added_property)
-                renamed_property_location.add(item)
-
-            # We can add the type and the property to the final set once
-            # we have removed renamed properties.
-            for property in added:
-                added_property_loction.add((to_type_name, property))
-            for property in deleted:
-                deleted_property_location.add((to_type_name, property))
-
-        for from_type_name, to_type_name in self.compare_types_pairwise(
-            from_population,
-            to_population,
-            deleted_types_location,
-            new_types_location,
-            renamed_types_location,
-        ):
-            detect_changes_between_types(from_type_name, to_type_name)
-
-    def detect_type_changes(
-        self,
-        from_population: Dict[str, GraphObjectSchema],
-        to_population: Dict[str, GraphObjectSchema],
-        deleted_types_location: Set[str],
-        renamed_types_location: Set[Tuple[str, str]],
-        new_types_location: Set[str],
-    ):
-        # To start, we assume that all types missing from one side or
-        # the other were created or deleted.
-        current_types = set(to_population)
-        previous_types = set(from_population)
-        deleted_types_location.update(previous_types - current_types)
-        new_types_location.update(current_types - previous_types)
-
-        # After that, check for types that appear to have been renamed
-        # where the type names are different but the keys are the same.
-        for new_type_name in new_types_location:
-            for prev_type_name in previous_types:
-                if self.input.ask_type_renamed(prev_type_name, new_type_name):
-                    renamed_types_location.add((prev_type_name, new_type_name))
-                    break
-
-        # Once we have found the renamed types, we can simply remove them
-        # from the new and deleted sets.
-        for previous, new in renamed_types_location:
-            deleted_types_location.remove(previous)
-            new_types_location.remove(new)
