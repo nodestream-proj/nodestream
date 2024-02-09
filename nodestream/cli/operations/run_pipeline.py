@@ -1,7 +1,8 @@
-from typing import Iterable
+from typing import Iterable, Optional
 
 from yaml import safe_dump
 
+from ...utils import StringSuggester
 from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
 from ...pipeline.meta import PipelineContext
 from ...project import Project, RunRequest
@@ -20,6 +21,20 @@ class RunPipeline(Operation):
     def __init__(self, project: Project) -> None:
         self.project = project
 
+    def get_pipeline_to_run_or_suggest_to_user(
+        self, command: NodestreamCommand, pipeline_name: str
+    ) -> Optional[PipelineDefinition]:
+        if pipeline_definition := self.project.get_pipeline_by_name(pipeline_name):
+            return pipeline_definition
+
+        all_names = {ppl.name for ppl in self.project.get_all_pipelines()}
+        suggester = StringSuggester(all_names)
+        suggested_name = suggester.suggest_closest(pipeline_name)
+        command.line(
+            f"<error>No pipeline with the name '{pipeline_name}' found in your project</error>"
+        )
+        command.line(f"<info>HINT: Did you mean '{suggested_name}'?</info>")
+
     def get_pipelines_to_run(
         self, command: NodestreamCommand
     ) -> Iterable[PipelineDefinition]:
@@ -28,7 +43,7 @@ class RunPipeline(Operation):
             return [
                 ppl
                 for name in supplied_commands
-                if (ppl := self.project.get_pipeline_by_name(name))
+                if (ppl := self.get_pipeline_to_run_or_suggest_to_user(command, name))
             ]
         return self.project.get_all_pipelines()
 
