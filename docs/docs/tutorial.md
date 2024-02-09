@@ -338,7 +338,7 @@ docker run \
 Then we can run our migrations:
 
 ```bash
-nodestream migrations run --target my-dd
+nodestream migrations run --target my-db
 ```
 
 
