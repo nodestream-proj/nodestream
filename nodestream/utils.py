@@ -17,11 +17,7 @@ class StringSuggester:
         Returns:
             The string from the list of strings that is most similar to the given string.
         """
-        best_string = self.all_strings[0]
-        best_score = SequenceMatcher(None, string, best_string).ratio()
-        for s in self.all_strings[1:]:
-            new_score = SequenceMatcher(None, string, s).ratio()
-            if new_score > best_score:
-                best_string = s
-                best_score = new_score
-        return best_string
+        return max(
+            self.all_strings,
+            key=lambda s: SequenceMatcher(None, string, s).ratio(),
+        )
