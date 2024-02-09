@@ -351,7 +351,7 @@ docker run \
 Then we can run our migrations to prepare the database:
 
 ```bash
-nodestream migrations run --target my-dd
+nodestream migrations run --target my-db
 ```
 
 Which should produce output like this after a moment:
