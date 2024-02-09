@@ -1,8 +1,8 @@
 from unittest.mock import patch
 
-from pandas import Timestamp
 import pytest
 from hamcrest import assert_that, equal_to, equal_to_ignoring_whitespace
+from pandas import Timestamp
 
 from nodestream.databases.neo4j.ingest_query_builder import (
     DELETE_NODE_QUERY,

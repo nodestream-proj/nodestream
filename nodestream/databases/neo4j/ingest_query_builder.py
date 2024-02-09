@@ -1,9 +1,9 @@
 import re
 from functools import cache, wraps
 from typing import Iterable
-from pandas import Timedelta, Timestamp
 
 from cymple.builder import NodeAfterMergeAvailable, NodeAvailable, QueryBuilder
+from pandas import Timedelta, Timestamp
 
 from ...model import (
     Node,
