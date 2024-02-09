@@ -1,8 +1,8 @@
-from datetime import datetime
+from unittest.mock import patch
 
 import pytest
-from freezegun import freeze_time
 from hamcrest import assert_that, equal_to, equal_to_ignoring_whitespace
+from pandas import Timestamp
 
 from nodestream.databases.neo4j.ingest_query_builder import (
     DELETE_NODE_QUERY,
@@ -30,7 +30,7 @@ def query_builder():
     return Neo4jIngestQueryBuilder(True)
 
 
-GREATEST_DAY = datetime(1998, 3, 25, 2, 0, 1)
+GREATEST_DAY = Timestamp(1998, 3, 25, 2, 0, 1)
 
 BASIC_NODE_TTL = TimeToLiveConfiguration(
     graph_object_type=GraphObjectType.NODE,
@@ -91,6 +91,7 @@ REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
 )
 
 
+@patch("pandas.Timestamp.utcnow")
 @pytest.mark.parametrize(
     "ttl,expected_query",
     [
@@ -100,8 +101,8 @@ REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         (REL_TTL_WITH_CUSTOM_QUERY, REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY),
     ],
 )
-@freeze_time("1998-03-25 12:00:01")
-def test_generates_expected_queries(query_builder, ttl, expected_query):
+def test_generates_expected_queries(mocked_utcnow, query_builder, ttl, expected_query):
+    mocked_utcnow.return_value = Timestamp(1998, 3, 25, 12, 0, 1)
     resultant_query = query_builder.generate_ttl_query_from_configuration(ttl)
     assert_that(resultant_query, equal_to(expected_query))
 

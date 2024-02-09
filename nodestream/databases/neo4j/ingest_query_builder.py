@@ -1,9 +1,9 @@
 import re
-from datetime import datetime, timedelta
 from functools import cache, wraps
 from typing import Iterable
 
 from cymple.builder import NodeAfterMergeAvailable, NodeAvailable, QueryBuilder
+from pandas import Timedelta, Timestamp
 
 from ...model import (
     Node,
@@ -228,7 +228,7 @@ class Neo4jIngestQueryBuilder:
         return QueryBatch(query, params)
 
     def generate_ttl_match_query(self, config: TimeToLiveConfiguration) -> Query:
-        earliest_allowed_time = datetime.utcnow() - timedelta(
+        earliest_allowed_time = Timestamp.utcnow() - Timedelta(
             hours=config.expiry_in_hours
         )
         params = {"earliest_allowed_time": earliest_allowed_time}
