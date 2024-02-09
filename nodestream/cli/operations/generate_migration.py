@@ -51,8 +51,7 @@ class GenerateMigration(Operation):
         migration, path = await self.generate_migration(input)
 
         # Describe any changes that were made if they were made.
-        schema_has_changes = migration is not None
-        if schema_has_changes:
+        if migration is not None:
             self.describe_migration(command, migration)
         else:
             command.line("No changes to migrate")
