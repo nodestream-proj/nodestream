@@ -46,7 +46,7 @@ class Run(NodestreamCommand):
         ),
         option(
             "auto-migrate",
-            description="Ensuree all specified targets are migrated before running specified pipelines",
+            description="Ensure all specified targets are migrated before running specified pipelines",
             flag=True,
         ),
     ]
