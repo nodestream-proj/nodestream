@@ -167,12 +167,14 @@ class GraphObjectSchema(LoadsFromYaml, SavesToYaml):
             raise ValueError(f"Key {old_key} does not exist on node type {self.name}.")
         self.rename_property(old_key, new_key)
 
-    def add_index(self, property: str):
+    def add_index(self, property: str, auto_add_property: bool = True):
         """Add an index.
 
         Args:
             index: The index to add.
         """
+        if property not in self.properties and auto_add_property:
+            self.add_property(property)
         self.properties[property].is_indexed = True
 
     def drop_index(self, property: str):
