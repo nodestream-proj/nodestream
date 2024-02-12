@@ -1,0 +1,14 @@
+scopes:
+  default:
+    pipelines:
+      - path: tests/e2e/project/airports.yaml
+        name: airports
+      - path: tests/e2e/project/fifa_2021_player_data.yaml
+        name: fifa
+  
+targets:
+  my-neo4j-db:
+    database: neo4j
+    uri: !env NEO4J_CONNECT_URI
+    username: neo4j
+    password: password

@@ -1,0 +1,45 @@
+name: Continuous Integration
+
+on: 
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        python-version: ["3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install --upgrade setuptools
+          poetry env use ${{ matrix.python-version }}
+          poetry install
+      - name: Run Tests
+        run: poetry run pytest --cov nodestream_plugin_neo4j --cov-report term --cov-report xml -m "not e2e"
+      - name: Run Lints
+        run: |
+          poetry run ruff nodestream_plugin_neo4j tests
+          poetry run black nodestream_plugin_neo4j tests --check
+          poetry run isort nodestream_plugin_neo4j tests --check-only
+      - name: Run E2E Tests
+        run: poetry run pytest -m "e2e"
+        if: "runner.os == 'Linux'"
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ${{ matrix.python-version }}-${{ matrix.os }}
