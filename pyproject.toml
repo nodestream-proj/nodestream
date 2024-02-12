@@ -21,6 +21,7 @@ pytest-cov = "^4.1.0"
 pytest-asyncio = "^0.23.3"
 testcontainers = {extras = ["neo4j"], version = "^3.7.1"}
 ruff = "^0.1.13"
+isort = "^5.13.2"
 
 [tool.pytest.ini_options]
 markers = [
