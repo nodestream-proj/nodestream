@@ -20,4 +20,9 @@ MANY_PIPELINES_ARGUMENT = argument(
     "pipelines", "the names of the pipelines", multiple=True, optional=True
 )
 
-DEVELOPMENT_ENVIRONMENT_OPTION = option("development", "g", "Run development settings. Cronjobs are suspended, perpetuals are scaled to 0 unless the debug annotation is specified.", flag=True)
+DEVELOPMENT_ENVIRONMENT_OPTION = option(
+    "development",
+    "g",
+    "Run development settings. Cronjobs are suspended, perpetuals are scaled to 0 unless the debug annotation is specified.",
+    flag=True,
+)
