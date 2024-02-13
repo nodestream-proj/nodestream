@@ -81,6 +81,8 @@ good candidate for a first pass at migrations.
 
 - **Adding a property with a non-trivial default value** Adding a property with a default value that is not a constant. This is not supported because it would require evaluating python code per item being migrated which is not supported due to the additional complexity it would introduce. In frameworks like Django, this is supported because the framework can rely on the ORM to provide a consistent interface for evaluating the default value. In nodestream, there is no such interface.
 
+- **Rolling Back Migrations** This has been deemed out of scope for the initial release of migrations. While it is possible to roll back migrations, it would require a significant amount of additional complexity to support and would not be a good candidate for a first pass at migrations. Especially since an equivalent to this feature is not supported with nodestream's existing handling of indexes and constraints.
+
 ### Migration Anatomy 
 
 A migration is a yaml file that contains a list of operations to be performed on the database. 
