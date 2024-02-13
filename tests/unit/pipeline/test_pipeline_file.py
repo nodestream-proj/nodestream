@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 from hamcrest import assert_that, equal_to, has_length, instance_of
 
 from nodestream.file_io import LazyLoadedArgument
@@ -7,6 +8,7 @@ from nodestream.pipeline.pipeline_file_loader import (
     PipelineFile,
     PipelineFileContents,
     PipelineInitializationArguments,
+    StepDefinition,
 )
 from nodestream.pipeline.step import PassStep
 
@@ -33,12 +35,26 @@ def test_init_args_for_testing():
     assert_that(init_args.annotations[0], "test")
 
 
-def test_unset_annotations():
-    init_args = PipelineInitializationArguments(annotations=[])
-    rest_of_step = {"implementation": "test"}
-    step = {"annotations": ["good"], **rest_of_step}
-    assert_that(init_args.step_is_tagged_properly(step), equal_to(True))
-    assert_that(step, equal_to(rest_of_step))
+@pytest.mark.parametrize(
+    "user_annotations,step_annotations,expected",
+    [
+        (set(), set(), True),
+        (set(), {"good"}, True),
+        ({"good"}, set(), True),
+        ({"good"}, {"good"}, True),
+        ({"good"}, {"bad"}, False),
+        ({"good", "bad"}, {"good"}, True),
+        ({"good", "bad"}, {"bad"}, True),
+        ({"good"}, {"good", "bad"}, True),
+        ({"good", "bad"}, {"good", "bad", "ugly"}, True),
+        ({"good", "bad", "ugly"}, {"good", "bad"}, True),
+    ],
+)
+def test_should_be_loaded(user_annotations, step_annotations, expected):
+    definition = StepDefinition(
+        implementation_path="test", annotations=step_annotations
+    )
+    assert_that(definition.should_be_loaded(user_annotations), equal_to(expected))
 
 
 def test_pipeline_file_loads_lazy():
@@ -46,13 +62,6 @@ def test_pipeline_file_loads_lazy():
         Path("tests/unit/pipeline/fixtures/config_pipeline.yaml")
     )
     assert_that(
-        file_contents.data,
-        equal_to(
-            [
-                {
-                    "implementation": "nodestream.pipeline.step:PassStep",
-                    "arguments": {"name": LazyLoadedArgument("config", "name")},
-                }
-            ]
-        ),
+        file_contents.step_definitions[0].arguments,
+        equal_to({"name": LazyLoadedArgument("config", "name")}),
     )

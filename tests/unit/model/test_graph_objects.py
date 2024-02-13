@@ -10,6 +10,11 @@ from nodestream.model import (
 )
 
 
+def test_node_with_no_keys_is_invalid():
+    node = Node("Person", {})
+    assert_that(node.has_valid_id, equal_to(False))
+
+
 def test_node_into_ingest():
     node = Node("Person", {"name": "John"})
     ingest = node.into_ingest()
