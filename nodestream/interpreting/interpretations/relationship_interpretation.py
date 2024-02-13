@@ -99,6 +99,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         "key_normalization",
         "properties_normalization",
         "key_search_algorithm",
+        "node_additional_types",
     )
 
     @deprecated_arugment("match_strategy", "node_creation_rule")
@@ -116,6 +117,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         node_creation_rule: Optional[str] = None,
         key_normalization: Optional[Dict[str, Any]] = None,
         properties_normalization: Optional[Dict[str, Any]] = None,
+        node_additional_types: Optional[Iterable[str]] = None,
     ):
         self.can_find_many = find_many or iterate_on is not None
         self.outbound = outbound
@@ -149,6 +151,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         self.key_search_algorithm = key_search_algorithm(
             self.node_key, self.key_normalization
         )
+        self.node_additional_types = tuple(node_additional_types or tuple())
 
     def interpret(self, context: ProviderContext):
         for sub_context in self.decomposer.decompose_record(context):
@@ -172,6 +175,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
             node = Node(
                 type=self.node_type.single_value(context),
                 key_values=PropertySet(key_set),
+                additional_types=self.node_additional_types,
             )
             if node.has_valid_id:
                 node.properties.apply_providers(

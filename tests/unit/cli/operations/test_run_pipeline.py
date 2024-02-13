@@ -79,3 +79,21 @@ def test_combine_targets_from_command_and_pipeline(
         command, pipeline
     )
     assert_that(result, equal_to(expected))
+
+
+@pytest.mark.parametrize(
+    "provided_pipelines,expected",
+    [
+        (None, ["dummy"]),  # No pipelines provided
+        (["dummy", "p2"], ["dummy"]),  # Partially found pipelines
+        (["p1", "p2"], []),  # Pipelines not found in project
+        (["dummy"], ["dummy"]),  # Single pipeline provided
+    ],
+)
+def test_get_pipleines_to_run(
+    provided_pipelines, expected, project_with_default_scope, mocker
+):
+    cmd = mocker.Mock()
+    cmd.argument.return_value = provided_pipelines
+    results = RunPipeline(project_with_default_scope).get_pipelines_to_run(cmd)
+    assert_that([result.name for result in results], equal_to(expected))
