@@ -19,7 +19,6 @@ from nodestream.model import (
 from nodestream.schema import GraphObjectType
 from pandas import Timedelta, Timestamp
 
-
 from .query import Query, QueryBatch
 
 PROPERTIES_PARAM_NAME = "properties"

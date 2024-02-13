@@ -15,6 +15,7 @@ from nodestream.model import (
     TimeToLiveConfiguration,
 )
 from nodestream.schema import GraphObjectType
+from pandas import Timestamp
 
 from nodestream_plugin_neo4j.ingest_query_builder import (
     DELETE_NODE_QUERY,
@@ -22,7 +23,6 @@ from nodestream_plugin_neo4j.ingest_query_builder import (
     Neo4jIngestQueryBuilder,
 )
 from nodestream_plugin_neo4j.query import COMMIT_QUERY, Query, QueryBatch
-from pandas import Timestamp
 
 
 @pytest.fixture
@@ -89,6 +89,7 @@ REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         "batched_query": DELETE_REL_QUERY,
     },
 )
+
 
 @patch("pandas.Timestamp.utcnow")
 @pytest.mark.parametrize(
