@@ -46,7 +46,7 @@ This allows for the extractor and interpreter to continue processing data and no
 
 ## Migrations 
 
-`nodestream` from versions `0.1`` through `0.11` automatically requested the creation of indexes and constraints on the database. 
+`nodestream` from versions `0.1` through `0.11` automatically requested the creation of indexes and constraints on the database. 
 This was done by introspecting the schema of the entire project and generating the appropriate queries to create the indexes and constraints.
 This was a very powerful feature but it had a few drawbacks:
 - **It was redundant.** The same indexes and constraints were being created with `IF NOT EXISTS` clauses every time the pipeline was run.
