@@ -238,3 +238,17 @@ def test_relationship_interpretation_gather_object_shapes_not_static_node(
     )
     subject.expand_schema(schema_coordinator)
     assert_that(schema_coordinator, has_no_defined_nodes())
+
+
+def test_relationship_interpretation_addtional_node_types(blank_context):
+    subject = RelationshipInterpretation(
+        node_type="Static",
+        node_key={"hello": "world"},
+        relationship_type="Static",
+        node_additional_types=["SomethingElse"],
+    )
+    subject.interpret(blank_context)
+    assert_that(
+        blank_context.desired_ingest.relationships[0].to_node.additional_types,
+        equal_to(("SomethingElse",)),
+    )
