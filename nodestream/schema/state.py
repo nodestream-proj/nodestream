@@ -632,9 +632,12 @@ class SchemaExpansionCoordinator:
         # the node type name when we find it. Note that we will need to "hold on" to the
         # unbound alias until we find the node type name.
         elif alias:
-            unbound = self.unbound_aliases.get(alias, GraphObjectSchema(alias))
-            self.unbound_aliases[alias] = unbound
-            fn(unbound)
+            if alias in self.aliases:
+                fn(self.schema.get_node_type_by_name(self.aliases[alias]))
+            else:
+                unbound = self.unbound_aliases.get(alias, GraphObjectSchema(alias))
+                self.unbound_aliases[alias] = unbound
+                fn(unbound)
 
         # If only the node_type_name is provided, we are not messing with the alias at all.
         # We are just calling the function on the node type name.
@@ -680,6 +683,7 @@ class SchemaExpansionCoordinator:
 
     def clear_aliases(self):
         self.aliases.clear()
+        self.unbound_aliases.clear()
 
 
 class ExpandsSchema:
