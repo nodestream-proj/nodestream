@@ -88,7 +88,14 @@ class LineSeperatedJsonFileFormat(SupportedFileFormat, alias=".jsonl"):
 class ParquetFileFormat(SupportedFileFormat, alias=".parquet"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
         df = pd.read_parquet(fp, engine='pyarrow')
-        return  df.to_dict(orient="records")
+
+        # Note: 
+        # It is not efficient to do this this way, which is
+        # converting the data frame to string JSON representation
+        # and then calling json.loads to parse the string into a JSON object.
+        # Find a direct way to convert to JSON object from parquet.
+
+        return json.loads(df.to_json(orient ='records'))
 
 
 class TextFileFormat(SupportedFileFormat, alias=".txt"):
