@@ -1,4 +1,5 @@
 import json
+import pandas as pd
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
@@ -39,8 +40,12 @@ class SupportedFileFormat(Pluggable, ABC):
     @classmethod
     @contextmanager
     def open(cls, file: Path) -> "SupportedFileFormat":
-        with open(file, "r", encoding="utf-8") as fp:
-            yield cls.from_file_pointer_and_format(fp, file.suffix)
+        if (file and ".parquet" in file.name):
+            with open(file, "rb") as fp:
+                yield cls.from_file_pointer_and_format(fp, file.suffix)
+        else:
+            with open(file, "r", encoding="utf-8") as fp:
+                yield cls.from_file_pointer_and_format(fp, file.suffix)
 
     @classmethod
     def from_file_pointer_and_format(
@@ -64,6 +69,12 @@ class JsonFileFormat(SupportedFileFormat, alias=".json"):
 class LineSeperatedJsonFileFormat(SupportedFileFormat, alias=".jsonl"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
         return (json.loads(line) for line in fp)
+
+
+class ParquetFileFormat(SupportedFileFormat, alias=".parquet"):
+    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+        df = pd.read_parquet(fp, engine='pyarrow')
+        return  df.to_dict(orient="records")
 
 
 class TextFileFormat(SupportedFileFormat, alias=".txt"):
