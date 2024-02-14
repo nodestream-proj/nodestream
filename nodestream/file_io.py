@@ -118,6 +118,7 @@ class SavesToYamlFile(SavesToYaml):
         """
         file_data = self.to_file_data()
         validated_file_data = self.describe_yaml_schema().validate(file_data)
+        file_path.parent.mkdir(parents=True, exist_ok=True)
         with file_path.open("w") as f:
             dump(
                 validated_file_data,

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nodestream"
-version = "0.11.8"
+version = "0.12.0a1"
 description = "A Fast, Declarative ETL for Graph Databases."
 license = "GPL-3.0-only"
 authors = [
@@ -31,10 +31,8 @@ profile = "black"
 python = "^3.10"
 pyyaml = "^6.0"
 jmespath = "^1.0.1"
-neo4j = "^5.8.0"
 cleo = "^2.0.1"
 python-json-logger = "^2.0.4"
-cymple = "0.8.1"
 boto3 = "^1.26.137"
 confluent-kafka = "^2.3.0"
 Jinja2 = "^3"
@@ -42,7 +40,6 @@ pandas = "^2"
 schema = "^0.7.5"
 cookiecutter = "^2.1.1"
 httpx = "^0.24.1"
-testcontainers = {extras = ["neo4j"], version = "^3.7.1"}
 psutil = "^5.9.6"
 
 uvloop = [
@@ -91,13 +88,13 @@ nodestream = 'nodestream.cli.application:run'
 "file_formats" = "nodestream.pipeline.extractors.files"
 "interpretations" = "nodestream.interpreting.interpretations"
 "normalizers" = "nodestream.pipeline.normalizers"
-"value_providers" = "nodestream.pipeline.value_providers"   
+"value_providers" = "nodestream.pipeline.value_providers"
 "record_formats" = "nodestream.pipeline.extractors.streams"
 "stream_connectors" = "nodestream.pipeline.extractors.streams"
-"commands" = "nodestream.cli.commands"                      
-"audits" = "nodestream.project.audits"                      
+"commands" = "nodestream.cli.commands"
+"audits" = "nodestream.project.audits"
 "schema_printers" = "nodestream.schema.printers"
-"databases" = "nodestream.databases.neo4j"
+"databases" = "nodestream.databases.null"
 
 [tool.ruff]
 ignore = ["E501"]
