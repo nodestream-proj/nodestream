@@ -9,18 +9,10 @@ from ...pipeline.value_providers import (
     StaticValueOrValueProvider,
     ValueProvider,
 )
-from ...schema.indexes import FieldIndex, KeyIndex
-from ...schema.schema import (
-    Cardinality,
-    GraphObjectShape,
-    GraphObjectType,
-    KnownTypeMarker,
-    PresentRelationship,
-    PropertyMetadataSet,
-    UnknownTypeMarker,
-)
+from ...schema import Cardinality, GraphObjectSchema, SchemaExpansionCoordinator
 from ..record_decomposers import RecordDecomposer
 from .interpretation import Interpretation
+from .source_node_interpretation import SourceNodeInterpretation
 
 DEFAULT_KEY_NORMALIZATION_ARGUMENTS = {LowercaseStrings.argument_flag(): True}
 
@@ -99,6 +91,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         "key_normalization",
         "properties_normalization",
         "key_search_algorithm",
+        "node_additional_types",
     )
 
     @deprecated_arugment("match_strategy", "node_creation_rule")
@@ -116,6 +109,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         node_creation_rule: Optional[str] = None,
         key_normalization: Optional[Dict[str, Any]] = None,
         properties_normalization: Optional[Dict[str, Any]] = None,
+        node_additional_types: Optional[Iterable[str]] = None,
     ):
         self.can_find_many = find_many or iterate_on is not None
         self.outbound = outbound
@@ -149,6 +143,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         self.key_search_algorithm = key_search_algorithm(
             self.node_key, self.key_normalization
         )
+        self.node_additional_types = tuple(node_additional_types or tuple())
 
     def interpret(self, context: ProviderContext):
         for sub_context in self.decomposer.decompose_record(context):
@@ -172,6 +167,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
             node = Node(
                 type=self.node_type.single_value(context),
                 key_values=PropertySet(key_set),
+                additional_types=self.node_additional_types,
             )
             if node.has_valid_id:
                 node.properties.apply_providers(
@@ -186,75 +182,55 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         for related_node in self.find_related_nodes(context):
             yield relationship, related_node
 
-    # NOTE: We cannot participate in introspection when we don't know the relationship
-    # or related node type until runtime. Sometimes we can partially participate if we know
-    # one or the other.
+    def expand_relationship_schema(self, relationship_schema: GraphObjectSchema):
+        relationship_schema.add_keys(self.relationship_key)
+        relationship_schema.add_properties(self.relationship_properties)
+        relationship_schema.add_indexed_timestamp()
 
-    def gather_present_relationships(self):
-        if not all((self.relationship_type.is_static, self.node_type.is_static)):
-            return
-
-        relationship_type = KnownTypeMarker(self.relationship_type.value)
-        source_node = UnknownTypeMarker.source_node()
-        related_node = KnownTypeMarker(type=self.node_type.value)
-        from_type = source_node if self.outbound else related_node
-        to_type = related_node if self.outbound else source_node
-        foreign_cardinality = Cardinality.MANY
-        source_cardinality = (
-            Cardinality.MANY if self.can_find_many else Cardinality.SINGLE
-        )
-
-        if self.outbound:
-            to_side_cardinality, from_side_cardinality = (
-                foreign_cardinality,
-                source_cardinality,
-            )
+    def expand_related_node_schema(self, node_schema: GraphObjectSchema):
+        if self.node_creation_rule == NodeCreationRule.EAGER:
+            node_schema.add_keys(self.node_key)
         else:
-            from_side_cardinality, to_side_cardinality = (
-                foreign_cardinality,
-                source_cardinality,
-            )
+            node_schema.add_properties(self.node_key)
+        node_schema.add_properties(self.node_properties)
+        node_schema.add_indexed_timestamp()
 
-        yield PresentRelationship(
-            from_object_type=from_type,
-            to_object_type=to_type,
-            relationship_type=relationship_type,
-            to_side_cardinality=to_side_cardinality,
-            from_side_cardinality=from_side_cardinality,
-        )
-
-    def gather_used_indexes(self):
-        if self.node_type.is_static:
-            related_node_type = self.node_type.value
-            yield FieldIndex.for_ttl_timestamp(related_node_type)
-
-            # If we are matching fuzzy or MATCH_ONLY, we cannot rely on the key index
-            # to find the related node.
-            # TODO: Perhaps in the future we can do a FieldIndex instead?
-            if self.node_creation_rule == NodeCreationRule.EAGER:
-                yield KeyIndex(related_node_type, frozenset(self.node_key.keys()))
-
+    def expand_schema(self, coordinator: SchemaExpansionCoordinator):
         if self.relationship_type.is_static:
-            relationship_type = self.relationship_type.value
-            yield FieldIndex.for_ttl_timestamp(
-                relationship_type, object_type=GraphObjectType.RELATIONSHIP
+            coordinator.on_relationship_schema(
+                self.expand_relationship_schema,
+                relationship_type=self.relationship_type.value,
             )
 
-    def gather_object_shapes(self):
         if self.node_type.is_static:
-            yield GraphObjectShape(
-                graph_object_type=GraphObjectType.NODE,
-                object_type=KnownTypeMarker(self.node_type.value),
-                properties=PropertyMetadataSet.from_names(
-                    self.node_properties.keys(), self.node_key.keys()
-                ),
+            coordinator.on_node_schema(
+                self.expand_related_node_schema,
+                node_type=self.node_type.value,
             )
 
-        if self.relationship_type.is_static:
-            yield GraphObjectShape(
-                graph_object_type=GraphObjectType.RELATIONSHIP,
-                object_type=KnownTypeMarker(self.relationship_type.value),
-                properties=PropertyMetadataSet.from_names(
-                    self.relationship_key.keys(), self.relationship_properties.keys()
-                ),
+        if self.relationship_type.is_static and self.node_type.is_static:
+            source_node = SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS
+            related_node = self.node_type.value
+            from_type = source_node if self.outbound else related_node
+            to_type = related_node if self.outbound else source_node
+            foreign_cardinality = Cardinality.MANY
+            source_cardinality = (
+                Cardinality.MANY if self.can_find_many else Cardinality.SINGLE
+            )
+            if self.outbound:
+                to_side_cardinality, from_side_cardinality = (
+                    foreign_cardinality,
+                    source_cardinality,
+                )
+            else:
+                from_side_cardinality, to_side_cardinality = (
+                    foreign_cardinality,
+                    source_cardinality,
+                )
+            coordinator.connect(
+                from_type_or_alias=from_type,
+                to_type_or_alias=to_type,
+                relationship_type=self.relationship_type.value,
+                to_cardinality=to_side_cardinality,
+                from_cardinality=from_side_cardinality,
             )
