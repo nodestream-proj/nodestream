@@ -4,8 +4,8 @@ import pytest
 @pytest.mark.asyncio
 async def test_perform(mocker, project_dir):
     from nodestream.cli.operations.run_project_cookiecutter import (
-        RunProjectCookiecutter,
         PROJECT_COOKIECUTTER_URL,
+        RunProjectCookiecutter,
     )
 
     mocked_cookiecutter = mocker.patch(
