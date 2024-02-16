@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -131,10 +132,12 @@ class PipelineFileContents(LoadsFromYamlFile):
 class PipelineFile:
     def __init__(self, file_path: Path):
         self.file_path = file_path
+        self.logger = getLogger(self.__class__.__name__)
 
     def load_pipeline(
         self, init_args: Optional[PipelineInitializationArguments] = None
     ) -> Pipeline:
+        self.logger.info("Loading Pipeline")
         init_args = init_args or PipelineInitializationArguments()
         contents = PipelineFileContents.read_from_file(self.file_path)
         return contents.initalize_with_arguments(init_args)
