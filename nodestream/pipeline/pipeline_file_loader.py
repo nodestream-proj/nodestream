@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -10,7 +11,6 @@ from .pipeline import Pipeline
 from .scope_config import ScopeConfig
 from .step import Step
 from .value_providers import ValueProvider
-from logging import getLogger
 
 
 class InvalidPipelineDefinitionError(ValueError):
