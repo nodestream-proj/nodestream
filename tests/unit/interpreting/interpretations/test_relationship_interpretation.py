@@ -5,14 +5,16 @@ from nodestream.interpreting.interpretations.relationship_interpretation import 
     InvalidKeyLengthError,
     RelationshipInterpretation,
 )
-from nodestream.schema.schema import (
-    Cardinality,
-    KnownTypeMarker,
-    PresentRelationship,
-    UnknownTypeMarker,
-)
 
 from ...stubs import StubbedValueProvider
+from .matchers import (
+    has_defined_relationships,
+    has_no_defined_nodes,
+    has_no_defined_relationships,
+    has_node_keys,
+    has_node_properties,
+    has_relationship_keys,
+)
 
 
 def test_single_key_search_without_normalized_values(blank_context):
@@ -137,132 +139,105 @@ def test_relationship_interpretation_node_property_normalization(blank_context):
     )
 
 
-def test_relationship_interpretation_gather_present_relationships_not_static_node():
+def test_relationship_interpretation_gather_present_relationships_not_static_node(
+    schema_coordinator,
+):
     subject = RelationshipInterpretation(
         node_type=StubbedValueProvider(values=["Dynamic"]),
         node_key={"hello": "world"},
         relationship_type="Static",
     )
-    assert_that(list(subject.gather_present_relationships()), has_length(0))
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_defined_relationships(("Static",)))
 
 
-def test_relationship_interpretation_gather_present_relationships_not_static_relationship():
+def test_relationship_interpretation_gather_present_relationships_not_static_relationship(
+    schema_coordinator,
+):
     subject = RelationshipInterpretation(
         node_type="Satic",
         node_key={"hello": "world"},
         relationship_type=StubbedValueProvider(values=["Dynamic"]),
     )
-    assert_that(list(subject.gather_present_relationships()), has_length(0))
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_no_defined_relationships())
 
 
-def test_relationship_interpretation_gather_present_relationships_static_values():
-    node_type, relationship_type = "Static", "IS_STATIC"
-    subject = RelationshipInterpretation(
-        node_type=node_type,
-        relationship_type=relationship_type,
-        node_key={"key": "value"},
-        find_many=True,
-    )
-    result = next(subject.gather_present_relationships())
-    assert_that(
-        result,
-        equal_to(
-            PresentRelationship(
-                from_object_type=UnknownTypeMarker.source_node(),
-                to_object_type=KnownTypeMarker(node_type),
-                relationship_type=KnownTypeMarker(relationship_type),
-                from_side_cardinality=Cardinality.MANY,
-                to_side_cardinality=Cardinality.MANY,
-            )
-        ),
-    )
-
-
-def test_relationship_interpretation_gather_present_relationships_reverse_direction():
-    node_type, relationship_type = "Static", "IS_STATIC"
-    subject = RelationshipInterpretation(
-        node_type=node_type,
-        relationship_type=relationship_type,
-        node_key={"key": "value"},
-        outbound=True,
-    )
-    result = next(subject.gather_present_relationships())
-    assert_that(
-        result,
-        equal_to(
-            PresentRelationship(
-                from_object_type=UnknownTypeMarker.source_node(),
-                to_object_type=KnownTypeMarker(node_type),
-                relationship_type=KnownTypeMarker(relationship_type),
-                from_side_cardinality=Cardinality.SINGLE,
-                to_side_cardinality=Cardinality.MANY,
-            )
-        ),
-    )
-
-
-def test_relationship_interpretation_gather_used_indexes_not_static_relationship():
-    subject = RelationshipInterpretation(
-        node_type="Satic",
-        node_key={"hello": "world"},
-        relationship_type=StubbedValueProvider(values=["Dynamic"]),
-    )
-    assert_that(list(subject.gather_used_indexes()), has_length(2))
-
-
-def test_relationship_interpretation_gather_used_indexes_static_values():
+def test_relationship_interpretation_gather_used_indexes_static_values(
+    schema_coordinator,
+):
     subject = RelationshipInterpretation(
         node_type=StubbedValueProvider(values=["Dynamic"]),
         node_key={"hello": "world"},
         relationship_type="Static",
     )
-    assert_that(list(subject.gather_used_indexes()), has_length(1))
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_no_defined_nodes())
 
 
-def test_relationship_interpretation_gather_used_indexes_static_values_match_only():
+def test_relationship_interpretation_gather_used_indexes_static_values_match_only(
+    schema_coordinator,
+):
     subject = RelationshipInterpretation(
         node_type="static",
         node_key={"hello": "world"},
         relationship_type=StubbedValueProvider(values=["Dynamic"]),
         node_creation_rule="MATCH_ONLY",
     )
-    assert_that(list(subject.gather_used_indexes()), has_length(1))
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_node_properties("static", ("hello",)))
 
 
-def test_relationship_interpretation_gather_used_indexes_not_static_node():
+def test_relationship_interpretation_gather_used_indexes_not_static_node(
+    schema_coordinator,
+):
     subject = RelationshipInterpretation(
         node_type="Static",
         node_key={"hello": "world"},
         relationship_type="AlsoStatic",
     )
-    assert_that(list(subject.gather_used_indexes()), has_length(3))
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_node_keys("Static", ("hello",)))
+    assert_that(schema_coordinator, has_relationship_keys("AlsoStatic", []))
 
 
-def test_relationship_interpretation_gather_object_shapes_not_static_relationship():
+def test_relationship_interpretation_gather_used_indexes_static_node_reversed(
+    schema_coordinator,
+):
+    subject = RelationshipInterpretation(
+        node_type="Static",
+        node_key={"hello": "world"},
+        relationship_type="AlsoStatic",
+        outbound=False,
+    )
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_node_keys("Static", ("hello",)))
+    assert_that(schema_coordinator, has_relationship_keys("AlsoStatic", []))
+
+
+def test_relationship_interpretation_gather_object_shapes_not_static_relationship(
+    schema_coordinator,
+):
     subject = RelationshipInterpretation(
         node_type="Static",
         node_key={"hello": "world"},
         relationship_type=StubbedValueProvider(values=["Dynamic"]),
     )
-    assert_that(list(subject.gather_object_shapes()), has_length(1))
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_no_defined_relationships())
+    assert_that(schema_coordinator, has_node_keys("Static", ("hello",)))
 
 
-def test_relationship_interpretation_gather_object_shapes_not_static_node():
+def test_relationship_interpretation_gather_object_shapes_not_static_node(
+    schema_coordinator,
+):
     subject = RelationshipInterpretation(
         node_type=StubbedValueProvider(values=["Dynamic"]),
         node_key={"hello": "world"},
         relationship_type="Static",
     )
-    assert_that(list(subject.gather_object_shapes()), has_length(1))
-
-
-def test_relationship_interpretation_gather_object_shapess_static_values():
-    subject = RelationshipInterpretation(
-        node_type="Static",
-        node_key={"hello": "world"},
-        relationship_type="Static",
-    )
-    assert_that(list(subject.gather_object_shapes()), has_length(2))
+    subject.expand_schema(schema_coordinator)
+    assert_that(schema_coordinator, has_no_defined_nodes())
 
 
 def test_relationship_interpretation_addtional_node_types(blank_context):
