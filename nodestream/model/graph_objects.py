@@ -1,6 +1,10 @@
+import time
 from abc import ABC
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+
+from pandas import Timestamp
 
 from .creation_rules import NodeCreationRule, RelationshipCreationRule
 
@@ -18,14 +22,34 @@ class DeduplicatableObject(ABC):
         raise NotImplementedError
 
 
+# This is a weird little trick to cache the current time for a short period of
+# time. When nodestream is adding the timestamp to tones of node and
+# relationship objects, it can be a bit slow. Just to get times that are
+# basically the same, there is little value in getting the current time over
+# and over again. So we cache the current time for a short period of time.
+# Profiling this generally shows a 5-15% speedup in the time it takes to
+# ingest a large number of nodes and relationships (Excluding database time).
+
+
+@lru_cache(maxsize=128)
+def _get_cached_timestamp(time_hash: int) -> Timestamp:
+    del time_hash  # Unused; just needed to cache the result
+    return Timestamp.utcnow()
+
+
+def get_cached_timestamp(max_age_in_seconds: int = 2) -> Timestamp:
+    # calling time.time() is relatively fast, but getting a Timestamp object
+    # is relatively slow.
+    ttl_hash = round(time.time()) / max_age_in_seconds
+    return _get_cached_timestamp(ttl_hash)
+
+
 class PropertySet(dict):
     def set_property(self, property_key: str, property_value: Any):
         self[property_key] = property_value
 
     @classmethod
     def default_properties(cls) -> "PropertySet":
-        from pandas import Timestamp
-
         from ..pipeline.meta import get_context
 
         """Returns a default set of properties which set values.
@@ -33,7 +57,7 @@ class PropertySet(dict):
         These default values indicate when the current pipeline touched the object the properties are for.
         """
         pipeline_name = get_context().name
-        now = Timestamp.utcnow()
+        now = get_cached_timestamp()
         return cls(
             {
                 "last_ingested_at": now,
