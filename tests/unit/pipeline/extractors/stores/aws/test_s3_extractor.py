@@ -128,7 +128,7 @@ async def test_s3_extractor_properly_loads_jsonl_files(
 async def test_s3_extractor_properly_loads_text_files(
     subject_with_populated_text_objects,
 ):
-    expected_results = [{"line": b"test"}, {"line": b"test2"}]
+    expected_results = [{"line": "test"}, {"line": "test2"}]
     results = [
         result async for result in subject_with_populated_text_objects.extract_records()
     ]
