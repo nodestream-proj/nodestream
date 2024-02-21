@@ -1,4 +1,5 @@
 import json
+import tempfile
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
@@ -142,14 +143,12 @@ class RemoteFileExtractor(Extractor):
 
     @asynccontextmanager
     async def download_file(self, client: AsyncClient, url: str) -> SupportedFileFormat:
-        with SpooledTemporaryFile(max_size=self.memory_spooling_max_size) as fp:
+        with tempfile.TemporaryFile() as fp:
             async with client.stream("GET", url) as response:
                 async for chunk in response.aiter_bytes():
                     fp.write(chunk)
             fp.seek(0)
-            yield SupportedFileFormat.from_file_pointer_and_format(
-                BufferedReader(fp), Path(url).suffix
-            )
+            yield SupportedFileFormat.from_file_pointer_and_format(fp, Path(url).suffix)
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         async with AsyncClient() as client:
