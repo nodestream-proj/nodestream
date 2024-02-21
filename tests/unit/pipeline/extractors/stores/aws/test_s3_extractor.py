@@ -59,6 +59,7 @@ def subject_with_populated_csv_objects(subject, s3_client):
         )
     return subject
 
+
 @pytest.fixture
 def subject_with_populated_jsonl_objects(subject, s3_client):
     subject.s3_client = s3_client
@@ -70,6 +71,7 @@ def subject_with_populated_jsonl_objects(subject, s3_client):
             Body='{"test":"test"}\n{"test2":"test2"}',
         )
     return subject
+
 
 @pytest.fixture
 def subject_with_archieved_objects(subject_with_archiving_enabled, s3_client):
@@ -95,15 +97,15 @@ async def test_s3_extractor_properly_loads_csv_files(
     assert_that(results, has_length(NUM_OBJECTS))
     assert_that(results, has_items(*expected_results))
 
+
 @pytest.mark.asyncio
 async def test_s3_extractor_properly_loads_jsonl_files(
     subject_with_populated_jsonl_objects,
 ):
-    expected_results = [
-        {"test": "test"}, {"test2": "test2"}
-    ]
+    expected_results = [{"test": "test"}, {"test2": "test2"}]
     results = [
-        result async for result in subject_with_populated_jsonl_objects.extract_records()
+        result
+        async for result in subject_with_populated_jsonl_objects.extract_records()
     ]
     assert_that(results, has_length(2))
     assert_that(results, has_items(*expected_results))
