@@ -147,7 +147,9 @@ class RemoteFileExtractor(Extractor):
                 async for chunk in response.aiter_bytes():
                     fp.write(chunk)
             fp.seek(0)
-            yield SupportedFileFormat.from_file_pointer_and_format(fp, Path(url).suffix)
+            yield SupportedFileFormat.from_file_pointer_and_format(
+                BufferedReader(fp), Path(url).suffix
+            )
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         async with AsyncClient() as client:
