@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
 from glob import glob
-from io import StringIO, TextIOWrapper
+from io import IOBase, TextIOWrapper
 from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from typing import Any, AsyncGenerator, Iterable, Union
@@ -21,11 +21,11 @@ SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
 class SupportedFileFormat(Pluggable, ABC):
-    def __init__(self, file: Union[Path, StringIO]) -> None:
+    def __init__(self, file: Union[Path, IOBase]) -> None:
         self.file = file
 
     @contextmanager
-    def read_handle(self) -> StringIO:
+    def read_handle(self) -> IOBase:
         if isinstance(self.file, Path):
             with open(self.file, "r", encoding="utf-8") as fp:
                 yield fp
@@ -44,7 +44,7 @@ class SupportedFileFormat(Pluggable, ABC):
 
     @classmethod
     def from_file_pointer_and_format(
-        cls, fp: StringIO, file_format: str
+        cls, fp: IOBase, file_format: str
     ) -> "SupportedFileFormat":
         # Import all file formats so that they can register themselves
         cls.import_all()
@@ -52,34 +52,34 @@ class SupportedFileFormat(Pluggable, ABC):
         return file_format(fp)
 
     @abstractmethod
-    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+    def read_file_from_handle(self, fp: IOBase) -> Iterable[JsonLikeDocument]:
         ...
 
 
 class JsonFileFormat(SupportedFileFormat, alias=".json"):
-    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+    def read_file_from_handle(self, fp: IOBase) -> Iterable[JsonLikeDocument]:
         return [json.load(fp)]
 
 
 class LineSeperatedJsonFileFormat(SupportedFileFormat, alias=".jsonl"):
-    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
-        return (json.loads(line.strip()) for line in fp.readlines())
+    def read_file_from_handle(self, fp: IOBase) -> Iterable[JsonLikeDocument]:
+        return (json.loads(line) for line in fp.readlines())
 
 
 class TextFileFormat(SupportedFileFormat, alias=".txt"):
-    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+    def read_file_from_handle(self, fp: IOBase) -> Iterable[JsonLikeDocument]:
         return ({"line": line} for line in fp.readlines())
 
 
 class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
-    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+    def read_file_from_handle(self, fp: IOBase) -> Iterable[JsonLikeDocument]:
         if not isinstance(fp, TextIOWrapper):
             return DictReader(TextIOWrapper(fp))
         return DictReader(fp)
 
 
 class YamlFileFormat(SupportedFileFormat, alias=".yaml"):
-    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+    def read_file_from_handle(self, fp: IOBase) -> Iterable[JsonLikeDocument]:
         return [safe_load(fp)]
 
 
