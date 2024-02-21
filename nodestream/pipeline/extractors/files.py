@@ -68,7 +68,7 @@ class LineSeperatedJsonFileFormat(SupportedFileFormat, alias=".jsonl"):
 
 class TextFileFormat(SupportedFileFormat, alias=".txt"):
     def read_file_from_handle(self, fp: IOBase) -> Iterable[JsonLikeDocument]:
-        return ({"line": line.decode("utf-8").strip()} for line in fp.readlines())
+        return ({"line": line.strip()} for line in fp.readlines())
 
 
 class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):

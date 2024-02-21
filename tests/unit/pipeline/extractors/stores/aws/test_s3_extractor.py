@@ -81,7 +81,7 @@ def subject_with_populated_text_objects(subject, s3_client):
         s3_client.put_object(
             Bucket=BUCKET_NAME,
             Key=f"{PREFIX}/bar/{i}.txt",
-            Body="test\ntest2",
+            Body="test\ntest2\n",
         )
     return subject
 
@@ -113,11 +113,12 @@ async def test_s3_extractor_properly_loads_csv_files(
 
 @pytest.mark.asyncio
 async def test_s3_extractor_properly_loads_jsonl_files(
-    subject_with_populated_text_objects,
+    subject_with_populated_jsonl_objects,
 ):
     expected_results = [{"test": "test"}, {"test2": "test2"}]
     results = [
-        result async for result in subject_with_populated_text_objects.extract_records()
+        result
+        async for result in subject_with_populated_jsonl_objects.extract_records()
     ]
     assert_that(results, has_length(2))
     assert_that(results, has_items(*expected_results))
@@ -127,7 +128,7 @@ async def test_s3_extractor_properly_loads_jsonl_files(
 async def test_s3_extractor_properly_loads_text_files(
     subject_with_populated_text_objects,
 ):
-    expected_results = [{"line": "test"}, {"line": "test2"}]
+    expected_results = [{"line": b"test"}, {"line": b"test2"}]
     results = [
         result async for result in subject_with_populated_text_objects.extract_records()
     ]
