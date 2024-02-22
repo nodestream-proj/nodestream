@@ -6,7 +6,6 @@ from csv import DictReader
 from glob import glob
 from io import BufferedReader, IOBase, TextIOWrapper
 from pathlib import Path
-from tempfile import SpooledTemporaryFile
 from typing import Any, AsyncGenerator, Iterable, Union
 
 from httpx import AsyncClient
