@@ -37,7 +37,11 @@ class SupportedFileFormat(Pluggable, ABC):
     def read_file(self) -> Iterable[JsonLikeDocument]:
         with self.read_handle() as fp:
             if self.reader is not None:
-                reader = self.reader(fp)
+                if self.reader is TextIOWrapper:
+                    reader = self.reader(fp, encoding="utf-8")
+                else:
+                    reader = self.reader(fp)
+
             else:
                 reader = fp
             return self.read_file_from_handle(reader)
@@ -95,8 +99,6 @@ class CommaSeperatedValuesFileFormat(SupportedFileFormat, alias=".csv"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        if not isinstance(reader, TextIOWrapper):
-            return DictReader(TextIOWrapper(reader))
         return DictReader(reader)
 
 
