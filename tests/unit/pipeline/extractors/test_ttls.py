@@ -45,3 +45,63 @@ async def test_ttls_relationship_object_type():
             ]
         ),
     )
+
+
+@pytest.mark.asyncio
+async def test_ttls_with_override():
+    subject = TimeToLiveConfigurationExtractor(
+        "RELATIONSHIP",
+        configurations=[
+            {"object_type": "MY_REL_TYPE", "expiry_in_hours": 48},
+            {"object_type": "OTHER_REL_TYPE", "expiry_in_hours": 2},
+        ],
+        override_expiry_in_hours=4,
+    )
+    result = [r async for r in subject.extract_records()]
+    assert_that(
+        result,
+        equal_to(
+            [
+                TimeToLiveConfiguration(
+                    graph_object_type=GraphObjectType.RELATIONSHIP,
+                    object_type="MY_REL_TYPE",
+                    expiry_in_hours=4,
+                ),
+                TimeToLiveConfiguration(
+                    graph_object_type=GraphObjectType.RELATIONSHIP,
+                    object_type="OTHER_REL_TYPE",
+                    expiry_in_hours=4,
+                ),
+            ]
+        ),
+    )
+
+
+@pytest.mark.asyncio
+async def test_ttls_with_override_and_no_declaration():
+    subject = TimeToLiveConfigurationExtractor(
+        "RELATIONSHIP",
+        configurations=[
+            {"object_type": "MY_REL_TYPE"},
+            {"object_type": "OTHER_REL_TYPE"},
+        ],
+        override_expiry_in_hours=4,
+    )
+    result = [r async for r in subject.extract_records()]
+    assert_that(
+        result,
+        equal_to(
+            [
+                TimeToLiveConfiguration(
+                    graph_object_type=GraphObjectType.RELATIONSHIP,
+                    object_type="MY_REL_TYPE",
+                    expiry_in_hours=4,
+                ),
+                TimeToLiveConfiguration(
+                    graph_object_type=GraphObjectType.RELATIONSHIP,
+                    object_type="OTHER_REL_TYPE",
+                    expiry_in_hours=4,
+                ),
+            ]
+        ),
+    )
