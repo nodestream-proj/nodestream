@@ -18,7 +18,7 @@ Parallelism deals with multiple operations executing simultaneously while concur
 
 `asyncio` operates on the observation that in some systems, the cpu is spending a lot of time _blocking_ or waiting for IO operations such as network calls, file reads, and the like to finish before it can continue operating. 
 To make better use of the CPU, `asyncio` introduces a series of language features that facilitate defining tasks and signaling when they need to wait. The language runtime can the “swap in” a different task that it can work on that’s not (currently) IO bound. 
-In workloads where there is an abundant amout of IO, the overhead of managing these tasks is worth it because  we are able to make better use CPU time that would otherwise be wasted.
+In workloads where there is an abundant amount of IO, the overhead of managing these tasks is worth it because  we are able to make better use CPU time that would otherwise be wasted.
 
 ![asyncio](https://eng.paxos.com/hs-fs/hubfs/_02_Paxos_Engineering/Event-Loop.png?width=800&name=Event-Loop.png)
 
@@ -26,7 +26,7 @@ In workloads where there is an abundant amout of IO, the overhead of managing th
 
     Images from [https://eng.paxos.com/python-3s-killer-feature-asyncio](https://eng.paxos.com/python-3s-killer-feature-asyncio)
 
-So how does nodestream leverage it? All the performance sensitive apis in nodestream allow for asynchronous operations. Most importantly, each step in a pipeline is executed asyncronously. To do so, each step is given two components at exectuion time:
+So how does nodestream leverage it? All the performance sensitive apis in nodestream allow for asynchronous operations. Most importantly, each step in a pipeline is executed asynchronously. To do so, each step is given two components at execution time:
 
 * A reference to the step before it
 * An outbox which is used to store completed output
@@ -61,7 +61,7 @@ Conceptually, they are similar to the migrations in the [Django](https://docs.dj
 
 ### Scope
 
-Some changes to the database are tricier to deal with than others, for the 0.11 release, the following changes are supported:
+Some changes to the database are trickier to deal with than others, for the 0.11 release, the following changes are supported:
 - **Creating indexes.** Creating indexes on node/relationship properties.
 - **Droping indexes.** Dropping indexes on node/relationship properties.
 - **Renaming indexes.** Renaming indexes on node/relationship properties (Drop and create).
@@ -113,7 +113,7 @@ The developer experience has several core goals:
 
 To achieve these goals, `nodestream` provides a set of commands that allow the developer to manage the migrations.
 
-- `nodestream migratations make [--pipeline <pipeline_name> --scope <scope_name>]` - Diff the current state of the project with the migrations and create a new migration if there are any differences. If `--pipeline` is specified, only migrations for that pipeline will be created. If `--scope` is specified, only migrations for that scope will be created.
+- `nodestream migrations make [--pipeline <pipeline_name> --scope <scope_name>]` - Diff the current state of the project with the migrations and create a new migration if there are any differences. If `--pipeline` is specified, only migrations for that pipeline will be created. If `--scope` is specified, only migrations for that scope will be created.
 - `nodestream migrations run [--dry-run]` - Apply all migrations to the database. If `--dry-run` is specified, the migrations will not be applied but the list of migrations that would be applied will be printed.
 - `nodestream migrations show -t <target>` - Show the migrations that will be applied to the target database.
 - `nodestream run --auto-migrate` - Run the pipeline and apply any migrations that need to be applied before. 

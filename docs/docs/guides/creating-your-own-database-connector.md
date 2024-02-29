@@ -2,8 +2,7 @@
 
 ## Introduction
 
-This guide will walk you through the process of creating a database connector for nodestream. 
-This guide will walk through the process of creating a database connector for a hpypothetical graph database called `smith`.
+This guide will walk through the process of creating a database connector for a hypothetical graph database called `smith`.
 
 !!! caution
 
@@ -17,7 +16,7 @@ Before you begin, you will need to have a basic understanding of the following c
 
 - **Labeled Property Graphs** The graph database that you are creating a connector for should be a [labeled property graph](https://www.oxfordsemantic.tech/faqs/what-is-a-labeled-property-graph).
 - **Cypher** Ideally, the graph database that you are creating a connector for should have a query language similar to [Cypher](https://neo4j.com/developer/cypher-query-language/).
-- **Python** You should have an intermidiate understanding of Python.
+- **Python** You should have an Intermediate understanding of Python.
 
 
 ## `DatabaseConnector`
