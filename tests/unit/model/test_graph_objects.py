@@ -69,11 +69,12 @@ def test_node_key_validity(keys, expected):
 def test_get_cached_timestamp():
     # The first and second timestamp should be the same if called in quick
     # succession.
-    first = get_cached_timestamp()
-    second = get_cached_timestamp()
-    assert_that(first, equal_to(second))
+    t = 10
+    first = get_cached_timestamp(epoch=t)
+    a_little_after = get_cached_timestamp(epoch=t + 0.00001)
+    a_little_before = get_cached_timestamp(epoch=t - 0.00001)
+    assert_that(first, equal_to(a_little_before))
+    assert_that(first, equal_to(a_little_after))
 
-    # After 2 seconds, the timestamp should be the same.
-    time.sleep(2)
-    third = get_cached_timestamp()
+    third = get_cached_timestamp(epoch=t + 2)
     assert_that(third, not_(equal_to(first)))

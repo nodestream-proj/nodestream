@@ -37,10 +37,13 @@ def _get_cached_timestamp(time_hash: int) -> Timestamp:
     return Timestamp.utcnow()
 
 
-def get_cached_timestamp(max_age_in_seconds: int = 2) -> Timestamp:
+def get_cached_timestamp(
+    max_age_in_seconds: int = 2, epoch: Optional[float] = None
+) -> Timestamp:
     # calling time.time() is relatively fast, but getting a Timestamp object
     # is relatively slow.
-    ttl_hash = round(time.time()) / max_age_in_seconds
+    epoch = epoch or time.time()
+    ttl_hash = round(epoch / max_age_in_seconds)
     return _get_cached_timestamp(ttl_hash)
 
 
