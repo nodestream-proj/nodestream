@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "nodestream-plugin-neo4j"
+version = "0.12.0a1"
+description = ""
+authors = ["Zach Probst <Zach_Probst@intuit.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+neo4j = "^5.16.0"
+nodestream = { version = "0.12.0a1", allow-prereleases = true} # TODO: Change this to 0.12 Final when it is ready
+cymple = "^0.11.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.12.1"
+pyhamcrest = "^2.1.0"
+freezegun = "^1.4.0"
+pytest = "^7.4.4"
+pytest-mock = "^3.12.0"
+pytest-cov = "^4.1.0"
+pytest-asyncio = "^0.23.3"
+testcontainers = {extras = ["neo4j"], version = "^3.7.1"}
+ruff = "^0.1.13"
+isort = "^5.13.2"
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks the test as an integration test (deselect with '-m \"not integration\"')",
+    "e2e: marks the test as an end-to-end test (deselect with '-m \"not e2e\"')",
+]
+
+[tool.isort]
+profile = "black"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.plugins."nodestream.plugins"]
+"databases" = "nodestream_plugin_neo4j"
