@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import assert_that, equal_to, not_
+from hamcrest import assert_that, equal_to, not_, same_instance
 
 from nodestream.model.graph_objects import (
     Node,
@@ -75,4 +75,4 @@ def test_get_cached_timestamp():
     assert_that(first, equal_to(a_little_after))
 
     third = get_cached_timestamp(epoch=t + 2.1)
-    assert_that(third, not_(equal_to(first)))
+    assert_that(third, not_(same_instance(first)))
