@@ -1,12 +1,13 @@
 import pytest
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, equal_to, not_, same_instance
 
-from nodestream.model import (
+from nodestream.model.graph_objects import (
     Node,
     NodeCreationRule,
     Relationship,
     RelationshipCreationRule,
     RelationshipWithNodes,
+    get_cached_timestamp,
 )
 
 
@@ -61,3 +62,17 @@ def test_relationship_into_ingest():
 def test_node_key_validity(keys, expected):
     node = Node("Person", keys)
     assert_that(node.has_valid_id, equal_to(expected))
+
+
+def test_get_cached_timestamp():
+    # The first and second timestamp should be the same if called in quick
+    # succession.
+    t = 10
+    first = get_cached_timestamp(epoch=t)
+    a_little_after = get_cached_timestamp(epoch=t + 0.00001)
+    a_little_before = get_cached_timestamp(epoch=t - 0.00001)
+    assert_that(first, equal_to(a_little_before))
+    assert_that(first, equal_to(a_little_after))
+
+    third = get_cached_timestamp(epoch=t + 2.1)
+    assert_that(third, not_(same_instance(first)))
