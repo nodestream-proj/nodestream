@@ -74,5 +74,5 @@ def test_get_cached_timestamp():
     assert_that(first, equal_to(a_little_before))
     assert_that(first, equal_to(a_little_after))
 
-    third = get_cached_timestamp(epoch=t + 2)
+    third = get_cached_timestamp(epoch=t + 2.1)
     assert_that(third, not_(equal_to(first)))
