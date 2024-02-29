@@ -1,4 +1,3 @@
-import time
 
 import pytest
 from hamcrest import assert_that, equal_to, not_
