@@ -43,7 +43,7 @@ def get_cached_timestamp(
     # calling time.time() is relatively fast, but getting a Timestamp object
     # is relatively slow.
     epoch = epoch or time.time()
-    ttl_hash = round(epoch / max_age_in_seconds)
+    ttl_hash = round(epoch) // max_age_in_seconds
     return _get_cached_timestamp(ttl_hash)
 
 
