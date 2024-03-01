@@ -20,7 +20,8 @@ class PropertyMapping(ABC):
         context: ProviderContext,
         property_set: PropertySet,
         norm_args: Dict[str, bool],
-    ): ...
+    ):
+        ...
 
 
 class PropertyMappingFromValueProviider(PropertyMapping):
