@@ -1,3 +1,4 @@
+import pytest
 from hamcrest import assert_that, has_entries
 
 from nodestream.interpreting.interpretations import (
@@ -36,3 +37,23 @@ def test_expand_schmea_adds_properties(schema_coordinator):
         schema_coordinator,
         has_node_properties(SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS, ("a",)),
     )
+
+
+def test_properties_interpretation_applies_properties_from_value_provider(
+    blank_context,
+):
+    expected_properties = {"first_name": "Zach", "last_name": "Probst"}
+    subject = PropertiesInterpretation(
+        properties=StubbedValueProvider(values=[expected_properties])
+    )
+    subject.interpret(blank_context)
+    actual_properties = blank_context.desired_ingest.source.properties
+    assert_that(actual_properties, has_entries(expected_properties))
+
+
+def test_properties_interpretation_applies_properties_from_value_provider_wrong_type(
+    blank_context,
+):
+    with pytest.raises(ValueError):
+        subject = PropertiesInterpretation(properties=StubbedValueProvider(values=[1]))
+        subject.interpret(blank_context)

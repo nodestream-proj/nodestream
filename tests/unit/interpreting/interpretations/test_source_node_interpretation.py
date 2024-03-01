@@ -1,3 +1,4 @@
+import pytest
 from hamcrest import assert_that, equal_to, has_entries
 
 from nodestream.interpreting.interpretations import SourceNodeInterpretation
@@ -115,3 +116,27 @@ def test_introspectable_definition_updates_schema(schema_coordinator):
     assert_that(schema_coordinator, has_node_keys("test", ("foo", "bar")))
     assert_that(schema_coordinator, has_node_properties("test", ("baz",)))
     assert_that(schema_coordinator, has_node_indexes("test", ("baz",)))
+
+
+def test_source_node_interpretation_with_properties_from_value_provider(blank_context):
+    subject = SourceNodeInterpretation(
+        node_type="Static",
+        key={"hello": "world"},
+        properties=StubbedValueProvider(values=[{"prop": "value"}]),
+    )
+    subject.interpret(blank_context)
+    assert_that(
+        blank_context.desired_ingest.source.properties, has_entries({"prop": "value"})
+    )
+
+
+def test_source_node_interpretation_with_properties_from_value_provider_wrong_type(
+    blank_context,
+):
+    with pytest.raises(ValueError):
+        subject = SourceNodeInterpretation(
+            node_type="Static",
+            key={"hello": "world"},
+            properties=StubbedValueProvider(values=["prop"]),
+        )
+        subject.interpret(blank_context)

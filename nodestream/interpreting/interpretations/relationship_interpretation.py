@@ -12,6 +12,7 @@ from ...pipeline.value_providers import (
 from ...schema import Cardinality, GraphObjectSchema, SchemaExpansionCoordinator
 from ..record_decomposers import RecordDecomposer
 from .interpretation import Interpretation
+from .property_mapping import PropertyMapping
 from .source_node_interpretation import SourceNodeInterpretation
 
 DEFAULT_KEY_NORMALIZATION_ARGUMENTS = {LowercaseStrings.argument_flag(): True}
@@ -122,13 +123,11 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
             relationship_type
         )
         self.node_key = ValueProvider.guarantee_provider_dictionary(node_key)
-        self.node_properties = ValueProvider.guarantee_provider_dictionary(
-            node_properties or {}
-        )
+        self.node_properties = PropertyMapping.from_file_data(node_properties or {})
         self.relationship_key = ValueProvider.guarantee_provider_dictionary(
             relationship_key or {}
         )
-        self.relationship_properties = ValueProvider.guarantee_provider_dictionary(
+        self.relationship_properties = PropertyMapping.from_file_data(
             relationship_properties or {}
         )
         self.key_normalization = {
@@ -157,8 +156,8 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         rel.key_values.apply_providers(
             context, self.relationship_key, self.key_normalization
         )
-        rel.properties.apply_providers(
-            context, self.relationship_properties, self.properties_normalization
+        self.relationship_properties.apply_to(
+            context, rel.properties, self.properties_normalization
         )
         return rel
 
@@ -170,8 +169,8 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
                 additional_types=self.node_additional_types,
             )
             if node.has_valid_id:
-                node.properties.apply_providers(
-                    context, self.node_properties, self.properties_normalization
+                self.node_properties.apply_to(
+                    context, node.properties, self.properties_normalization
                 )
                 yield node
 
