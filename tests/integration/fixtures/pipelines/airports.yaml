@@ -10,7 +10,11 @@
         node_type: Airport
         key:
           identifier: !jmespath ident
-        properties: !jmespath
+        properties:
+          elevation_in_feet: !jmespath elevation_ft
+          iata_code: !jmespath iata_code
+          local_code: !jmespath local_code
+          name: !jmespath name
       - type: relationship
         node_type: Country
         relationship_type: WITHIN
