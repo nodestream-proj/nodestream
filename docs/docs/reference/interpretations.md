@@ -65,11 +65,15 @@ For example, if we had input data that looked like this:
     "address": "123 Main St"
   }
 }
+```
 
 You could then use the following interpretation to bind the `birthday` and `address` properties to the source node:
 
 ```yaml
-- type: properties
+- type: source_node
+  node_type: Person
+  key:
+    name: !jmespath patient_name
   properties: !jmespath attributes
 ```
 
@@ -165,6 +169,7 @@ For example, if we had input data that looked like this:
     "percentage": 100
   }
 }
+```
 
 You could then use the following interpretation to:
 
@@ -286,6 +291,7 @@ For example, if we had input data that looked like this:
     "meaning_of_life": 42
   }
 }
+```
 
 You could then use the following interpretation to bind the `birthday` and `meaning_of_life` properties to the source node:
 
