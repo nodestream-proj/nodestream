@@ -6,7 +6,7 @@ COMMIT_QUERY = """
 CALL apoc.periodic.iterate(
     $iterable_query,
     $batched_query,
-    {batchSize: 1000, parallel: true, retries: 3, params: $iterate_params}
+    {batchSize: $chunk_size, parallel: $execute_chunks_in_paralell, retries: $retries_per_chunk, params: $iterate_params}
 )
 YIELD batches, committedOperations, failedOperations, errorMessages
 RETURN batches, committedOperations, failedOperations, errorMessages
@@ -46,7 +46,13 @@ class QueryBatch:
     query_statement: str
     batched_parameter_sets: List[Dict[str, Any]]
 
-    def as_query(self, apoc_iterate: bool) -> Query:
+    def as_query(
+        self,
+        apoc_iterate: bool,
+        chunk_size: int = 1000,
+        execute_chunks_in_paralell: bool = True,
+        retries_per_chunk: int = 3,
+    ) -> Query:
         return Query(
             {True: COMMIT_QUERY, False: NON_APOCH_COMMIT_QUERY}[apoc_iterate],
             {
@@ -55,5 +61,8 @@ class QueryBatch:
                 },
                 "batched_query": self.query_statement,
                 "iterable_query": UNWIND_QUERY,
+                "execute_chunks_in_paralell": execute_chunks_in_paralell,
+                "chunk_size": chunk_size,
+                "retries_per_chunk": retries_per_chunk,
             },
         )
