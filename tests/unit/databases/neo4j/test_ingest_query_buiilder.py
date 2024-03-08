@@ -194,11 +194,7 @@ RELATIONSHIP_BETWEEN_TWO_NODES = RelationshipWithNodes(
 
 RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY = QueryBatch(
     """MATCH (from_node: TestType) WHERE from_node.id = params.__from_node_id MATCH (to_node: ComplexType) WHERE to_node.id = params.__to_node_id
-    OPTIONAL MATCH  (from_node)-[rel: RELATED_TO]->(to_node)
-    FOREACH (x IN CASE WHEN rel IS NULL THEN [1] ELSE [] END |
-        CREATE (from_node)-[rel: RELATED_TO]->(to_node) SET rel += params.__rel_properties)
-    FOREACH (i in CASE WHEN rel IS NOT NULL THEN [1] ELSE [] END |
-        SET rel += params.__rel_properties)
+    MERGE (from_node)-[rel: RELATED_TO]->(to_node) SET rel += params.__rel_properties
     """,
     [
         {
@@ -217,12 +213,7 @@ RELATIONSHIP_BETWEEN_TWO_NODES_WITH_MULTI_KEY = RelationshipWithNodes(
 
 RELATIONSHIP_BETWEEN_TWO_NODES_EXPECTED_QUERY_WITH_MULTI_KEY = QueryBatch(
     """MATCH (from_node: TestType) WHERE from_node.id = params.__from_node_id MATCH (to_node: ComplexType) WHERE to_node.id_part1 = params.__to_node_id_part1 AND to_node.id_part2 = params.__to_node_id_part2
-    OPTIONAL MATCH  (from_node)-[rel: RELATED_TO]->(to_node)
-    FOREACH (x IN CASE WHEN rel IS NULL THEN [1] ELSE [] END |
-        CREATE (from_node)-[rel: RELATED_TO]->(to_node) SET rel += params.__rel_properties)
-    FOREACH (i in CASE WHEN rel IS NOT NULL THEN [1] ELSE [] END |
-        SET rel += params.__rel_properties)
-    """,
+    MERGE (from_node)-[rel: RELATED_TO]->(to_node) SET rel += params.__rel_properties""",
     [
         {
             "__from_node_id": "foo",
