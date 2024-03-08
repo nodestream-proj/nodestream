@@ -29,6 +29,19 @@ def query_executor(mocker):
 
 
 @pytest.mark.asyncio
+async def test_execute_query_batch(query_executor, some_query_batch, mocker):
+    expected_query = some_query_batch.as_query(
+        query_executor.ingest_query_builder.apoc_iterate,
+        chunk_size=query_executor.chunk_size,
+        execute_chunks_in_parallel=query_executor.execute_chunks_in_parallel,
+        retries_per_chunk=query_executor.retries_per_chunk,
+    )
+
+    await query_executor.execute_query_batch(some_query_batch)
+    assert_that(query_executor, ran_query(expected_query))
+
+
+@pytest.mark.asyncio
 async def test_upsert_nodes_in_bulk_of_same_operation(query_executor, some_query_batch):
     query_executor.ingest_query_builder.generate_batch_update_node_operation_batch.return_value = (
         some_query_batch
