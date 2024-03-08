@@ -21,7 +21,7 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
         use_enterprise_features: bool = False,
         use_apoc: bool = True,
         chunk_size: int = 1000,
-        execute_chunks_in_paralell: bool = True,
+        execute_chunks_in_parallel: bool = True,
         retries_per_chunk: int = 3,
         **driver_kwargs
     ):
@@ -38,7 +38,7 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
             ingest_query_builder=Neo4jIngestQueryBuilder(use_apoc),
             database_name=database_name,
             chunk_size=chunk_size,
-            execute_chunks_in_paralell=execute_chunks_in_paralell,
+            execute_chunks_in_parallel=execute_chunks_in_parallel,
             retries_per_chunk=retries_per_chunk,
         )
 
@@ -49,7 +49,7 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
         ingest_query_builder: Neo4jIngestQueryBuilder,
         database_name: str,
         chunk_size: int = 1000,
-        execute_chunks_in_paralell: bool = True,
+        execute_chunks_in_parallel: bool = True,
         retries_per_chunk: int = 3,
     ) -> None:
         self.driver = driver
@@ -57,7 +57,7 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
         self.ingest_query_builder = ingest_query_builder
         self.database_name = database_name
         self.chunk_size = chunk_size
-        self.execute_chunks_in_paralell = execute_chunks_in_paralell
+        self.execute_chunks_in_parallel = execute_chunks_in_parallel
         self.retries_per_chunk = retries_per_chunk
 
     def make_query_executor(self) -> QueryExecutor:
@@ -69,7 +69,7 @@ class Neo4jDatabaseConnector(DatabaseConnector, alias="neo4j"):
             self.index_query_builder,
             self.database_name,
             chunk_size=self.chunk_size,
-            execute_chunks_in_paralell=self.execute_chunks_in_paralell,
+            execute_chunks_in_parallel=self.execute_chunks_in_parallel,
             retries_per_chunk=self.retries_per_chunk,
         )
 

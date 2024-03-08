@@ -23,7 +23,7 @@ class Neo4jQueryExecutor(QueryExecutor):
         index_query_builder: Neo4jIndexQueryBuilder,
         database_name: str,
         chunk_size: int = 1000,
-        execute_chunks_in_paralell: bool = True,
+        execute_chunks_in_parallel: bool = True,
         retries_per_chunk: int = 3,
     ) -> None:
         self.driver = driver
@@ -32,7 +32,7 @@ class Neo4jQueryExecutor(QueryExecutor):
         self.logger = getLogger(self.__class__.__name__)
         self.database_name = database_name
         self.chunk_size = chunk_size
-        self.execute_chunks_in_paralell = execute_chunks_in_paralell
+        self.execute_chunks_in_parallel = execute_chunks_in_parallel
         self.retries_per_chunk = retries_per_chunk
 
     async def execute_query_batch(self, batch: QueryBatch):
@@ -40,7 +40,7 @@ class Neo4jQueryExecutor(QueryExecutor):
             batch.as_query(
                 self.ingest_query_builder.apoc_iterate,
                 chunk_size=self.chunk_size,
-                execute_chunks_in_paralell=self.execute_chunks_in_paralell,
+                execute_chunks_in_parallel=self.execute_chunks_in_parallel,
                 retries_per_chunk=self.retries_per_chunk,
             ),
             log_result=True,

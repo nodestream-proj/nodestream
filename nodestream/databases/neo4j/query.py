@@ -6,7 +6,7 @@ COMMIT_QUERY = """
 CALL apoc.periodic.iterate(
     $iterable_query,
     $batched_query,
-    {batchSize: $chunk_size, parallel: $execute_chunks_in_paralell, retries: $retries_per_chunk, params: $iterate_params}
+    {batchSize: $chunk_size, parallel: $execute_chunks_in_parallel, retries: $retries_per_chunk, params: $iterate_params}
 )
 YIELD batches, committedOperations, failedOperations, errorMessages
 RETURN batches, committedOperations, failedOperations, errorMessages
@@ -50,7 +50,7 @@ class QueryBatch:
         self,
         apoc_iterate: bool,
         chunk_size: int = 1000,
-        execute_chunks_in_paralell: bool = True,
+        execute_chunks_in_parallel: bool = True,
         retries_per_chunk: int = 3,
     ) -> Query:
         return Query(
@@ -61,7 +61,7 @@ class QueryBatch:
                 },
                 "batched_query": self.query_statement,
                 "iterable_query": UNWIND_QUERY,
-                "execute_chunks_in_paralell": execute_chunks_in_paralell,
+                "execute_chunks_in_parallel": execute_chunks_in_parallel,
                 "chunk_size": chunk_size,
                 "retries_per_chunk": retries_per_chunk,
             },
