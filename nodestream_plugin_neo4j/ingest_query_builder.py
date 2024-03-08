@@ -97,9 +97,9 @@ def _make_relationship(
     rel_identity: RelationshipIdentityShape, creation_rule: RelationshipCreationRule
 ):
     keys = generate_properties_set_with_prefix(rel_identity.keys, RELATIONSHIP_REF_NAME)
-    match_rel_query = (
+    merge_rel_query = (
         QueryBuilder()
-        .match_optional()
+        .merge()
         .node(ref_name=FROM_NODE_REF_NAME)
         .related_to(
             ref_name=RELATIONSHIP_REF_NAME,
@@ -109,18 +109,12 @@ def _make_relationship(
         .node(ref_name=TO_NODE_REF_NAME)
     )
 
-    create_rel_query = str(match_rel_query).replace("OPTIONAL MATCH ", "CREATE")
     set_properties_query = f"SET {RELATIONSHIP_REF_NAME} += params.{generate_prefixed_param_name(PROPERTIES_PARAM_NAME, RELATIONSHIP_REF_NAME)}"
     if creation_rule == RelationshipCreationRule.CREATE:
+        create_rel_query = str(merge_rel_query).replace("MERGE", "CREATE")
         return f"{create_rel_query} {set_properties_query}"
 
-    return f"""
-    {match_rel_query}
-    FOREACH (x IN CASE WHEN {RELATIONSHIP_REF_NAME} IS NULL THEN [1] ELSE [] END |
-        {create_rel_query} {set_properties_query})
-    FOREACH (i in CASE WHEN {RELATIONSHIP_REF_NAME} IS NOT NULL THEN [1] ELSE [] END |
-        {set_properties_query})
-    """
+    return f"{merge_rel_query} {set_properties_query}"
 
 
 class Neo4jIngestQueryBuilder:
