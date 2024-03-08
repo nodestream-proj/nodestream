@@ -21,7 +21,7 @@ class PropertyMapping(ABC):
         property_set: PropertySet,
         norm_args: Dict[str, bool],
     ):
-        ...
+        raise NotImplementedError
 
 
 class PropertyMappingFromValueProviider(PropertyMapping):
