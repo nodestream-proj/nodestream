@@ -252,3 +252,30 @@ def test_relationship_interpretation_addtional_node_types(blank_context):
         blank_context.desired_ingest.relationships[0].to_node.additional_types,
         equal_to(("SomethingElse",)),
     )
+
+
+def test_relationship_interpretation_with_properties_from_value_provider(blank_context):
+    subject = RelationshipInterpretation(
+        node_type="Static",
+        node_key={"hello": "world"},
+        relationship_type="Static",
+        relationship_properties=StubbedValueProvider(values=[{"prop": "value"}]),
+    )
+    subject.interpret(blank_context)
+    assert_that(
+        blank_context.desired_ingest.relationships[0].relationship.properties,
+        has_entries({"prop": "value"}),
+    )
+
+
+def test_relationship_interpretation_with_properties_from_value_provider_wrong_type(
+    blank_context,
+):
+    with pytest.raises(ValueError):
+        subject = RelationshipInterpretation(
+            node_type="Static",
+            node_key={"hello": "world"},
+            relationship_type="Static",
+            relationship_properties=StubbedValueProvider(values="not a dict"),
+        )
+        subject.interpret(blank_context)

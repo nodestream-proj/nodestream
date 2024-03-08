@@ -8,6 +8,7 @@ from ...pipeline.value_providers import (
 )
 from ...schema import GraphObjectSchema, SchemaExpansionCoordinator
 from .interpretation import Interpretation
+from .property_mapping import PropertyMapping
 
 # By default, data gathered from this interpretation is lower cased when a string.
 DEFAULT_NORMALIZATION_ARGUMENTS = {LowercaseStrings.argument_flag(): True}
@@ -92,7 +93,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
     ):
         self.node_type = ValueProvider.guarantee_value_provider(node_type)
         self.key = ValueProvider.guarantee_provider_dictionary(key)
-        self.properties = ValueProvider.guarantee_provider_dictionary(properties or {})
+        self.properties = PropertyMapping.from_file_data(properties or {})
         self.additional_indexes = additional_indexes or []
         self.additional_types = tuple(additional_types or [])
         self.norm_args = {**DEFAULT_NORMALIZATION_ARGUMENTS, **(normalization or {})}
@@ -101,7 +102,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         source = context.desired_ingest.source
         source.type = self.node_type.single_value(context)
         source.key_values.apply_providers(context, self.key, self.norm_args)
-        source.properties.apply_providers(context, self.properties, self.norm_args)
+        self.properties.apply_to(context, source.properties, self.norm_args)
         source.additional_types = self.additional_types
 
     def expand_source_node_schema(self, source_node_schema: GraphObjectSchema):
