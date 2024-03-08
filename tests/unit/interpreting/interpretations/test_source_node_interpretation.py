@@ -10,7 +10,6 @@ from .matchers import (
     has_node_indexes,
     has_node_keys,
     has_node_properties,
-    has_no_defined_properties,
 )
 
 EXPECTED_NODE_TYPE = "Person"

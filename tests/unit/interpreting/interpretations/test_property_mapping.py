@@ -1,8 +1,7 @@
 from hamcrest import assert_that, equal_to
 
-from nodestream.model import PropertySet
 from nodestream.interpreting.interpretations.property_mapping import PropertyMapping
-
+from nodestream.model import PropertySet
 
 from ...stubs import StubbedValueProvider
 
