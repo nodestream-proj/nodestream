@@ -139,7 +139,7 @@ class Node(DeduplicatableObject):
         self.properties.update(other.properties)
 
     def get_dedup_key(self) -> tuple:
-        return tuple(sorted(self.key_values.values()))
+        return tuple(sorted(self.key_values.items()))
 
     def into_ingest(self) -> "DesiredIngestion":
         from .desired_ingestion import DesiredIngestion

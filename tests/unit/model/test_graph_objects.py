@@ -76,3 +76,25 @@ def test_get_cached_timestamp():
 
     third = get_cached_timestamp(epoch=t + 2.1)
     assert_that(third, not_(same_instance(first)))
+
+
+@pytest.mark.parametrize(
+    "keys,expected",
+    [
+        (
+            {"name": "John"},
+            (("name", "John"),),
+        ),
+        ({"name": "John", "age": 30}, (("age", 30), ("name", "John"))),
+        (
+            {"name": "John", "age": 30, "city": "New York"},
+            (("age", 30), ("city", "New York"), ("name", "John")),
+        ),
+    ],
+)
+def test_get_dedup_key(keys, expected):
+    node = Node("Person", keys)
+    assert_that(node.get_dedup_key(), equal_to(expected))
+
+    other = Node("Person", keys)
+    assert_that(node.get_dedup_key(), equal_to(other.get_dedup_key()))
