@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://nodestream-proj.github.io/blog</id>
+    <title>Nodestream Blog</title>
+    <updated>2024-03-30T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://nodestream-proj.github.io/blog"/>
+    <subtitle>Nodestream Blog</subtitle>
+    <icon>https://nodestream-proj.github.io/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Welcome]]></title>
+        <id>https://nodestream-proj.github.io/blog/welcome</id>
+        <link href="https://nodestream-proj.github.io/blog/welcome"/>
+        <updated>2024-03-30T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Welcome to the new nodestream documentation and project site!]]></summary>
+        <content type="html"><![CDATA[<p>Welcome to the new nodestream documentation and project site!
+We are excited to share with you the new features and improvements we have been working on.</p>
+<p>We have been working hard to improve the documentation and make it easier to use and navigate.
+We have also been working on improving the project site to make it easier to find the information you need.</p>
+<p>We hope you find the new documentation and project site helpful and easy to use!</p>
+<p>By the way, thanks to the <a href="https://docusaurus.io/" target="_blank" rel="noopener noreferrer">Docusaurus</a> team for creating such a great tool!</p>
+<p>If you have any questions or feedback, please feel free to reach out to us on <a href="https://github.com/nodestream-proj/nodestream" target="_blank" rel="noopener noreferrer">GitHub</a>!</p>]]></content>
+        <author>
+            <name>Zach Probst</name>
+            <uri>https://github.com/zprobst</uri>
+        </author>
+        <category label="welcome" term="welcome"/>
+        <category label="nodestream" term="nodestream"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Nodestream 0.12 Release]]></title>
+        <id>https://nodestream-proj.github.io/blog/2024/03/30/nodestream-0-12</id>
+        <link href="https://nodestream-proj.github.io/blog/2024/03/30/nodestream-0-12"/>
+        <updated>2024-03-30T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[We are happy to announce the release of Nodestream 0.12.]]></summary>
+        <content type="html"><![CDATA[<p>We are happy to announce the release of Nodestream 0.12.
+This release marks the largest update to Nodestream since its inception.
+We've spent a lot of time improving the core of nodestream and we're excited to share it with you.</p>
+<p>Before we get into the details, we want to thank the community for their support and feedback.
+As such, we have completely revamped the documentation to make it easier to use and navigate.
+This releases comes with two headline features <a href="https://nodestream-proj.github.io/blog/2024/03/30/nodestream-0-12#database-migrations">Database Migrations</a> and <a href="https://nodestream-proj.github.io/blog/2024/03/30/nodestream-0-12#multi-database-support">Multi-Database Support</a>.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="database-migrations">Database Migrations<a href="https://nodestream-proj.github.io/blog/2024/03/30/nodestream-0-12#database-migrations" class="hash-link" aria-label="Direct link to Database Migrations" title="Direct link to Database Migrations">​</a></h2>
+<p>In the past, nodestream attempted to automatically create indexes and constraints on the database based on your pipeline at runtime.
+This was done by introspecting the schema of the entire project and generating the appropriate queries to create the indexes and constraints.
+This was a very powerful feature but it had a few drawbacks:</p>
+<ul>
+<li><strong>It was redundant.</strong> The same indexes and constraints were being created with <code>IF NOT EXISTS</code> clauses every time the pipeline was run.</li>
+<li><strong>It was slow.</strong> The queries were being executed serially and the pipeline was locked until they were all completed.</li>
+<li><strong>It was error prone.</strong> If the database was not in a state that allowed for the creation of the indexes and constraints, the pipeline would fail.</li>
+<li><strong>It was high friction.</strong> There was no way to refactor the database without manual intervention. If the schema changed, the pipeline would fail and the user would have to manually remove the indexes, constraints, and sometimes data before running the pipeline again.</li>
+</ul>
+<p>To address these issues, <code>nodestream</code> 0.12 has introduced the concept of migrations.
+Migrations are a way of encapsulating changes to the database schema in a way that can be applied incrementally.
+Conceptually, they are similar to the migrations in the <a href="https://docs.djangoproject.com/en/5.0/topics/migrations/" target="_blank" rel="noopener noreferrer">Django</a>, <a href="https://guides.rubyonrails.org/v3.2/migrations.html" target="_blank" rel="noopener noreferrer">Rails</a>, <a href="https://neo4j.com/labs/neo4j-migrations/2.0/" target="_blank" rel="noopener noreferrer">Neo4j Migrations</a>, and <a href="https://documentation.red-gate.com/fd/migrations-184127470.html" target="_blank" rel="noopener noreferrer">Flyway</a> frameworks.</p>
+<p>Migrations are defined in a directory called <code>migrations</code> in the root of your project.
+Each migration is a yaml file that contains data about the migration and its dependencies.
+You can create migrations by running the <code>nodestream migrations make</code> command.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="multi-database-support">Multi-Database Support<a href="https://nodestream-proj.github.io/blog/2024/03/30/nodestream-0-12#multi-database-support" class="hash-link" aria-label="Direct link to Multi-Database Support" title="Direct link to Multi-Database Support">​</a></h2>
+<p>Prior to this release, the only database that was supported was neo4j.
+While this is an category leading database, the goal of nodestream is to be database agnostic.
+As such, we are happy to announce that nodestream now supports <a href="https://aws.amazon.com/neptune/" target="_blank" rel="noopener noreferrer">Amazon Neptune</a> and <a href="https://docs.aws.amazon.com/neptune-analytics/latest/userguide/what-is-neptune-analytics.html" target="_blank" rel="noopener noreferrer">Amazon Neptune Analytics</a>.
+TO accomedate that, we have moved the neo4j database connector into a separate package called <a href="https://pypi.org/project/nodestream-plugin-neo4j/" target="_blank" rel="noopener noreferrer">nodestream-plugin-neo4j</a> and added a new package called <a href="https://pypi.org/project/nodestream-plugin-neptune/" target="_blank" rel="noopener noreferrer">nodestream-plugin-neptune</a>.</p>
+<p>Thank you to the following folks from AWS to make that happen:</p>
+<p>-- TODO: Get the links to all of the AWS folks who helped us with this.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="parquet-support">Parquet Support<a href="https://nodestream-proj.github.io/blog/2024/03/30/nodestream-0-12#parquet-support" class="hash-link" aria-label="Direct link to Parquet Support" title="Direct link to Parquet Support">​</a></h2>
+<p>Many customers have data stored in parquet format.
+Paquet is a columnar storage format that is optimized for reading and writing large datasets.
+We are happy to announce that nodestream now supports parquet as a first class citizen.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="performance-improvements">Performance Improvements<a href="https://nodestream-proj.github.io/blog/2024/03/30/nodestream-0-12#performance-improvements" class="hash-link" aria-label="Direct link to Performance Improvements" title="Direct link to Performance Improvements">​</a></h2>
+<p>We've made a small number of performance improvements to the core of nodestream that should result in faster processing times and lower memory usage.
+Most notably, we've cache the <code>last_ingested_at</code> timestamp for nodes and relationships to reduce the number of times we create objects in memory.
+We've observed a 10% improvement in processing times and a 5% reduction in memory usage in our benchmarks.</p>]]></content>
+    </entry>
+</feed>
