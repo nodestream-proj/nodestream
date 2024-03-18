@@ -167,9 +167,10 @@ class Neo4jMigrator(OperationTypeRoutingMixin, Migrator):
         await self.database_connection.execute(query)
 
     async def get_completed_migrations(self, graph: MigrationGraph) -> List[Migration]:
+        query = Query.from_statement(LIST_MIGRATIONS_QUERY)
         return [
             graph.get_migration(record["name"])
-            for record in await self.database_connection.execute(LIST_MIGRATIONS_QUERY)
+            for record in await self.database_connection.execute(query)
         ]
 
     async def execute_create_node_type(self, operation: CreateNodeType) -> None:
