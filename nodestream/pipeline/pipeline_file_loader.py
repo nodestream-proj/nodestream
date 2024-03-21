@@ -9,6 +9,7 @@ from ..file_io import (
     LoadsFromYaml,
     LoadsFromYamlFile,
 )
+from .argument_resolvers import set_config
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
 from .pipeline import Pipeline
@@ -140,13 +141,14 @@ class PipelineFileContents(LoadsFromYamlFile):
     def __init__(self, step_definitions: List[StepDefinition]) -> None:
         self.step_definitions = step_definitions
 
-    def initalize_with_arguments(self, init_args: PipelineInitializationArguments):
-        steps_defined_in_file = [
-            step_definition.load_step()
-            for step_definition in self.step_definitions
-            if step_definition.should_be_loaded(init_args.annotations)
-        ]
-        steps = steps_defined_in_file + (init_args.extra_steps or [])
+    def initialize_with_arguments(self, init_args: PipelineInitializationArguments):
+        with set_config(init_args.effecitve_config_values):
+            steps_defined_in_file = [
+                step_definition.load_step()
+                for step_definition in self.step_definitions
+                if step_definition.should_be_loaded(init_args.annotations)
+            ]
+            steps = steps_defined_in_file + (init_args.extra_steps or [])
         return Pipeline(steps, step_outbox_size=init_args.step_outbox_size)
 
 
@@ -161,7 +163,7 @@ class PipelineFile:
         self.logger.info("Loading Pipeline")
         init_args = init_args or PipelineInitializationArguments()
         contents = self.get_contents()
-        return contents.initalize_with_arguments(init_args)
+        return contents.initialize_with_arguments(init_args)
 
     def get_contents(self) -> PipelineFileContents:
         return PipelineFileContents.read_from_file(self.file_path)

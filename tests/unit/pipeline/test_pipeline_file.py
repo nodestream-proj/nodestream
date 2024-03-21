@@ -9,6 +9,7 @@ from nodestream.pipeline.pipeline_file_loader import (
     PipelineFileContents,
     PipelineInitializationArguments,
     StepDefinition,
+    ScopeConfig,
 )
 from nodestream.pipeline.step import PassStep
 
@@ -64,4 +65,18 @@ def test_pipeline_file_loads_lazy():
     assert_that(
         file_contents.step_definitions[0].arguments,
         equal_to({"name": LazyLoadedArgument("config", "name")}),
+    )
+
+
+def test_pipeline_file_loads_config_when_set():
+    init_args = PipelineInitializationArguments(
+        effecitve_config_values=ScopeConfig({"name": "test"})
+    )
+    file_contents = PipelineFileContents.read_from_file(
+        Path("tests/unit/pipeline/fixtures/config_pipeline.yaml")
+    )
+    loaded_pipeline = file_contents.initialize_with_arguments(init_args)
+    assert_that(
+        loaded_pipeline.steps[0].name,
+        equal_to("test"),
     )
