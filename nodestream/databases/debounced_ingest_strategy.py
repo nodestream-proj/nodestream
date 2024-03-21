@@ -9,7 +9,6 @@ from ..model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
-from ..schema.indexes import FieldIndex, KeyIndex
 from .ingest_strategy import IngestionStrategy
 from .operation_debouncer import OperationDebouncer
 from .query_executor import QueryExecutor
@@ -41,16 +40,6 @@ class DebouncedIngestStrategy(IngestionStrategy, alias="debounced"):
             await self.executor.execute_hook(request.hook)
         else:
             self.hooks_saved_for_after_ingest.append(request.hook)
-
-    async def upsert_key_index(self, index: KeyIndex):
-        self.logger.debug("Ensuring Index Created", extra=asdict(index))
-        await self.executor.upsert_key_index(index)
-        self.logger.info("Ensured Index Created", extra=asdict(index))
-
-    async def upsert_field_index(self, index: FieldIndex):
-        self.logger.debug("Ensuring Index Created", extra=asdict(index))
-        await self.executor.upsert_field_index(index)
-        self.logger.info("Ensured Index Created", extra=asdict(index))
 
     async def perform_ttl_operation(self, config: TimeToLiveConfiguration):
         self.logger.debug("Executing TTL", extra=asdict(config))

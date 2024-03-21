@@ -35,6 +35,10 @@ class DatabaseConnector(ABC, Pluggable):
     def make_type_retriever(self) -> TypeRetriever:
         raise NotImplementedError
 
+    @abstractmethod
+    def make_migrator(self) -> TypeRetriever:
+        raise NotImplementedError
+
     def get_query_executor(self, collect_stats: bool = True):
         connector = self.make_query_executor()
         if collect_stats:

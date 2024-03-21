@@ -22,6 +22,10 @@ class Step(ABC):
 class PassStep(Step):
     """A `PassStep` is a step that does nothing."""
 
+    def __init__(self, **kwargs) -> None:
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
     async def handle_async_record_stream(
         self, record_stream: AsyncGenerator[Any, Any]
     ) -> AsyncGenerator[Any, Any]:

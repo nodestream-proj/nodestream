@@ -1,5 +1,7 @@
 from .add_pipeline_to_project import AddPipelineToProject
 from .commit_project_to_disk import CommitProjectToDisk
+from .execute_migration import ExecuteMigrations
+from .generate_migration import GenerateMigration
 from .generate_pipeline_scaffold import GeneratePipelineScaffold
 from .initialize_logger import InitializeLogger
 from .initialize_project import InitializeProject
@@ -15,6 +17,8 @@ from .show_pipelines import ShowPipelines
 __all__ = (
     "AddPipelineToProject",
     "CommitProjectToDisk",
+    "ExecuteMigrations",
+    "GenerateMigration",
     "GeneratePipelineScaffold",
     "InitializeLogger",
     "InitializeProject",

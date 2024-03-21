@@ -12,7 +12,6 @@ from ..model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
-from ..schema.indexes import FieldIndex, KeyIndex
 
 
 @dataclass(slots=True, frozen=True)
@@ -42,14 +41,6 @@ class QueryExecutor(ABC):
         shape: OperationOnRelationshipIdentity,
         relationships: Iterable[RelationshipWithNodes],
     ):
-        raise NotImplementedError
-
-    @abstractmethod
-    async def upsert_key_index(self, index: KeyIndex):
-        raise NotImplementedError
-
-    @abstractmethod
-    async def upsert_field_index(self, index: FieldIndex):
         raise NotImplementedError
 
     @abstractmethod

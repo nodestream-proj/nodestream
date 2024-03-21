@@ -10,7 +10,6 @@ if TYPE_CHECKING:
         RelationshipWithNodes,
         TimeToLiveConfiguration,
     )
-    from ..schema.indexes import FieldIndex, KeyIndex
 
 
 INGESTION_STRATEGY_REGISTRY = SubclassRegistry()
@@ -41,22 +40,6 @@ class IngestionStrategy(ABC):
     @abstractmethod
     async def run_hook(self, request: "IngestionHookRunRequest"):
         """Runs the provided request for an IngestHook given the context."""
-        raise NotImplementedError
-
-    @abstractmethod
-    async def upsert_key_index(self, index: "KeyIndex"):
-        """Create a Key Index Immediately for a given Node Type.
-
-        See information on `KeyIndex` for more information.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    async def upsert_field_index(self, index: "FieldIndex"):
-        """Create a Key Index Immediately for a Object Type.
-
-        See information on `FieldIndex` for more information.
-        """
         raise NotImplementedError
 
     @abstractmethod

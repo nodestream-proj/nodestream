@@ -2,7 +2,6 @@ from typing import Iterable
 
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from ..pipeline.meta import get_context
-from ..schema.indexes import FieldIndex, KeyIndex
 from .query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
@@ -11,8 +10,6 @@ from .query_executor import (
 
 NODE_STAT = "Node Upsert Operations"
 RELATIONSHIP_STAT = "Relationship Upsert Operations"
-KEY_INDEX_STAT = "Key Index Upsert Operations"
-FIELD_INDEX_STAT = "Field Index Upsert Operations"
 TTL_STAT = "Time to Live Operations"
 HOOK_STAT = "Ingest Hooks Executed"
 
@@ -38,14 +35,6 @@ class QueryExecutorWithStatistics(QueryExecutor):
             shape, relationships
         )
         get_context().increment_stat(RELATIONSHIP_STAT, len(relationships))
-
-    async def upsert_key_index(self, index: KeyIndex):
-        await self.inner.upsert_key_index(index)
-        get_context().increment_stat(KEY_INDEX_STAT)
-
-    async def upsert_field_index(self, index: FieldIndex):
-        await self.inner.upsert_field_index(index)
-        get_context().increment_stat(FIELD_INDEX_STAT)
 
     async def perform_ttl_op(self, config: TimeToLiveConfiguration):
         await self.inner.perform_ttl_op(config)

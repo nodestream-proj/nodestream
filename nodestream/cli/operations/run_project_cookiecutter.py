@@ -15,6 +15,9 @@ class RunProjectCookiecutter(Operation):
     async def perform(self, _: NodestreamCommand):
         from ..application import get_version
 
+        version = get_version()
+        semver_non_patch_version = ".".join(version.split(".")[:2])
+
         cookiecutter(
             PROJECT_COOKIECUTTER_URL,
             no_input=True,
@@ -22,6 +25,7 @@ class RunProjectCookiecutter(Operation):
             extra_context={
                 "project_name": self.project_name,
                 "database": self.database,
-                "nodestream_version": get_version(),
+                "nodestream_version": version,
+                "nodestream_semver_non_patch_version": semver_non_patch_version,
             },
         )

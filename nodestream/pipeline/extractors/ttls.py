@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable
 
 from ...model import TimeToLiveConfiguration
-from ...schema.schema import GraphObjectType
+from ...schema import GraphObjectType
 from .extractor import Extractor
 
 

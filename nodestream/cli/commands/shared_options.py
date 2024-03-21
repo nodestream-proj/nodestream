@@ -19,3 +19,11 @@ PIPELINE_ARGUMENT = argument("pipeline", "the name of the pipeline")
 MANY_PIPELINES_ARGUMENT = argument(
     "pipelines", "the names of the pipelines", multiple=True, optional=True
 )
+
+TARGETS_OPTION = option(
+    "target",
+    "t",
+    "Specify a database to target at run time.",
+    multiple=True,
+    flag=False,
+)

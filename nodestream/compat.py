@@ -7,6 +7,19 @@ def leave_unchanged(v):
 
 
 def deprecated_arugment(old, new, converter=leave_unchanged):
+    """Decorator to convert an old argument to a new one.
+
+    This decorator will convert an old argument to a new one. It will also
+    issue a deprecation warning. By default, the old argument will be passed
+    through unchanged. If a converter function is provided, it will be used to
+    convert the old argument to the new one.
+
+    Args:
+        old: The old argument name.
+        new: The new argument name.
+        converter: A function to convert the old argument to the new one.
+    """
+
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):

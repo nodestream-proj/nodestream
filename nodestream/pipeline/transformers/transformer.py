@@ -148,11 +148,12 @@ class SwitchTransformer(Transformer):
 
     @classmethod
     def from_file_data(cls, switch_on, cases, default=None, normalization=None):
+        loader = ClassLoader.instance(Step)
         transformers = {
-            field_value: ClassLoader().load_class(**transformer)
+            field_value: loader.load_class(**transformer)
             for field_value, transformer in cases.items()
         }
-        default = ClassLoader().load_class(**default) if default else None
+        default = loader.load_class(**default) if default else None
         return cls(switch_on, transformers, default, normalization)
 
     def __init__(

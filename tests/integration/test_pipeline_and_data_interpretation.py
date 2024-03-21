@@ -82,7 +82,7 @@ async def test_pipeline_schema_inference(pipeline_name, format, snapshot):
     definition = PipelineDefinition.from_path(
         get_pipeline_fixture_file_by_name(pipeline_name)
     )
-    result = printer.print_schema_to_string(definition.generate_graph_schema())
+    result = printer.print_schema_to_string(definition.make_schema())
     snapshot.snapshot_dir = "tests/integration/snapshots"
     snapshot_file = f"schema_snapshot_{pipeline_name}_{format}.txt"
     snapshot.assert_match(result, snapshot_file)

@@ -1,9 +1,7 @@
 import pytest
 
 from nodestream.databases.query_executor_with_statistics import (
-    FIELD_INDEX_STAT,
     HOOK_STAT,
-    KEY_INDEX_STAT,
     NODE_STAT,
     RELATIONSHIP_STAT,
     TTL_STAT,
@@ -45,30 +43,6 @@ async def test_upsert_relationships_in_bulk_of_same_operation_increments_counter
             ["relationship1", "relationship2"],
         )
         assert get_context().stats[RELATIONSHIP_STAT] == 2
-
-
-@pytest.mark.asyncio
-async def test_upsert_key_index_increments_counter_by_one(
-    query_executor_with_statistics,
-):
-    with start_context("test"):
-        await query_executor_with_statistics.upsert_key_index("index")
-        query_executor_with_statistics.inner.upsert_key_index.assert_awaited_once_with(
-            "index"
-        )
-        assert get_context().stats[KEY_INDEX_STAT] == 1
-
-
-@pytest.mark.asyncio
-async def test_upsert_field_index_increments_counter_by_one(
-    query_executor_with_statistics,
-):
-    with start_context("test"):
-        await query_executor_with_statistics.upsert_field_index("index")
-        query_executor_with_statistics.inner.upsert_field_index.assert_awaited_once_with(
-            "index"
-        )
-        assert get_context().stats[FIELD_INDEX_STAT] == 1
 
 
 @pytest.mark.asyncio

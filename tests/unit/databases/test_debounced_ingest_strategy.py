@@ -12,8 +12,7 @@ from nodestream.model import (
     RelationshipWithNodes,
     TimeToLiveConfiguration,
 )
-from nodestream.schema.indexes import FieldIndex, KeyIndex
-from nodestream.schema.schema import GraphObjectShape, GraphObjectType
+from nodestream.schema import GraphObjectType
 
 
 @pytest.fixture
@@ -58,20 +57,6 @@ async def test_run_hook_after_ingest(ingest_strategy, mocker):
 
 
 @pytest.mark.asyncio
-async def test_upsert_key_index(ingest_strategy):
-    index = KeyIndex("test", frozenset(("key",)))
-    await ingest_strategy.upsert_key_index(index)
-    ingest_strategy.executor.upsert_key_index.assert_called_once_with(index)
-
-
-@pytest.mark.asyncio
-async def test_upsert_field_index(ingest_strategy):
-    index = FieldIndex("test", "field", GraphObjectType.NODE)
-    await ingest_strategy.upsert_field_index(index)
-    ingest_strategy.executor.upsert_field_index.assert_called_once_with(index)
-
-
-@pytest.mark.asyncio
 async def test_upsert_ttl_config(ingest_strategy):
     config = TimeToLiveConfiguration(GraphObjectType.NODE, "Type")
     await ingest_strategy.perform_ttl_operation(config)
@@ -98,7 +83,7 @@ async def test_flush_relationships(ingest_strategy):
     ingest_strategy.debouncer.drain_node_groups.return_value = []
     ingest_strategy.debouncer.drain_relationship_groups.return_value = [
         (
-            GraphObjectShape(GraphObjectType.RELATIONSHIP, "type", frozenset(("key",))),
+            "Type",
             [
                 RelationshipWithNodes(
                     from_node=Node("type", {"key": "test"}),

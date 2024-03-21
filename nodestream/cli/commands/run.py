@@ -1,8 +1,18 @@
 from cleo.helpers import option
 
-from ..operations import InitializeLogger, InitializeProject, RunPipeline
+from ..operations import (
+    ExecuteMigrations,
+    InitializeLogger,
+    InitializeProject,
+    RunPipeline,
+)
 from .nodestream_command import NodestreamCommand
-from .shared_options import JSON_OPTION, MANY_PIPELINES_ARGUMENT, PROJECT_FILE_OPTION
+from .shared_options import (
+    JSON_OPTION,
+    MANY_PIPELINES_ARGUMENT,
+    PROJECT_FILE_OPTION,
+    TARGETS_OPTION,
+)
 
 
 class Run(NodestreamCommand):
@@ -12,6 +22,7 @@ class Run(NodestreamCommand):
     options = [
         PROJECT_FILE_OPTION,
         JSON_OPTION,
+        TARGETS_OPTION,
         option(
             "annotations",
             "a",
@@ -34,15 +45,24 @@ class Run(NodestreamCommand):
             flag=False,
         ),
         option(
-            "target",
-            "t",
-            "Specify a database to target at run time.",
-            multiple=True,
-            flag=False,
+            "auto-migrate",
+            description="Ensure all specified targets are migrated before running specified pipelines",
+            flag=True,
         ),
     ]
+
+    async def auto_migrate_targets_if_needed(self, project):
+        if not self.option("auto-migrate"):
+            return
+
+        targets = self.option("targets")
+        migrations = self.get_migrations()
+        for target_name in targets:
+            target = project.get_target_by_name(target_name)
+            await self.run_operation(ExecuteMigrations(migrations, target))
 
     async def handle_async(self):
         await self.run_operation(InitializeLogger())
         project = await self.run_operation(InitializeProject())
+        await self.auto_migrate_targets_if_needed(project)
         await self.run_operation(RunPipeline(project))
