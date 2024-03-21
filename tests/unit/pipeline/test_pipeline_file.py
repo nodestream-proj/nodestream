@@ -8,8 +8,8 @@ from nodestream.pipeline.pipeline_file_loader import (
     PipelineFile,
     PipelineFileContents,
     PipelineInitializationArguments,
-    StepDefinition,
     ScopeConfig,
+    StepDefinition,
 )
 from nodestream.pipeline.step import PassStep
 
