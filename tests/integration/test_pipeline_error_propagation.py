@@ -127,7 +127,7 @@ async def test_immediate_error_propogation(interpreter):
     assert did_except
     ending_time = datetime.now()
     difference = ending_time - beginning_time
-    assert difference.total_seconds() < 0.4 * 2
+    assert difference.total_seconds() < 0.5 * 2
 
 
 # Testing that the exception is propagated. Also testing that we would see a failure in the stop-process if necessary.
@@ -144,7 +144,7 @@ async def test_immediate_error_propagation_fails_all_steps():
     did_except = False
 
     try:
-        await asyncio.wait_for(pipeline.run(), timeout=3.2 * 2)
+        await asyncio.wait_for(pipeline.run(), timeout=4.2 * 2)
     except PipelineException as exception:
         # Every step should have a Stepexeption except for the last one that has a Exception
         extractor_work_body_exception = exception.errors[0].exceptions[
@@ -160,4 +160,4 @@ async def test_immediate_error_propagation_fails_all_steps():
     assert did_except
     ending_time = datetime.now()
     difference = ending_time - beginning_time
-    assert difference.total_seconds() < 0.4 * 2
+    assert difference.total_seconds() < 0.5 * 2

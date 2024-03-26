@@ -277,6 +277,7 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
         tasks = self.build_steps_into_tasks(progress_reporter)
         return_states = await asyncio.gather(*tasks, return_exceptions=True)
         self.propogate_errors_from_return_states(return_states)
+        self.logger.info("Pipeline Completed")
 
     def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
         return (s for s in self.steps if isinstance(s, IntrospectiveIngestionComponent))

@@ -102,5 +102,9 @@ class Neo4jQueryExecutor(QueryExecutor):
             for record in result.records:
                 self.logger.info(
                     "Gathered Query Results",
-                    extra=dict(**record, query=query.query_statement),
+                    extra=dict(
+                        **record,
+                        query=query.query_statement,
+                        uri=self.driver._pool.address.host
+                    ),
                 )
