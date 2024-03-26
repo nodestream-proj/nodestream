@@ -25,7 +25,7 @@ class Neo4jQueryExecutor(QueryExecutor):
         chunk_size: int = 1000,
         execute_chunks_in_parallel: bool = True,
         retries_per_chunk: int = 3,
-        alias: str = "neo4j-default"
+        alias: str = "neo4j-default",
     ) -> None:
         self.driver = driver
         self.ingest_query_builder = ingest_query_builder
