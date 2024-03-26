@@ -31,7 +31,7 @@ def test_empty_results_single(blank_context):
     subject = NormalizerValueProvider(
         using="lowercase_strings", data=StubbedValueProvider([])
     )
-    assert subject.single_value(blank_context) == None
+    assert subject.single_value(blank_context) is None
 
 
 def test_empty_results_many(blank_context):
