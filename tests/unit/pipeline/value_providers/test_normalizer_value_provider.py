@@ -1,6 +1,9 @@
 import pytest
 
-from nodestream.pipeline.value_providers import NormalizerValueProvider, StaticValueProvider
+from nodestream.pipeline.value_providers import (
+    NormalizerValueProvider,
+    StaticValueProvider,
+)
 from nodestream.subclass_registry import MissingFromRegistryError
 
 from ...stubs import StubbedValueProvider
@@ -25,6 +28,7 @@ def test_invalid_normalizer(blank_context):
         NormalizerValueProvider(
             using="not_a_normalizer", data=StubbedValueProvider(["ABC"])
         )
+
 
 def test_empty_results_single(blank_context):
     subject = NormalizerValueProvider(
