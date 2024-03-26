@@ -25,7 +25,6 @@ class Neo4jQueryExecutor(QueryExecutor):
         chunk_size: int = 1000,
         execute_chunks_in_parallel: bool = True,
         retries_per_chunk: int = 3,
-        alias: str = "neo4j-default",
     ) -> None:
         self.driver = driver
         self.ingest_query_builder = ingest_query_builder
@@ -35,7 +34,6 @@ class Neo4jQueryExecutor(QueryExecutor):
         self.chunk_size = chunk_size
         self.execute_chunks_in_parallel = execute_chunks_in_parallel
         self.retries_per_chunk = retries_per_chunk
-        self.alias = alias
 
     async def execute_query_batch(self, batch: QueryBatch):
         await self.execute(
@@ -104,5 +102,5 @@ class Neo4jQueryExecutor(QueryExecutor):
             for record in result.records:
                 self.logger.info(
                     "Gathered Query Results",
-                    extra=dict(**record, query=query.query_statement, alias=self.alias),
+                    extra=dict(**record, query=query.query_statement, uri=self.driver._pool.address.host),
                 )

@@ -13,11 +13,7 @@ class NormalizerValueProvider(ValueProvider):
         self.data = data
 
     def single_value(self, context: ProviderContext) -> Any:
-        values = list(self.many_values(context))
-        if values:
-            return next((value for value in values))
-        else:
-            return None
+        return next(self.many_values(context), None)
 
     def many_values(self, context: ProviderContext) -> Iterable[Any]:
         return map(self.normalizer.normalize_value, self.data.many_values(context))
