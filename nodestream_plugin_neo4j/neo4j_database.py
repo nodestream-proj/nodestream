@@ -43,13 +43,16 @@ class Neo4jDatabaseConnection:
             database_=self.database_name,
             routing_=routing,
         )
-        for record in result.records:
-            if log_result:
+        if log_result:
+            for record in result.records:
                 self.logger.info(
                     "Gathered Query Results",
-                    extra=dict(**record, query=query.query_statement),
+                    extra=dict(
+                        **record,
+                        query=query.query_statement,
+                        uri=self.driver._pool.address.host
+                    ),
                 )
-
         return result.records
 
     def session(self) -> AsyncSession:
