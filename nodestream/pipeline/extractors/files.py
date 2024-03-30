@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
 from glob import glob
-from io import BufferedReader, IOBase, TextIOWrapper
+from io import BufferedReader, IOBase, TextIOWrapper, StringIO
 from pathlib import Path
 from typing import Any, AsyncGenerator, Iterable, Union
 
@@ -88,14 +88,7 @@ class LineSeperatedJsonFileFormat(SupportedFileFormat, alias=".jsonl"):
 class ParquetFileFormat(SupportedFileFormat, alias=".parquet"):
     def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
         df = pd.read_parquet(fp, engine='pyarrow')
-
-        # Note: 
-        # It is not efficient to do this this way, which is
-        # converting the data frame to string JSON representation
-        # and then calling json.loads to parse the string into a JSON object.
-        # Find a direct way to convert to JSON object from parquet.
-
-        return json.loads(df.to_json(orient ='records'))
+        return (row[1].to_dict() for row in df.iterrows())
 
 
 class TextFileFormat(SupportedFileFormat, alias=".txt"):

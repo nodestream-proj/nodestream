@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
+import pandas as pd
 import pytest
 import yaml
 from hamcrest import assert_that, equal_to, has_length
@@ -78,6 +79,17 @@ def yaml_file(fixture_directory):
         temp_file.seek(0)
     yield Path(name)
 
+@pytest.fixture
+def parquet_file(fixture_directory):
+    with NamedTemporaryFile(
+        "w+", suffix=".parquet", dir=fixture_directory, delete=False
+    ) as temp_file:
+        name = temp_file.name
+        df = pd.DataFrame(data=SIMPLE_RECORD, index=[0])
+        df.to_parquet(temp_file.name)
+        temp_file.seek(0)
+    yield Path(name)
+
 
 @pytest.mark.asyncio
 async def test_json_formatting(json_file):
@@ -110,6 +122,13 @@ async def test_jsonl_formatting(jsonl_file):
 @pytest.mark.asyncio
 async def test_yaml_formatting(yaml_file):
     subject = FileExtractor([yaml_file])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_parquet_formatting(parquet_file):
+    subject = FileExtractor([parquet_file])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
