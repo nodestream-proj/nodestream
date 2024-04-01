@@ -274,6 +274,7 @@ class Pipeline(ExpandsSchemaFromChildren):
         tasks = self.build_steps_into_tasks(progress_reporter)
         return_states = await asyncio.gather(*tasks, return_exceptions=True)
         self.propogate_errors_from_return_states(return_states)
+        self.logger.info("Pipeline Completed")
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return (s for s in self.steps if isinstance(s, ExpandsSchema))

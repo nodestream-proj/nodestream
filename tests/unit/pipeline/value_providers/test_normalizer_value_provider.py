@@ -25,3 +25,17 @@ def test_invalid_normalizer(blank_context):
         NormalizerValueProvider(
             using="not_a_normalizer", data=StubbedValueProvider(["ABC"])
         )
+
+
+def test_empty_results_single(blank_context):
+    subject = NormalizerValueProvider(
+        using="lowercase_strings", data=StubbedValueProvider([])
+    )
+    assert subject.single_value(blank_context) is None
+
+
+def test_empty_results_many(blank_context):
+    subject = NormalizerValueProvider(
+        using="lowercase_strings", data=StubbedValueProvider([])
+    )
+    assert list(subject.many_values(blank_context)) == []
