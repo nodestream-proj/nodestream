@@ -4,10 +4,11 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
 from glob import glob
-from io import BufferedReader, IOBase, TextIOWrapper
+from io import BufferedReader, IOBase, StringIO, TextIOWrapper
 from pathlib import Path
 from typing import Any, AsyncGenerator, Iterable, Union
 
+import pandas as pd
 from httpx import AsyncClient
 from yaml import safe_load
 
@@ -82,6 +83,12 @@ class LineSeperatedJsonFileFormat(SupportedFileFormat, alias=".jsonl"):
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
         return (json.loads(line.strip()) for line in reader.readlines())
+
+
+class ParquetFileFormat(SupportedFileFormat, alias=".parquet"):
+    def read_file_from_handle(self, fp: StringIO) -> Iterable[JsonLikeDocument]:
+        df = pd.read_parquet(fp, engine="pyarrow")
+        return (row[1].to_dict() for row in df.iterrows())
 
 
 class TextFileFormat(SupportedFileFormat, alias=".txt"):
