@@ -79,6 +79,7 @@ def yaml_file(fixture_directory):
         temp_file.seek(0)
     yield Path(name)
 
+
 @pytest.fixture
 def parquet_file(fixture_directory):
     with NamedTemporaryFile(
