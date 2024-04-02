@@ -18,7 +18,7 @@ Parallelism deals with multiple operations executing simultaneously while concur
 
 `asyncio` operates on the observation that in some systems, the cpu is spending a lot of time _blocking_ or waiting for IO operations such as network calls, file reads, and the like to finish before it can continue operating. 
 To make better use of the CPU, `asyncio` introduces a series of language features that facilitate defining tasks and signaling when they need to wait. The language runtime can the “swap in” a different task that it can work on that’s not (currently) IO bound. 
-In workloads where there is an abundant amount of IO, the overhead of managing these tasks is worth it because  we are able to make better use CPU time that would otherwise be wasted.
+In workloads where there is an abundant amount of IO, the overhead of managing these tasks is worth it because  we are able to make better use of CPU time that would otherwise be wasted.
 
 ![asyncio](https://eng.paxos.com/hs-fs/hubfs/_02_Paxos_Engineering/Event-Loop.png?width=800&name=Event-Loop.png)
 
