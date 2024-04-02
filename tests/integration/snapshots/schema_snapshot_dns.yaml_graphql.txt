@@ -1,0 +1,65 @@
+
+
+type A @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    cNAMEResolvesTo: [CNAME!]!
+        @relationship(type: "RESOLVES_TO", direction: IN, properties: "ResolvesTo")
+    
+
+    # Outbound Relationships
+
+    
+    resolvesToIpv4: Ipv4
+        @relationship(type: "RESOLVES_TO", direction: OUT, properties: "ResolvesTo")
+    
+
+}
+
+type CNAME @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    resolvesToA: A
+        @relationship(type: "RESOLVES_TO", direction: OUT, properties: "ResolvesTo")
+    
+
+}
+
+type Ipv4 @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    address: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    aResolvesTo: [A!]!
+        @relationship(type: "RESOLVES_TO", direction: IN, properties: "ResolvesTo")
+    
+
+    # Outbound Relationships
+
+}
+interface ResolvesTo @relationshipProperties {
+
+    last_ingested_at: LocalDateTime
+
+}

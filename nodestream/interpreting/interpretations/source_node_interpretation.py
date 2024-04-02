@@ -72,6 +72,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
     """
 
     SOURCE_NODE_TYPE_ALIAS = "source_node"
+    assigns_source_nodes = True
 
     __slots__ = (
         "node_type",

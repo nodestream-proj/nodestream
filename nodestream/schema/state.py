@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, Iterable, Optional, Set, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 from ..file_io import LoadsFromYaml, LoadsFromYamlFile, SavesToYaml, SavesToYamlFile
 
@@ -589,12 +589,32 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
 
 
 @dataclass(slots=True, frozen=True)
+class UnboundAdjacency:
+    """An unbound adjacency."""
+
+    from_type_or_alias: str
+    to_type_or_alias: str
+    relationship_type: str
+    from_cardinality: Cardinality
+    to_cardinality: Cardinality
+
+    def bind(self, schema: Schema, aliases: Dict[str, str]):
+        from_type = aliases.get(self.from_type_or_alias, self.from_type_or_alias)
+        to_type = aliases.get(self.to_type_or_alias, self.to_type_or_alias)
+        schema.add_adjacency(
+            Adjacency(from_type, to_type, self.relationship_type),
+            AdjacencyCardinality(self.from_cardinality, self.to_cardinality),
+        )
+
+
+@dataclass(slots=True, frozen=True)
 class SchemaExpansionCoordinator:
     """A coordinator for expanding a schema."""
 
     schema: Schema
     aliases: Dict[str, str] = field(default_factory=dict)
     unbound_aliases: Dict[str, GraphObjectSchema] = field(default_factory=dict)
+    unbound_adjacencies: List[UnboundAdjacency] = field(default_factory=list)
 
     def on_node_schema(
         self,
@@ -675,15 +695,22 @@ class SchemaExpansionCoordinator:
             from_cardinality: The from cardinality.
             to_cardinality: The to cardinality.
         """
-        from_side_type = self.aliases.get(from_type_or_alias, from_type_or_alias)
-        to_side_type = self.aliases.get(to_type_or_alias, to_type_or_alias)
-        adjacency = Adjacency(from_side_type, to_side_type, relationship_type)
-        cardinality = AdjacencyCardinality(from_cardinality, to_cardinality)
-        self.schema.add_adjacency(adjacency, cardinality)
+        unbound = UnboundAdjacency(
+            from_type_or_alias,
+            to_type_or_alias,
+            relationship_type,
+            from_cardinality,
+            to_cardinality,
+        )
+        self.unbound_adjacencies.append(unbound)
 
     def clear_aliases(self):
+        for unbound_adjacency in self.unbound_adjacencies:
+            unbound_adjacency.bind(self.schema, self.aliases)
+
         self.aliases.clear()
         self.unbound_aliases.clear()
+        self.unbound_adjacencies.clear()
 
 
 class ExpandsSchema:

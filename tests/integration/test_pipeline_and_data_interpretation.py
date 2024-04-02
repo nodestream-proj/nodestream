@@ -75,6 +75,10 @@ async def test_pipeline_interpretation_snapshot(
         ("fifa_2021_player_data.yaml", "graphql"),
         ("airports.yaml", "plain"),
         ("airports.yaml", "graphql"),
+        ("people.yaml", "plain"),
+        ("people.yaml", "graphql"),
+        ("dns.yaml", "plain"),
+        ("dns.yaml", "graphql"),
     ],
 )
 async def test_pipeline_schema_inference(pipeline_name, format, snapshot):
