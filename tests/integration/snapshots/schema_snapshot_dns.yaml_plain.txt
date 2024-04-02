@@ -9,3 +9,7 @@
 [NODE] CNAME:
   name: STRING
   last_ingested_at: DATETIME
+[NODE] Unknown:
+  name: STRING
+  value: STRING
+  last_ingested_at: DATETIME

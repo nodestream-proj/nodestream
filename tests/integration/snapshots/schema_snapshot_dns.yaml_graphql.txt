@@ -58,6 +58,21 @@ type Ipv4 @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {de
     # Outbound Relationships
 
 }
+
+type Unknown @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+    # Node Properties
+
+    name: String
+
+    value: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+}
 interface ResolvesTo @relationshipProperties {
 
     last_ingested_at: LocalDateTime

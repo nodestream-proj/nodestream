@@ -8,6 +8,13 @@
     interpretations:
       - type: switch
         switch_on: !jmespath 'type'
+        default:
+          - type: source_node
+            node_type: Unknown
+            key:
+              name: !jmespath 'name'
+            properties:
+              value: !jmespath 'value'
         cases:
           A:
           - type: source_node
