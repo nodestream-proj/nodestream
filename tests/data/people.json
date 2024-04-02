@@ -1,0 +1,25 @@
+{
+    "organization": {
+        "name": "Acme Inc."
+    },
+    "people": [
+        {
+            "name": "John",
+            "surname": "Doe",
+            "age": 30,
+            "contact": {
+                "email": "jdoe@example.com",
+                "phone": "555-555-5555"
+            }
+        },
+        {
+            "name": "Jane",
+            "surname": "Doe",
+            "age": 28,
+            "contact": {
+                "email": "jane_doe@example.com",
+                "phone": "555-555-5555"
+            }
+        }
+    ]
+}

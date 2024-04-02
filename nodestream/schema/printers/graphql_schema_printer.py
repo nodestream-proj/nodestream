@@ -7,7 +7,7 @@ from .schema_printer import SchemaPrinter
 
 NODE_TYPE_DEF_TEMPLATE = """
 {% set node_type = ensure_camel_case(shape.name) %}
-type {{ node_type }} @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}} {% if node_type != shape.name %} @node(labels: ["{{ shape.name }}"]) {% endif %} {
+type {{ node_type }} @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10}) {% if node_type != shape.name %} @node(labels: ["{{ shape.name }}"]) {% endif %} {
     # Node Properties
 {% for property in shape.properties.items() %}
     {{ property[0] }}: {{ field_mappings[property[1].type] }}

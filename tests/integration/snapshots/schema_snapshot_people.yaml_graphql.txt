@@ -1,0 +1,95 @@
+
+
+type Email @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    email: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    personHasContact: [Person!]!
+        @relationship(type: "HAS_CONTACT", direction: IN, properties: "HasContact")
+    
+
+    # Outbound Relationships
+
+}
+
+type Organization @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    personIsMemberOf: [Person!]!
+        @relationship(type: "IS_MEMBER_OF", direction: IN, properties: "IsMemberOf")
+    
+
+    # Outbound Relationships
+
+}
+
+type Person @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    first_name: String
+
+    last_name: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    isMemberOfOrganization: Organization
+        @relationship(type: "IS_MEMBER_OF", direction: OUT, properties: "IsMemberOf")
+    
+
+    
+    hasContactEmail: Email
+        @relationship(type: "HAS_CONTACT", direction: OUT, properties: "HasContact")
+    
+
+    
+    hasContactPhone: Phone
+        @relationship(type: "HAS_CONTACT", direction: OUT, properties: "HasContact")
+    
+
+}
+
+type Phone @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    phone: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    personHasContact: [Person!]!
+        @relationship(type: "HAS_CONTACT", direction: IN, properties: "HasContact")
+    
+
+    # Outbound Relationships
+
+}
+interface IsMemberOf @relationshipProperties {
+
+    last_ingested_at: LocalDateTime
+
+}
+interface HasContact @relationshipProperties {
+
+    last_ingested_at: LocalDateTime
+
+}

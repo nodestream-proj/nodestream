@@ -11,6 +11,7 @@ INTERPRETATION_REGISTRY = SubclassRegistry()
 @INTERPRETATION_REGISTRY.connect_baseclass
 class Interpretation(ExpandsSchema, Pluggable, ABC):
     entrypoint_name = "interpretations"
+    assigns_source_nodes = False
 
     @abstractmethod
     def interpret(self, context: ProviderContext):
