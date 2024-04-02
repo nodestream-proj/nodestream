@@ -1,6 +1,6 @@
 
 
-type A @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type A @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     name: String
@@ -23,7 +23,7 @@ type A @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {defau
 
 }
 
-type CNAME @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type CNAME @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     name: String
@@ -41,7 +41,7 @@ type CNAME @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {d
 
 }
 
-type Ipv4 @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type Ipv4 @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     address: String
@@ -59,7 +59,7 @@ type Ipv4 @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {de
 
 }
 
-type Unknown @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type Unknown @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     name: String

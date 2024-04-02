@@ -1,6 +1,6 @@
 
 
-type Airport @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type Airport @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     identifier: String
@@ -31,7 +31,7 @@ type Airport @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: 
 
 }
 
-type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     code: String
@@ -49,7 +49,7 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: 
 
 }
 
-type Region @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type Region @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     code: String
