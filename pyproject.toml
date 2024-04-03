@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 neo4j = "^5.16.0"
-nodestream = { version = "0.12.0a3", allow-prereleases = true} # TODO: Change this to 0.12 Final when it is ready
+nodestream = { version = "0.12.0rc2", allow-prereleases = true} 
 cymple = "^0.11.0"
 
 [tool.poetry.group.dev.dependencies]
