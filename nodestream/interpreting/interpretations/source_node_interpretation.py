@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from ...pipeline.normalizers import LowercaseStrings
 from ...pipeline.value_providers import (
@@ -6,14 +6,9 @@ from ...pipeline.value_providers import (
     StaticValueOrValueProvider,
     ValueProvider,
 )
-from ...schema.indexes import FieldIndex, KeyIndex
-from ...schema.schema import (
-    GraphObjectShape,
-    GraphObjectType,
-    KnownTypeMarker,
-    PropertyMetadataSet,
-)
+from ...schema import GraphObjectSchema, SchemaExpansionCoordinator
 from .interpretation import Interpretation
+from .property_mapping import PropertyMapping
 
 # By default, data gathered from this interpretation is lower cased when a string.
 DEFAULT_NORMALIZATION_ARGUMENTS = {LowercaseStrings.argument_flag(): True}
@@ -76,6 +71,9 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
     ```
     """
 
+    SOURCE_NODE_TYPE_ALIAS = "source_node"
+    assigns_source_nodes = True
+
     __slots__ = (
         "node_type",
         "key",
@@ -96,7 +94,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
     ):
         self.node_type = ValueProvider.guarantee_value_provider(node_type)
         self.key = ValueProvider.guarantee_provider_dictionary(key)
-        self.properties = ValueProvider.guarantee_provider_dictionary(properties or {})
+        self.properties = PropertyMapping.from_file_data(properties or {})
         self.additional_indexes = additional_indexes or []
         self.additional_types = tuple(additional_types or [])
         self.norm_args = {**DEFAULT_NORMALIZATION_ARGUMENTS, **(normalization or {})}
@@ -105,30 +103,21 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         source = context.desired_ingest.source
         source.type = self.node_type.single_value(context)
         source.key_values.apply_providers(context, self.key, self.norm_args)
-        source.properties.apply_providers(context, self.properties, self.norm_args)
+        self.properties.apply_to(context, source.properties, self.norm_args)
         source.additional_types = self.additional_types
 
-    def gather_used_indexes(self) -> Iterable[Union[KeyIndex, FieldIndex]]:
-        # NOTE: We cannot generate indexes when we do not know the type until runtime.
+    def expand_source_node_schema(self, source_node_schema: GraphObjectSchema):
+        source_node_schema.add_keys(self.key)
+        source_node_schema.add_properties(self.properties)
+        source_node_schema.add_indexes(self.additional_indexes)
+        source_node_schema.add_indexed_timestamp()
+
+    def expand_schema(self, coordinator: SchemaExpansionCoordinator):
         if not self.node_type.is_static:
             return
 
-        node_type = self.node_type.value
-        yield KeyIndex(node_type, frozenset(self.key.keys()))
-        yield FieldIndex.for_ttl_timestamp(node_type)
-        for field in self.additional_indexes:
-            yield FieldIndex(node_type, field, object_type=GraphObjectType.NODE)
-
-    def gather_object_shapes(self) -> Iterable[GraphObjectShape]:
-        # NOTE: We cannot generate schemas when we do not know the type until runtime.
-        if not self.node_type.is_static:
-            return
-
-        node_type = self.node_type.value
-        yield GraphObjectShape(
-            graph_object_type=GraphObjectType.NODE,
-            object_type=KnownTypeMarker.fulfilling_source_node(node_type),
-            properties=PropertyMetadataSet.from_names(
-                self.key.keys(), self.properties.keys()
-            ),
+        coordinator.on_node_schema(
+            self.expand_source_node_schema,
+            alias=self.SOURCE_NODE_TYPE_ALIAS,
+            node_type=self.node_type.value,
         )

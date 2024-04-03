@@ -12,11 +12,7 @@ from ..file_io import (
 )
 from ..pipeline import Step
 from ..pluggable import Pluggable
-from ..schema.schema import (
-    AggregatedIntrospectiveIngestionComponent,
-    GraphSchema,
-    IntrospectiveIngestionComponent,
-)
+from ..schema import ExpandsSchema, ExpandsSchemaFromChildren, Schema
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .plugin import PluginConfiguration
@@ -27,9 +23,7 @@ T = TypeVar("T", bound=Step)
 
 
 @dataclass
-class Project(
-    AggregatedIntrospectiveIngestionComponent, LoadsFromYamlFile, SavesToYamlFile
-):
+class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
     """A `Project` represents a collection of pipelines.
 
     A project is the top-level object in a nodestream project.
@@ -137,7 +131,7 @@ class Project(
             },
         }
 
-    def get_target_by_name(self, target_name: str) -> Optional[Target]:
+    def get_target_by_name(self, target_name: str) -> Target:
         """Returns the target with the given name.
 
         Args:
@@ -146,7 +140,10 @@ class Project(
         Returns:
             Optional[Target]: The target with the given name, or None if no target was found.
         """
-        return self.targets_by_name.get(target_name)
+        try:
+            return self.targets_by_name[target_name]
+        except KeyError:
+            raise ValueError(f"Target {target_name} not specified in the project.")
 
     async def run(self, request: RunRequest) -> int:
         """Takes a run request and runs the appropriate pipeline.
@@ -262,7 +259,7 @@ class Project(
                 missing_ok=missing_ok,
             )
 
-    def get_schema(self, type_overrides_file: Optional[Path] = None) -> GraphSchema:
+    def get_schema(self, type_overrides_file: Optional[Path] = None) -> Schema:
         """Returns a `GraphSchema` representing the project.
 
         If a `type_overrides_file` is provided, the schema will be updated with the overrides.
@@ -277,12 +274,13 @@ class Project(
         Returns:
             GraphSchema: The schema representing the project.
         """
-        schema = self.generate_graph_schema()
+        schema = self.make_schema()
         if type_overrides_file is not None:
-            schema.apply_type_overrides_from_file(type_overrides_file)
+            overrides_schema = Schema.read_from_file(type_overrides_file)
+            schema.merge(overrides_schema)
         return schema
 
-    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
+    def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return self.scopes_by_name.values()
 
     def dig_for_step_of_type(

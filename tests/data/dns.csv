@@ -1,0 +1,5 @@
+type,name,value
+A,foo.bar.com,1.1.1.1
+A,foo.bar.com,1.0.0.1
+CNAME,baz.bar.com,baz.vendordns.com
+AAAA,foo.bar.com,2001:db8::1

@@ -1,8 +1,0 @@
-scopes:
-  default:
-    pipelines:
-      - path: tests/e2e/pipelines/airports.yaml
-        name: airports
-      - path: tests/e2e/pipelines/fifa_2021_player_data.yaml
-        name: fifa
-  

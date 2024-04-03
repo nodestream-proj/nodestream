@@ -3,10 +3,7 @@ import traceback
 from logging import getLogger
 from typing import Any, AsyncGenerator, Iterable, List, Optional
 
-from ..schema.schema import (
-    AggregatedIntrospectiveIngestionComponent,
-    IntrospectiveIngestionComponent,
-)
+from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .meta import get_context
 from .progress_reporter import PipelineProgressReporter
 from .step import Step
@@ -232,7 +229,7 @@ class StepExecutor:
         self.raise_encountered_exceptions()
 
 
-class Pipeline(AggregatedIntrospectiveIngestionComponent):
+class Pipeline(ExpandsSchemaFromChildren):
     """A pipeline is a series of steps that are executed in order."""
 
     __slots__ = ("steps",)
@@ -279,5 +276,5 @@ class Pipeline(AggregatedIntrospectiveIngestionComponent):
         self.propogate_errors_from_return_states(return_states)
         self.logger.info("Pipeline Completed")
 
-    def all_subordinate_components(self) -> Iterable[IntrospectiveIngestionComponent]:
-        return (s for s in self.steps if isinstance(s, IntrospectiveIngestionComponent))
+    def get_child_expanders(self) -> Iterable[ExpandsSchema]:
+        return (s for s in self.steps if isinstance(s, ExpandsSchema))

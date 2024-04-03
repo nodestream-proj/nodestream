@@ -1,14 +1,13 @@
-from hamcrest import assert_that, equal_to, has_entries
+import pytest
+from hamcrest import assert_that, has_entries
 
-from nodestream.interpreting.interpretations import PropertiesInterpretation
-from nodestream.schema.schema import (
-    GraphObjectShape,
-    GraphObjectType,
-    PropertyMetadataSet,
-    UnknownTypeMarker,
+from nodestream.interpreting.interpretations import (
+    PropertiesInterpretation,
+    SourceNodeInterpretation,
 )
 
 from ...stubs import StubbedValueProvider
+from .matchers import has_node_properties
 
 
 def test_properties_interpretaton_applies_static_properties(blank_context):
@@ -31,12 +30,30 @@ def test_properties_interpretation_applies_dynamic_properties(blank_context):
     assert_that(actual_properties, has_entries(expected_properties))
 
 
-def test_gather_object_shapes():
+def test_expand_schmea_adds_properties(schema_coordinator):
     subject = PropertiesInterpretation(properties={"a": "b"})
-    shape = next(subject.gather_object_shapes())
-    expected_shape = GraphObjectShape(
-        graph_object_type=GraphObjectType.NODE,
-        object_type=UnknownTypeMarker.source_node(),
-        properties=PropertyMetadataSet.from_names(("a",)),
+    subject.expand_schema(schema_coordinator)
+    assert_that(
+        schema_coordinator,
+        has_node_properties(SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS, ("a",)),
     )
-    assert_that(shape, equal_to(expected_shape))
+
+
+def test_properties_interpretation_applies_properties_from_value_provider(
+    blank_context,
+):
+    expected_properties = {"first_name": "Zach", "last_name": "Probst"}
+    subject = PropertiesInterpretation(
+        properties=StubbedValueProvider(values=[expected_properties])
+    )
+    subject.interpret(blank_context)
+    actual_properties = blank_context.desired_ingest.source.properties
+    assert_that(actual_properties, has_entries(expected_properties))
+
+
+def test_properties_interpretation_applies_properties_from_value_provider_wrong_type(
+    blank_context,
+):
+    with pytest.raises(ValueError):
+        subject = PropertiesInterpretation(properties=StubbedValueProvider(values=[1]))
+        subject.interpret(blank_context)

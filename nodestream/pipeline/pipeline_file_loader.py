@@ -1,9 +1,14 @@
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Set
 
-from ..file_io import LazyLoadedArgument, LazyLoadedTagSafeLoader, LoadsFromYamlFile
+from ..file_io import (
+    LazyLoadedArgument,
+    LazyLoadedTagSafeLoader,
+    LoadsFromYaml,
+    LoadsFromYamlFile,
+)
 from .argument_resolvers import set_config
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
@@ -55,63 +60,71 @@ class PipelineInitializationArguments:
     def for_testing(cls):
         return cls(annotations=["test"])
 
-    def initialize_from_file_data(self, file_data: Any):
-        with set_config(self.effecitve_config_values):
-            return Pipeline(
-                steps=self.load_steps(ClassLoader(Step), file_data),
-                step_outbox_size=self.step_outbox_size,
-            )
 
-    def load_steps(self, class_loader, file_data):
-        effective = self.get_effective_configuration(file_data)
-        if self.on_effective_configuration_resolved:
-            self.on_effective_configuration_resolved(file_data)
-        in_file = [self.load_step(class_loader, **step_data) for step_data in effective]
-        return in_file + (self.extra_steps or [])
+@dataclass(frozen=True, slots=True)
+class StepDefinition(LoadsFromYaml):
+    implementation_path: str
+    factory_method_name: Optional[str] = None
+    annotations: Optional[Set[str]] = None
+    arguments: Optional[Dict[str, Any]] = None
 
-    def load_step(self, class_loader, implementation, arguments=None, factory=None):
-        arguments = LazyLoadedArgument.resolve_if_needed(arguments or {})
-        return class_loader.load_class(
-            implementation=implementation, arguments=arguments, factory=factory
-        )
-
-    def get_effective_configuration(self, file_data):
-        return [
-            step_data for step_data in file_data if self.should_load_step(step_data)
-        ]
-
-    def should_load_step(self, step):
-        return self.step_is_tagged_properly(step)
-
-    def step_is_tagged_properly(self, step):
-        # By default, we need to load all steps. Only filter a step out if:
-        #   1. We have set annotations during initialization (e.g from the cli)
-        #   2. The step is annotated
-        #   3. There is not an intersection between the annotations from (1) and (2).
-        #
-        # This function also has a side effect of removing the annotations from the step data.
-        annotations_set_on_step = set(step.pop("annotations", []))
-        if annotations_set_on_step and self.annotations:
-            return annotations_set_on_step.intersection(self.annotations)
-
-        return True
-
-
-class PipelineFileContents(LoadsFromYamlFile):
     @classmethod
     def describe_yaml_schema(cls):
         from schema import Optional, Schema
 
         return Schema(
-            [
-                {
-                    "implementation": str,
-                    Optional("factory"): str,
-                    Optional("annotations"): [str],
-                    Optional("arguments"): {str: object},
-                }
-            ]
+            {
+                "implementation": str,
+                Optional("factory"): str,
+                Optional("annotations"): [str],
+                Optional("arguments"): {str: object},
+            }
         )
+
+    @classmethod
+    def from_file_data(cls, data):
+        return cls(
+            implementation_path=data["implementation"],
+            factory_method_name=data.get("factory"),
+            annotations=set(data.get("annotations", [])),
+            arguments=data.get("arguments"),
+        )
+
+    def should_be_loaded(self, user_annotations: Optional[Set[str]]) -> bool:
+        """Determine if this step should be loaded.
+
+        Here are the rules:
+            - If the step has no annotations, it will always be loaded.
+            - If the user supplies no annotations, it will always be loaded.
+            - If the step has annotations, and the user supplies annotations, it will only be loaded if the step's
+                annotations are a subset of the user's annotations.
+
+        Args:
+            user_annotations: The annotations supplied by the user.
+
+        Returns:
+            True if the step should be loaded, False otherwise.
+        """
+        if not bool(self.annotations) or not bool(user_annotations):
+            return True
+
+        return bool(self.annotations.intersection(user_annotations))
+
+    def load_step(self) -> Step:
+        arguments = LazyLoadedArgument.resolve_if_needed(self.arguments)
+        return ClassLoader.instance(Step).load_class(
+            implementation=self.implementation_path,
+            arguments=arguments,
+            factory=self.factory_method_name,
+        )
+
+
+class PipelineFileContents(LoadsFromYamlFile):
+    @classmethod
+    def describe_yaml_schema(cls):
+        from schema import Schema
+
+        return Schema([StepDefinition.describe_yaml_schema()])
 
     @classmethod
     def get_loader(cls):
@@ -119,14 +132,24 @@ class PipelineFileContents(LoadsFromYamlFile):
         return PipelineFileSafeLoader
 
     @classmethod
-    def from_file_data(cls, data):
-        return cls(data)
+    def from_file_data(cls, data: List[Dict]):
+        step_definitions = [
+            StepDefinition.from_file_data(definition_data) for definition_data in data
+        ]
+        return cls(step_definitions)
 
-    def __init__(self, data: List[Dict]) -> None:
-        self.data = data
+    def __init__(self, step_definitions: List[StepDefinition]) -> None:
+        self.step_definitions = step_definitions
 
-    def initalize_with_arguments(self, init_args: PipelineInitializationArguments):
-        return init_args.initialize_from_file_data(self.data)
+    def initialize_with_arguments(self, init_args: PipelineInitializationArguments):
+        with set_config(init_args.effecitve_config_values):
+            steps_defined_in_file = [
+                step_definition.load_step()
+                for step_definition in self.step_definitions
+                if step_definition.should_be_loaded(init_args.annotations)
+            ]
+            steps = steps_defined_in_file + (init_args.extra_steps or [])
+        return Pipeline(steps, step_outbox_size=init_args.step_outbox_size)
 
 
 class PipelineFile:
@@ -139,5 +162,8 @@ class PipelineFile:
     ) -> Pipeline:
         self.logger.info("Loading Pipeline")
         init_args = init_args or PipelineInitializationArguments()
-        contents = PipelineFileContents.read_from_file(self.file_path)
-        return contents.initalize_with_arguments(init_args)
+        contents = self.get_contents()
+        return contents.initialize_with_arguments(init_args)
+
+    def get_contents(self) -> PipelineFileContents:
+        return PipelineFileContents.read_from_file(self.file_path)

@@ -5,7 +5,7 @@ from ...pipeline.value_providers import (
     StaticValueOrValueProvider,
     ValueProvider,
 )
-from ...schema.schema import AggregatedIntrospectiveIngestionComponent
+from ...schema import SchemaExpansionCoordinator
 from .interpretation import Interpretation
 
 
@@ -18,9 +18,7 @@ class UnhandledBranchError(ValueError):
         )
 
 
-class SwitchInterpretation(
-    AggregatedIntrospectiveIngestionComponent, Interpretation, alias="switch"
-):
+class SwitchInterpretation(Interpretation, alias="switch"):
     __slots__ = (
         "switch_on",
         "interpretations",
@@ -62,11 +60,25 @@ class SwitchInterpretation(
         self.normalization = normalization or {}
         self.fail_on_unhandled = fail_on_unhandled
 
-    def all_subordinate_components(self):
-        for child in self.interpretations.values():
-            yield from child
+    @property
+    def distinct_branches(self) -> bool:
+        # If all branches have at least one interpretation that assigns source nodes,
+        # then the branches are distinct and we should not merge their schemas.
+        return all(
+            any(interpretation.assigns_source_nodes for interpretation in branch)
+            for branch in self.interpretations.values()
+        )
+
+    def expand_schema(self, coordinator: SchemaExpansionCoordinator):
+        for branch in self.interpretations.values():
+            for interpretation in branch:
+                interpretation.expand_schema(coordinator)
+            if self.distinct_branches:
+                coordinator.clear_aliases()
+
         if self.default:
-            yield from self.default
+            for interpretation in self.default:
+                interpretation.expand_schema(coordinator)
 
     def interpret(self, context: ProviderContext):
         key = self.switch_on.normalize_single_value(context, self.normalization)

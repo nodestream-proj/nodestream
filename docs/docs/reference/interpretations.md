@@ -53,6 +53,33 @@ The example below expands on our previous example by:
     - Patient
 ```
 
+You may also provide an expression that returns a map of properties, each of which will be bound to the source node. 
+
+For example, if we had input data that looked like this:
+
+```json
+{
+  "patient_name": "John Doe",
+  "attributes": { 
+    "birthday": "1980-01-01",
+    "address": "123 Main St"
+  }
+}
+```
+
+You could then use the following interpretation to bind the `birthday` and `address` properties to the source node:
+
+```yaml
+- type: source_node
+  node_type: Person
+  key:
+    name: !jmespath patient_name
+  properties: !jmespath attributes
+```
+
+**NOTE**: Because these properties are not known by name until runtime, the schema introspection will not be aware of them. 
+
+
 Here is a full list of the fields that can be used in a source node interpretation: 
 
 | Parameter Name     | Required? | Type                    | Description                                                                                                                                                                                                                                                                                                            |
@@ -123,6 +150,43 @@ For example, if we wanted to define a `LIVES_AT` relationship between a source n
   relationship_properties:
     since: !jmespath since
 ```
+
+
+You may also provide an expression that returns a map of properties, each of which will be bound to the related node or relatonship respectively. 
+
+For example, if we had input data that looked like this:
+
+```json
+{
+  "name": "John",
+  "address": "123 Main St",
+  "address_information": { 
+    "type": "residential",
+    "tax_rate": 0.05,
+  },
+  "ownership": {
+    "since": "2010-01-01",
+    "percentage": 100
+  }
+}
+```
+
+You could then use the following interpretation to:
+
+- bind the `type` and `tax_rate` properties to the related node
+- bind the `since` and `percentage` properties to the relationship
+
+```yaml
+- type: relationship
+  node_type: Address
+  relationship_type: LIVES_AT
+  node_key:
+    address: !jmespath address
+  node_properties: !jmespath address_information
+  relationship_properties: !jmespath ownership
+```
+
+**NOTE**: Because these properties are not known by name until runtime, the schema introspection will not be aware of them. 
 
 ### Relationship Keys
 
@@ -214,6 +278,31 @@ For example, if we wanted to define a `birthday` property and a `meaning_of_life
     birthday: !jmespath birthday
     meaning_of_life: 42
 ```
+
+You may also provide an expression that returns a map of properties, each of which will be bound to the source node. 
+
+For example, if we had input data that looked like this:
+
+```json
+{
+  "name": "John",
+  "attributes": { 
+    "birthday": "1980-01-01",
+    "meaning_of_life": 42
+  }
+}
+```
+
+You could then use the following interpretation to bind the `birthday` and `meaning_of_life` properties to the source node:
+
+```yaml
+- type: properties
+  properties: !jmespath attributes
+```
+
+**NOTE**: Because these properties are not known by name until runtime, the schema introspection will not be aware of them. 
+
+
 
 | Parameter Name 	| Required? 	| Type       	| Description                                                                                                                                                                                                	|
 |----------------	|-----------	|------------	|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|

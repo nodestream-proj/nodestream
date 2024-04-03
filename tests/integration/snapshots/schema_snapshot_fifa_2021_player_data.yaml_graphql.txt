@@ -1,6 +1,6 @@
 
 
-type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     name: String
@@ -18,7 +18,7 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: 
 
 }
 
-type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     player_id: String
@@ -56,7 +56,7 @@ type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {
 
 }
 
-type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     name: String
@@ -74,7 +74,7 @@ type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit:
 
 }
 
-type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @pageOptions{limit: {default: 10}}  {
+type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     name: String

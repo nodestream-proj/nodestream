@@ -1,0 +1,15 @@
+[NODE] A:
+  name: STRING
+  last_ingested_at: DATETIME
+[RELATIONSHIP] RESOLVES_TO:
+  last_ingested_at: DATETIME
+[NODE] Ipv4:
+  address: STRING
+  last_ingested_at: DATETIME
+[NODE] CNAME:
+  name: STRING
+  last_ingested_at: DATETIME
+[NODE] Unknown:
+  name: STRING
+  value: STRING
+  last_ingested_at: DATETIME
