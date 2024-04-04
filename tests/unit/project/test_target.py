@@ -1,9 +1,10 @@
 from unittest.mock import ANY
+
 from hamcrest import assert_that, equal_to, instance_of
 
+from nodestream.databases.null import NullMigrator
 from nodestream.file_io import LazyLoadedArgument
 from nodestream.project import Target
-from nodestream.databases.null import NullMigrator
 
 
 def test_target_make_writer_default_writer_args(mocker):

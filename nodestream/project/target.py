@@ -4,7 +4,6 @@ from typing import Any, Dict
 from ..file_io import LazyLoadedArgument
 from ..schema.migrations import Migrator
 
-
 WRITER_ARGUMENTS = ("batch_size", "collect_stats", "ingest_strategy_name")
 
 
