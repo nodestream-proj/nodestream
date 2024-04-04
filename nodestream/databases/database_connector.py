@@ -15,7 +15,7 @@ class DatabaseConnector(ABC, Pluggable):
 
     @classmethod
     def from_database_args(
-        cls, database: str = "neo4j", **database_args
+        cls, database: str = "null", **database_args
     ) -> "DatabaseConnector":
         DatabaseConnector.import_all()
 

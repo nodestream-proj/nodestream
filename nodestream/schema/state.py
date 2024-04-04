@@ -226,7 +226,11 @@ class GraphObjectSchema(LoadsFromYaml, SavesToYaml):
         Args:
             property_name: The property name.
         """
-        self.properties[property_name] = metadata or PropertyMetadata()
+        metadata = metadata or PropertyMetadata()
+        if property_name in self.properties:
+            self.properties[property_name].merge(metadata)
+        else:
+            self.properties[property_name] = metadata
 
     def drop_property(self, property_name: str):
         """Drop a property.

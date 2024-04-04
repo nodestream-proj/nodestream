@@ -49,6 +49,9 @@ class NullRetriver(TypeRetriever):
 
 
 class NullConnector(DatabaseConnector, alias="null"):
+    def __init__(self, **_) -> None:
+        pass
+
     def make_migrator(self) -> TypeRetriever:
         return NullMigrator()
 
