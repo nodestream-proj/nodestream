@@ -97,7 +97,9 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         ]
 
         targets = data.pop("targets", {})
-        target_cfgs = {name: Target(name, value) for name, value in targets.items()}
+        target_cfgs = {
+            name: Target.from_file_data(name, data) for name, data in targets.items()
+        }
 
         project = cls(targets_by_name=target_cfgs)
         for plugin in plugins:

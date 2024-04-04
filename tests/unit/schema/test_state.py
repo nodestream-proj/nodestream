@@ -114,3 +114,14 @@ def test_invalid_merge_mismatched_keys(basic_schema):
     other_person = GraphObjectSchema("Person", {"ssn": PropertyMetadata(is_key=True)})
     with pytest.raises(ValueError):
         person.merge(other_person)
+
+
+def test_overlapping_property_definitions(basic_schema):
+    person = basic_schema.get_node_type_by_name("NewType")
+    person.add_index("name")
+    person.add_key("name")
+    person.add_property("name")
+
+    property_defintion = person.properties["name"]
+    assert_that(property_defintion.is_key, equal_to(True))
+    assert_that(property_defintion.is_indexed, equal_to(True))

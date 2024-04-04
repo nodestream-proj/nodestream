@@ -1,14 +1,32 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict
 
 from ..file_io import LazyLoadedArgument
 from ..schema.migrations import Migrator
 
 
+WRITER_ARGUMENTS = ("batch_size", "collect_stats", "ingest_strategy_name")
+
+
 @dataclass(slots=True, frozen=True)
 class Target:
     name: str
     connector_config: Dict[str, Any]
+    writer_arguments: Dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_file_data(cls, name: str, file_data):
+        writer_arguments = {
+            item: value
+            for item in WRITER_ARGUMENTS
+            if (value := file_data.pop(item, None)) is not None
+        }
+
+        return cls(
+            name=name,
+            connector_config=file_data,
+            writer_arguments=writer_arguments,
+        )
 
     @property
     def resolved_connector_config(self):
@@ -20,11 +38,11 @@ class Target:
 
         return DatabaseConnector.from_database_args(**self.resolved_connector_config)
 
-    def make_writer(self, **writer_args):
+    def make_writer(self):
         from ..databases import GraphDatabaseWriter
 
-        return GraphDatabaseWriter.from_file_data(
-            **writer_args, **self.resolved_connector_config
+        return GraphDatabaseWriter.from_connector(
+            connector=self.connector, **self.writer_arguments
         )
 
     def make_type_retriever(self):

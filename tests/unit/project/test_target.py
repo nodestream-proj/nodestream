@@ -1,14 +1,35 @@
+from unittest.mock import ANY
 from hamcrest import assert_that, equal_to
 
 from nodestream.file_io import LazyLoadedArgument
 from nodestream.project import Target
 
 
-def test_target_make_writer(mocker):
-    target = Target("test", {"a": "b"})
+def test_target_make_writer_default_writer_args(mocker):
+    target = Target.from_file_data("test", {"a": "b"})
     mock_writer = mocker.patch("nodestream.databases.GraphDatabaseWriter")
     target.make_writer()
-    mock_writer.from_file_data.assert_called_once_with(a="b")
+    mock_writer.from_connector.assert_called_once_with(connector=ANY)
+
+
+def test_target_make_writer_custom_writer_args(mocker):
+    target = Target.from_file_data(
+        "test",
+        {
+            "a": "b",
+            "batch_size": 500,
+            "collect_stats": False,
+            "ingest_strategy_name": "immediate",
+        },
+    )
+    mock_writer = mocker.patch("nodestream.databases.GraphDatabaseWriter")
+    target.make_writer()
+    mock_writer.from_connector.assert_called_once_with(
+        connector=ANY,
+        ingest_strategy_name="immediate",
+        collect_stats=False,
+        batch_size=500,
+    )
 
 
 def test_target_make_type_retriever(mocker):
