@@ -51,4 +51,4 @@ class Target:
         return self.connector.make_migrator()
 
     def to_file_data(self):
-        return self.connector_config
+        return dict(**self.connector_config, **self.writer_arguments)
