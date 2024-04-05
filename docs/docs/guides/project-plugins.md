@@ -1,7 +1,7 @@
 # Project Plugins
 
 Project plugins are used to modify, extend, or in otherwise interact with a project. They are loaded when a project is created or opened. 
-They are intended for things like adding custom metadata to project pipelines, distributing additional piplines, or other project-oriented tasks.
+They are intended for things like adding custom metadata to project pipelines, distributing additional pipelines, or other project-oriented tasks.
 
 ## Creating a Project Plugin
 
@@ -51,7 +51,7 @@ class MyProjectPlugin(ProjectPlugin):
 ### Use Case: Distributing Additional Pipelines
 
 Project plugins can be used to distribute additional pipelines with your application. As an example, lets say we want to distribute a set of 
-pipelines that interact with a specific API. These pipelines can be packaged as a plugin and distributed with `pypi` as a seperate package. The plugin can then be registered as a project plugin, and the pipelines will be added to any project that is opened.
+pipelines that interact with a specific API. These pipelines can be packaged as a plugin and distributed with `pypi` as a separate package. The plugin can then be registered as a project plugin, and the pipelines will be added to any project that is opened.
 
 To support this, `PipelineScope` has a factory method that can be used to create an instance using the 
 `importlib.resources` api. This allows you to distribute pipelines as part of a python package, and load them into a project at runtime.

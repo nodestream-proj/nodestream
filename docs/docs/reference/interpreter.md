@@ -59,7 +59,7 @@ then we can use the following YAML definition to instruct the interpreter on how
 
 ## Using `iterate_on` and `before_iteration`
 
-Sometimes single records come in a format were multiple ingestions are required for that single record. In cases where the record contains a single list, you can use a combination of the `iterate_on` and `before_iteration` keywords. `iterate_on` is given a `ValueProvider` for extrcting the subrecords of the source recod. While `before_iteration` is a separate section of interpretations applied to all objects matched by iterate_on. For example, take the following object:
+Sometimes single records come in a format were multiple ingestions are required for that single record. In cases where the record contains a single list, you can use a combination of the `iterate_on` and `before_iteration` keywords. `iterate_on` is given a `ValueProvider` for extracting the subrecords of the source record. While `before_iteration` is a separate section of interpretations applied to all objects matched by iterate_on. For example, take the following object:
 
 ```json
 {
@@ -155,7 +155,7 @@ We can use the following YAML definition to instruct the interpreter on how to p
 ```
 
 
-Mutliple interpretation passes are also allowed for the `before_iteration` block. 
+Multiple interpretation passes are also allowed for the `before_iteration` block. 
 In this case, the `iterate_on` and `iterpretation` blocks are applied on the result of each pass pass of the `before_iteration` block.
 
 For example, imagine we have data like this:

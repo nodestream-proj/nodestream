@@ -44,7 +44,7 @@ from nodestream.model import DesiredIngestion
 from nodestream.pipeline.value_providers import ProviderContext
 
 
-class DeleteOrderIntepretation(Interpretation, alias="delete_order"):
+class DeleteOrderInterpretation(Interpretation, alias="delete_order"):
     # __init__ omitted 
 
     def interpret(self, context: ProviderContext):

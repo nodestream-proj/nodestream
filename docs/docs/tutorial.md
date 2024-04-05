@@ -5,7 +5,7 @@ nodestream. To demonstrate it, we'll be building an ingestion of an org chart.
 
 ## Generating a New Project
 
-To generate a nodestream project, its simple. Make sure you have installed nodestream with:
+To generate a nodestream project, it's simple. Make sure you have installed nodestream with:
 
 ```bash
 pip install nodestream
@@ -92,7 +92,7 @@ will see the pipeline is gone:
 +-------+------+------+-------------+
 ```
 
-Further more you can also see that the pipeline file is removed from the project directory:
+Furthermore, you can also see that the pipeline file is removed from the project directory:
 
 ```
 .
@@ -213,7 +213,7 @@ record. The first item in the pipeline is referred to generally as an `Extractor
 ### Loading our Data Files
 
 In the scaffold, we have an `IterableExtractor` configured to return records for each number in the range [0,100000).
-Not exactly the most interesting. Lets get to work wiring this up to use our newly created data instead.
+Not exactly the most interesting. Let's get to work wiring this up to use our newly created data instead.
 Replace the first block with the following:
 
 ```yaml
@@ -264,7 +264,7 @@ Replace the second step (the existing interpreter block) with the following (we'
 
 At the top of the block, its follows the same pattern we saw with the `FileExtractor` from before
 with the `implementation` and `arguments` sections. However, the `arguments` are obviously very different.
-Lets investigate each of the two interpretations:
+Let's investigate each of the two interpretations:
 
 #### Source Node
 
@@ -279,8 +279,8 @@ Lets investigate each of the two interpretations:
   node_type: Employee
 ```
 
-A source node represents the node at the conceptual "center" of the ingest. Typically this represents the central
-entity that you are modeling with the Ingest. In our case, its the employee for whom the record represents. We've
+A source node represents the node at the conceptual "center" of the ingest. Typically, this represents the central
+entity that you are modeling with the Ingest. In our case, it's the employee for whom the record represents. We've
 decided to call this type of node an `Employee`.
 
 The `key` block tells nodestream what set of properties represents a unique node of the `node_type` and how to get
@@ -335,7 +335,7 @@ timestamp and (sometimes) a description of the migration. The file contains the 
 
 ## Testing it Out
 
-Alright! We've done a lot of work. Lets see if our results can pay off. But before we get started, we need to have
+Alright! We've done a lot of work. Let's see if our results can pay off. But before we get started, we need to have
 a database to connect to. In the beginning we selected neo4j. The easiest way to get a local neo4j database is to run it
 via docker. Below is a command to load a docker neo4j database:
 
@@ -377,7 +377,7 @@ Running: Run Pipeline
 
 ## Making It Production Ready
 
-Right now, we have a pipeline that works, but its not exactly production ready. 
+Right now, we have a pipeline that works, but it's not exactly production ready. 
 Most importantly, we have configuration values and credentials in our `nodestream.yaml` file.
 We can use [argument resolvers](./reference/argument-resovlers.md) to make this more secure.
 Let's use the `!env` value provider to pull the credentials from environment variables.

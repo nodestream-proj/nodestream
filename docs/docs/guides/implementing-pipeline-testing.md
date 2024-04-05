@@ -1,4 +1,4 @@
-# Implemeting Pipeline Testing 
+# Implementing Pipeline Testing 
 
 ## Overview
 Pipelines are the core of NodeStream. 
