@@ -2,8 +2,6 @@
 
 This plugin provides a [Nodestream](https://github.com/nodestream-proj/nodestream) interface to Neo4j. 
 
-**THIS PLUGIN IS IN BETA. USE AT YOUR OWN RISK.**
-
 ## Installation
 
 ```bash
