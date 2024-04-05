@@ -30,9 +30,11 @@ class GraphDatabaseWriter(Writer):
     def from_connector(
         cls,
         connector: DatabaseConnector,
-        ingest_strategy_name: str,
-        collect_stats: bool,
-        batch_size: int,
+        ingest_strategy_name: str = INGESTION_STRATEGY_REGISTRY.name_for(
+            DebouncedIngestStrategy
+        ),
+        collect_stats: bool = True,
+        batch_size: int = 1000,
     ):
         executor = connector.get_query_executor(collect_stats=collect_stats)
         ingest_strategy_cls = INGESTION_STRATEGY_REGISTRY.get(ingest_strategy_name)
