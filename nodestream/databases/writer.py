@@ -19,6 +19,21 @@ class GraphDatabaseWriter(Writer):
         connector = DatabaseConnector.from_database_args(
             database=database, **database_args
         )
+        return cls.from_connector(
+            connector=connector,
+            ingest_strategy_name=ingest_strategy_name,
+            collect_stats=collect_stats,
+            batch_size=batch_size,
+        )
+
+    @classmethod
+    def from_connector(
+        cls,
+        connector: DatabaseConnector,
+        ingest_strategy_name: str,
+        collect_stats: bool,
+        batch_size: int,
+    ):
         executor = connector.get_query_executor(collect_stats=collect_stats)
         ingest_strategy_cls = INGESTION_STRATEGY_REGISTRY.get(ingest_strategy_name)
         ingest_strategy = ingest_strategy_cls(executor)
