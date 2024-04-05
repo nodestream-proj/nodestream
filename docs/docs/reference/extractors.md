@@ -234,7 +234,7 @@ and one can configure a Relationship TTL like this:
         expiry_in_hours: 48
 ```
 
-Additionally you can introduce the parameter override_expiry_in_hours that will overwrite all expiry in hours for the configuration, or apply that time for anything that doesn't explicitly state an expiry time.
+Additionally, you can introduce the parameter override_expiry_in_hours that will overwrite all expiry in hours for the configuration, or apply that time for anything that doesn't explicitly state an expiry time.
 ```yaml
 - implementation: nodestream.pipeline.extractors.ttl:TimeToLiveConfigurationExtractor
   arguments:
@@ -252,13 +252,13 @@ Additionally you can introduce the parameter override_expiry_in_hours that will 
 
 Each configuration can include the following arguments:
 
-| Parameter Name          	| Type   	| Description                                                                                                                                                                               	|
-|-------------------------	|--------	|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
-| object_type             	| String 	| The object type to apply the TTL to.                                                                                                                                                      	|
-| expiry_in_hours         	| Integer 	| The number of hours after which the object should be deleted. Optional if override_expiry_in_hours is set.                                                                                |
-| enabled                 	| Boolean 	| Whether or not the TTL is enabled. Defaults to `True`.                                                                                                                                     	|
-| batch_size              	| Integer 	| The number of objects to delete in a single batch. Defaults to `100`.                                                                                                                     	|
-| custom_query            	| String 	| A custom query to use to delete the objects. If not provided, the default query will be used. The custom query is database implmentation specific.                                                                                             	|
+| Parameter Name          	| Type   	| Description                                                                                                                                                                               	                                                       |
+|-------------------------	|--------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| object_type             	| String 	| The object type to apply the TTL to.                                                                                                                                                      	                                                       |
+| expiry_in_hours         	| Integer 	| The number of hours after which the object should be deleted. Optional if override_expiry_in_hours is set.                                                                                                                                        |
+| enabled                 	| Boolean 	| Whether or not the TTL is enabled. Defaults to `True`.                                                                                                                                     	                                                      |
+| batch_size              	| Integer 	| The number of objects to delete in a single batch. Defaults to `100`.                                                                                                                     	                                                       |
+| custom_query            	| String 	| A custom query to use to delete the objects. If not provided, the default query will be used. The custom query is database implementation specific.                                                                                             	 |
 
 
 ## `Neo4jExtractor`

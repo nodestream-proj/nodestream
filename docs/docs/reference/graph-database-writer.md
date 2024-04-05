@@ -1,6 +1,6 @@
 # Graph Database Writer
 
-The graph database writer is a writer that writes the output of a ingestion pipeline to a graph database. Currently, only Neo4j is supported.
+The graph database writer is a writer that writes the output of an ingestion pipeline to a graph database. Currently, only Neo4j is supported.
 
 ## Database Independent Options
 

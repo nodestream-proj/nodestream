@@ -21,7 +21,7 @@ provided after the `!jmespath` tag will be parsed and loaded as one. Another gui
 ## `!variable`
 
 Provides the value of an extracted variable from the [Variables Interpretation](./interpretations.md#variables-interpretation). For instance, if
-you provided an variables interpretation block like so:
+you provided a variables interpretation block like so:
 
 ```yaml
 interpretations:

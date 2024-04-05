@@ -113,7 +113,7 @@ Depending on how you are building your package, you can register your Value Prov
 ## Debuggability 
 
 `nodestream` contains a feature that allows the user to print the effective pipeline configuration. This is useful for debugging purposes. 
-This means that `nodestream` needs to understand how to represent your custom value provider in a human readable way in yaml. 
+This means that `nodestream` needs to understand how to represent your custom value provider in a human-readable way in yaml. 
 To do this, you need to implement a `Representer` for your value provider. 
 
 ```python

@@ -1,4 +1,4 @@
-# Implemeting Time to Live
+# Implementing Time to Live
 
 This guide will walk you through the process of implementing a time to live (TTL) feature in your application. This feature will allow you to set a time limit on the amount of time a document is available in your database. After the time limit has expired, the document will be deleted from the database.
 
@@ -58,7 +58,7 @@ Again, You can view all the configuration options in the `TimeToLiveConfiguratio
 
 ### Running the Evictor Pipelines
 
-The evictor pipelines can be run at whatever interval is correct for your application. Note that the data will only be eviceted when the piplines are run and not the moment the TTL expires. The evictor pipelines can be run by using the `nodestream` command line tool.
+The evictor pipelines can be run at whatever interval is correct for your application. Note that the data will only be evicted when the pipelines are run and not the moment the TTL expires. The evictor pipelines can be run by using the `nodestream` command line tool.
 
 ```bash
 nodestream run node-ttl-evictor

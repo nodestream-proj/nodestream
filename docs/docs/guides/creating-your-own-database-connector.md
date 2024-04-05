@@ -150,7 +150,7 @@ class SmithMigrator(Migrator):
         ...
 ```
 
-Fundementally, the `Migrator` class responds to operations following the [Command Pattern](https://refactoring.guru/design-patterns/command).
+Fundamentally, the `Migrator` class responds to operations following the [Command Pattern](https://refactoring.guru/design-patterns/command).
 To facilitate this, the `Migrator` can use the `OperationTypeRoutingMixin` to route operations to the correct method.
 
 ```diff

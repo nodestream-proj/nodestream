@@ -152,7 +152,7 @@ For example, if we wanted to define a `LIVES_AT` relationship between a source n
 ```
 
 
-You may also provide an expression that returns a map of properties, each of which will be bound to the related node or relatonship respectively. 
+You may also provide an expression that returns a map of properties, each of which will be bound to the related node or relationship respectively. 
 
 For example, if we had input data that looked like this:
 
@@ -211,7 +211,7 @@ This would allow us to have multiple `PLAYED_IN` relationships between the same 
 By default, related nodes are created when not present based on the supplied node type and key. However, you can change this behavior by setting the `match_strategy` field. The `match_strategy` field is a string that can be one of the following values:
 
 * `EAGER` - Related nodes will be created when not present based on the supplied node type and key. (Default)
-* `MATCH_ONLY` - Will not create a relationship when the related node does not already exists.
+* `MATCH_ONLY` - Will not create a relationship when the related node does not already exist.
 * `FUZZY` - Behaves like `MATCH ONLY`, but treats the key values as regular expressions to match on.
 
 ### Working with Many Relationships

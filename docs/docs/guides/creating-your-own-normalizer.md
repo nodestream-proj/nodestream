@@ -1,6 +1,6 @@
 # Creating A Normalizer
 
-A `Normalizer` allows you to clean data extracted by a `ValueProvider`. They are intended to provided stateless, simple
+A `Normalizer` allows you to clean data extracted by a `ValueProvider`. They are intended to provide stateless, simple
 transformations of data. Nodestream has some built in ones that you can view [here](../reference/normalizers.md).
 
 For example, assume that you have numeric numbers that should be rounded to a whole number before being used.

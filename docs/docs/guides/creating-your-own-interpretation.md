@@ -24,7 +24,7 @@ class MemoizeNegativeProperty(Interpretation, alias="memoize_negative"):
 
 As you might imagine, this isn't particularly interesting. But, the `name="memoize_negative"` might have caught your eye.
 `Interpretation`s are part of a unique registry. The `alias` property corresponds with the `type` property that is covered in
-the [Interpreter Reference](../reference/interpreter.md) section. Functionally, all other keys in the object are forwarded to this classes constructor.
+the [Interpreter Reference](../reference/interpreter.md) section. Functionally, all other keys in the object are forwarded to this class's constructor.
 
 Given that, let's consider our `MemoizeNegativeProperty` class. That implies that we could write down a constructor like this:
 
@@ -66,7 +66,7 @@ The above code leverages the aforementioned `InterpretationContext` as well as `
 
 Interpretations are registered via the [entry_points](https://setuptools.pypa.io/en/latest/userguide/entry_point.html#entry-points-for-plugins) API of a Python Package. Specifically, the `entry_point` named `interpretations` inside of the `nodestream.plugins` group is loaded. Every `Interpretation`  is expected to be a subclass of `nodestream.interpreting:Interpretation` as directed above.
 
-The `entry_point` should be a module that contains at least one `Interpretation` class. At runtime, the module will be loaded and all classes that inherit from `nodestream.interpreting:Interpretation` will be registered. The `alias` attribute of the class will be used as as the name of the tag used in the yaml pipeline.
+The `entry_point` should be a module that contains at least one `Interpretation` class. At runtime, the module will be loaded and all classes that inherit from `nodestream.interpreting:Interpretation` will be registered. The `alias` attribute of the class will be used as the name of the tag used in the yaml pipeline.
 
 Depending on how you are building your package, you can register your `Interpretation` plugin in one of the following ways:
 
