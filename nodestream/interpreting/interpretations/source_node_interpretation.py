@@ -1,5 +1,7 @@
 from typing import Any, Dict, List, Optional
 
+from nodestream.model import NodeCreationRule
+
 from ...pipeline.normalizers import LowercaseStrings
 from ...pipeline.value_providers import (
     ProviderContext,
@@ -81,6 +83,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         "additional_indexes",
         "additional_types",
         "norm_args",
+        "allow_create",
     )
 
     def __init__(
@@ -91,6 +94,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         additional_indexes: Optional[List[str]] = None,
         additional_types: Optional[List[str]] = None,
         normalization: Optional[Dict[str, Any]] = None,
+        allow_create: bool = True,
     ):
         self.node_type = ValueProvider.guarantee_value_provider(node_type)
         self.key = ValueProvider.guarantee_provider_dictionary(key)
@@ -98,6 +102,10 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         self.additional_indexes = additional_indexes or []
         self.additional_types = tuple(additional_types or [])
         self.norm_args = {**DEFAULT_NORMALIZATION_ARGUMENTS, **(normalization or {})}
+        if allow_create:
+            self.creation_rule = NodeCreationRule.EAGER
+        else:
+            self.creation_rule = NodeCreationRule.MATCH_ONLY
 
     def interpret(self, context: ProviderContext):
         source = context.desired_ingest.source
@@ -105,6 +113,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         source.key_values.apply_providers(context, self.key, self.norm_args)
         self.properties.apply_to(context, source.properties, self.norm_args)
         source.additional_types = self.additional_types
+        context.desired_ingest.creation_rule = self.creation_rule
 
     def expand_source_node_schema(self, source_node_schema: GraphObjectSchema):
         source_node_schema.add_keys(self.key)

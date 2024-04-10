@@ -4,8 +4,9 @@ from logging import getLogger
 from typing import TYPE_CHECKING, List
 
 from .creation_rules import NodeCreationRule, RelationshipCreationRule
-from .graph_objects import Node, Relationship, RelationshipWithNodes
+from .graph_objects import Node, Relationship
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
+from .relationship_draft import RelationshipDraft
 
 if TYPE_CHECKING:
     from ..databases.ingest_strategy import IngestionStrategy
@@ -17,20 +18,25 @@ LOGGER = getLogger(__name__)
 @dataclass(slots=True)
 class DesiredIngestion:
     source: Node = field(default_factory=Node)
-    relationships: List[Relationship] = field(default_factory=list)
+    relationships: List[RelationshipDraft] = field(default_factory=list)
     hook_requests: List[IngestionHookRunRequest] = field(default_factory=list)
+    creation_rule: NodeCreationRule = None
 
     @property
     def source_node_is_valid(self) -> bool:
-        return self.source.is_valid
+        return self.source.is_valid and self.creation_rule is not None
 
     async def ingest_source_node(self, strategy: "IngestionStrategy"):
-        await strategy.ingest_source_node(self.source)
+        await strategy.ingest_source_node(self.source, self.creation_rule)
 
     async def ingest_relationships(self, strategy: "IngestionStrategy"):
         await asyncio.gather(
             *(
-                strategy.ingest_relationship(relationship)
+                strategy.ingest_relationship(
+                    relationship.make_relationship(
+                        source_node=self.source, source_creation_rule=self.creation_rule
+                    )
+                )
                 for relationship in self.relationships
             )
         )
@@ -72,28 +78,12 @@ class DesiredIngestion:
         node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER,
         relationship_creation_rule: RelationshipCreationRule = RelationshipCreationRule.EAGER,
     ):
-        if not related_node.is_valid:
-            LOGGER.warning(
-                "Identity value for related node was null. Skipping.",
-                extra=asdict(related_node),
-            )
-            return
-
-        from_node, to_node = (
-            (self.source, related_node) if outbound else (related_node, self.source)
-        )
-        from_match, to_match = (
-            (NodeCreationRule.EAGER, node_creation_rule)
-            if outbound
-            else (node_creation_rule, NodeCreationRule.EAGER)
-        )
         self.relationships.append(
-            RelationshipWithNodes(
-                from_node=from_node,
-                to_node=to_node,
+            RelationshipDraft(
+                related_node=related_node,
                 relationship=relationship,
-                from_side_node_creation_rule=from_match,
-                to_side_node_creation_rule=to_match,
+                outbound=outbound,
+                related_node_creation_rule=node_creation_rule,
                 relationship_creation_rule=relationship_creation_rule,
             )
         )

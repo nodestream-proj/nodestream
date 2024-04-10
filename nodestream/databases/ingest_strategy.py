@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from ..model import (
         IngestionHookRunRequest,
         Node,
+        NodeCreationRule,
         RelationshipWithNodes,
         TimeToLiveConfiguration,
     )
@@ -28,8 +29,18 @@ class IngestionStrategy(ABC):
     """
 
     @abstractmethod
-    async def ingest_source_node(self, source: "Node"):
-        """Given a provided instance of `Node`, ensure that it is committed to the GraphDatabase."""
+    async def ingest_source_node(
+        self, source: "Node", creation_rule: "NodeCreationRule"
+    ):
+        """This asynchronous function ingests a given 'source' Node into the GraphDatabase.
+
+        Args:
+        source (Node): The Node instance that needs to be committed into the GraphDatabase.
+        creation_rule (NodeCreationRule): The rule governing the creation of the Node instance.
+
+        Returns:
+        None
+        """
         raise NotImplementedError
 
     @abstractmethod
