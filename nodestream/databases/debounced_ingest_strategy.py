@@ -22,7 +22,7 @@ class DebouncedIngestStrategy(IngestionStrategy, alias="debounced"):
         self.hooks_saved_for_after_ingest = []
 
     async def ingest_source_node(
-        self, source: Node, creation_rule: NodeCreationRule
+        self, source: Node, creation_rule: NodeCreationRule = NodeCreationRule.EAGER
     ) -> None:
         self.debouncer.debounce_node_operation(source, node_creation_rule=creation_rule)
 

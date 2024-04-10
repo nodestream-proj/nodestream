@@ -20,7 +20,7 @@ def test_node_into_ingest():
     node = Node("Person", {"name": "John"})
     ingest = node.into_ingest()
     assert_that(ingest.source, equal_to(node))
-    assert_that(ingest.relationships, equal_to([]))
+    assert_that(ingest.relationship_drafts, equal_to([]))
 
 
 def test_relationship_into_ingest():
@@ -33,18 +33,18 @@ def test_relationship_into_ingest():
     ingest = relationship_with_nodes.into_ingest()
     assert_that(ingest.source, equal_to(from_node))
     assert_that(
-        ingest.relationships,
+        ingest.relationship_drafts[0].make_relationship(
+            from_node, NodeCreationRule.EAGER
+        ),
         equal_to(
-            [
-                RelationshipWithNodes(
-                    from_node=from_node,
-                    to_node=to_node,
-                    relationship=relationship,
-                    from_side_node_creation_rule=NodeCreationRule.EAGER,
-                    to_side_node_creation_rule=NodeCreationRule.MATCH_ONLY,
-                    relationship_creation_rule=RelationshipCreationRule.CREATE,
-                )
-            ]
+            RelationshipWithNodes(
+                from_node=from_node,
+                to_node=to_node,
+                relationship=relationship,
+                from_side_node_creation_rule=NodeCreationRule.EAGER,
+                to_side_node_creation_rule=NodeCreationRule.MATCH_ONLY,
+                relationship_creation_rule=RelationshipCreationRule.CREATE,
+            )
         ),
     )
 

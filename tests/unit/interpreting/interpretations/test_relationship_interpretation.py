@@ -23,7 +23,7 @@ def test_single_key_search_without_normalized_values(blank_context):
         node_type="Test", relationship_type="IS_TEST", node_key=expected_key
     ).interpret(blank_context)
     assert_that(
-        blank_context.desired_ingest.relationships[0].to_node.key_values,
+        blank_context.desired_ingest.relationship_drafts[0].related_node.key_values,
         equal_to(expected_key),
     )
 
@@ -35,7 +35,7 @@ def test_single_key_search_with_normalized_values(blank_context):
         node_type="Test", relationship_type="IS_TEST", node_key=provided_key
     ).interpret(blank_context)
     assert_that(
-        blank_context.desired_ingest.relationships[0].to_node.key_values,
+        blank_context.desired_ingest.relationship_drafts[0].related_node.key_values,
         equal_to(expected_key),
     )
 
@@ -52,9 +52,9 @@ def test_multiple_key_search_with_normalized_values(blank_context):
 
     subject.interpret(blank_context)
 
-    assert_that(blank_context.desired_ingest.relationships, has_length(3))
+    assert_that(blank_context.desired_ingest.relationship_drafts, has_length(3))
     assert_that(
-        blank_context.desired_ingest.relationships[0].to_node.key_values,
+        blank_context.desired_ingest.relationship_drafts[0].related_node.key_values,
         equal_to({"one": 1, "two": "a"}),
     )
 
@@ -72,9 +72,9 @@ def test_multiple_key_search_without_normalized_values(blank_context):
 
     subject.interpret(blank_context)
 
-    assert_that(blank_context.desired_ingest.relationships, has_length(3))
+    assert_that(blank_context.desired_ingest.relationship_drafts, has_length(3))
     assert_that(
-        blank_context.desired_ingest.relationships[0].to_node.key_values,
+        blank_context.desired_ingest.relationship_drafts[0].related_node.key_values,
         equal_to({"one": 1, "two": "A"}),
     )
 
@@ -100,7 +100,7 @@ def test_relationship_interpretation_find_relationship_key_normalization(blank_c
         relationship_key=expected_key,
     ).interpret(blank_context)
     assert_that(
-        blank_context.desired_ingest.relationships[0].relationship.key_values,
+        blank_context.desired_ingest.relationship_drafts[0].relationship.key_values,
         equal_to(expected_key),
     )
 
@@ -118,7 +118,7 @@ def test_relationship_interpretation_find_relationship_property_normalization(
         properties_normalization={"do_lowercase_strings": True},
     ).interpret(blank_context)
     assert_that(
-        blank_context.desired_ingest.relationships[0].relationship.properties,
+        blank_context.desired_ingest.relationship_drafts[0].relationship.properties,
         has_entries(expected_properties),
     )
 
@@ -134,7 +134,7 @@ def test_relationship_interpretation_node_property_normalization(blank_context):
         properties_normalization={"do_lowercase_strings": True},
     ).interpret(blank_context)
     assert_that(
-        blank_context.desired_ingest.relationships[0].to_node.properties,
+        blank_context.desired_ingest.relationship_drafts[0].related_node.properties,
         has_entries(expected_properties),
     )
 
@@ -249,7 +249,9 @@ def test_relationship_interpretation_addtional_node_types(blank_context):
     )
     subject.interpret(blank_context)
     assert_that(
-        blank_context.desired_ingest.relationships[0].to_node.additional_types,
+        blank_context.desired_ingest.relationship_drafts[
+            0
+        ].related_node.additional_types,
         equal_to(("SomethingElse",)),
     )
 
@@ -263,7 +265,7 @@ def test_relationship_interpretation_with_properties_from_value_provider(blank_c
     )
     subject.interpret(blank_context)
     assert_that(
-        blank_context.desired_ingest.relationships[0].relationship.properties,
+        blank_context.desired_ingest.relationship_drafts[0].relationship.properties,
         has_entries({"prop": "value"}),
     )
 

@@ -1,4 +1,4 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from logging import getLogger
 from typing import Optional
 
@@ -23,13 +23,6 @@ class RelationshipDraft:
     def make_relationship(
         self, source_node: Node, source_creation_rule: NodeCreationRule
     ) -> Optional[RelationshipWithNodes]:
-        if not self.related_node.is_valid:
-            LOGGER.warning(
-                "Identity value for related node was null. Skipping.",
-                extra=asdict(self.related_node),
-            )
-            return
-
         from_node, to_node = (
             (source_node, self.related_node)
             if self.outbound

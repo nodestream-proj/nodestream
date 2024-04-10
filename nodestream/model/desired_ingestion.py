@@ -18,7 +18,7 @@ LOGGER = getLogger(__name__)
 @dataclass(slots=True)
 class DesiredIngestion:
     source: Node = field(default_factory=Node)
-    relationships: List[RelationshipDraft] = field(default_factory=list)
+    relationship_drafts: List[RelationshipDraft] = field(default_factory=list)
     hook_requests: List[IngestionHookRunRequest] = field(default_factory=list)
     creation_rule: NodeCreationRule = None
 
@@ -33,11 +33,11 @@ class DesiredIngestion:
         await asyncio.gather(
             *(
                 strategy.ingest_relationship(
-                    relationship.make_relationship(
+                    relationship_draft.make_relationship(
                         source_node=self.source, source_creation_rule=self.creation_rule
                     )
                 )
-                for relationship in self.relationships
+                for relationship_draft in self.relationship_drafts
             )
         )
 
@@ -48,10 +48,10 @@ class DesiredIngestion:
 
     def can_perform_ingest(self):
         # We can do the main part of the ingest if the source node is valid.
-        # If its not valid, its only an error when there are relationships we are
+        # If it's not valid, it's only an error when there are relationships we are
         # trying to ingest as well.
         if not self.source_node_is_valid:
-            if len(self.relationships) > 0:
+            if len(self.relationship_drafts) > 0:
                 LOGGER.warning(
                     "Identity value for source node was null. Skipping Ingest.",
                     extra=asdict(self),
@@ -78,15 +78,21 @@ class DesiredIngestion:
         node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER,
         relationship_creation_rule: RelationshipCreationRule = RelationshipCreationRule.EAGER,
     ):
-        self.relationships.append(
-            RelationshipDraft(
-                related_node=related_node,
-                relationship=relationship,
-                outbound=outbound,
-                related_node_creation_rule=node_creation_rule,
-                relationship_creation_rule=relationship_creation_rule,
+        if not related_node.is_valid:
+            LOGGER.warning(
+                "Identity value for related node was null. Skipping.",
+                extra=asdict(related_node),
             )
+            return
+
+        draft = RelationshipDraft(
+            related_node=related_node,
+            relationship=relationship,
+            outbound=outbound,
+            related_node_creation_rule=node_creation_rule,
+            relationship_creation_rule=relationship_creation_rule,
         )
+        self.relationship_drafts.append(draft)
 
     def add_ingest_hook(self, hook: IngestionHook, before_ingest=False):
         self.hook_requests.append(IngestionHookRunRequest(hook, before_ingest))
