@@ -97,7 +97,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         allow_create: bool = True,
     ):
         self.node_type = ValueProvider.guarantee_value_provider(node_type)
-        self.key = ValueProvider.guarantee_provider_dictionary(key)
+        self.key = PropertyMapping.from_file_data(key or {})
         self.properties = PropertyMapping.from_file_data(properties or {})
         self.additional_indexes = additional_indexes or []
         self.additional_types = tuple(additional_types or [])
@@ -108,12 +108,13 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
             self.creation_rule = NodeCreationRule.MATCH_ONLY
 
     def interpret(self, context: ProviderContext):
-        source = context.desired_ingest.source
-        source.type = self.node_type.single_value(context)
-        source.key_values.apply_providers(context, self.key, self.norm_args)
-        self.properties.apply_to(context, source.properties, self.norm_args)
-        source.additional_types = self.additional_types
-        context.desired_ingest.creation_rule = self.creation_rule
+        source = context.desired_ingest.add_source_node(
+            self.node_type.single_value(context),
+            self.additional_types,
+            self.creation_rule,
+            self.key.key_value_generator(context, self.norm_args),
+            self.properties.key_value_generator(context, self.norm_args)
+        )
 
     def expand_source_node_schema(self, source_node_schema: GraphObjectSchema):
         source_node_schema.add_keys(self.key)

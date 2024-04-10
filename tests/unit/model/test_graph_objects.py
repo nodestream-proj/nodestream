@@ -33,9 +33,7 @@ def test_relationship_into_ingest():
     ingest = relationship_with_nodes.into_ingest()
     assert_that(ingest.source, equal_to(from_node))
     assert_that(
-        ingest.relationship_drafts[0].make_relationship(
-            from_node, NodeCreationRule.EAGER
-        ),
+        ingest.relationships[0],
         equal_to(
             RelationshipWithNodes(
                 from_node=from_node,

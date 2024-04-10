@@ -1,10 +1,10 @@
 import asyncio
 from dataclasses import asdict, dataclass, field
 from logging import getLogger
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Tuple
 
 from .creation_rules import NodeCreationRule, RelationshipCreationRule
-from .graph_objects import Node, Relationship
+from .graph_objects import Node, Relationship, RelationshipWithNodes
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
 from .relationship_draft import RelationshipDraft
 
@@ -18,9 +18,10 @@ LOGGER = getLogger(__name__)
 @dataclass(slots=True)
 class DesiredIngestion:
     source: Node = field(default_factory=Node)
+    relationships: List[RelationshipWithNodes] = field(default_factory=list)
     relationship_drafts: List[RelationshipDraft] = field(default_factory=list)
     hook_requests: List[IngestionHookRunRequest] = field(default_factory=list)
-    creation_rule: NodeCreationRule = None
+    creation_rule: NodeCreationRule = NodeCreationRule.EAGER
 
     @property
     def source_node_is_valid(self) -> bool:
@@ -32,12 +33,8 @@ class DesiredIngestion:
     async def ingest_relationships(self, strategy: "IngestionStrategy"):
         await asyncio.gather(
             *(
-                strategy.ingest_relationship(
-                    relationship_draft.make_relationship(
-                        source_node=self.source, source_creation_rule=self.creation_rule
-                    )
-                )
-                for relationship_draft in self.relationship_drafts
+                strategy.ingest_relationship(relationship)
+                for relationship in self.relationships
             )
         )
 
@@ -70,6 +67,29 @@ class DesiredIngestion:
             await self.ingest_relationships(strategy)
         await self.run_ingest_hooks(strategy)
 
+    def add_source_node(
+        self,
+        source_type: str,
+        additional_types: Tuple[str],
+        creation_rule: NodeCreationRule,
+        key_value_generator,
+        properties_generator,
+    ) -> Node:
+        self.source.type = source_type
+        self.source.additional_types = additional_types
+        self.creation_rule = creation_rule
+        self.source.key_values.apply(key_value_generator)
+        self.source.properties.apply(properties_generator)
+        self.finalize_relationship_drafts()
+        return self.source
+
+    def finalize_relationship_drafts(self):
+        while self.relationship_drafts:
+            draft = self.relationship_drafts.pop()
+            self.relationships.append(
+                draft.make_relationship(self.source, self.creation_rule)
+            )
+
     def add_relationship(
         self,
         related_node: Node,
@@ -92,7 +112,13 @@ class DesiredIngestion:
             related_node_creation_rule=node_creation_rule,
             relationship_creation_rule=relationship_creation_rule,
         )
-        self.relationship_drafts.append(draft)
+
+        if self.source.is_valid:  # pseudocode for source is set
+            self.relationships.append(
+                draft.make_relationship(self.source, self.creation_rule)
+            )  # change creation_rule to source_node_creation_rule
+        else:
+            self.relationship_drafts.append(draft)
 
     def add_ingest_hook(self, hook: IngestionHook, before_ingest=False):
         self.hook_requests.append(IngestionHookRunRequest(hook, before_ingest))

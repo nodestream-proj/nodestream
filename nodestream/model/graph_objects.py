@@ -74,6 +74,10 @@ class PropertySet(dict):
         """Returns an empty property set."""
         return PropertySet()
 
+    def apply(self, key_value_gen):
+        for key, val in key_value_gen:
+            self.set_property(key, val)
+
     def apply_providers(
         self,
         context: "ProviderContext",
