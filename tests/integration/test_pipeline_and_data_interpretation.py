@@ -44,7 +44,7 @@ def drive_definition_to_completion():
 @pytest.mark.integration
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "pipeline_name", ["fifa_2021_player_data.yaml", "airports.yaml"]
+    "pipeline_name", ["fifa_2021_player_data.yaml", "airports.yaml", "source_match_only.yaml", "source_eager.yaml"]
 )
 async def test_pipeline_interpretation_snapshot(
     snapshot, drive_definition_to_completion, pipeline_name, mocker

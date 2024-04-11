@@ -1,6 +1,5 @@
 [
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -150,10 +149,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -303,10 +302,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -456,10 +455,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -609,10 +608,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -762,10 +761,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -915,10 +914,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -1068,10 +1067,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -1221,10 +1220,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -1374,10 +1373,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -1527,10 +1526,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -1680,10 +1679,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -1833,10 +1832,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -1986,10 +1985,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -2139,10 +2138,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -2292,10 +2291,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -2445,10 +2444,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -2598,10 +2597,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -2751,10 +2750,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -2904,10 +2903,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -3057,10 +3056,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -3210,10 +3209,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -3363,10 +3362,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -3516,10 +3515,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -3669,10 +3668,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -3822,10 +3821,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -3975,10 +3974,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -4128,10 +4127,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -4281,10 +4280,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -4434,10 +4433,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -4587,10 +4586,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -4740,10 +4739,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -4893,10 +4892,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -5046,10 +5045,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -5199,10 +5198,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -5352,10 +5351,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -5505,10 +5504,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -5658,10 +5657,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -5811,10 +5810,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -5964,10 +5963,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -6117,10 +6116,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -6270,10 +6269,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -6423,10 +6422,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -6576,10 +6575,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -6729,10 +6728,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -6882,10 +6881,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -7035,10 +7034,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -7188,10 +7187,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -7341,10 +7340,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -7494,10 +7493,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -7647,10 +7646,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -7800,10 +7799,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -7953,10 +7952,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -8106,10 +8105,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -8259,10 +8258,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -8412,10 +8411,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -8565,10 +8564,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -8718,10 +8717,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -8871,10 +8870,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -9024,10 +9023,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -9177,10 +9176,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -9330,10 +9329,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -9483,10 +9482,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -9636,10 +9635,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -9789,10 +9788,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -9942,10 +9941,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -10095,10 +10094,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -10248,10 +10247,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -10401,10 +10400,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -10554,10 +10553,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -10707,10 +10706,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -10860,10 +10859,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -11013,10 +11012,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -11166,10 +11165,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -11319,10 +11318,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -11472,10 +11471,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -11625,10 +11624,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -11778,10 +11777,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -11931,10 +11930,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -12084,10 +12083,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -12237,10 +12236,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -12390,10 +12389,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -12543,10 +12542,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -12696,10 +12695,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -12849,10 +12848,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -13002,10 +13001,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -13155,10 +13154,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -13308,10 +13307,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -13461,10 +13460,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -13614,10 +13613,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -13767,10 +13766,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -13920,10 +13919,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -14073,10 +14072,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -14226,10 +14225,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -14379,10 +14378,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -14532,10 +14531,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -14685,10 +14684,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -14838,10 +14837,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -14991,10 +14990,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -15144,10 +15143,10 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     },
     {
-        "creation_rule": "EAGER",
         "hook_requests": [],
         "relationship_drafts": [],
         "relationships": [
@@ -15297,6 +15296,7 @@
                 "was_ingested_by_unknown": true
             },
             "type": "Player"
-        }
+        },
+        "source_node_creation_rule": "EAGER"
     }
 ]
