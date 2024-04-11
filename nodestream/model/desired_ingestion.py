@@ -85,7 +85,7 @@ class DesiredIngestion:
         return self.source
 
     def finalize_relationship_drafts(self):
-        """ Finalizes relationships that were added before source node
+        """Finalizes relationships that were added before source node
         Assumes source node has been added
         """
         self.relationships.extend(
