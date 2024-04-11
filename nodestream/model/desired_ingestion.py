@@ -80,15 +80,19 @@ class DesiredIngestion:
         self.source_node_creation_rule = creation_rule
         self.source.key_values.apply(key_value_generator)
         self.source.properties.apply(properties_generator)
+        # Because relationships can be added before source node
         self.finalize_relationship_drafts()
         return self.source
 
     def finalize_relationship_drafts(self):
-        while self.relationship_drafts:
-            draft = self.relationship_drafts.pop()
-            self.relationships.append(
-                draft.make_relationship(self.source, self.source_node_creation_rule)
-            )
+        """ Finalizes relationships that were added before source node
+        Assumes source node has been added
+        """
+        self.relationships.extend(
+            draft.make_relationship(self.source, self.source_node_creation_rule)
+            for draft in self.relationship_drafts
+        )
+        self.relationship_drafts.clear()
 
     def add_relationship(
         self,
