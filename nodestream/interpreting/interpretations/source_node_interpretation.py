@@ -108,12 +108,12 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
             self.creation_rule = NodeCreationRule.MATCH_ONLY
 
     def interpret(self, context: ProviderContext):
-        source = context.desired_ingest.add_source_node(
+        context.desired_ingest.add_source_node(
             self.node_type.single_value(context),
             self.additional_types,
             self.creation_rule,
             self.key.key_value_generator(context, self.norm_args),
-            self.properties.key_value_generator(context, self.norm_args)
+            self.properties.key_value_generator(context, self.norm_args),
         )
 
     def expand_source_node_schema(self, source_node_schema: GraphObjectSchema):

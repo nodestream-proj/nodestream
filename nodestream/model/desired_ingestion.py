@@ -21,14 +21,14 @@ class DesiredIngestion:
     relationships: List[RelationshipWithNodes] = field(default_factory=list)
     relationship_drafts: List[RelationshipDraft] = field(default_factory=list)
     hook_requests: List[IngestionHookRunRequest] = field(default_factory=list)
-    creation_rule: NodeCreationRule = NodeCreationRule.EAGER
+    source_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
 
     @property
     def source_node_is_valid(self) -> bool:
-        return self.source.is_valid and self.creation_rule is not None
+        return self.source.is_valid and self.source_node_creation_rule is not None
 
     async def ingest_source_node(self, strategy: "IngestionStrategy"):
-        await strategy.ingest_source_node(self.source, self.creation_rule)
+        await strategy.ingest_source_node(self.source, self.source_node_creation_rule)
 
     async def ingest_relationships(self, strategy: "IngestionStrategy"):
         await asyncio.gather(
@@ -77,7 +77,7 @@ class DesiredIngestion:
     ) -> Node:
         self.source.type = source_type
         self.source.additional_types = additional_types
-        self.creation_rule = creation_rule
+        self.source_node_creation_rule = creation_rule
         self.source.key_values.apply(key_value_generator)
         self.source.properties.apply(properties_generator)
         self.finalize_relationship_drafts()
@@ -87,7 +87,7 @@ class DesiredIngestion:
         while self.relationship_drafts:
             draft = self.relationship_drafts.pop()
             self.relationships.append(
-                draft.make_relationship(self.source, self.creation_rule)
+                draft.make_relationship(self.source, self.source_node_creation_rule)
             )
 
     def add_relationship(
@@ -115,8 +115,8 @@ class DesiredIngestion:
 
         if self.source.is_valid:  # pseudocode for source is set
             self.relationships.append(
-                draft.make_relationship(self.source, self.creation_rule)
-            )  # change creation_rule to source_node_creation_rule
+                draft.make_relationship(self.source, self.source_node_creation_rule)
+            )
         else:
             self.relationship_drafts.append(draft)
 
