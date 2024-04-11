@@ -75,6 +75,9 @@ class PropertySet(dict):
         return PropertySet()
 
     def apply(self, key_value_gen):
+        if not key_value_gen:
+            return
+
         for key, val in key_value_gen:
             self.set_property(key, val)
 
