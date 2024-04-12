@@ -2,15 +2,13 @@ import time
 from abc import ABC
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 from pandas import Timestamp
 
 from .creation_rules import NodeCreationRule, RelationshipCreationRule
 
 if TYPE_CHECKING:
-    from ..interpreting.context import ProviderContext
-    from ..interpreting.value_providers import ValueProvider
     from .desired_ingestion import DesiredIngestion
 
 
