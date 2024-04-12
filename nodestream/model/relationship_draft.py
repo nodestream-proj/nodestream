@@ -23,16 +23,13 @@ class RelationshipDraft:
     def make_relationship(
         self, source_node: Node, source_creation_rule: NodeCreationRule
     ) -> Optional[RelationshipWithNodes]:
-        from_node, to_node = (
-            (source_node, self.related_node)
-            if self.outbound
-            else (self.related_node, source_node)
-        )
-        from_match, to_match = (
-            (source_creation_rule, self.related_node_creation_rule)
-            if self.outbound
-            else (self.related_node_creation_rule, source_creation_rule)
-        )
+        if self.outbound:
+            from_node, from_match = (source_node, source_creation_rule)
+            to_node, to_match = (self.related_node, self.related_node_creation_rule)
+        else:
+            from_node, from_match = (self.related_node, self.related_node_creation_rule)
+            to_node, to_match = (source_node, source_creation_rule)
+
         return RelationshipWithNodes(
             from_node=from_node,
             to_node=to_node,
