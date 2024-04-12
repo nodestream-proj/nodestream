@@ -20,6 +20,7 @@ def test_node_into_ingest():
     node = Node("Person", {"name": "John"})
     ingest = node.into_ingest()
     assert_that(ingest.source, equal_to(node))
+    assert_that(ingest.relationships, equal_to([]))
     assert_that(ingest.relationship_drafts, equal_to([]))
 
 

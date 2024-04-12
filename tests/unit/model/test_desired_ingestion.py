@@ -41,6 +41,7 @@ def test_add_relationship_valid_node(desired_ingestion, valid_node, valid_relati
         outbound=True,
         node_creation_rule=NodeCreationRule.EAGER,
     )
+    assert len(desired_ingestion.relationships) == 0
     assert len(desired_ingestion.relationship_drafts) == 1
 
 
@@ -53,6 +54,7 @@ def test_add_relationship_invalid_node(
         outbound=True,
         node_creation_rule=NodeCreationRule.EAGER,
     )
+    assert len(desired_ingestion.relationships) == 0
     assert len(desired_ingestion.relationship_drafts) == 0
 
 

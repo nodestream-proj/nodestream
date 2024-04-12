@@ -81,21 +81,6 @@ class PropertySet(dict):
         for key, val in key_value_gen:
             self.set_property(key, val)
 
-    def apply_providers(
-        self,
-        context: "ProviderContext",
-        provider_map: "Dict[str, ValueProvider]",
-        norm_args,
-    ):
-        """For every `(key, provider)` pair provided, sets the property to the values provided.
-
-        This method can take arbitrary keyword arguments which are passed to `ValueProvider` as
-        arguments for value normalization.
-        """
-        for key, provider in provider_map.items():
-            v = provider.normalize_single_value(context, norm_args)
-            self.set_property(key, v)
-
 
 @dataclass(slots=True)
 class Node(DeduplicatableObject):

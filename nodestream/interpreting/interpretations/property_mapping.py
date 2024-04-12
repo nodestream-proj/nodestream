@@ -30,7 +30,9 @@ class PropertyMappingFromValueProvider(PropertyMapping):
     def __init__(self, value_provider: ValueProvider):
         self.value_provider = value_provider
 
-    def key_value_generator(self, context: "ProviderContext", norm_args):
+    def key_value_generator(
+        self, context: "ProviderContext", norm_args: Dict[str, bool]
+    ):
         should_be_a_dict = self.value_provider.single_value(context)
         if not isinstance(should_be_a_dict, dict):
             raise ValueError(
@@ -64,7 +66,9 @@ class PropertyMappingFromDict(PropertyMapping):
     def __init__(self, map_of_value_providers: Dict[str, ValueProvider]):
         self.map_of_value_providers = map_of_value_providers
 
-    def key_value_generator(self, context: "ProviderContext", norm_args):
+    def key_value_generator(
+        self, context: "ProviderContext", norm_args: Dict[str, bool]
+    ):
         for key, provider in self.map_of_value_providers.items():
             v = provider.normalize_single_value(context, norm_args)
             yield key, v
