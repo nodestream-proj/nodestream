@@ -86,7 +86,6 @@ class DesiredIngestion:
         """Finalizes relationships that were added before source node.
         Assumes source node has been added
         """
-
         for relationship in self.relationships:
             if relationship.outbound:
                 relationship.from_node = self.source
