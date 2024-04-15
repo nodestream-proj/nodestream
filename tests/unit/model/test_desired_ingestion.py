@@ -41,8 +41,7 @@ def test_add_relationship_valid_node(desired_ingestion, valid_node, valid_relati
         outbound=True,
         node_creation_rule=NodeCreationRule.EAGER,
     )
-    assert len(desired_ingestion.relationships) == 0
-    assert len(desired_ingestion.relationship_drafts) == 1
+    assert len(desired_ingestion.relationships) == 1
 
 
 def test_add_relationship_invalid_node(
@@ -55,7 +54,6 @@ def test_add_relationship_invalid_node(
         node_creation_rule=NodeCreationRule.EAGER,
     )
     assert len(desired_ingestion.relationships) == 0
-    assert len(desired_ingestion.relationship_drafts) == 0
 
 
 @pytest.mark.asyncio
@@ -83,8 +81,7 @@ def test_relationship_is_finalized_after_source_node_added(
         outbound=True,
         node_creation_rule=NodeCreationRule.EAGER,
     )
-    assert len(desired_ingestion.relationship_drafts) == 1
-    assert len(desired_ingestion.relationships) == 0
+    assert len(desired_ingestion.relationships) == 1
 
     desired_ingestion.add_source_node(
         source_type=valid_node.type,
@@ -95,7 +92,6 @@ def test_relationship_is_finalized_after_source_node_added(
         ),
         properties_generator=None,
     )
-    assert len(desired_ingestion.relationship_drafts) == 0
     assert len(desired_ingestion.relationships) == 1
 
 
@@ -118,8 +114,6 @@ def test_drafts_are_empty_when_source_node_exists(
         outbound=True,
         node_creation_rule=NodeCreationRule.EAGER,
     )
-    assert len(desired_ingestion.relationship_drafts) == 0
     assert len(desired_ingestion.relationships) == 1
 
-    assert len(desired_ingestion.relationship_drafts) == 0
     assert len(desired_ingestion.relationships) == 1

@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, List, Tuple
 from .creation_rules import NodeCreationRule, RelationshipCreationRule
 from .graph_objects import Node, Relationship, RelationshipWithNodes
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
-from .relationship_draft import RelationshipDraft
 
 if TYPE_CHECKING:
     from ..databases.ingest_strategy import IngestionStrategy
@@ -19,7 +18,6 @@ LOGGER = getLogger(__name__)
 class DesiredIngestion:
     source: Node = field(default_factory=Node)
     relationships: List[RelationshipWithNodes] = field(default_factory=list)
-    relationship_drafts: List[RelationshipDraft] = field(default_factory=list)
     hook_requests: List[IngestionHookRunRequest] = field(default_factory=list)
     source_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
 
@@ -48,7 +46,7 @@ class DesiredIngestion:
         # If it's not valid, it's only an error when there are relationships we are
         # trying to ingest as well.
         if not self.source_node_is_valid:
-            if len(self.relationship_drafts) > 0:
+            if len(self.relationships) > 0:
                 LOGGER.warning(
                     "Identity value for source node was null. Skipping Ingest.",
                     extra=asdict(self),
@@ -81,18 +79,23 @@ class DesiredIngestion:
         self.source.key_values.apply(key_value_generator)
         self.source.properties.apply(properties_generator)
         # Because relationships can be added before source node
-        self.finalize_relationship_drafts()
+        self.finalize_relationships()
         return self.source
 
-    def finalize_relationship_drafts(self):
-        """Finalizes relationships that were added before source node
+    def finalize_relationships(self):
+        """Finalizes relationships that were added before source node.
         Assumes source node has been added
         """
-        self.relationships.extend(
-            draft.make_relationship(self.source, self.source_node_creation_rule)
-            for draft in self.relationship_drafts
-        )
-        self.relationship_drafts.clear()
+
+        for relationship in self.relationships:
+            if relationship.outbound:
+                relationship.from_node = self.source
+                relationship.from_side_node_creation_rule = (
+                    self.source_node_creation_rule
+                )
+            else:
+                relationship.to_node = self.source
+                relationship.to_side_node_creation_rule = self.source_node_creation_rule
 
     def add_relationship(
         self,
@@ -109,20 +112,24 @@ class DesiredIngestion:
             )
             return
 
-        draft = RelationshipDraft(
-            related_node=related_node,
-            relationship=relationship,
-            outbound=outbound,
-            related_node_creation_rule=node_creation_rule,
-            relationship_creation_rule=relationship_creation_rule,
-        )
-
-        if self.source.is_valid:  # pseudocode for source is set
-            self.relationships.append(
-                draft.make_relationship(self.source, self.source_node_creation_rule)
-            )
+        if outbound:
+            from_node, from_match = (self.source, self.source_node_creation_rule)
+            to_node, to_match = (related_node, node_creation_rule)
         else:
-            self.relationship_drafts.append(draft)
+            from_node, from_match = (related_node, node_creation_rule)
+            to_node, to_match = (self.source, self.source_node_creation_rule)
+
+        self.relationships.append(
+            RelationshipWithNodes(
+                from_node=from_node,
+                to_node=to_node,
+                outbound=outbound,
+                relationship=relationship,
+                from_side_node_creation_rule=from_match,
+                to_side_node_creation_rule=to_match,
+                relationship_creation_rule=relationship_creation_rule,
+            )
+        )
 
     def add_ingest_hook(self, hook: IngestionHook, before_ingest=False):
         self.hook_requests.append(IngestionHookRunRequest(hook, before_ingest))

@@ -21,7 +21,6 @@ def test_node_into_ingest():
     ingest = node.into_ingest()
     assert_that(ingest.source, equal_to(node))
     assert_that(ingest.relationships, equal_to([]))
-    assert_that(ingest.relationship_drafts, equal_to([]))
 
 
 def test_relationship_into_ingest():

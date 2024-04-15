@@ -1,7 +1,6 @@
 [
     {
         "hook_requests": [],
-        "relationship_drafts": [],
         "relationships": [
             {
                 "from_node": {
@@ -17,6 +16,7 @@
                     "type": "Person"
                 },
                 "from_side_node_creation_rule": "EAGER",
+                "outbound": true,
                 "relationship": {
                     "key_values": {},
                     "properties": {
@@ -55,6 +55,7 @@
                     "type": "Person"
                 },
                 "from_side_node_creation_rule": "EAGER",
+                "outbound": true,
                 "relationship": {
                     "key_values": {},
                     "properties": {
@@ -93,6 +94,7 @@
                     "type": "Person"
                 },
                 "from_side_node_creation_rule": "EAGER",
+                "outbound": true,
                 "relationship": {
                     "key_values": {},
                     "properties": {
