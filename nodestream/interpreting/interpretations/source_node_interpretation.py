@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from nodestream.model import NodeCreationRule, PropertySet
-
+from ...model import NodeCreationRule, PropertySet
 from ...pipeline.normalizers import LowercaseStrings
 from ...pipeline.value_providers import (
     ProviderContext,
