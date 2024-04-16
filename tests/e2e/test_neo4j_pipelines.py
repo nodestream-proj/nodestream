@@ -86,17 +86,23 @@ def validate_node_ttls(session):
     assert result.single()["node_count"] == 0
 
 
+PIPELINE_TESTS = [
+    ("airports", [validate_airports, valiudate_airport_country]),
+    ("fifa", [validate_fifa_player_count, validate_fifa_mo_club]),
+]
+
+TTL_TESTS = [
+    ("relationship-ttlss", [validate_relationship_ttls]),
+    ("node-ttls", [validate_node_ttls]),
+]
+
+
 @pytest.mark.asyncio
 @pytest.mark.e2e
 @pytest.mark.parametrize("neo4j_version", TESTED_NEO4J_VERSIONS)
 @pytest.mark.parametrize(
     "pipeline_name,validations",
-    [
-        ("airports", [validate_airports, valiudate_airport_country]),
-        ("fifa", [validate_fifa_player_count, validate_fifa_mo_club]),
-        ("relatiobship-ttls", [validate_relationship_ttls]),
-        ("node-ttls", [validate_node_ttls]),
-    ],
+    PIPELINE_TESTS,
 )
 async def test_neo4j_pipeline(
     project, neo4j_container, pipeline_name, validations, neo4j_version
@@ -116,3 +122,25 @@ async def test_neo4j_pipeline(
 
         for validator in validations:
             validator(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.e2e
+@pytest.mark.parametrize("neo4j_version", TESTED_NEO4J_VERSIONS)
+async def test_neo4j_ttls(project, neo4j_container, neo4j_version):
+    with neo4j_container(
+        neo4j_version
+    ) as neo4j_container, neo4j_container.get_driver() as driver, driver.session() as session:
+        target = project.get_target_by_name("my-neo4j-db")
+
+        for pipeline_name, validations in PIPELINE_TESTS + TTL_TESTS:
+            await project.run(
+                RunRequest(
+                    pipeline_name,
+                    PipelineInitializationArguments(extra_steps=[target.make_writer()]),
+                    PipelineProgressReporter(),
+                )
+            )
+
+            for validator in validations:
+                validator(session)
