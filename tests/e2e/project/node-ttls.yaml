@@ -1,0 +1,17 @@
+- implementation: nodestream.pipeline.extractors:TimeToLiveConfigurationExtractor
+  arguments:
+    graph_object_type: NODE
+    configurations: 
+    - object_type: Airport
+      expiry_in_hours: 0
+    - object_type: Country
+      expiry_in_hours: 0
+    - object_type: Region
+      expiry_in_hours: 0
+    - object_type: Player
+      expiry_in_hours: 0
+    - object_type: PlaceOfOrigin
+      expiry_in_hours: 0
+    - object_type: Position
+      expiry_in_hours: 0
+    - object_type: Team

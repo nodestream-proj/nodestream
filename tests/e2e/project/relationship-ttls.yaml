@@ -1,0 +1,12 @@
+- implementation: nodestream.pipeline.extractors:TimeToLiveConfigurationExtractor
+  arguments:
+    graph_object_type: RELATIONSHIP
+    configurations: 
+    - object_type: WITHIN
+      expiry_in_hours: 0
+    - object_type: ORIGINATES_FROM
+      expiry_in_hours: 0
+    - object_type: LINES_UP_AT
+      expiry_in_hours: 0
+    - object_type: PLAYS_FOR
+      expiry_in_hours: 0

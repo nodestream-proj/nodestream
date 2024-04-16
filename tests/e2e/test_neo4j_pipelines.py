@@ -59,6 +59,33 @@ def validate_fifa_mo_club(session):
     assert result.single()["club"] == "Liverpool"
 
 
+def validate_relationship_ttls(session):
+    result = session.run(
+        """
+        MATCH ()-[r]-()
+        RETURN count(r) as relationship_count
+        """
+    )
+    assert result.single()["relationship_count"] == 0
+    result = session.run(
+        """
+            MATCH (n)
+            RETURN count(n) as node_count
+        """
+    )
+    assert result.single()["relationship_count"] != 0
+
+
+def validate_node_ttls(session):
+    result = session.run(
+        """
+        MATCH (n)
+        RETURN count(n) as node_count
+        """
+    )
+    assert result.single()["node_count"] == 0
+
+
 @pytest.mark.asyncio
 @pytest.mark.e2e
 @pytest.mark.parametrize("neo4j_version", TESTED_NEO4J_VERSIONS)
@@ -67,6 +94,8 @@ def validate_fifa_mo_club(session):
     [
         ("airports", [validate_airports, valiudate_airport_country]),
         ("fifa", [validate_fifa_player_count, validate_fifa_mo_club]),
+        ("relatiobship-ttls", [validate_relationship_ttls]),
+        ("node-ttls", [validate_node_ttls]),
     ],
 )
 async def test_neo4j_pipeline(
