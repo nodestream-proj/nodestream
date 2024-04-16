@@ -29,7 +29,13 @@ class Query:
     def from_statement(cls, query_statement: str, **parameters: Any) -> "Query":
         return cls(query_statement, parameters)
 
-    def feed_batched_query(self, batched_query: str) -> "Query":
+    def feed_batched_query(
+        self,
+        batched_query: str,
+        chunk_size: int = 1000,
+        execute_chunks_in_parallel: bool = True,
+        retries_per_chunk: int = 3,
+    ) -> "Query":
         """Feed the results of the the query into another query that will be executed in batches."""
         return Query(
             COMMIT_QUERY,
@@ -37,6 +43,9 @@ class Query:
                 "iterate_params": self.parameters,
                 "batched_query": batched_query,
                 "iterable_query": self.query_statement,
+                "execute_chunks_in_parallel": execute_chunks_in_parallel,
+                "chunk_size": chunk_size,
+                "retries_per_chunk": retries_per_chunk,
             },
         )
 

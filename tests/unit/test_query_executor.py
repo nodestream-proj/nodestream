@@ -9,6 +9,12 @@ from nodestream_plugin_neo4j.query_executor import Neo4jQueryExecutor
 
 from .matchers import ran_query
 
+TEST_PARAMS = {
+    "execute_chunks_in_parallel": True,
+    "chunk_size": 1000,
+    "retries_per_chunk": 3,
+}
+
 
 @pytest.fixture
 def some_query():
@@ -84,7 +90,7 @@ async def test_perform_ttl_op(query_executor, some_query):
     )
     query_generator.return_value = some_query
     await query_executor.perform_ttl_op(ttl_config)
-    query_generator.assert_called_once_with(ttl_config)
+    query_generator.assert_called_once_with(ttl_config, **TEST_PARAMS)
     assert_that(query_executor, ran_query(some_query))
 
 

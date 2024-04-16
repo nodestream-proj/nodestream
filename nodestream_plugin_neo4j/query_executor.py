@@ -71,7 +71,12 @@ class Neo4jQueryExecutor(QueryExecutor):
         )
 
     async def perform_ttl_op(self, config: TimeToLiveConfiguration):
-        query = self.ingest_query_builder.generate_ttl_query_from_configuration(config)
+        query = self.ingest_query_builder.generate_ttl_query_from_configuration(
+            config,
+            chunk_size=self.chunk_size,
+            execute_chunks_in_parallel=self.execute_chunks_in_parallel,
+            retries_per_chunk=self.retries_per_chunk,
+        )
         await self.database_connection.execute(query)
 
     async def execute_hook(self, hook: IngestionHook):
