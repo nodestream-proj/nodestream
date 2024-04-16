@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from ...model import NodeCreationRule, PropertySet
 from ...pipeline.normalizers import LowercaseStrings
 from ...pipeline.value_providers import (
     ProviderContext,
@@ -81,6 +82,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         "additional_indexes",
         "additional_types",
         "norm_args",
+        "allow_create",
     )
 
     def __init__(
@@ -91,20 +93,32 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         additional_indexes: Optional[List[str]] = None,
         additional_types: Optional[List[str]] = None,
         normalization: Optional[Dict[str, Any]] = None,
+        allow_create: bool = True,
     ):
         self.node_type = ValueProvider.guarantee_value_provider(node_type)
-        self.key = ValueProvider.guarantee_provider_dictionary(key)
+        self.key = PropertyMapping.from_file_data(key or {})
         self.properties = PropertyMapping.from_file_data(properties or {})
         self.additional_indexes = additional_indexes or []
         self.additional_types = tuple(additional_types or [])
         self.norm_args = {**DEFAULT_NORMALIZATION_ARGUMENTS, **(normalization or {})}
+        if allow_create:
+            self.creation_rule = NodeCreationRule.EAGER
+        else:
+            self.creation_rule = NodeCreationRule.MATCH_ONLY
 
     def interpret(self, context: ProviderContext):
-        source = context.desired_ingest.source
-        source.type = self.node_type.single_value(context)
-        source.key_values.apply_providers(context, self.key, self.norm_args)
-        self.properties.apply_to(context, source.properties, self.norm_args)
-        source.additional_types = self.additional_types
+        normalized_key: PropertySet = PropertySet()
+        self.key.apply_to(context, normalized_key, self.norm_args)
+        normalized_properties: PropertySet = PropertySet()
+        self.properties.apply_to(context, normalized_properties, self.norm_args)
+
+        context.desired_ingest.add_source_node(
+            self.node_type.single_value(context),
+            self.additional_types,
+            self.creation_rule,
+            normalized_key,
+            normalized_properties,
+        )
 
     def expand_source_node_schema(self, source_node_schema: GraphObjectSchema):
         source_node_schema.add_keys(self.key)

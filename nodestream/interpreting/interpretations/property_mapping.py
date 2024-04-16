@@ -9,7 +9,7 @@ class PropertyMapping(ABC):
     @classmethod
     def from_file_data(cls, file_data):
         if isinstance(file_data, ValueProvider):
-            return PropertyMappingFromValueProviider(file_data)
+            return PropertyMappingFromValueProvider(file_data)
 
         providers = ValueProvider.guarantee_provider_dictionary(file_data)
         return PropertyMappingFromDict(providers)
@@ -24,17 +24,14 @@ class PropertyMapping(ABC):
         raise NotImplementedError
 
 
-class PropertyMappingFromValueProviider(PropertyMapping):
+class PropertyMappingFromValueProvider(PropertyMapping):
     __slots__ = ("value_provider",)
 
     def __init__(self, value_provider: ValueProvider):
         self.value_provider = value_provider
 
-    def apply_to(
-        self,
-        context: ProviderContext,
-        property_set: PropertySet,
-        norm_args: Dict[str, bool],
+    def key_value_generator(
+        self, context: "ProviderContext", norm_args: Dict[str, bool]
     ):
         should_be_a_dict = self.value_provider.single_value(context)
         if not isinstance(should_be_a_dict, dict):
@@ -43,7 +40,18 @@ class PropertyMappingFromValueProviider(PropertyMapping):
             )
 
         as_providers = ValueProvider.guarantee_provider_dictionary(should_be_a_dict)
-        property_set.apply_providers(context, as_providers, norm_args)
+
+        for key, provider in as_providers.items():
+            v = provider.normalize_single_value(context, norm_args)
+            yield key, v
+
+    def apply_to(
+        self,
+        context: ProviderContext,
+        property_set: PropertySet,
+        norm_args: Dict[str, bool],
+    ):
+        property_set.apply(self.key_value_generator(context, norm_args))
 
     def __iter__(self):
         # This is used when adding properties to a schema.
@@ -58,13 +66,20 @@ class PropertyMappingFromDict(PropertyMapping):
     def __init__(self, map_of_value_providers: Dict[str, ValueProvider]):
         self.map_of_value_providers = map_of_value_providers
 
+    def key_value_generator(
+        self, context: "ProviderContext", norm_args: Dict[str, bool]
+    ):
+        for key, provider in self.map_of_value_providers.items():
+            v = provider.normalize_single_value(context, norm_args)
+            yield key, v
+
     def apply_to(
         self,
         context: ProviderContext,
         property_set: PropertySet,
         norm_args: Dict[str, bool],
     ):
-        property_set.apply_providers(context, self.map_of_value_providers, norm_args)
+        property_set.apply(self.key_value_generator(context, norm_args))
 
     def __iter__(self):
         return iter(self.map_of_value_providers)

@@ -1,10 +1,10 @@
 import asyncio
 from dataclasses import asdict, dataclass, field
 from logging import getLogger
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Tuple
 
 from .creation_rules import NodeCreationRule, RelationshipCreationRule
-from .graph_objects import Node, Relationship, RelationshipWithNodes
+from .graph_objects import Node, PropertySet, Relationship, RelationshipWithNodes
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
 
 if TYPE_CHECKING:
@@ -17,15 +17,16 @@ LOGGER = getLogger(__name__)
 @dataclass(slots=True)
 class DesiredIngestion:
     source: Node = field(default_factory=Node)
-    relationships: List[Relationship] = field(default_factory=list)
+    relationships: List[RelationshipWithNodes] = field(default_factory=list)
     hook_requests: List[IngestionHookRunRequest] = field(default_factory=list)
+    source_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
 
     @property
     def source_node_is_valid(self) -> bool:
-        return self.source.is_valid
+        return self.source.is_valid and self.source_node_creation_rule is not None
 
     async def ingest_source_node(self, strategy: "IngestionStrategy"):
-        await strategy.ingest_source_node(self.source)
+        await strategy.ingest_source_node(self.source, self.source_node_creation_rule)
 
     async def ingest_relationships(self, strategy: "IngestionStrategy"):
         await asyncio.gather(
@@ -42,7 +43,7 @@ class DesiredIngestion:
 
     def can_perform_ingest(self):
         # We can do the main part of the ingest if the source node is valid.
-        # If its not valid, its only an error when there are relationships we are
+        # If it's not valid, it's only an error when there are relationships we are
         # trying to ingest as well.
         if not self.source_node_is_valid:
             if len(self.relationships) > 0:
@@ -64,6 +65,37 @@ class DesiredIngestion:
             await self.ingest_relationships(strategy)
         await self.run_ingest_hooks(strategy)
 
+    def add_source_node(
+        self,
+        source_type: str,
+        additional_types: Tuple[str],
+        creation_rule: NodeCreationRule,
+        key_values: PropertySet,
+        properties: PropertySet,
+    ) -> Node:
+        self.source.type = source_type
+        self.source.additional_types = additional_types
+        self.source_node_creation_rule = creation_rule
+        self.source.key_values.merge(key_values)
+        self.source.properties.merge(properties)
+        # Because relationships can be added before the source node
+        self.finalize_relationships()
+        return self.source
+
+    def finalize_relationships(self):
+        """Finalizes relationships that were added before source node.
+        Assumes source node has been added
+        """
+        for relationship in self.relationships:
+            if relationship.outbound:
+                relationship.from_node = self.source
+                relationship.from_side_node_creation_rule = (
+                    self.source_node_creation_rule
+                )
+            else:
+                relationship.to_node = self.source
+                relationship.to_side_node_creation_rule = self.source_node_creation_rule
+
     def add_relationship(
         self,
         related_node: Node,
@@ -79,18 +111,18 @@ class DesiredIngestion:
             )
             return
 
-        from_node, to_node = (
-            (self.source, related_node) if outbound else (related_node, self.source)
-        )
-        from_match, to_match = (
-            (NodeCreationRule.EAGER, node_creation_rule)
-            if outbound
-            else (node_creation_rule, NodeCreationRule.EAGER)
-        )
+        if outbound:
+            from_node, from_match = (self.source, self.source_node_creation_rule)
+            to_node, to_match = (related_node, node_creation_rule)
+        else:
+            from_node, from_match = (related_node, node_creation_rule)
+            to_node, to_match = (self.source, self.source_node_creation_rule)
+
         self.relationships.append(
             RelationshipWithNodes(
                 from_node=from_node,
                 to_node=to_node,
+                outbound=outbound,
                 relationship=relationship,
                 from_side_node_creation_rule=from_match,
                 to_side_node_creation_rule=to_match,

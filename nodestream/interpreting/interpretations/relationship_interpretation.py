@@ -12,7 +12,7 @@ from ...pipeline.value_providers import (
 from ...schema import Cardinality, GraphObjectSchema, SchemaExpansionCoordinator
 from ..record_decomposers import RecordDecomposer
 from .interpretation import Interpretation
-from .property_mapping import PropertyMapping
+from .property_mapping import PropertyMapping, PropertyMappingFromDict
 from .source_node_interpretation import SourceNodeInterpretation
 
 DEFAULT_KEY_NORMALIZATION_ARGUMENTS = {LowercaseStrings.argument_flag(): True}
@@ -153,8 +153,11 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
 
     def find_relationship(self, context: ProviderContext) -> Relationship:
         rel = Relationship(type=self.relationship_type.single_value(context))
-        rel.key_values.apply_providers(
-            context, self.relationship_key, self.key_normalization
+        relationship_key_property_mapping = PropertyMappingFromDict(
+            self.relationship_key
+        )
+        relationship_key_property_mapping.apply_to(
+            context, rel.key_values, self.properties_normalization
         )
         self.relationship_properties.apply_to(
             context, rel.properties, self.properties_normalization

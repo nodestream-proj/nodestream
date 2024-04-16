@@ -1,0 +1,137 @@
+[
+    {
+        "hook_requests": [],
+        "relationships": [
+            {
+                "from_node": {
+                    "additional_types": [],
+                    "key_values": {
+                        "id": "source1"
+                    },
+                    "properties": {
+                        "last_ingested_at": "2021-06-18T00:00:00",
+                        "last_ingested_by_unknown_at": "2021-06-18T00:00:00",
+                        "was_ingested_by_unknown": true
+                    },
+                    "type": "Person"
+                },
+                "from_side_node_creation_rule": "EAGER",
+                "outbound": true,
+                "relationship": {
+                    "key_values": {},
+                    "properties": {
+                        "last_ingested_at": "2021-06-18T00:00:00",
+                        "last_ingested_by_unknown_at": "2021-06-18T00:00:00",
+                        "was_ingested_by_unknown": true
+                    },
+                    "type": "DEFAULT_RELATED_TO"
+                },
+                "relationship_creation_rule": "EAGER",
+                "to_node": {
+                    "additional_types": [],
+                    "key_values": {
+                        "code": "related_node1"
+                    },
+                    "properties": {
+                        "last_ingested_at": "2021-06-18T00:00:00",
+                        "last_ingested_by_unknown_at": "2021-06-18T00:00:00",
+                        "was_ingested_by_unknown": true
+                    },
+                    "type": "Person"
+                },
+                "to_side_node_creation_rule": "EAGER"
+            },
+            {
+                "from_node": {
+                    "additional_types": [],
+                    "key_values": {
+                        "id": "source1"
+                    },
+                    "properties": {
+                        "last_ingested_at": "2021-06-18T00:00:00",
+                        "last_ingested_by_unknown_at": "2021-06-18T00:00:00",
+                        "was_ingested_by_unknown": true
+                    },
+                    "type": "Person"
+                },
+                "from_side_node_creation_rule": "EAGER",
+                "outbound": true,
+                "relationship": {
+                    "key_values": {},
+                    "properties": {
+                        "last_ingested_at": "2021-06-18T00:00:00",
+                        "last_ingested_by_unknown_at": "2021-06-18T00:00:00",
+                        "was_ingested_by_unknown": true
+                    },
+                    "type": "MAYBE_RELATED_TO"
+                },
+                "relationship_creation_rule": "EAGER",
+                "to_node": {
+                    "additional_types": [],
+                    "key_values": {
+                        "code": "related_node1"
+                    },
+                    "properties": {
+                        "last_ingested_at": "2021-06-18T00:00:00",
+                        "last_ingested_by_unknown_at": "2021-06-18T00:00:00",
+                        "was_ingested_by_unknown": true
+                    },
+                    "type": "Person"
+                },
+                "to_side_node_creation_rule": "MATCH_ONLY"
+            },
+            {
+                "from_node": {
+                    "additional_types": [],
+                    "key_values": {
+                        "id": "source1"
+                    },
+                    "properties": {
+                        "last_ingested_at": "2021-06-18T00:00:00",
+                        "last_ingested_by_unknown_at": "2021-06-18T00:00:00",
+                        "was_ingested_by_unknown": true
+                    },
+                    "type": "Person"
+                },
+                "from_side_node_creation_rule": "EAGER",
+                "outbound": true,
+                "relationship": {
+                    "key_values": {},
+                    "properties": {
+                        "last_ingested_at": "2021-06-18T00:00:00",
+                        "last_ingested_by_unknown_at": "2021-06-18T00:00:00",
+                        "was_ingested_by_unknown": true
+                    },
+                    "type": "EAGER_RELATED_TO"
+                },
+                "relationship_creation_rule": "EAGER",
+                "to_node": {
+                    "additional_types": [],
+                    "key_values": {
+                        "code": "related_node1"
+                    },
+                    "properties": {
+                        "last_ingested_at": "2021-06-18T00:00:00",
+                        "last_ingested_by_unknown_at": "2021-06-18T00:00:00",
+                        "was_ingested_by_unknown": true
+                    },
+                    "type": "Person"
+                },
+                "to_side_node_creation_rule": "EAGER"
+            }
+        ],
+        "source": {
+            "additional_types": [],
+            "key_values": {
+                "id": "source1"
+            },
+            "properties": {
+                "last_ingested_at": "2021-06-18T00:00:00",
+                "last_ingested_by_unknown_at": "2021-06-18T00:00:00",
+                "was_ingested_by_unknown": true
+            },
+            "type": "Person"
+        },
+        "source_node_creation_rule": "EAGER"
+    }
+]

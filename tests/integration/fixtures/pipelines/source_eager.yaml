@@ -1,0 +1,32 @@
+- implementation: nodestream.pipeline.extractors:FileExtractor
+  arguments:
+    globs:
+      - tests/data/source_match_only_data.csv
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+    - type: relationship
+      node_type: Person
+      relationship_type: DEFAULT_RELATED_TO
+      node_key:
+        code: !jmespath related_node
+#    Source node is added after relationship to test this use case
+    - type: source_node
+      node_type: Person
+      allow_create: true
+      normalization:
+        do_remove_trailing_dots: true
+      key:
+        id: !jmespath source
+    - type: relationship
+      node_type: Person
+      node_creation_rule: 'MATCH_ONLY'
+      relationship_type: MAYBE_RELATED_TO
+      node_key:
+        code: !jmespath related_node
+    - type: relationship
+      node_type: Person
+      node_creation_rule: 'EAGER'
+      relationship_type: EAGER_RELATED_TO
+      node_key:
+        code: !jmespath related_node

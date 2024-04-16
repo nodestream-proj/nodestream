@@ -1,11 +1,8 @@
 from typing import Any, Dict, Optional
 
-from ...pipeline.value_providers import (
-    ProviderContext,
-    StaticValueOrValueProvider,
-    ValueProvider,
-)
+from ...pipeline.value_providers import ProviderContext, StaticValueOrValueProvider
 from .interpretation import Interpretation
+from .property_mapping import PropertyMapping
 
 
 class ExtractVariablesInterpretation(Interpretation, alias="variables"):
@@ -40,8 +37,8 @@ class ExtractVariablesInterpretation(Interpretation, alias="variables"):
         variables: Dict[str, StaticValueOrValueProvider],
         normalization: Optional[Dict[str, Any]] = None,
     ):
-        self.variables = ValueProvider.guarantee_provider_dictionary(variables)
+        self.variables = PropertyMapping.from_file_data(variables)
         self.norm_args = normalization or {}
 
     def interpret(self, context: ProviderContext):
-        context.variables.apply_providers(context, self.variables, self.norm_args)
+        self.variables.apply_to(context, context.variables, self.norm_args)

@@ -2,15 +2,13 @@ import time
 from abc import ABC
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 from pandas import Timestamp
 
 from .creation_rules import NodeCreationRule, RelationshipCreationRule
 
 if TYPE_CHECKING:
-    from ..interpreting.context import ProviderContext
-    from ..interpreting.value_providers import ValueProvider
     from .desired_ingestion import DesiredIngestion
 
 
@@ -74,20 +72,19 @@ class PropertySet(dict):
         """Returns an empty property set."""
         return PropertySet()
 
-    def apply_providers(
-        self,
-        context: "ProviderContext",
-        provider_map: "Dict[str, ValueProvider]",
-        norm_args,
-    ):
-        """For every `(key, provider)` pair provided, sets the property to the values provided.
+    def apply(self, key_value_gen):
+        if not key_value_gen:
+            return
 
-        This method can take arbitrary keyword arguments which are passed to `ValueProvider` as
-        arguments for value normalization.
-        """
-        for key, provider in provider_map.items():
-            v = provider.normalize_single_value(context, norm_args)
-            self.set_property(key, v)
+        for key, val in key_value_gen:
+            self.set_property(key, val)
+
+    def merge(self, properties: "PropertySet"):
+        if not properties:
+            return
+
+        for key, val in properties.items():
+            self.set_property(key, val)
 
 
 @dataclass(slots=True)
@@ -188,6 +185,7 @@ class RelationshipWithNodes(DeduplicatableObject):
     from_node: Node
     to_node: Node
     relationship: Relationship
+    outbound: bool = True  # lets us maintain knowledge of which node is the source node
 
     to_side_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
     from_side_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
