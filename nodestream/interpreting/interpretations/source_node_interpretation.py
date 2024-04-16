@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 
-from nodestream.model import NodeCreationRule
+from nodestream.model import NodeCreationRule, PropertySet
 
 from ...pipeline.normalizers import LowercaseStrings
 from ...pipeline.value_providers import (
@@ -108,12 +108,17 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
             self.creation_rule = NodeCreationRule.MATCH_ONLY
 
     def interpret(self, context: ProviderContext):
+        normalized_key: PropertySet = PropertySet()
+        self.key.apply_to(context, normalized_key, self.norm_args)
+        normalized_properties: PropertySet = PropertySet()
+        self.properties.apply_to(context, normalized_properties, self.norm_args)
+
         context.desired_ingest.add_source_node(
             self.node_type.single_value(context),
             self.additional_types,
             self.creation_rule,
-            self.key.key_value_generator(context, self.norm_args),
-            self.properties.key_value_generator(context, self.norm_args),
+            normalized_key,
+            normalized_properties,
         )
 
     def expand_source_node_schema(self, source_node_schema: GraphObjectSchema):

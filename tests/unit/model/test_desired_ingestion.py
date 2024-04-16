@@ -87,10 +87,8 @@ def test_relationship_is_finalized_after_source_node_added(
         source_type=valid_node.type,
         additional_types=valid_node.additional_types,
         creation_rule=NodeCreationRule.MATCH_ONLY,
-        key_value_generator=(
-            (key, value) for key, value in valid_node.key_values.items()
-        ),
-        properties_generator=None,
+        key_values=valid_node.key_values,
+        properties=valid_node.properties,
     )
     subject = desired_ingestion.relationships[0]
     assert subject.from_side_node_creation_rule == NodeCreationRule.MATCH_ONLY
@@ -105,10 +103,8 @@ def test_relationships_are_finalized_when_source_node_exists(
         source_type=valid_node.type,
         additional_types=valid_node.additional_types,
         creation_rule=NodeCreationRule.MATCH_ONLY,
-        key_value_generator=(
-            (key, value) for key, value in valid_node.key_values.items()
-        ),
-        properties_generator=None,
+        key_values=valid_node.key_values,
+        properties=valid_node.properties,
     )
 
     desired_ingestion.add_relationship(
@@ -130,10 +126,8 @@ def test_relationships_are_finalized_when_source_node_is_inbound(
         source_type=valid_node.type,
         additional_types=valid_node.additional_types,
         creation_rule=NodeCreationRule.MATCH_ONLY,
-        key_value_generator=(
-            (key, value) for key, value in valid_node.key_values.items()
-        ),
-        properties_generator=None,
+        key_values=valid_node.key_values,
+        properties=valid_node.properties,
     )
 
     desired_ingestion.add_relationship(

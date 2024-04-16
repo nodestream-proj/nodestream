@@ -4,7 +4,7 @@ from logging import getLogger
 from typing import TYPE_CHECKING, List, Tuple
 
 from .creation_rules import NodeCreationRule, RelationshipCreationRule
-from .graph_objects import Node, Relationship, RelationshipWithNodes
+from .graph_objects import Node, PropertySet, Relationship, RelationshipWithNodes
 from .ingestion_hooks import IngestionHook, IngestionHookRunRequest
 
 if TYPE_CHECKING:
@@ -70,15 +70,15 @@ class DesiredIngestion:
         source_type: str,
         additional_types: Tuple[str],
         creation_rule: NodeCreationRule,
-        key_value_generator,
-        properties_generator,
+        key_values: PropertySet,
+        properties: PropertySet,
     ) -> Node:
         self.source.type = source_type
         self.source.additional_types = additional_types
         self.source_node_creation_rule = creation_rule
-        self.source.key_values.apply(key_value_generator)
-        self.source.properties.apply(properties_generator)
-        # Because relationships can be added before source node
+        self.source.key_values.merge(key_values)
+        self.source.properties.merge(properties)
+        # Because relationships can be added before the source node
         self.finalize_relationships()
         return self.source
 

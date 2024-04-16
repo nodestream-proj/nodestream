@@ -79,6 +79,13 @@ class PropertySet(dict):
         for key, val in key_value_gen:
             self.set_property(key, val)
 
+    def merge(self, properties: "PropertySet"):
+        if not properties:
+            return
+
+        for key, val in properties.items():
+            self.set_property(key, val)
+
 
 @dataclass(slots=True)
 class Node(DeduplicatableObject):
