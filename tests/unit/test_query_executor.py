@@ -8,11 +8,16 @@ from nodestream_plugin_neo4j.query import Query, QueryBatch
 from nodestream_plugin_neo4j.query_executor import Neo4jQueryExecutor
 
 from .matchers import ran_query
+from .test_ingest_query_builder import (
+    DEFAULT_CHUNK_SIZE,
+    DEFAULT_EXECUTE_CHUNKS_IN_PARALLEL,
+    DEFAULT_RETRIES_PER_CHUNK,
+)
 
 TEST_PARAMS = {
-    "execute_chunks_in_parallel": True,
-    "chunk_size": 1000,
-    "retries_per_chunk": 3,
+    "execute_chunks_in_parallel": DEFAULT_EXECUTE_CHUNKS_IN_PARALLEL,
+    "chunk_size": DEFAULT_CHUNK_SIZE,
+    "retries_per_chunk": DEFAULT_RETRIES_PER_CHUNK,
 }
 
 
