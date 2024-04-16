@@ -8,6 +8,7 @@ from nodestream.pipeline import (
 from nodestream.project import Project, RunRequest
 
 from .conftest import TESTED_NEO4J_VERSIONS
+from time import sleep
 
 
 @pytest.fixture
@@ -133,7 +134,21 @@ async def test_neo4j_ttls(project, neo4j_container, neo4j_version):
     ) as neo4j_container, neo4j_container.get_driver() as driver, driver.session() as session:
         target = project.get_target_by_name("my-neo4j-db")
 
-        for pipeline_name, validations in PIPELINE_TESTS + TTL_TESTS:
+        for pipeline_name, validations in PIPELINE_TESTS:
+            await project.run(
+                RunRequest(
+                    pipeline_name,
+                    PipelineInitializationArguments(extra_steps=[target.make_writer()]),
+                    PipelineProgressReporter(),
+                )
+            )
+
+            for validator in validations:
+                validator(session)
+
+        sleep(30)
+
+        for pipeline_name, validations in TTL_TESTS:
             await project.run(
                 RunRequest(
                     pipeline_name,
