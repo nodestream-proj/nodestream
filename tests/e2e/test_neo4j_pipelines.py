@@ -1,4 +1,5 @@
 from pathlib import Path
+from time import sleep
 
 import pytest
 from nodestream.pipeline import (
@@ -8,7 +9,6 @@ from nodestream.pipeline import (
 from nodestream.project import Project, RunRequest
 
 from .conftest import TESTED_NEO4J_VERSIONS
-from time import sleep
 
 
 @pytest.fixture
