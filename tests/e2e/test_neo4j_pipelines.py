@@ -70,7 +70,7 @@ def validate_relationship_ttls(session):
     result = session.run(
         """
             MATCH (n)
-            RETURN count(n) as node_count
+            RETURN count(n) as relationship_count
         """
     )
     assert result.single()["relationship_count"] != 0
