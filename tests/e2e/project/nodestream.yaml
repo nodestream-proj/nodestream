@@ -7,7 +7,7 @@ scopes:
         name: fifa
       - path: tests/e2e/project/node-ttls.yaml
         name: node-ttls
-      - path: tests/e2e/project/node-ttls.yaml
+      - path: tests/e2e/project/relationship-ttls.yaml
         name: relationship-ttls
   
 targets:

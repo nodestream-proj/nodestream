@@ -1,12 +1,15 @@
 from pathlib import Path
-from time import sleep
 
 import pytest
+from neo4j import Session
 from nodestream.pipeline import (
     PipelineInitializationArguments,
     PipelineProgressReporter,
 )
 from nodestream.project import Project, RunRequest
+from pandas import Timedelta, Timestamp
+
+from nodestream_plugin_neo4j.query import Query
 
 from .conftest import TESTED_NEO4J_VERSIONS
 
@@ -60,31 +63,55 @@ def validate_fifa_mo_club(session):
     assert result.single()["club"] == "Liverpool"
 
 
-def validate_relationship_ttls(session):
+def validate_consistency_in_node_counts(session):
     result = session.run(
         """
-        MATCH ()-[r]-()
-        RETURN count(r) as relationship_count
-        """
-    )
-    assert result.single()["relationship_count"] == 0
-    result = session.run(
-        """
-            MATCH (n)
-            RETURN count(n) as relationship_count
-        """
-    )
-    assert result.single()["relationship_count"] != 0
-
-
-def validate_node_ttls(session):
-    result = session.run(
-        """
-        MATCH (n)
+        MATCH (n:ObjectA)
         RETURN count(n) as node_count
         """
     )
-    assert result.single()["node_count"] == 0
+    assert result.single()["node_count"] == 30
+    result = session.run(
+        """
+        MATCH (n:ObjectB)
+        RETURN count(n) as node_count
+        """
+    )
+    assert result.single()["node_count"] == 30
+
+
+def validate_ttl_seperation_between_relationship_object_types(session):
+    result = session.run(
+        """
+        MATCH ()-[r:CONNECTED_TO]->()
+        RETURN count(r) as relationship_count
+        """
+    )
+    assert result.single()["relationship_count"] == 20
+    result = session.run(
+        """
+        MATCH ()-[r:ADJACENT_TO]->()
+        RETURN count(r) as relationship_count
+        """
+    )
+    assert result.single()["relationship_count"] == 10
+
+
+def validate_ttl_seperation_between_node_object_types(session):
+    result = session.run(
+        """
+        MATCH (n:ObjectA)
+        RETURN count(n) as node_count
+        """
+    )
+    assert result.single()["node_count"] == 20
+    result = session.run(
+        """
+        MATCH (n:ObjectB)
+        RETURN count(n) as node_count
+        """
+    )
+    assert result.single()["node_count"] == 10
 
 
 PIPELINE_TESTS = [
@@ -93,9 +120,121 @@ PIPELINE_TESTS = [
 ]
 
 TTL_TESTS = [
-    ("relationship-ttlss", [validate_relationship_ttls]),
-    ("node-ttls", [validate_node_ttls]),
+    (
+        "relationship-ttls",
+        [
+            validate_consistency_in_node_counts,
+            validate_ttl_seperation_between_relationship_object_types,
+        ],
+    ),
+    ("node-ttls", [validate_ttl_seperation_between_node_object_types]),
 ]
+
+NODE_CREATION_QUERY = """
+CREATE (n:{node_label}) 
+SET n.last_ingested_at = $timestamp
+SET n.identifier = $node_id
+"""
+
+RELATIONSHIP_CREATION_QUERY = """
+MATCH (from_node:{from_node_label}) MATCH (to_node:{to_node_label}) 
+WHERE to_node.identifier=$to_node_identifier AND from_node.identifier=$from_node_identifier
+CREATE (from_node)-[rel:{relationship_label}]->(to_node) 
+SET rel.last_ingested_at = $timestamp
+"""
+
+REALLY_OLD_TIMESTAMP = Timestamp.utcnow() - Timedelta(hours=60)
+OLD_TIMESTAMP = Timestamp.utcnow() - Timedelta(hours=36)
+NEW_TIMESTAMP = Timestamp.utcnow() - Timedelta(hours=12)
+
+
+def create_node_query_from_params(node_label, node_id, timestamp):
+    return Query(
+        NODE_CREATION_QUERY.format(node_label=node_label),
+        {"timestamp": timestamp, "node_id": node_id},
+    )
+
+
+def create_relationship_query_from_params(
+    from_node_label,
+    from_node_identifier,
+    to_node_label,
+    to_node_identifier,
+    relationship_label,
+    timestamp,
+):
+    return Query(
+        RELATIONSHIP_CREATION_QUERY.format(
+            from_node_label=from_node_label,
+            to_node_label=to_node_label,
+            relationship_label=relationship_label,
+        ),
+        {
+            "timestamp": timestamp,
+            "from_node_identifier": from_node_identifier,
+            "to_node_identifier": to_node_identifier,
+        },
+    )
+
+
+def create_test_objects(session: Session):
+    def create_node(node_label, node_id, timestamp):
+        query = create_node_query_from_params(node_label, node_id, timestamp)
+        session.run(query.query_statement, query.parameters)
+
+    def create_relationship(
+        from_node_label,
+        from_node_identifier,
+        to_node_label,
+        to_node_identifier,
+        relationship_label,
+        timestamp,
+    ):
+        query = create_relationship_query_from_params(
+            from_node_label,
+            from_node_identifier,
+            to_node_label,
+            to_node_identifier,
+            relationship_label,
+            timestamp,
+        )
+        session.run(query.query_statement, query.parameters)
+
+    for i in range(0, 10):
+        create_node("ObjectA", str(i), REALLY_OLD_TIMESTAMP)
+        create_node("ObjectB", str(i), REALLY_OLD_TIMESTAMP)
+
+    for i in range(10, 20):
+        create_node("ObjectA", str(i), OLD_TIMESTAMP)
+        create_node("ObjectB", str(i), OLD_TIMESTAMP)
+
+    for i in range(20, 30):
+        create_node("ObjectA", str(i), NEW_TIMESTAMP)
+        create_node("ObjectB", str(i), NEW_TIMESTAMP)
+
+    for i in range(0, 10):
+        create_relationship(
+            "ObjectA", str(i), "ObjectB", str(i), "CONNECTED_TO", NEW_TIMESTAMP
+        )
+        create_relationship(
+            "ObjectA", str(i), "ObjectB", str(i), "ADJACENT_TO", NEW_TIMESTAMP
+        )
+
+    for i in range(10, 20):
+        create_relationship(
+            "ObjectA", str(i), "ObjectB", str(i), "CONNECTED_TO", OLD_TIMESTAMP
+        )
+        create_relationship(
+            "ObjectA", str(i), "ObjectB", str(i), "ADJACENT_TO", OLD_TIMESTAMP
+        )
+
+    for i in range(20, 30):
+        create_relationship(
+            "ObjectA", str(i), "ObjectB", str(i), "CONNECTED_TO", REALLY_OLD_TIMESTAMP
+        )
+        create_relationship(
+            "ObjectA", str(i), "ObjectB", str(i), "ADJACENT_TO", REALLY_OLD_TIMESTAMP
+        )
 
 
 @pytest.mark.asyncio
@@ -132,22 +271,8 @@ async def test_neo4j_ttls(project, neo4j_container, neo4j_version):
     with neo4j_container(
         neo4j_version
     ) as neo4j_container, neo4j_container.get_driver() as driver, driver.session() as session:
+        create_test_objects(session)
         target = project.get_target_by_name("my-neo4j-db")
-
-        for pipeline_name, validations in PIPELINE_TESTS:
-            await project.run(
-                RunRequest(
-                    pipeline_name,
-                    PipelineInitializationArguments(extra_steps=[target.make_writer()]),
-                    PipelineProgressReporter(),
-                )
-            )
-
-            for validator in validations:
-                validator(session)
-
-        sleep(30)
-
         for pipeline_name, validations in TTL_TESTS:
             await project.run(
                 RunRequest(
@@ -156,6 +281,5 @@ async def test_neo4j_ttls(project, neo4j_container, neo4j_version):
                     PipelineProgressReporter(),
                 )
             )
-
             for validator in validations:
                 validator(session)
