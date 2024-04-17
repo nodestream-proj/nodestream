@@ -8,6 +8,11 @@ from nodestream_plugin_neo4j.query import Query, QueryBatch
 from nodestream_plugin_neo4j.query_executor import Neo4jQueryExecutor
 
 from .matchers import ran_query
+from .test_ingest_query_builder import DEFAULT_RETRIES_PER_CHUNK
+
+TEST_PARAMS = {
+    "retries_per_chunk": DEFAULT_RETRIES_PER_CHUNK,
+}
 
 
 @pytest.fixture
@@ -84,7 +89,7 @@ async def test_perform_ttl_op(query_executor, some_query):
     )
     query_generator.return_value = some_query
     await query_executor.perform_ttl_op(ttl_config)
-    query_generator.assert_called_once_with(ttl_config)
+    query_generator.assert_called_once_with(ttl_config, **TEST_PARAMS)
     assert_that(query_executor, ran_query(some_query))
 
 

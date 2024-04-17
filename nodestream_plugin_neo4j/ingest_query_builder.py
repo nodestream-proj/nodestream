@@ -254,12 +254,19 @@ class Neo4jIngestQueryBuilder:
         return Query(str(query_builder), params)
 
     def generate_ttl_query_from_configuration(
-        self, config: TimeToLiveConfiguration
+        self,
+        config: TimeToLiveConfiguration,
+        retries_per_chunk,
     ) -> Query:
         ttl_match_query = self.generate_ttl_match_query(config)
+        execute_chunks_in_parallel = (
+            config.graph_object_type == GraphObjectType.RELATIONSHIP
+        )
         operation = (
             DELETE_NODE_QUERY
             if config.graph_object_type == GraphObjectType.NODE
             else DELETE_REL_QUERY
         )
-        return ttl_match_query.feed_batched_query(operation)
+        return ttl_match_query.feed_batched_query(
+            operation, config.batch_size, execute_chunks_in_parallel, retries_per_chunk
+        )
