@@ -177,6 +177,32 @@ def create_relationship_query_from_params(
     )
 
 
+"""
+The test works like this:
+    We create 60 nodes in total:
+        10 ObjectA 60hrs old
+        10 ObjectB 60hrs old
+        10 ObjectA 36hrs old
+        10 ObjectB 36hrs old
+        10 ObjectA 12hrs old
+        10 ObjectB 12hrs old
+
+    We create 60 pairwise relationships as follows:
+        ObjectA -ADJACENT_TO {60hrs old} > Object B
+        ObjectA -CONNECTED_TO {60hrs old} > Object B
+        ....
+
+    Following the same pattern.
+
+    With our TTL configuration, were able to first get rid of relationships.
+    CONNECTED_TO has 48hr expiry leaving 20 relationships of this type post deletion.
+    ADJACENT_TO has 24hr expiry leaving 10 relationships of this type post deletion
+
+    We assert that the nodes were untouched in the validate_consistency_in_node_counts  function located above.
+    We then do the exact same thing with the nodes.
+"""
+
+
 def create_test_objects(session: Session):
     def create_node(node_label, node_id, timestamp):
         query = create_node_query_from_params(node_label, node_id, timestamp)

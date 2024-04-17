@@ -31,8 +31,7 @@ def query_builder():
 
 
 GREATEST_DAY = Timestamp(1998, 3, 25, 2, 0, 1)
-DEFAULT_EXECUTE_CHUNKS_IN_PARALLEL = True
-DEFAULT_CHUNK_SIZE = 1000
+DEFAULT_CHUNK_SIZE = 100
 DEFAULT_RETRIES_PER_CHUNK = 3
 
 BASIC_NODE_TTL = TimeToLiveConfiguration(
@@ -46,7 +45,7 @@ BASIC_NODE_TTL_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "batched_query": DELETE_NODE_QUERY,
         "iterable_query": "MATCH (x: TestNodeType) WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
-        "execute_chunks_in_parallel": DEFAULT_EXECUTE_CHUNKS_IN_PARALLEL,
+        "execute_chunks_in_parallel": False,
         "chunk_size": DEFAULT_CHUNK_SIZE,
         "retries_per_chunk": DEFAULT_RETRIES_PER_CHUNK,
     },
@@ -64,7 +63,7 @@ NODE_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "batched_query": DELETE_NODE_QUERY,
         "iterable_query": NODE_TTL_WITH_CUSTOM_QUERY.custom_query,
-        "execute_chunks_in_parallel": DEFAULT_EXECUTE_CHUNKS_IN_PARALLEL,
+        "execute_chunks_in_parallel": False,
         "chunk_size": DEFAULT_CHUNK_SIZE,
         "retries_per_chunk": DEFAULT_RETRIES_PER_CHUNK,
     },
@@ -81,7 +80,7 @@ BASIC_REL_TTL_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "iterable_query": "MATCH ()-[x: IS_RELATED_TO]->() WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
         "batched_query": DELETE_REL_QUERY,
-        "execute_chunks_in_parallel": DEFAULT_EXECUTE_CHUNKS_IN_PARALLEL,
+        "execute_chunks_in_parallel": True,
         "chunk_size": DEFAULT_CHUNK_SIZE,
         "retries_per_chunk": DEFAULT_RETRIES_PER_CHUNK,
     },
@@ -99,8 +98,46 @@ REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
         "iterable_query": REL_TTL_WITH_CUSTOM_QUERY.custom_query,
         "batched_query": DELETE_REL_QUERY,
-        "execute_chunks_in_parallel": DEFAULT_EXECUTE_CHUNKS_IN_PARALLEL,
+        "execute_chunks_in_parallel": True,
         "chunk_size": DEFAULT_CHUNK_SIZE,
+        "retries_per_chunk": DEFAULT_RETRIES_PER_CHUNK,
+    },
+)
+
+NODE_TTL_WITH_BATCH_PARAMS = TimeToLiveConfiguration(
+    graph_object_type=GraphObjectType.NODE,
+    object_type="TestNodeType",
+    expiry_in_hours=10,
+    batch_size=200,
+)
+
+NODE_TTL_WITH_BATCH_PARAMS_EXPECTED_QUERY = Query(
+    COMMIT_QUERY,
+    {
+        "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
+        "batched_query": DELETE_NODE_QUERY,
+        "iterable_query": "MATCH (x: TestNodeType) WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
+        "execute_chunks_in_parallel": False,
+        "chunk_size": 200,
+        "retries_per_chunk": DEFAULT_RETRIES_PER_CHUNK,
+    },
+)
+
+REL_TTL_WITH_BATCH_PARAMS = TimeToLiveConfiguration(
+    graph_object_type=GraphObjectType.RELATIONSHIP,
+    object_type="IS_RELATED_TO",
+    expiry_in_hours=10,
+    batch_size=200,
+)
+
+REL_TTL_WITH_BATCH_PARAMS_EXPECTED_QUERY = Query(
+    COMMIT_QUERY,
+    {
+        "iterate_params": {"earliest_allowed_time": GREATEST_DAY},
+        "iterable_query": "MATCH ()-[x: IS_RELATED_TO]->() WHERE x.last_ingested_at <= $earliest_allowed_time RETURN id(x) as id",
+        "batched_query": DELETE_REL_QUERY,
+        "execute_chunks_in_parallel": True,
+        "chunk_size": 200,
         "retries_per_chunk": DEFAULT_RETRIES_PER_CHUNK,
     },
 )
@@ -114,14 +151,14 @@ REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY = Query(
         (NODE_TTL_WITH_CUSTOM_QUERY, NODE_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY),
         (BASIC_REL_TTL, BASIC_REL_TTL_EXPECTED_QUERY),
         (REL_TTL_WITH_CUSTOM_QUERY, REL_TTL_WITH_CUSTOM_QUERY_EXPECTED_QUERY),
+        (NODE_TTL_WITH_BATCH_PARAMS, NODE_TTL_WITH_BATCH_PARAMS_EXPECTED_QUERY),
+        (REL_TTL_WITH_BATCH_PARAMS, REL_TTL_WITH_BATCH_PARAMS_EXPECTED_QUERY),
     ],
 )
 def test_generates_expected_queries(mocked_utcnow, query_builder, ttl, expected_query):
     mocked_utcnow.return_value = Timestamp(1998, 3, 25, 12, 0, 1)
     resultant_query = query_builder.generate_ttl_query_from_configuration(
         ttl,
-        DEFAULT_CHUNK_SIZE,
-        DEFAULT_EXECUTE_CHUNKS_IN_PARALLEL,
         DEFAULT_RETRIES_PER_CHUNK,
     )
     assert_that(resultant_query, equal_to(expected_query))
