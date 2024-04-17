@@ -32,7 +32,7 @@ class NullInterpretationPass(InterpretationPass):
         yield context
 
 
-class MultiSequenceInterpretationPass(ExpandsSchemaFromChildren, InterpretationPass):
+class MultiSequenceInterpretationPass(InterpretationPass):
     __slots__ = ("passes",)
 
     @classmethod
@@ -48,8 +48,10 @@ class MultiSequenceInterpretationPass(ExpandsSchemaFromChildren, InterpretationP
             for res in interpretation_pass.apply_interpretations(provided_subcontext):
                 yield res
 
-    def get_child_expanders(self) -> Iterable[ExpandsSchema]:
-        yield from self.passes
+    def expand_schema(self, coordinator: SchemaExpansionCoordinator):
+        for interpretation_pass in self.passes:
+            interpretation_pass.expand_schema(coordinator)
+            coordinator.clear_aliases()
 
 
 class SingleSequenceInterpretationPass(ExpandsSchemaFromChildren, InterpretationPass):
