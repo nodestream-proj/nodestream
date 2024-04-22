@@ -6,4 +6,4 @@ scopes:
 
 targets:
   db-one:
-    database: "null"
+    database: "nil"
