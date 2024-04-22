@@ -30,6 +30,16 @@ def validate_airports(session):
     assert result.single()["count"] == 1000
 
 
+def validate_enrichment(session):
+    result = session.run(
+        """
+        MATCH (a:NewObject)
+        RETURN count(a) AS count
+        """
+    )
+    assert result.single()["count"] == 30
+
+
 def valiudate_airport_country(session):
     result = session.run(
         """
@@ -129,6 +139,9 @@ TTL_TESTS = [
     ),
     ("node-ttls", [validate_ttl_seperation_between_node_object_types]),
 ]
+
+EXTRACTOR_TESTS = [("extractor_integration", [validate_enrichment])]
+
 
 NODE_CREATION_QUERY = """
 CREATE (n:{node_label}) 
@@ -300,6 +313,27 @@ async def test_neo4j_ttls(project, neo4j_container, neo4j_version):
         create_test_objects(session)
         target = project.get_target_by_name("my-neo4j-db")
         for pipeline_name, validations in TTL_TESTS:
+            await project.run(
+                RunRequest(
+                    pipeline_name,
+                    PipelineInitializationArguments(extra_steps=[target.make_writer()]),
+                    PipelineProgressReporter(),
+                )
+            )
+            for validator in validations:
+                validator(session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.e2e
+@pytest.mark.parametrize("neo4j_version", TESTED_NEO4J_VERSIONS)
+async def test_neo4j_extractor(project, neo4j_container, neo4j_version):
+    with neo4j_container(
+        neo4j_version
+    ) as neo4j_container, neo4j_container.get_driver() as driver, driver.session() as session:
+        create_test_objects(session)
+        target = project.get_target_by_name("my-neo4j-db")
+        for pipeline_name, validations in EXTRACTOR_TESTS:
             await project.run(
                 RunRequest(
                     pipeline_name,

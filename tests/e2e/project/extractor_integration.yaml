@@ -1,0 +1,18 @@
+- implementation: nodestream_plugin_neo4j.extractor:Neo4jExtractor
+  arguments:
+    database: neo4j
+    uri: !env NEO4J_CONNECT_URI
+    username: neo4j
+    password: password
+    query: |
+      MATCH (a:ObjectA)
+      RETURN a.identifier as identifier
+      SKIP $offset LIMIT $limit
+
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: source_node
+        node_type: NewObject
+        key:
+          identifier: !jmespath identifier
