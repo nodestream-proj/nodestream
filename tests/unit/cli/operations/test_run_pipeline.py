@@ -2,9 +2,9 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations.run_pipeline import (
+    WARNING_NO_TARGETS_PROVIDED,
     RunPipeline,
     SpinnerProgressIndicator,
-    WARNING_NO_TARGETS_PROVIDED,
 )
 from nodestream.pipeline.meta import PipelineContext
 from nodestream.project import PipelineConfiguration, PipelineDefinition, Project

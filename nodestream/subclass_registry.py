@@ -1,6 +1,5 @@
 from functools import wraps
 
-
 MISSING_FROM_REGISTRY_MESSAGE_FORMAT = "{registered_class_name} '{name}' is not registered. Did you forget to install a plugin?"
 
 
