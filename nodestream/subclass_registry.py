@@ -1,5 +1,7 @@
 from functools import wraps
 
+MISSING_FROM_REGISTRY_MESSAGE_FORMAT = "{registered_class_name} '{name}' is not registered. Did you forget to install a plugin?"
+
 
 class AlreadyInRegistryError(ValueError):
     """Raised when a subclass with the same name is already in the subclass registry."""
@@ -16,7 +18,10 @@ class MissingFromRegistryError(ValueError):
 
     def __init__(self, name, registry: "SubclassRegistry", *args: object) -> None:
         super().__init__(
-            f"{name} is not in the subclass registry for: {registry.linked_base.__name__}",
+            MISSING_FROM_REGISTRY_MESSAGE_FORMAT.format(
+                name=name,
+                registered_class_name=registry.linked_base.__name__,
+            ),
             *args,
         )
 

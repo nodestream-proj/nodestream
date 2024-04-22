@@ -15,6 +15,7 @@ STATS_TABLE_COLS = ["Statistic", "Value"]
 ERROR_NO_PIPELINES_FOUND = "<error>No pipelines with the provided name were found in your project. If you didn't provide a name, you have no pipelines.</error>"
 HINT_CHECK_PIPELINE_NAME = "<info>HINT: Check that the pipelines you are trying to run are named correctly and in the registry.</info>"
 HINT_USE_NODESTREAM_SHOW = "<info>HINT: You can view your project's pipelines by running 'nodestream show'. </info>"
+WARNING_NO_TARGETS_PROVIDED = "<error>No targets provided. Running pipeline without writing to any targets.</error>"
 
 
 class RunPipeline(Operation):
@@ -78,7 +79,10 @@ class RunPipeline(Operation):
     ):
         from_cli = set(command.option("target") or {})
         from_pipeline = set(pipeline.configuration.effective_targets or {})
-        return from_cli.union(from_pipeline)
+        effective_target_names = from_cli.union(from_pipeline)
+        if not effective_target_names:
+            command.line(WARNING_NO_TARGETS_PROVIDED)
+        return effective_target_names
 
     def make_run_request(
         self, command: NodestreamCommand, pipeline: PipelineDefinition
