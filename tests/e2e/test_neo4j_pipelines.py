@@ -140,7 +140,7 @@ TTL_TESTS = [
     ("node-ttls", [validate_ttl_seperation_between_node_object_types]),
 ]
 
-EXTRACTOR_TESTS = [("airport_enrichment", [validate_enrichment])]
+EXTRACTOR_TESTS = [("extractor_integration", [validate_enrichment])]
 
 
 NODE_CREATION_QUERY = """
