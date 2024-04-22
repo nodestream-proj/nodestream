@@ -9,6 +9,8 @@ scopes:
         name: node-ttls
       - path: tests/e2e/project/relationship-ttls.yaml
         name: relationship-ttls
+      - path: tests/e2e/project/airport_enrichment.yaml
+        name: airport_enrichment
   
 targets:
   my-neo4j-db:

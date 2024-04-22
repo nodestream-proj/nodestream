@@ -27,7 +27,7 @@ class Neo4jDatabaseConnection:
         self.logger = getLogger(self.__class__.__name__)
 
     async def execute(
-        self, query: Query, log_result: bool = False, routing=RoutingControl.WRITE
+        self, query: Query, log_result: bool = False, routing_=RoutingControl.WRITE
     ) -> Iterable[Record]:
         self.logger.info(
             "Executing Cypher Query to Neo4j",
@@ -41,7 +41,7 @@ class Neo4jDatabaseConnection:
             query.query_statement,
             query.parameters,
             database_=self.database_name,
-            routing_=routing,
+            routing_=routing_,
         )
         if log_result:
             for record in result.records:
