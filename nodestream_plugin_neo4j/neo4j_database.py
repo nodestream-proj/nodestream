@@ -1,10 +1,9 @@
 from logging import getLogger
-from typing import Iterable, Union, Tuple, Awaitable
-
-from nodestream.file_io import LazyLoadedArgument
+from typing import Awaitable, Iterable, Tuple, Union
 
 from neo4j import AsyncDriver, AsyncGraphDatabase, AsyncSession, Record, RoutingControl
 from neo4j.auth_management import AsyncAuthManagers
+from nodestream.file_io import LazyLoadedArgument
 
 from .query import Query
 

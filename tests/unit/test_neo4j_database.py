@@ -1,7 +1,6 @@
 import pytest
 from hamcrest import assert_that, equal_to
 from neo4j import AsyncDriver, RoutingControl
-
 from nodestream.file_io import LazyLoadedArgument
 
 from nodestream_plugin_neo4j.neo4j_database import (
