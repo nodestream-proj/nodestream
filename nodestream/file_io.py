@@ -144,6 +144,8 @@ class LazyLoadedArgument:
     def get_value(self):
         from .pipeline.argument_resolvers import ArgumentResolver
 
+        if isinstance(self.value, LazyLoadedArgument):
+            return self.value.get_value()
         return ArgumentResolver.resolve_argument_with_alias(self.tag, self.value)
 
     @staticmethod
@@ -168,8 +170,18 @@ def wrap_unloaded_tag(self, node):
     return LazyLoadedArgument(node.tag[1:], value)
 
 
+def wrap_delayed_tag(self, node):
+    value = self.construct_mapping(node)["value"]
+    return LazyLoadedArgument(node.tag[1:], value)
+
+
+def represent_lazy_loaded_argument(dumper, data):
+    if isinstance(data.value, LazyLoadedArgument):
+        return dumper.represent_mapping(f"!{data.tag}", {"value": data.value})
+
+    return dumper.represent_scalar(f"!{data.tag}", data.value)
+
+
+LazyLoadedTagSafeLoader.add_constructor("!delayed", wrap_delayed_tag)
 LazyLoadedTagSafeLoader.add_constructor(None, wrap_unloaded_tag)
-SafeDumper.add_representer(
-    LazyLoadedArgument,
-    lambda dumper, arg: dumper.represent_scalar(arg.tag, arg.value),
-)
+SafeDumper.add_representer(LazyLoadedArgument, represent_lazy_loaded_argument)
