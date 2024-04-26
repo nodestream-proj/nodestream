@@ -25,7 +25,9 @@ def test_remembers_subclasses_by_name():
 
 
 def test_raises_errors_when_invalid_named_subclass():
-    with pytest.raises(MissingFromRegistryError):
+    with pytest.raises(
+        MissingFromRegistryError, match="Did you forget to install a plugin?"
+    ):
         TEST_REGISTRY.get("not_there")
 
 

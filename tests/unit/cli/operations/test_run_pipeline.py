@@ -1,7 +1,11 @@
 import pytest
 from hamcrest import assert_that, equal_to
 
-from nodestream.cli.operations.run_pipeline import RunPipeline, SpinnerProgressIndicator
+from nodestream.cli.operations.run_pipeline import (
+    WARNING_NO_TARGETS_PROVIDED,
+    RunPipeline,
+    SpinnerProgressIndicator,
+)
 from nodestream.pipeline.meta import PipelineContext
 from nodestream.project import PipelineConfiguration, PipelineDefinition, Project
 
@@ -79,6 +83,14 @@ def test_combine_targets_from_command_and_pipeline(
         command, pipeline
     )
     assert_that(result, equal_to(expected))
+
+
+def test_combine_targets_from_command_and_pipeline_warns_when_targets_not_set(mocker):
+    command = mocker.Mock()
+    pipeline = PipelineDefinition(None, None, configuration=PipelineConfiguration())
+    command.option.return_value = []
+    RunPipeline(None).combine_targets_from_command_and_pipeline(command, pipeline)
+    command.line.assert_called_once_with(WARNING_NO_TARGETS_PROVIDED)
 
 
 @pytest.mark.parametrize(
