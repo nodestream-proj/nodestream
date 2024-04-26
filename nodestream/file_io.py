@@ -145,7 +145,7 @@ class LazyLoadedArgument:
         from .pipeline.argument_resolvers import ArgumentResolver
 
         if isinstance(self.value, LazyLoadedArgument):
-            return self.value.get_value()
+            return self.value
         return ArgumentResolver.resolve_argument_with_alias(self.tag, self.value)
 
     @staticmethod

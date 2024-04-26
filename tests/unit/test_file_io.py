@@ -64,3 +64,10 @@ def test_delayed_tag_load_roundtrip():
     as_yaml_str = yaml.safe_dump(DATA_AS_PYTHON, indent=2, sort_keys=True)
     loaded = yaml.load(as_yaml_str, Loader=LazyLoadedTagSafeLoader)
     assert_that(loaded, DATA_AS_PYTHON)
+
+
+def test_delayed_value_resolution(mocker):
+    mocker.patch.dict("os.environ", {"USERNAME_FROM_ENV": "bob"})
+    loaded = yaml.load(DATA_TYPES_AS_YAML, Loader=LazyLoadedTagSafeLoader)
+    assert_that(loaded["lazy"].get_value(), equal_to("bob"))
+    assert_that(loaded["delayed"].get_value(), equal_to("bob"))
