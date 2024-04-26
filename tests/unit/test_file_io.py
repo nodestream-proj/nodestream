@@ -70,4 +70,7 @@ def test_delayed_value_resolution(mocker):
     mocker.patch.dict("os.environ", {"USERNAME_FROM_ENV": "bob"})
     loaded = yaml.load(DATA_TYPES_AS_YAML, Loader=LazyLoadedTagSafeLoader)
     assert_that(loaded["lazy"].get_value(), equal_to("bob"))
-    assert_that(loaded["delayed"].get_value(), equal_to("bob"))
+    assert_that(
+        loaded["delayed"].get_value(), LazyLoadedArgument("env", "USERNAME_FROM_ENV")
+    )
+    assert_that(loaded["delayed"].get_value().get_value(), equal_to("bob"))
