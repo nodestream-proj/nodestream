@@ -1,0 +1,20 @@
+[NODE] Player:
+  player_id: STRING
+  name: STRING
+  overall: STRING
+  hits: STRING
+  age: STRING
+  potential: STRING
+  last_ingested_at: DATETIME
+[RELATIONSHIP] ORIGINATES_FROM:
+  last_ingested_at: DATETIME
+[NODE] Country:
+  name: STRING
+  last_ingested_at: DATETIME
+[NODE] Person:
+  person_id: STRING
+  name: STRING
+  age: STRING
+  last_ingested_at: DATETIME
+[RELATIONSHIP] HAILS_FROM:
+  last_ingested_at: DATETIME
