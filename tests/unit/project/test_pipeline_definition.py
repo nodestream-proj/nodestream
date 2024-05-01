@@ -200,20 +200,14 @@ def test_effective_annotation_prioritizes_self():
     pipeline_configuration = PipelineConfiguration(
         targets=[],
         exclude_inherited_targets=False,
-        annotations={
-            "key": "value"
-        },
+        annotations={"key": "value"},
         parent=PipelineConfiguration(
             targets=[],
             exclude_inherited_targets=False,
-            annotations={
-                "key": "other_value",
-                "other_key": "arbitrary_value"
-            },
-        )
+            annotations={"key": "other_value", "other_key": "arbitrary_value"},
+        ),
     )
-    assert pipeline_configuration.effective_annotations=={
+    assert pipeline_configuration.effective_annotations == {
         "key": "value",
-        "other_key": "arbitrary_value"
+        "other_key": "arbitrary_value",
     }
-
