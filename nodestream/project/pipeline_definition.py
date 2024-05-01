@@ -37,9 +37,8 @@ class PipelineConfiguration:
 
     @property
     def effective_annotations(self) -> Dict[str, Any]:
-        annotations = dict(self.annotations)
-        if self.parent is not None:
-            annotations.update(self.parent.effective_annotations)
+        annotations = dict(self.parent.effective_annotations) if self.parent else {}
+        annotations.update(self.annotations)
         return annotations
 
     def to_file_data(self, verbose: bool = False):
