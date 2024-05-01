@@ -194,3 +194,20 @@ def test_from_path():
     assert_that(result.name, equal_to("test"))
     assert_that(result.configuration.annotations, equal_to({}))
     assert_that(result.file_path, equal_to(path))
+
+
+def test_effective_annotation_prioritizes_self():
+    pipeline_configuration = PipelineConfiguration(
+        targets=[],
+        exclude_inherited_targets=False,
+        annotations={"key": "value"},
+        parent=PipelineConfiguration(
+            targets=[],
+            exclude_inherited_targets=False,
+            annotations={"key": "other_value", "other_key": "arbitrary_value"},
+        ),
+    )
+    assert pipeline_configuration.effective_annotations == {
+        "key": "value",
+        "other_key": "arbitrary_value",
+    }
