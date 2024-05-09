@@ -1,7 +1,6 @@
 from typing import AsyncGenerator, Iterable
 
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
-from ..pipeline.pipeline import empty_async_generator
 from ..schema.migrations import Migrator
 from ..schema.migrations.operations import Operation
 from .copy import TypeRetriever
@@ -11,6 +10,11 @@ from .query_executor import (
     OperationOnRelationshipIdentity,
     QueryExecutor,
 )
+
+
+async def empty_async_generator():
+    for i in []:
+        yield i
 
 
 class NullMigrator(Migrator):

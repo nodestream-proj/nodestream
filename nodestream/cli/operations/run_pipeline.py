@@ -139,6 +139,12 @@ class ProgressIndicator:
     def on_finish(self, context: PipelineContext):
         pass
 
+    def on_fatal_error(self, exception: Exception):
+        self.command.line(
+            "<error>Encountered a fatal error while running pipeline</error>"
+        )
+        self.command.line(f"<error>{exception}</error>")
+
 
 class SpinnerProgressIndicator(ProgressIndicator):
     def on_start(self):
