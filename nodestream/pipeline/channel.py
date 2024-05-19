@@ -1,5 +1,5 @@
 from asyncio import Queue, wait_for
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 
 #  WARNING: DoneObject refernces should not exist beyond this module.

@@ -1,11 +1,11 @@
-from asyncio import gather, create_task
-from typing import Iterable, Tuple, List
+from asyncio import create_task, gather
+from typing import Iterable, List, Tuple
 
-from ..schema import ExpandsSchemaFromChildren, ExpandsSchema
+from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
+from .channel import StepInput, StepOuput, channel
+from .meta import get_context
 from .progress_reporter import PipelineProgressReporter
 from .step import Step, StepContext
-from .channel import channel, StepInput, StepOuput
-from .meta import get_context
 
 
 class StepExecutor:
