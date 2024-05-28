@@ -11,7 +11,7 @@ from ...stubs import StubbedValueProvider
 def subject_with_named_groups():
     return RegexValueProvider(
         regex="(?P<name>[a-z]+) (?P<age>[0-9]+)",
-        data=StubbedValueProvider(["john 42", "jane 32"]),
+        data=StubbedValueProvider(["I am john 42", "jane 32"]),
         group="name",
     )
 
