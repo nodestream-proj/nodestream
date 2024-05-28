@@ -14,7 +14,7 @@ class RegexValueProvider(ValueProvider):
         self.data = data
 
     def apply_regex_to_value(self, value: Any) -> Any:
-        match = self.regex.match(value)
+        match = self.regex.search(value)
         if match:
             return match.group(self.group)
         return None
