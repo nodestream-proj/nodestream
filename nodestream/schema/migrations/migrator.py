@@ -135,8 +135,12 @@ class Migrator:
             await self.acquire_lock()
 
         async with self.transaction():
-            for operation in migration.operations:
-                await self.execute_operation(operation)
+            try:
+                for operation in migration.operations:
+                    await self.execute_operation(operation)
+            except Exception:
+                await self.release_lock()
+                raise
 
         async with self.transaction():
             await self.mark_migration_as_executed(migration)
