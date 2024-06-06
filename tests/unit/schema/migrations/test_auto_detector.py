@@ -532,6 +532,68 @@ class DroppedRelationshipPropertyIndex(Scenario):
         )
 
 
+class MoveNodePropertyToKey(Scenario):
+    # If a property is moved to a key, then the detector should detect that the
+    # key was extended only. It should not detect that the property was dropped
+    # as it was only moved to the key.
+
+    def get_intial_state_operations(self) -> Iterable[Operation]:
+        yield CreateNodeType(
+            name=self.get_name("node_type"),
+            properties={self.get_name("property")},
+            keys={self.get_name("key")},
+        )
+
+    def get_change_operations(self) -> Iterable[Operation]:
+        yield DropNodeProperty(
+            node_type=self.get_name("node_type"),
+            property_name=self.get_name("property"),
+        )
+        yield NodeKeyExtended(
+            node_type=self.get_name("node_type"),
+            added_key_property=self.get_name("property"),
+            default=None,
+        )
+
+    def get_expected_detections(self) -> Iterable[Operation]:
+        yield NodeKeyExtended(
+            node_type=self.get_name("node_type"),
+            added_key_property=self.get_name("property"),
+            default=None,
+        )
+
+
+class MoveRelationshipPropertyToKey(Scenario):
+    # If a property is moved to a key, then the detector should detect that the
+    # key was extended only. It should not detect that the property was dropped
+    # as it was only moved to the key.
+
+    def get_intial_state_operations(self) -> Iterable[Operation]:
+        yield CreateRelationshipType(
+            name=self.get_name("relationship_type"),
+            properties={self.get_name("property")},
+            keys={self.get_name("key")},
+        )
+
+    def get_change_operations(self) -> Iterable[Operation]:
+        yield DropRelationshipProperty(
+            relationship_type=self.get_name("relationship_type"),
+            property_name=self.get_name("property"),
+        )
+        yield RelationshipKeyExtended(
+            relationship_type=self.get_name("relationship_type"),
+            added_key_property=self.get_name("property"),
+            default=None,
+        )
+
+    def get_expected_detections(self) -> Iterable[Operation]:
+        yield RelationshipKeyExtended(
+            relationship_type=self.get_name("relationship_type"),
+            added_key_property=self.get_name("property"),
+            default=None,
+        )
+
+
 ALL_PERMUTABLE_SCENARIOS = [
     AddedNodeType,
     DroppedNodeType,
@@ -553,6 +615,8 @@ ALL_PERMUTABLE_SCENARIOS = [
     ExtendedRelationshipKey,
     RenamedNodeKeyPart,
     RenamedRelationshipKeyPart,
+    MoveNodePropertyToKey,
+    MoveRelationshipPropertyToKey,
 ]
 
 

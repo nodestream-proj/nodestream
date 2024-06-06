@@ -377,6 +377,8 @@ class AutoChangeDetector:
 
     def make_node_property_change_operations(self) -> Iterable[Operation]:
         for type, deleted_field in self.deleted_node_properties:
+            if (type, deleted_field) in self.added_node_keys:
+                continue
             yield DropNodeProperty(type, deleted_field)
 
         for type, old_field, new_field in self.renamed_node_properties:
@@ -387,6 +389,8 @@ class AutoChangeDetector:
 
     def make_relationship_property_change_operations(self) -> Iterable[Operation]:
         for type, deleted_field in self.deleted_relationship_properties:
+            if (type, deleted_field) in self.added_relationship_keys:
+                continue
             yield DropRelationshipProperty(type, deleted_field)
 
         for type, old_field, new_field in self.renamed_relationship_properties:
