@@ -115,7 +115,7 @@ async def test_project_runs_pipeline_in_scope_when_present(
 ):
     scopes[0].run_request = mocker.Mock(return_value=async_return())
     request = RunRequest(
-        "test", None, PipelineInitializationArguments(), PipelineProgressReporter()
+        "test", PipelineInitializationArguments(), PipelineProgressReporter()
     )
     await project.run(request)
     scopes[0].run_request.assert_called_once_with(request)

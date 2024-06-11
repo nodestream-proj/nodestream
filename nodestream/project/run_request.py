@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from ..pipeline import PipelineInitializationArguments
-from ..pipeline.meta import start_context
 from ..pipeline.progress_reporter import PipelineProgressReporter
 from ..pipeline.scope_config import ScopeConfig
 from .pipeline_definition import PipelineDefinition
@@ -17,7 +16,6 @@ class RunRequest:
     """
 
     pipeline_name: str
-    pipeline_scope: str
     initialization_arguments: PipelineInitializationArguments
     progress_reporter: PipelineProgressReporter
 
@@ -38,7 +36,6 @@ class RunRequest:
         """
         return cls(
             pipeline_name,
-            None,
             PipelineInitializationArguments.for_testing(),
             PipelineProgressReporter.for_testing(results_list),
         )
@@ -55,9 +52,8 @@ class RunRequest:
         Args:
             definition: The pipeline definition to execute this run request with.
         """
-        with start_context(self.pipeline_name, self.pipeline_scope):
-            pipeline = definition.initialize(self.initialization_arguments)
-            await pipeline.run(self.progress_reporter)
+        pipeline = definition.initialize(self.initialization_arguments)
+        await pipeline.run(self.progress_reporter)
 
     def set_configuration(self, scope_config: ScopeConfig):
         self.initialization_arguments.effecitve_config_values = scope_config

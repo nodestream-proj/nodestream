@@ -7,7 +7,7 @@ from ..pipeline.scope_config import ScopeConfig
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .pipeline_definition import PipelineConfiguration, PipelineDefinition
 from .run_request import RunRequest
-
+from ..pipeline.meta import start_context
 
 class MissingExpectedPipelineError(ValueError):
     pass
@@ -88,9 +88,9 @@ class PipelineScope(ExpandsSchemaFromChildren, LoadsFromYaml, SavesToYaml):
         if (name := run_request.pipeline_name) not in self:
             return 0
 
-        run_request.pipeline_scope = self.name
         run_request.set_configuration(self.config)
-        await run_request.execute_with_definition(self[name])
+        with start_context(name, self.name):
+            await run_request.execute_with_definition(self[name])
         return 1
 
     def __getitem__(self, pipeline_name):

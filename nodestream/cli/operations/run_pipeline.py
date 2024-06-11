@@ -94,7 +94,6 @@ class RunPipeline(Operation):
 
         return RunRequest(
             pipeline_name=pipeline.name,
-            pipeline_scope=None,
             initialization_arguments=PipelineInitializationArguments(
                 annotations=command.option("annotations"),
                 step_outbox_size=int(command.option("step-outbox-size")),
