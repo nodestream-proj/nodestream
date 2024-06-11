@@ -26,7 +26,8 @@ def configure_logging_with_json_defaults():
     logging.setLogRecordFactory(record_factory)
 
     formatter = JsonFormatter(
-        "%(name)s %(levelname)s %(pipeline_name)s %(pipeline_scope)s %(message)s", timestamp=True
+        "%(name)s %(levelname)s %(pipeline_name)s %(pipeline_scope)s %(message)s",
+        timestamp=True,
     )
     logger = logging.getLogger()  # Configure the root logger.
     logger.handlers[0].setFormatter(formatter)

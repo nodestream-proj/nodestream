@@ -37,7 +37,7 @@ class RunRequest:
             RunRequest: A `RunRequest` for testing.
         """
         return cls(
-            pipeline_name, 
+            pipeline_name,
             None,
             PipelineInitializationArguments.for_testing(),
             PipelineProgressReporter.for_testing(results_list),
