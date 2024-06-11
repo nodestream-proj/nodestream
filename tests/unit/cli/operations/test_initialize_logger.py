@@ -36,8 +36,10 @@ def test_logs_pipeline_name(capsys):
     configure_logging_with_json_defaults()
     logger = logging.getLogger("some")
     pipeline_name = "test_pipeline_name"
-    with start_context(pipeline_name):
+    scope_name = "test_scope_name"
+    with start_context(pipeline_name, scope_name):
         logger.info("some message")
 
     captured_out = capsys.readouterr().err
     assert_that(captured_out, contains_string(pipeline_name))
+    assert_that(captured_out, contains_string(scope_name))

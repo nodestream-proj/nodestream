@@ -17,6 +17,7 @@ class RunRequest:
     """
 
     pipeline_name: str
+    pipeline_scope: str
     initialization_arguments: PipelineInitializationArguments
     progress_reporter: PipelineProgressReporter
 
@@ -36,7 +37,8 @@ class RunRequest:
             RunRequest: A `RunRequest` for testing.
         """
         return cls(
-            pipeline_name,
+            pipeline_name, 
+            None,
             PipelineInitializationArguments.for_testing(),
             PipelineProgressReporter.for_testing(results_list),
         )
@@ -53,7 +55,7 @@ class RunRequest:
         Args:
             definition: The pipeline definition to execute this run request with.
         """
-        with start_context(self.pipeline_name):
+        with start_context(self.pipeline_name, self.pipeline_scope):
             pipeline = definition.initialize(self.initialization_arguments)
             await pipeline.run(self.progress_reporter)
 

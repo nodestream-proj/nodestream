@@ -10,7 +10,7 @@ from nodestream.project import RunRequest
 @pytest.mark.asyncio
 async def test_execute_with_definition(mocker):
     request = RunRequest(
-        "test", PipelineInitializationArguments(), PipelineProgressReporter()
+        "test", None, PipelineInitializationArguments(), PipelineProgressReporter()
     )
     pipeline_definition = mocker.Mock()
     pipeline_definition.initialize.return_value = pipeline = mocker.AsyncMock()
