@@ -5,11 +5,13 @@ from dataclasses import dataclass, field
 from typing import Any, Dict
 
 UNKNOWN_PIPELINE_NAME = "unknown"
+UNKNOWN_PIPELINE_SCOPE = "unknown"
 
 
 @dataclass(frozen=True, slots=True)
 class PipelineContext:
     name: str = UNKNOWN_PIPELINE_NAME
+    scope: str = UNKNOWN_PIPELINE_SCOPE
     stats: Dict[str, Any] = field(default_factory=lambda: defaultdict(int))
 
     def increment_stat(self, stat_name: str, amount: int = 1):
@@ -27,8 +29,8 @@ def get_context() -> PipelineContext:
 
 
 @contextmanager
-def start_context(pipeline_name: str):
-    token = context.set(PipelineContext(pipeline_name))
+def start_context(pipeline_name: str, pipeline_scope: str):
+    token = context.set(PipelineContext(pipeline_name, pipeline_scope))
     try:
         yield
     finally:
