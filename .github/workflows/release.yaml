@@ -17,6 +17,7 @@ jobs:
     # See here: https://docs.pypi.org/trusted-publishers/using-a-publisher/
     permissions:
       id-token: write
+      attestations: write
   
     # Use the Github Actions Environment to isolate the workflow from the rest of the repository. 
     # See here: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
