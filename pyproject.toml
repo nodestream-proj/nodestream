@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nodestream"
-version = "0.12.4"
+version = "0.12.5a2"
 description = "A Fast, Declarative ETL for Graph Databases."
 license = "GPL-3.0-only"
 authors = [
