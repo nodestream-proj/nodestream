@@ -1,8 +1,6 @@
 from hamcrest import assert_that, equal_to
 
-from nodestream.schema.printers.cypheresque import (
-    CypherEsquePrinter,
-)
+from nodestream.schema.printers.cypheresque import CypherEsquePrinter
 
 
 def test_print_schema_to_string(basic_schema):

@@ -6,7 +6,7 @@ from .schema_printer import SCHEMA_PRINTER_SUBCLASS_REGISTRY, SchemaPrinter
 __all__ = (
     "SchemaPrinter",
     "GraphQLSchemaPrinter",
-    "LargeLanguageModelSchemaPrinter",
+    "CypherEsquePrinter",
     "PlainTestSchemaPrinter",
     "SCHEMA_PRINTER_SUBCLASS_REGISTRY",
 )

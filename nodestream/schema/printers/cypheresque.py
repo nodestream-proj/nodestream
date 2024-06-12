@@ -1,6 +1,5 @@
-from .schema_printer import SchemaPrinter
 from ..state import Adjacency, GraphObjectSchema, Schema
-
+from .schema_printer import SchemaPrinter
 
 OUTPUT_FORMAT = """Node Types:
 {node_types}
