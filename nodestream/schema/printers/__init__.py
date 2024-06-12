@@ -1,4 +1,4 @@
-from .graph_schema_extraction import LargeLanguageModelSchemaPrinter
+from .cypheresque import CypherEsquePrinter
 from .graphql_schema_printer import GraphQLSchemaPrinter
 from .plain_text_schema_printer import PlainTestSchemaPrinter
 from .schema_printer import SCHEMA_PRINTER_SUBCLASS_REGISTRY, SchemaPrinter
