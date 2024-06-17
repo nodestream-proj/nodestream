@@ -23,7 +23,7 @@ class QueueConnector(Pluggable, ABC):
 
 
 @QUEUE_OBJECT_FORMAT_SUBCLASS_REGISTRY.connect_baseclass
-class StreamRecordFormat(Pluggable, ABC):
+class QueueRecordFormat(Pluggable, ABC):
     entrypoint_name = "record_formats"
 
     @abstractmethod
@@ -31,22 +31,22 @@ class StreamRecordFormat(Pluggable, ABC):
         raise NotImplementedError
 
 
-class JsonStreamRecordFormat(StreamRecordFormat, alias="json"):
+class JsonStreamRecordFormat(QueueRecordFormat, alias="json"):
     def parse(self, record: Any) -> JsonLikeDocument:
         return json.loads(record)
 
 
 class QueueExtractor(Extractor):
-    """A StreamExtractor implements the standard behavior of polling data from a stream.
+    """A QueueExtractor implements the standard behavior of polling data from a stream.
 
-    The StreamExtractor requires both a StreamConnector and a StreamRecordFormat to delegate
+    The QueueExtractor requires both a QueueConnector and a QueueRecordFormat to delegate
     to for the actual polling implementation and parsing of the data, respectively.
     """
 
     @classmethod
     def from_file_data(cls, connector: str, record_format: str, **connector_args):
         # Import all plugins so that they can register themselves
-        StreamRecordFormat.import_all()
+        QueueRecordFormat.import_all()
         QueueConnector.import_all()
 
         object_format_cls = QUEUE_OBJECT_FORMAT_SUBCLASS_REGISTRY.get(record_format)
@@ -59,7 +59,7 @@ class QueueExtractor(Extractor):
     def __init__(
         self,
         connector: QueueConnector,
-        record_format: StreamRecordFormat,
+        record_format: QueueRecordFormat,
     ):
         self.connector = connector
         self.record_format = record_format
