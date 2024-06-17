@@ -2,7 +2,12 @@ import pytest
 
 from nodestream.databases import GraphDatabaseWriter
 from nodestream.interpreting import Interpreter
-from nodestream.pipeline import Flush, IterableExtractor, Pipeline
+from nodestream.pipeline import (
+    Flush,
+    IterableExtractor,
+    Pipeline,
+    PipelineProgressReporter,
+)
 
 
 @pytest.fixture
@@ -36,5 +41,5 @@ def test_extractor_with_flushes(mocker):
 @pytest.mark.asyncio
 async def test_flush_handling(writer, interpreter, test_extractor_with_flushes):
     pipeline = Pipeline([test_extractor_with_flushes, interpreter, writer], 1000)
-    await pipeline.run()
+    await pipeline.run(PipelineProgressReporter())
     assert writer.ingest_strategy.flush.call_count == 5

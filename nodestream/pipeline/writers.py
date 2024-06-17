@@ -7,22 +7,19 @@ from .step import Step
 
 
 class Writer(Step):
-    """A `Writer` takes a given record and commits it to a downstream data store.
+    """A `Writer` takes a given record and commits it to a downstream store.
 
-    `Writer` steps generally make up the end of an ETL pipeline and are responsible
-    for ensuring that the newly transformed data is persisted. After writing the record,
-    the record is passed downstream.
+    `Writer` steps generally make up the end of an ETL pipeline and are
+    responsible for ensuring that the newly transformed data is persisted.
+    After writing the record, the record is passed downstream.
     """
 
-    async def handle_async_record_stream(
-        self, record_stream: AsyncGenerator[Any, Any]
-    ) -> AsyncGenerator[Any, Any]:
-        async for record in record_stream:
-            if record is Flush:
-                await self.flush()
-            else:
-                await self.write_record(record)
-            yield record
+    async def process_record(self, record, _) -> AsyncGenerator[object, None]:
+        if record is Flush:
+            await self.flush()
+        else:
+            await self.write_record(record)
+        yield record
 
     @abstractmethod
     async def write_record(self, record: Any):
@@ -31,7 +28,7 @@ class Writer(Step):
     async def flush(self):
         pass
 
-    async def finish(self):
+    async def finish(self, _):
         await self.flush()
 
 

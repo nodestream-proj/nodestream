@@ -64,10 +64,6 @@ async def test_exclude_possibilities__failing():
 
 @pytest.mark.asyncio
 async def test_base_filter_filters_correctly():
-    async def records():
-        yield 1
-        yield 2
-
     class TestFilter(Filter):
         def __init__(self, results) -> None:
             self.results = results
@@ -76,8 +72,10 @@ async def test_base_filter_filters_correctly():
             return self.results.pop(0)
 
     subject = TestFilter([False, True])
-    results = [record async for record in subject.handle_async_record_stream(records())]
+    results = [record async for record in subject.process_record(1, None)]
     assert_that(results, equal_to([1]))
+    results = [record async for record in subject.process_record(2, None)]
+    assert_that(results, equal_to([]))
 
 
 REGEX = ".*[\[\]\{\}\(\)\\\/~,]+"

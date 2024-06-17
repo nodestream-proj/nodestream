@@ -16,7 +16,7 @@ async def test_value_projection_transform_record():
     subject = ValueProjection(
         projection=JmespathValueProvider.from_string_expression("items[*]")
     )
-    results = [r async for r in subject.handle_async_record_stream(record())]
+    results = [r async for r in subject.process_record(TEST_DATA, None)]
     assert_that(results, equal_to([{"index": 1}, {"index": 2}, {"index": 3}]))
 
 
@@ -29,7 +29,7 @@ async def test_value_projection_with_additional_values():
         },
     )
 
-    results = [r async for r in subject.handle_async_record_stream(record())]
+    results = [r async for r in subject.process_record(TEST_DATA, None)]
     assert_that(
         results,
         equal_to(

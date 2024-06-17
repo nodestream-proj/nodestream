@@ -122,6 +122,7 @@ class RunPipeline(Operation):
             callback=indicator.progress_callback,
             on_start_callback=indicator.on_start,
             on_finish_callback=indicator.on_finish,
+            on_fatal_error_callback=indicator.on_fatal_error,
         )
 
 
@@ -139,8 +140,18 @@ class ProgressIndicator:
     def on_finish(self, context: PipelineContext):
         pass
 
+    def on_fatal_error(self, exception: Exception):
+        self.command.line(
+            "<error>Encountered a fatal error while running pipeline</error>"
+        )
+        self.command.line(f"<error>{exception}</error>")
+
 
 class SpinnerProgressIndicator(ProgressIndicator):
+    def __init__(self, command: NodestreamCommand, pipeline_name: str) -> None:
+        super().__init__(command, pipeline_name)
+        self.exception = None
+
     def on_start(self):
         self.progress = self.command.progress_indicator()
         self.progress.start(f"Running pipeline: '{self.pipeline_name}'")
@@ -156,3 +167,12 @@ class SpinnerProgressIndicator(ProgressIndicator):
         stats = ((k, str(v)) for k, v in context.stats.items())
         table = self.command.table(STATS_TABLE_COLS, stats)
         table.render()
+
+        if self.exception:
+            raise self.exception
+
+    def on_fatal_error(self, exception: Exception):
+        self.progress.set_message(
+            "<error>Encountered a fatal error while running pipeline</error>"
+        )
+        self.exception = exception

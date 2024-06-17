@@ -19,12 +19,11 @@ async def test_writers_flush_on_write(mocker):
     writer.flush = mocker.AsyncMock()
     writer.write_record = mocker.AsyncMock()
 
-    async def input():
-        yield 1
-        yield Flush
-        yield 2
+    not_flush = await anext(writer.process_record(1, None))
+    assert_that(not_flush, equal_to(1))
+    assert_that(writer.write_record.await_count, equal_to(1))
+    assert_that(writer.flush.await_count, equal_to(0))
 
-    results = [r async for r in writer.handle_async_record_stream(input())]
-    assert_that(results, equal_to([1, Flush, 2]))
-    assert_that(writer.write_record.await_count, equal_to(2))
+    a_flush = await anext(writer.process_record(Flush, None))
+    assert_that(a_flush, equal_to(Flush))
     assert_that(writer.flush.await_count, equal_to(1))

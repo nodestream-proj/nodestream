@@ -16,7 +16,6 @@ from nodestream.interpreting.record_decomposers import (
     RecordDecomposer,
     WholeRecordDecomposer,
 )
-from nodestream.model import DesiredIngestion
 from nodestream.pipeline import IterableExtractor
 from nodestream.pipeline.value_providers import ProviderContext
 
@@ -100,18 +99,13 @@ def test_intepret_record_iterates_through_interpretation_process(stubbed_interpr
 
 @pytest.mark.asyncio
 @freeze_time("1998-03-25 12:00:01")
-async def test_handle_async_record_stream_returns_iteration_results(
-    stubbed_interpreter, mocker
-):
+async def test_transform_record_returns_iteration_results(stubbed_interpreter, mocker):
     contexts = [[ProviderContext.fresh(i)] for i in range(5)]
-    stubbed_interpreter.gather_used_indexes = mocker.Mock(return_value=[])
     stubbed_interpreter.interpret_record = mocker.Mock(side_effect=contexts)
     results = [
         r
-        async for r in stubbed_interpreter.handle_async_record_stream(
-            IterableExtractor.range(stop=5).extract_records()
-        )
-        if isinstance(r, DesiredIngestion)
+        async for input in IterableExtractor.range(stop=5).extract_records()
+        async for r in stubbed_interpreter.transform_record(input)
     ]
 
     assert_that(results, equal_to([context[0].desired_ingest for context in contexts]))
