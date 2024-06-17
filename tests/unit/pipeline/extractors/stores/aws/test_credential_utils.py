@@ -6,7 +6,7 @@ from hamcrest import assert_that, equal_to, has_key, instance_of, not_
 
 @pytest.fixture
 def client_with_role():
-    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+    from nodestream.pipeline.extractors.credential_utils import (
         AwsClientFactory,
     )
 
@@ -15,7 +15,7 @@ def client_with_role():
 
 @pytest.fixture
 def client_without_role():
-    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+    from nodestream.pipeline.extractors.credential_utils import (
         AwsClientFactory,
     )
 
@@ -23,7 +23,7 @@ def client_without_role():
 
 
 def test_init_extra_args_profile():
-    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+    from nodestream.pipeline.extractors.credential_utils import (
         AwsClientFactory,
     )
 
@@ -32,7 +32,7 @@ def test_init_extra_args_profile():
 
 
 def test_init_extra_args_empty_profile():
-    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+    from nodestream.pipeline.extractors.credential_utils import (
         AwsClientFactory,
     )
 
@@ -41,7 +41,7 @@ def test_init_extra_args_empty_profile():
 
 
 def test_init_extra_args_no_profile():
-    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+    from nodestream.pipeline.extractors.credential_utils import (
         AwsClientFactory,
     )
 
@@ -51,7 +51,7 @@ def test_init_extra_args_no_profile():
 
 def test_assume_role_and_get_credentials(mocker, client_with_role):
     mock_sts_client = mocker.patch(
-        "nodestream.pipeline.extractors.stores.aws.credential_utils.boto3.client"
+        "nodestream.pipeline.extractors.credential_utils.boto3.client"
     )
     mock_sts_client.return_value.assume_role.return_value = {
         "Credentials": {

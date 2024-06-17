@@ -19,7 +19,7 @@ def s3_client():
 
 @pytest.fixture
 def subject(mocker):
-    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
+    from nodestream.pipeline.extractors.credential_utils import (
         AwsClientFactory,
     )
     from nodestream.pipeline.extractors.stores.aws.s3_extractor import S3Extractor
