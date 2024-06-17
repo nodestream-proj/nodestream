@@ -44,3 +44,22 @@ async def test_poll_batch_1(subject):
     subject.max_batch_size = 1
     results = await subject.poll()
     assert results == ['test-message-1']
+    results = await subject.poll()
+    assert results == ['test-message-2']
+    assert await subject.poll() == []
+
+@pytest.mark.asyncio
+async def test_poll_delete_false(subject):
+    subject.max_batch_size = 10
+    subject.max_batches = 1
+    subject.delete_after_read = False
+    subject.sqs_client.set_queue_attributes(
+        QueueUrl=subject.queue_url,
+        Attributes={
+            'VisibilityTimeout': '0'
+        }
+    )
+    results = await subject.poll()
+    assert results == ['test-message-1', 'test-message-2']
+    results = await subject.poll()
+    assert results == ['test-message-1', 'test-message-2']
