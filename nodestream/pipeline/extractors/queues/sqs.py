@@ -66,8 +66,8 @@ class SQSQueueConnector(QueueConnector, alias="sqs"):
     async def get_next_messsage_batch(self):
         loop = asyncio.get_running_loop()
         msgs = await loop.run_in_executor(None, self.get_message_batch)
-        messages = msgs.get("Messages")
-        if messages is None:
+        messages = msgs.get("Messages", [])
+        if len(messages) == 0:
             return None
         return self.process_messages(messages)
 

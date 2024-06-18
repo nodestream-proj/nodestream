@@ -55,6 +55,54 @@ set the `record_format` to be `json` in the `StreamExtractor` configuration. For
      record_format: json
 ```
 
+## `QueueExtractor`
+
+The `QueueExtractor` provides a convenient abstraction for extracting records from different types of queues
+by allowing customization of the underlying queue system and the record format. By implementing the `QueueConnector`
+and `StreamRecordFormat` subclasses, one can easily adapt the extraction process to various queue sources and
+record formats.
+
+The documentation below contains information on the supported `QueueConnector` options and
+how to configure them. See the [Customizing The Queue Extractor](../guides/customizing-the-queue-extractor.md) guide
+to learn how to add your own implementations of these classes.
+
+#### Top Level Arguments
+
+```yaml
+- implementation: nodestream.pipeline.extractors.queues:QueueExtractor
+  arguments:
+     # rest of the queue extractor format arguments
+     max_batch_size: 1 # default 10. Max number of records to retrieve at one time, max size depends on connector implementation.
+     max_batches: 1 # default 10. Number of batches to process
+```
+
+### `QueueConnector`
+
+The `QueueConnector` describes how to poll data from the underlying queue mechanism.
+
+#### `AWS SQS`
+
+```yaml
+- implementation: nodestream.pipeline.extractors.queues:QueueExtractor
+  arguments:
+     # rest of the stream extractor format arguments
+     connector: sqs
+     queue_url: "https://sqs.us-east-1.amazonaws.com/177715257436/MyQueue"
+```
+
+### Additional Arguments
+With the previous minimal configuration, it will use your currently active aws credentials to read messages from
+`https://sqs.us-east-1.amazonaws.com/177715257436/MyQueue`. However, there are many options you can add to this:
+
+| Parameter Name          	| Type   	| Description                                                                                                                                                                               	|
+|-------------------------	|--------	|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| message_system_attribute_names                  	| String 	| A list of attributes that need to be returned along with each message. (Default: "All")                                                                                                     	|
+| message_attribute_names                  	| String 	| A list of attribute names to receive. (Default: "All")                                                                                                     	|
+| delete_after_read                  	| Boolean 	| Deletes the batch of messages from the queue after they are yielded to the next pipeline step. (Default: True)               
+| assume_role_arn         	| String 	| The ARN of a role to assume before interacting with the SQS Queue. Of course the appropriate configuration is needed on both the current credentials as well as the target role.             	|
+| assume_role_external_id 	| String 	| The external id that is required to assume role. Only used when `assume_role_arn` is set and only needed when the role is configured to require an external id.                           	|
+| **session_args          	| Any    	| Any other argument that you want sent to the [boto3.Session](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/core/session.html) that will be used to interact with AWS. 	|
+
 ## `AthenaExtractor`
 
 The `AthenaExtractor` issues a query to Amazon Athena, and returns yields each row as a record to the pipeline. For

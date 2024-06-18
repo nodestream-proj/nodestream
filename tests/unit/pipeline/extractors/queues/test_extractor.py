@@ -4,10 +4,8 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline import Flush
-from nodestream.pipeline.extractors.queues.extractor import (
-    JsonStreamRecordFormat,
-    QueueExtractor,
-)
+from nodestream.pipeline.extractors.queues.extractor import QueueExtractor
+from nodestream.pipeline.extractors.streams.extractor import JsonStreamRecordFormat
 
 
 @pytest.fixture

@@ -1,16 +1,18 @@
-import json
 from abc import ABC, abstractmethod
 from logging import getLogger
 from typing import Any, Iterable
 
-from ....model import JsonLikeDocument
+from nodestream.pipeline.extractors.streams.extractor import (
+    STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY,
+    StreamRecordFormat,
+)
+
 from ....pluggable import Pluggable
 from ....subclass_registry import SubclassRegistry
 from ...flush import Flush
 from ..extractor import Extractor
 
 QUEUE_CONNECTOR_SUBCLASS_REGISTRY = SubclassRegistry()
-QUEUE_OBJECT_FORMAT_SUBCLASS_REGISTRY = SubclassRegistry()
 
 
 @QUEUE_CONNECTOR_SUBCLASS_REGISTRY.connect_baseclass
@@ -20,20 +22,6 @@ class QueueConnector(Pluggable, ABC):
     @abstractmethod
     async def poll(self) -> Iterable[Any]:
         raise NotImplementedError
-
-
-@QUEUE_OBJECT_FORMAT_SUBCLASS_REGISTRY.connect_baseclass
-class QueueRecordFormat(Pluggable, ABC):
-    entrypoint_name = "record_formats"
-
-    @abstractmethod
-    def parse(self, record: Any) -> JsonLikeDocument:
-        raise NotImplementedError
-
-
-class JsonStreamRecordFormat(QueueRecordFormat, alias="json"):
-    def parse(self, record: Any) -> JsonLikeDocument:
-        return json.loads(record)
 
 
 class QueueExtractor(Extractor):
@@ -46,10 +34,10 @@ class QueueExtractor(Extractor):
     @classmethod
     def from_file_data(cls, connector: str, record_format: str, **connector_args):
         # Import all plugins so that they can register themselves
-        QueueRecordFormat.import_all()
+        StreamRecordFormat.import_all()
         QueueConnector.import_all()
 
-        object_format_cls = QUEUE_OBJECT_FORMAT_SUBCLASS_REGISTRY.get(record_format)
+        object_format_cls = STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY.get(record_format)
         connector_cls = QUEUE_CONNECTOR_SUBCLASS_REGISTRY.get(connector)
         return cls(
             record_format=object_format_cls(),
@@ -59,7 +47,7 @@ class QueueExtractor(Extractor):
     def __init__(
         self,
         connector: QueueConnector,
-        record_format: QueueRecordFormat,
+        record_format: StreamRecordFormat,
     ):
         self.connector = connector
         self.record_format = record_format
