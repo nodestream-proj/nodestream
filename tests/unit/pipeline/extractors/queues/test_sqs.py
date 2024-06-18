@@ -1,11 +1,7 @@
-from dataclasses import dataclass
-
 import pytest
 
 from moto import mock_sqs
-from pytest_mock import mocker
 
-from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
 from nodestream.pipeline.extractors.queues.sqs import SQSQueueConnector
 
 
