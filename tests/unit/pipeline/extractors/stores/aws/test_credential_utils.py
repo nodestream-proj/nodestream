@@ -6,44 +6,34 @@ from hamcrest import assert_that, equal_to, has_key, instance_of, not_
 
 @pytest.fixture
 def client_with_role():
-    from nodestream.pipeline.extractors.credential_utils import (
-        AwsClientFactory,
-    )
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
 
     return AwsClientFactory(assume_role_arn="arn:aws:iam::123456789012:role/test")
 
 
 @pytest.fixture
 def client_without_role():
-    from nodestream.pipeline.extractors.credential_utils import (
-        AwsClientFactory,
-    )
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
 
     return AwsClientFactory()
 
 
 def test_init_extra_args_profile():
-    from nodestream.pipeline.extractors.credential_utils import (
-        AwsClientFactory,
-    )
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
 
     extra_args = AwsClientFactory._init_session_args(profile_name="test")
     assert_that(extra_args, has_key("profile_name"))
 
 
 def test_init_extra_args_empty_profile():
-    from nodestream.pipeline.extractors.credential_utils import (
-        AwsClientFactory,
-    )
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
 
     extra_args = AwsClientFactory._init_session_args(profile_name="")
     assert_that(extra_args, not_(has_key("profile_name")))
 
 
 def test_init_extra_args_no_profile():
-    from nodestream.pipeline.extractors.credential_utils import (
-        AwsClientFactory,
-    )
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
 
     extra_args = AwsClientFactory._init_session_args()
     assert_that(extra_args, not_(has_key("profile_name")))

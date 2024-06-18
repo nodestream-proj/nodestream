@@ -3,8 +3,8 @@ from decimal import Decimal
 from logging import getLogger
 from typing import Any, AsyncGenerator
 
-from ...extractor import Extractor
 from ...credential_utils import AwsClientFactory
+from ...extractor import Extractor
 
 ATHENA_STATE_RUNNING = "RUNNING"
 ATHENA_STATE_FAILED = "FAILED"

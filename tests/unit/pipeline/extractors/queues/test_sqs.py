@@ -1,5 +1,4 @@
 import pytest
-
 from moto import mock_sqs
 
 from nodestream.pipeline.extractors.queues.sqs import SQSQueueConnector
