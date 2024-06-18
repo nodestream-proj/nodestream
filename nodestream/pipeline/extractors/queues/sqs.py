@@ -1,4 +1,3 @@
-
 import asyncio
 from logging import getLogger
 from typing import Any, AsyncGenerator, Iterable, Optional
@@ -7,14 +6,14 @@ from nodestream.pipeline.extractors.queues.extractor import QueueConnector
 
 from ..credential_utils import AwsClientFactory
 
+
 class SQSQueueConnector(QueueConnector, alias="sqs"):
     @classmethod
-
     def from_file_data(
         cls,
         queue_url: str,
-        message_system_attribute_names: Optional[list[str]] = ['All'],
-        message_attribute_names: Optional[list[str]] = ['All'],
+        message_system_attribute_names: Optional[list[str]] = ["All"],
+        message_attribute_names: Optional[list[str]] = ["All"],
         max_batch_size: int = 10,
         delete_after_read: bool = True,
         max_batches: int = 10,
@@ -34,8 +33,8 @@ class SQSQueueConnector(QueueConnector, alias="sqs"):
         self,
         sqs_client,
         queue_url: str,
-        message_system_attribute_names: Optional[list[str]] = ['All'],
-        message_attribute_names: Optional[list[str]] = ['All'],
+        message_system_attribute_names: Optional[list[str]] = ["All"],
+        message_attribute_names: Optional[list[str]] = ["All"],
         max_batch_size: int = 10,
         delete_after_read: bool = True,
         max_batches: int = 10,
@@ -70,17 +69,17 @@ class SQSQueueConnector(QueueConnector, alias="sqs"):
         if msgs is None:
             return None
         return self.process_messages(msgs)
-    
+
     def process_messages(self, msgs):
         for message in msgs["Messages"]:
             yield message["Body"]
         if self.delete_after_read:
             msgs.delete()
-        
+
     def get_message_batch(self) -> AsyncGenerator[Any, Any]:
         return self.sqs_client.receive_message(
             QueueUrl=self.queue_url,
             MessageSystemAttributeNames=self.message_system_attribute_names,
             MessageAttributeNames=self.message_attribute_names,
-            MaxNumberOfMessages=self.max_batch_size
+            MaxNumberOfMessages=self.max_batch_size,
         )
