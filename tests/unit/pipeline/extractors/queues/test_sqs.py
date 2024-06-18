@@ -24,9 +24,28 @@ def sqs_queue(mock_client):
 
 @mock_sqs
 @pytest.fixture
+def sqs_queue_no_messages(mock_client):
+    response = mock_client.create_queue(QueueName="queue1")
+    url = response["QueueUrl"]
+    yield url
+
+
+@mock_sqs
+@pytest.fixture
 def subject(sqs_queue, mock_client):
     return SQSQueueConnector(
         queue_url=sqs_queue,
+        max_batch_size=10,
+        max_batches=10,
+        sqs_client=mock_client,
+    )
+
+
+@mock_sqs
+@pytest.fixture
+def subject_no_messages(sqs_queue_no_messages, mock_client):
+    return SQSQueueConnector(
+        queue_url=sqs_queue_no_messages,
         max_batch_size=10,
         max_batches=10,
         sqs_client=mock_client,
@@ -61,3 +80,15 @@ async def test_poll_delete_false(subject):
     assert results == ["test-message-1", "test-message-2"]
     results = await subject.poll()
     assert results == ["test-message-1", "test-message-2"]
+
+
+@pytest.mark.asyncio
+async def test_poll_no_messages(subject_no_messages):
+    subject_no_messages.max_batch_size = 10
+    subject_no_messages.max_batches = 1
+    subject_no_messages.delete_after_read = False
+    subject_no_messages.sqs_client.set_queue_attributes(
+        QueueUrl=subject_no_messages.queue_url, Attributes={"VisibilityTimeout": "0"}
+    )
+    results = await subject_no_messages.poll()
+    assert results == []
