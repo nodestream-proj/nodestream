@@ -53,7 +53,7 @@ class SQSQueueConnector(QueueConnector, alias="sqs"):
         for _ in range(self.max_batches):
             try:
                 messages = await self.get_next_messsage_batch()
-                if len(messages) is 0:
+                if messages is None:
                     self.logger.debug("Polling returned no messages")
                     continue
                 for result in messages:
