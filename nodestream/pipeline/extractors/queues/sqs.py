@@ -53,7 +53,7 @@ class SQSQueueConnector(QueueConnector, alias="sqs"):
         for _ in range(self.max_batches):
             try:
                 messages = await self.get_next_messsage_batch()
-                if messages is None:
+                if len(messages) is 0:
                     self.logger.debug("Polling returned no messages")
                     continue
                 for result in messages:
@@ -66,7 +66,7 @@ class SQSQueueConnector(QueueConnector, alias="sqs"):
     async def get_next_messsage_batch(self):
         loop = asyncio.get_running_loop()
         msgs = await loop.run_in_executor(None, self.get_message_batch)
-        if msgs is None:
+        if len(msgs["Messages"]) is 0:
             return None
         return self.process_messages(msgs)
 
