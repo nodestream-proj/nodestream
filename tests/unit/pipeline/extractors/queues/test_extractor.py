@@ -1,19 +1,14 @@
 import json
-from unittest.mock import patch
 
 import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline import Flush
 from nodestream.pipeline.extractors.queues.extractor import (
-    QUEUE_CONNECTOR_SUBCLASS_REGISTRY,
     QueueConnector,
     QueueExtractor,
 )
-from nodestream.pipeline.extractors.streams.extractor import (
-    STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY,
-    JsonStreamRecordFormat,
-)
+from nodestream.pipeline.extractors.streams.extractor import JsonStreamRecordFormat
 
 
 @pytest.fixture
