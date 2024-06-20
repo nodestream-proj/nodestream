@@ -1,11 +1,19 @@
 import json
+from unittest.mock import patch
 
 import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline import Flush
-from nodestream.pipeline.extractors.queues.extractor import QueueExtractor
-from nodestream.pipeline.extractors.streams.extractor import JsonStreamRecordFormat
+from nodestream.pipeline.extractors.queues.extractor import (
+    QUEUE_CONNECTOR_SUBCLASS_REGISTRY,
+    QueueConnector,
+    QueueExtractor,
+)
+from nodestream.pipeline.extractors.streams.extractor import (
+    STREAM_OBJECT_FORMAT_SUBCLASS_REGISTRY,
+    JsonStreamRecordFormat,
+)
 
 
 @pytest.fixture
@@ -14,6 +22,39 @@ def extractor(mocker):
         record_format=JsonStreamRecordFormat(),
         connector=mocker.AsyncMock(),
     )
+
+
+class MockQueueConnector(QueueConnector, alias="mock_connector"):
+    def __init__(self, max_polls=1):
+        self.poll_count = 0
+        self.max_polls = max_polls
+
+    async def poll(self):
+        if self.poll_count < self.max_polls:
+            self.poll_count += 1
+            return ['{"key": "test-value"}']
+        else:
+            raise StopAsyncIteration
+
+
+@pytest.mark.asyncio
+async def test_queue_extractor_from_file_data():
+    queue_extractor = QueueExtractor.from_file_data(
+        connector="mock_connector",
+        record_format="json",
+    )
+
+    assert isinstance(queue_extractor.record_format, JsonStreamRecordFormat)
+    assert isinstance(queue_extractor.connector, MockQueueConnector)
+
+    extracted_records = []
+    try:
+        async for record in queue_extractor.extract_records():
+            extracted_records.append(record)
+    except StopAsyncIteration:
+        # Allow for a clean exit from the extract_records() infinite loop
+        pass
+    assert extracted_records == [{"key": "test-value"}]
 
 
 @pytest.mark.asyncio
