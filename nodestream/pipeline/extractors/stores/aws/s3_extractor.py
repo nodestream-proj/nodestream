@@ -3,9 +3,9 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, AsyncGenerator, Optional
 
+from ...credential_utils import AwsClientFactory
 from ...extractor import Extractor
 from ...files import SupportedFileFormat
-from .credential_utils import AwsClientFactory
 
 
 class S3Extractor(Extractor):
