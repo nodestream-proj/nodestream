@@ -5,7 +5,11 @@ from typing import Any, AsyncGenerator, Optional
 
 from ...credential_utils import AwsClientFactory
 from ...extractor import Extractor
-from ...files import SupportedFileFormat
+from ...files import (
+    SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY,
+    SupportedCompressedFileFormat,
+    SupportedFileFormat,
+)
 
 
 class S3Extractor(Extractor):
@@ -64,9 +68,27 @@ class S3Extractor(Extractor):
         return object_format
 
     def get_object_as_file(self, key: str) -> SupportedFileFormat:
-        io = self.get_object_as_io(key)
+        io = self.get_object_as_io(key)  # StreamingBody
         object_format = self.infer_object_format(key)
+        if object_format in SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY:
+            return self.supported_file_from_compressed_path(io, key)
         return SupportedFileFormat.from_file_pointer_and_format(io, object_format)
+
+    def supported_file_from_compressed_path(self, io, key) -> SupportedFileFormat:
+        path = Path(key)
+        while path.suffix in SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY:
+            compressed_file_format = (
+                SupportedCompressedFileFormat.from_file_pointer_and_format(
+                    io, path.suffix
+                )
+            )
+            io = compressed_file_format.decompress_bytes()
+            path = path.with_suffix("")
+        if not path.suffix:
+            raise ValueError(
+                f"No object format provided and key has no non-compressed extension: '{key}'"
+            )
+        return SupportedFileFormat.from_file_pointer_and_format(io, path.suffix)
 
     def is_object_in_archive(self, key: str) -> bool:
         if self.archive_dir:

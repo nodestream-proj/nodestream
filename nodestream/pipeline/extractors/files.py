@@ -1,10 +1,12 @@
+import bz2
+import gzip
 import json
 import tempfile
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
 from glob import glob
-from io import BufferedReader, IOBase, StringIO, TextIOWrapper
+from io import BufferedReader, BytesIO, IOBase, StringIO, TextIOWrapper
 from pathlib import Path
 from typing import Any, AsyncGenerator, Iterable, Union
 
@@ -18,6 +20,7 @@ from ...subclass_registry import SubclassRegistry
 from .extractor import Extractor
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
+SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
@@ -38,7 +41,7 @@ class SupportedFileFormat(Pluggable, ABC):
     def read_file(self) -> Iterable[JsonLikeDocument]:
         with self.read_handle() as fp:
             if self.reader is not None:
-                if self.reader is TextIOWrapper:
+                if self.reader is TextIOWrapper or BytesIO:
                     reader = self.reader(fp, encoding="utf-8")
                 else:
                     reader = self.reader(fp)
@@ -64,6 +67,29 @@ class SupportedFileFormat(Pluggable, ABC):
 
     @abstractmethod
     def read_file_from_handle(self, fp: BufferedReader) -> Iterable[JsonLikeDocument]:
+        ...
+
+
+@SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY.connect_baseclass
+class SupportedCompressedFileFormat(Pluggable, ABC):
+    def __init__(self, file: Union[Path, IOBase]) -> None:
+        self.file = file
+
+    @classmethod
+    def from_file_pointer_and_format(
+        cls, fp: IOBase, format: str
+    ) -> "SupportedCompressedFileFormat":
+        # Import all compression file formats so that they can register themselves
+        cls.import_all()
+        file_format = SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY.get(format)
+        return file_format(fp)
+
+    @abstractmethod
+    def decompress_file(self) -> Path:
+        ...
+
+    @abstractmethod
+    def decompress_bytes(self) -> BytesIO:
         ...
 
 
@@ -118,6 +144,50 @@ class YamlFileFormat(SupportedFileFormat, alias=".yaml"):
         return [safe_load(reader)]
 
 
+class GzipFileFormat(SupportedCompressedFileFormat, alias=".gz"):
+    def decompress_file(self) -> Path:
+        output_path = self.file.with_suffix("")
+        with gzip.open(self.file, "rb") as f_in, open(output_path, "wb") as f_out:
+            chunk_size = 65536
+            while True:
+                chunk = f_in.read(chunk_size)
+                if not chunk:
+                    break
+                f_out.write(chunk)
+        return output_path
+
+    def decompress_bytes(self) -> BytesIO:
+        decompressed_stream = BytesIO()
+        with gzip.GzipFile(fileobj=self.file, mode="rb") as gz:
+            while True:
+                chunk = gz.read(1024)
+                if not chunk:
+                    break
+                decompressed_stream.write(chunk)
+        decompressed_stream.seek(0)
+        return decompressed_stream
+
+
+class Bz2FileFormat(SupportedCompressedFileFormat, alias=".bz2"):
+    def decompress_file(self) -> Path:
+        output_path = self.file.with_suffix("")
+        with bz2.open(self.file, "rb") as f_in, open(output_path, "wb") as f_out:
+            chunk_size = 65536
+            while True:
+                chunk = f_in.read(chunk_size)
+                if not chunk:
+                    break
+                f_out.write(chunk)
+        return output_path
+
+    def decompress_bytes(self) -> BytesIO:
+        with bz2.open(self.file, "rb") as compressed_file:
+            decompressed_data = compressed_file.read()
+        decompressed_stream = BytesIO(decompressed_data)
+        decompressed_stream.seek(0)
+        return decompressed_stream
+
+
 class FileExtractor(Extractor):
     @classmethod
     def from_file_data(cls, globs: Iterable[str]):
@@ -137,7 +207,7 @@ class FileExtractor(Extractor):
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for path in self._ordered_paths():
-            with SupportedFileFormat.open(path) as file:
+            with SupportedFileFormat.open(resolve_compressed_path(path)) as file:
                 for record in file.read_file():
                     yield record
 
@@ -164,3 +234,15 @@ class RemoteFileExtractor(Extractor):
                 async with self.download_file(client, url) as file:
                     for record in file.read_file():
                         yield record
+
+
+# decompress all in path, return uncompressed path
+def resolve_compressed_path(path: Path) -> Path:
+    while path.suffix in SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY:
+        compress_file_format = (
+            SupportedCompressedFileFormat.from_file_pointer_and_format(
+                path, path.suffix
+            )
+        )
+        path = compress_file_format.decompress_file()
+    return path

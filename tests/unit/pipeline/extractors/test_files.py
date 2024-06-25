@@ -1,4 +1,6 @@
+import bz2
 import csv
+import gzip
 import itertools
 import json
 from pathlib import Path
@@ -92,6 +94,34 @@ def parquet_file(fixture_directory):
     yield Path(name)
 
 
+@pytest.fixture
+def gzip_file(fixture_directory):
+    with NamedTemporaryFile(
+        "wb", suffix=".json.gz", dir=fixture_directory, delete=False
+    ) as temp_file:
+        json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
+        with gzip.GzipFile(fileobj=temp_file, mode="wb") as gzip_file:
+            gzip_file.write(json_data)
+        name = temp_file.name
+        if not temp_file.name.endswith(".json.gz"):
+            raise Exception("not a json gzip file")
+    yield Path(name)
+
+
+@pytest.fixture
+def bz2_file(fixture_directory):
+    with NamedTemporaryFile(
+        "wb", suffix=".json.bz2", dir=fixture_directory, delete=False
+    ) as temp_file:
+        json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
+        with bz2.BZ2File(fileobj=temp_file, mode="wb") as bz2_file:
+            bz2_file.write(json_data)
+        name = temp_file.name
+        if not temp_file.name.endswith(".json.bz2"):
+            raise Exception("not a json bz2 file")
+    yield Path(name)
+
+
 @pytest.mark.asyncio
 async def test_json_formatting(json_file):
     subject = FileExtractor([json_file])
@@ -130,6 +160,20 @@ async def test_yaml_formatting(yaml_file):
 @pytest.mark.asyncio
 async def test_parquet_formatting(parquet_file):
     subject = FileExtractor([parquet_file])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_gzip_formatting(gzip_file):
+    subject = FileExtractor([gzip_file])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_bz2_formatting(gzip_file):
+    subject = FileExtractor([gzip_file])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
