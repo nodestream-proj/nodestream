@@ -3,7 +3,7 @@ import pytest
 from nodestream.pipeline.value_providers import SplitValueProvider
 from nodestream.pipeline.value_providers.value_provider import ValueProviderException
 
-from ...stubs import StubbedValueProvider, ErrorValueProvider
+from ...stubs import ErrorValueProvider, StubbedValueProvider
 
 
 def test_split(blank_context):

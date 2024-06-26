@@ -4,7 +4,7 @@ from nodestream.pipeline.value_providers import NormalizerValueProvider
 from nodestream.pipeline.value_providers.value_provider import ValueProviderException
 from nodestream.subclass_registry import MissingFromRegistryError
 
-from ...stubs import StubbedValueProvider, ErrorValueProvider
+from ...stubs import ErrorValueProvider, StubbedValueProvider
 
 
 def test_single_value(blank_context):

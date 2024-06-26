@@ -5,7 +5,7 @@ from yaml import safe_dump
 from nodestream.pipeline.value_providers import RegexValueProvider, StaticValueProvider
 from nodestream.pipeline.value_providers.value_provider import ValueProviderException
 
-from ...stubs import StubbedValueProvider, ErrorValueProvider
+from ...stubs import ErrorValueProvider, StubbedValueProvider
 
 
 @pytest.fixture
