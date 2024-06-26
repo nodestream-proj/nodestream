@@ -3,8 +3,9 @@ from hamcrest import assert_that, equal_to
 from yaml import safe_dump
 
 from nodestream.pipeline.value_providers import RegexValueProvider, StaticValueProvider
+from nodestream.pipeline.value_providers.value_provider import ValueProviderException
 
-from ...stubs import StubbedValueProvider
+from ...stubs import StubbedValueProvider, ErrorValueProvider
 
 
 @pytest.fixture
@@ -63,3 +64,32 @@ def test_regex_dump():
             "regex: (?P<name>[a-z]+) (?P<age>[0-9]+)\n"
         ),
     )
+
+
+def test_single_value_error(blank_context_with_document, subject_with_named_groups):
+    some_text_from_document = blank_context_with_document.document["team"]["name"]
+    subject_with_named_groups.data = ErrorValueProvider()
+
+    with pytest.raises(ValueProviderException) as e_info:
+        subject_with_named_groups.single_value(blank_context_with_document)
+    error_message = str(e_info.value)
+
+    assert subject_with_named_groups.raw_regex in error_message
+    assert subject_with_named_groups.group in error_message
+    assert str(subject_with_named_groups.data) in error_message
+    assert some_text_from_document in error_message
+
+
+def test_multiple_values_error(blank_context_with_document, subject_with_named_groups):
+    some_text_from_document = blank_context_with_document.document["team"]["name"]
+    subject_with_named_groups.data = ErrorValueProvider()
+
+    with pytest.raises(ValueProviderException) as e_info:
+        iterable = subject_with_named_groups.many_values(blank_context_with_document)
+        list(iterable)
+    error_message = str(e_info.value)
+
+    assert subject_with_named_groups.raw_regex in error_message
+    assert subject_with_named_groups.group in error_message
+    assert str(subject_with_named_groups.data) in error_message
+    assert some_text_from_document in error_message

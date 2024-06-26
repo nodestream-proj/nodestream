@@ -23,3 +23,6 @@ class ErrorValueProvider(ValueProvider):
 
     def single_value(self, context: ProviderContext) -> Any:
         raise Exception("testing")
+
+    def __str__(self):
+        return "ErrorValueProvider: for testing"
