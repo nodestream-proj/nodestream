@@ -51,7 +51,9 @@ class JmespathValueProvider(ValueProvider):
             raise ValueProviderException(str(context.document), self) from e
 
     def __str__(self) -> str:
-        return f"JmespathValueProvider: { {'expression': self.compiled_query.expression} }"
+        return (
+            f"JmespathValueProvider: { {'expression': self.compiled_query.expression} }"
+        )
 
 
 SafeDumper.add_representer(

@@ -3,7 +3,11 @@ from typing import Any, Iterable, Type
 from yaml import SafeDumper, SafeLoader
 
 from .context import ProviderContext
-from .value_provider import StaticValueOrValueProvider, ValueProvider, ValueProviderException
+from .value_provider import (
+    StaticValueOrValueProvider,
+    ValueProvider,
+    ValueProviderException,
+)
 
 
 class MappingValueProvider(ValueProvider):

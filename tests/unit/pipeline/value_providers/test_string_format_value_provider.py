@@ -46,6 +46,7 @@ def test_string_format_empty(blank_context):
     )
     assert_that(subject.single_value(blank_context), equal_to(None))
 
+
 def test_single_value_error(blank_context_with_document):
     some_text_from_document = blank_context_with_document.document["team"]["name"]
     subject = StringFormattingValueProvider(

@@ -11,7 +11,7 @@ MAPPINGS = {
     "MAP_A": {
         "static": "hello",
         "dynamic": StubbedValueProvider(["world"]),
-        "error": ErrorValueProvider()
+        "error": ErrorValueProvider(),
     }
 }
 
