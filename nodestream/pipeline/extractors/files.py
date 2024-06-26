@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
 from glob import glob
-from io import BufferedReader, BytesIO, IOBase, StringIO, TextIOWrapper
+from io import BufferedReader, IOBase, StringIO, TextIOWrapper
 from pathlib import Path
 from typing import Any, AsyncGenerator, Iterable, Union
 
@@ -41,7 +41,7 @@ class SupportedFileFormat(Pluggable, ABC):
     def read_file(self) -> Iterable[JsonLikeDocument]:
         with self.read_handle() as fp:
             if self.reader is not None:
-                if self.reader is TextIOWrapper or BytesIO:
+                if self.reader is TextIOWrapper:
                     reader = self.reader(fp, encoding="utf-8")
                 else:
                     reader = self.reader(fp)
@@ -53,6 +53,11 @@ class SupportedFileFormat(Pluggable, ABC):
     @classmethod
     @contextmanager
     def open(cls, file: Path) -> "SupportedFileFormat":
+        # Decompress file if in Supported Compressed File Format Registry
+        while file.suffix in SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY:
+            with SupportedCompressedFileFormat.open(file) as compressed_file_format:
+                fp = compressed_file_format.decompress_file()
+                file = Path(fp.name)
         with open(file, "rb") as fp:
             yield cls.from_file_pointer_and_format(fp, file.suffix)
 
@@ -76,6 +81,12 @@ class SupportedCompressedFileFormat(Pluggable, ABC):
         self.file = file
 
     @classmethod
+    @contextmanager
+    def open(cls, file: Path) -> "SupportedCompressedFileFormat":
+        with open(file, "rb") as fp:
+            yield cls.from_file_pointer_and_format(fp, file.suffix)
+
+    @classmethod
     def from_file_pointer_and_format(
         cls, fp: IOBase, format: str
     ) -> "SupportedCompressedFileFormat":
@@ -85,11 +96,7 @@ class SupportedCompressedFileFormat(Pluggable, ABC):
         return file_format(fp)
 
     @abstractmethod
-    def decompress_file(self) -> Path:
-        ...
-
-    @abstractmethod
-    def decompress_bytes(self) -> BytesIO:
+    def decompress_file(self) -> IOBase:
         ...
 
 
@@ -145,47 +152,43 @@ class YamlFileFormat(SupportedFileFormat, alias=".yaml"):
 
 
 class GzipFileFormat(SupportedCompressedFileFormat, alias=".gz"):
-    def decompress_file(self) -> Path:
-        output_path = self.file.with_suffix("")
-        with gzip.open(self.file, "rb") as f_in, open(output_path, "wb") as f_out:
+    def decompress_file(self):
+        new_path = Path(self.file.name).with_suffix("")
+        suffixes = "".join(Path(new_path).suffixes)
+        temp_file = tempfile.NamedTemporaryFile(
+            suffix=suffixes, delete=False, mode="w+b"
+        )
+        with gzip.open(self.file, "rb") as f_in:
             chunk_size = 65536
             while True:
                 chunk = f_in.read(chunk_size)
                 if not chunk:
                     break
-                f_out.write(chunk)
-        return output_path
+                temp_file.write(chunk)
 
-    def decompress_bytes(self) -> BytesIO:
-        decompressed_stream = BytesIO()
-        with gzip.GzipFile(fileobj=self.file, mode="rb") as gz:
-            while True:
-                chunk = gz.read(1024)
-                if not chunk:
-                    break
-                decompressed_stream.write(chunk)
-        decompressed_stream.seek(0)
-        return decompressed_stream
+        temp_file.flush()
+        temp_file.seek(0)
+        return temp_file
 
 
 class Bz2FileFormat(SupportedCompressedFileFormat, alias=".bz2"):
-    def decompress_file(self) -> Path:
-        output_path = self.file.with_suffix("")
-        with bz2.open(self.file, "rb") as f_in, open(output_path, "wb") as f_out:
+    def decompress_file(self):
+        new_path = Path(self.file.name).with_suffix("")
+        suffixes = "".join(Path(new_path).suffixes)
+        temp_file = tempfile.NamedTemporaryFile(
+            suffix=suffixes, delete=False, mode="w+b"
+        )
+        with bz2.open(self.file, "rb") as f_in:
             chunk_size = 65536
             while True:
                 chunk = f_in.read(chunk_size)
                 if not chunk:
                     break
-                f_out.write(chunk)
-        return output_path
+                temp_file.write(chunk)
 
-    def decompress_bytes(self) -> BytesIO:
-        with bz2.open(self.file, "rb") as compressed_file:
-            decompressed_data = compressed_file.read()
-        decompressed_stream = BytesIO(decompressed_data)
-        decompressed_stream.seek(0)
-        return decompressed_stream
+        temp_file.flush()
+        temp_file.seek(0)
+        return temp_file
 
 
 class FileExtractor(Extractor):
@@ -207,7 +210,7 @@ class FileExtractor(Extractor):
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for path in self._ordered_paths():
-            with SupportedFileFormat.open(resolve_compressed_path(path)) as file:
+            with SupportedFileFormat.open(path) as file:
                 for record in file.read_file():
                     yield record
 
@@ -234,15 +237,3 @@ class RemoteFileExtractor(Extractor):
                 async with self.download_file(client, url) as file:
                     for record in file.read_file():
                         yield record
-
-
-# decompress all in path, return uncompressed path
-def resolve_compressed_path(path: Path) -> Path:
-    while path.suffix in SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY:
-        compress_file_format = (
-            SupportedCompressedFileFormat.from_file_pointer_and_format(
-                path, path.suffix
-            )
-        )
-        path = compress_file_format.decompress_file()
-    return path

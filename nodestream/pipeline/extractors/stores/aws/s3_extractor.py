@@ -1,15 +1,12 @@
-from io import StringIO
+from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Any, AsyncGenerator, Optional
 
 from ...credential_utils import AwsClientFactory
 from ...extractor import Extractor
-from ...files import (
-    SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY,
-    SupportedCompressedFileFormat,
-    SupportedFileFormat,
-)
+from ...files import SupportedFileFormat
 
 
 class S3Extractor(Extractor):
@@ -45,8 +42,15 @@ class S3Extractor(Extractor):
         self.s3_client = s3_client
         self.logger = getLogger(__name__)
 
-    def get_object_as_io(self, key: str) -> StringIO:
-        return self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"]
+    @contextmanager
+    def get_object_as_tempfile(self, key: str):
+        streaming_body = self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"]
+        suffixes = "".join(Path(key).suffixes)
+        temp_file = NamedTemporaryFile("w+b", suffix=suffixes)
+        for chunk in iter(lambda: streaming_body.read(1024), b""):
+            temp_file.write(chunk)
+        temp_file.flush()
+        yield temp_file
 
     def archive_s3_object(self, key: str):
         if self.archive_dir:
@@ -67,28 +71,12 @@ class S3Extractor(Extractor):
             )
         return object_format
 
+    @contextmanager
     def get_object_as_file(self, key: str) -> SupportedFileFormat:
-        io = self.get_object_as_io(key)  # StreamingBody
-        object_format = self.infer_object_format(key)
-        if object_format in SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY:
-            return self.supported_file_from_compressed_path(io, key)
-        return SupportedFileFormat.from_file_pointer_and_format(io, object_format)
-
-    def supported_file_from_compressed_path(self, io, key) -> SupportedFileFormat:
-        path = Path(key)
-        while path.suffix in SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY:
-            compressed_file_format = (
-                SupportedCompressedFileFormat.from_file_pointer_and_format(
-                    io, path.suffix
-                )
-            )
-            io = compressed_file_format.decompress_bytes()
-            path = path.with_suffix("")
-        if not path.suffix:
-            raise ValueError(
-                f"No object format provided and key has no non-compressed extension: '{key}'"
-            )
-        return SupportedFileFormat.from_file_pointer_and_format(io, path.suffix)
+        with self.get_object_as_tempfile(key) as temp_file:
+            path = Path(temp_file.name)
+            with SupportedFileFormat.open(path) as file_format:
+                yield file_format
 
     def is_object_in_archive(self, key: str) -> bool:
         if self.archive_dir:
@@ -106,7 +94,8 @@ class S3Extractor(Extractor):
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for key in self.find_keys_in_bucket():
             try:
-                for record in self.get_object_as_file(key).read_file():
-                    yield record
+                with self.get_object_as_file(key) as records:
+                    for record in records.read_file():
+                        yield record
             finally:
                 self.archive_s3_object(key)
