@@ -42,13 +42,14 @@ class S3Extractor(Extractor):
         self.s3_client = s3_client
         self.logger = getLogger(__name__)
 
+    @contextmanager
     def get_object_as_tempfile(self, key: str):
         streaming_body = self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"]
         file = IngestibleFile.from_file_pointer_and_suffixes(
             streaming_body, Path(key).suffixes
         )
         file.on_ingestion = lambda: os.remove(file.path) and self.archive_s3_object(key)
-        return file
+        yield file
 
     def archive_s3_object(self, key: str):
         if self.archive_dir:
