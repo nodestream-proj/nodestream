@@ -17,7 +17,7 @@ def test_split_single(blank_context):
 
 
 def test_split_not_string(blank_context):
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueProviderException):
         subject = SplitValueProvider(delimiter=",", data=StubbedValueProvider([1]))
         subject.single_value(blank_context)
 
