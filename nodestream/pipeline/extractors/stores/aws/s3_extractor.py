@@ -71,9 +71,9 @@ class S3Extractor(Extractor):
 
     @contextmanager
     def get_object_as_file(self, key: str) -> SupportedFileFormat:
-        temp_file = self.get_object_as_tempfile(key)
-        with SupportedFileFormat.open(temp_file) as file_format:
-            yield file_format
+        with self.get_object_as_tempfile(key) as temp_file:
+            with SupportedFileFormat.open(temp_file) as file_format:
+                yield file_format
 
     def is_object_in_archive(self, key: str) -> bool:
         if self.archive_dir:
