@@ -10,7 +10,7 @@ from csv import DictReader
 from glob import glob
 from io import BufferedReader, IOBase, StringIO, TextIOWrapper
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable, Iterable, Optional, Union
+from typing import Any, AsyncGenerator, Callable, Iterable
 
 import pandas as pd
 from httpx import AsyncClient
@@ -26,7 +26,12 @@ SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 
 
 class IngestibleFile:
-    def __init__(self, path: Path,  fp: IOBase | None = None, on_ingestion: Callable[[Any], Any]  = lambda: ()) -> None:
+    def __init__(
+        self,
+        path: Path,
+        fp: IOBase | None = None,
+        on_ingestion: Callable[[Any], Any] = lambda: (),
+    ) -> None:
         self.extension = path.suffix
         self.suffixes = path.suffixes
         self.fp = fp
@@ -34,28 +39,34 @@ class IngestibleFile:
         self.on_ingestion = on_ingestion
 
     @classmethod
-    def from_file_pointer_and_suffixes(cls, fp: IOBase, suffixes: str | list[str], on_ingestion: Callable[[Any], Any]| None = None) -> "IngestibleFile":
+    def from_file_pointer_and_suffixes(
+        cls,
+        fp: IOBase,
+        suffixes: str | list[str],
+        on_ingestion: Callable[[Any], Any] | None = None,
+    ) -> "IngestibleFile":
         fd, temp_path = tempfile.mkstemp(suffix="".join(suffixes))
         os.close(fd)
 
         with open(temp_path, "wb") as temp_file:
-            for chunk in iter(lambda: fp.read(1024), b''):
+            for chunk in iter(lambda: fp.read(1024), b""):
                 temp_file.write(chunk)
             temp_file.flush()
 
-        fp = open(temp_path, 'rb+')
+        fp = open(temp_path, "rb+")
         return IngestibleFile(Path(temp_path), fp, on_ingestion)
-    
+
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
         self.ingested()
         if self.fp:
-            self.fp.close() 
+            self.fp.close()
 
     def ingested(self):
         self.on_ingestion()
+
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
 class SupportedFileFormat(Pluggable, ABC):
@@ -203,10 +214,13 @@ class GzipFileFormat(SupportedCompressedFileFormat, alias=".gz"):
         new_path = self.file.path.with_suffix("")
         print(new_path)
         print(new_path.suffixes)
-        temp_file = IngestibleFile.from_file_pointer_and_suffixes(decompressed_data, new_path.suffixes, self.file.on_ingestion)
+        temp_file = IngestibleFile.from_file_pointer_and_suffixes(
+            decompressed_data, new_path.suffixes, self.file.on_ingestion
+        )
         self.file.on_ingestion()
-      
+
         return temp_file
+
 
 class Bz2FileFormat(SupportedCompressedFileFormat, alias=".bz2"):
     def decompress_file(self) -> IngestibleFile:
@@ -220,9 +234,11 @@ class Bz2FileFormat(SupportedCompressedFileFormat, alias=".bz2"):
                 decompressed_data.write(chunk)
         decompressed_data.seek(0)
         new_path = self.file.path.with_suffix("")
-        temp_file = IngestibleFile.from_file_pointer_and_suffixes(decompressed_data, new_path.suffixes, self.file.on_ingestion)
+        temp_file = IngestibleFile.from_file_pointer_and_suffixes(
+            decompressed_data, new_path.suffixes, self.file.on_ingestion
+        )
         self.file.on_ingestion()
-        
+
         return temp_file
 
 
@@ -272,5 +288,3 @@ class RemoteFileExtractor(Extractor):
                 async with self.download_file(client, url) as file:
                     for record in file.read_file():
                         yield record
-
-
