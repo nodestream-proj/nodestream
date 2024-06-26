@@ -3,7 +3,11 @@ from typing import Any, Dict, Iterable, Type
 from yaml import SafeDumper, SafeLoader
 
 from .context import ProviderContext
-from .value_provider import StaticValueOrValueProvider, ValueProvider
+from .value_provider import (
+    StaticValueOrValueProvider,
+    ValueProvider,
+    ValueProviderException,
+)
 
 
 class StringFormattingValueProvider(ValueProvider):
@@ -26,22 +30,28 @@ class StringFormattingValueProvider(ValueProvider):
         self.subs = ValueProvider.guarantee_provider_dictionary(subs)
 
     def single_value(self, context: ProviderContext) -> Any:
-        if (fmt := self.fmt.single_value(context)) is None:
-            return None
+        try:
+            if (fmt := self.fmt.single_value(context)) is None:
+                return None
 
-        subs = {
-            field: provider.single_value(context)
-            for field, provider in self.subs.items()
-        }
+            subs = {
+                field: provider.single_value(context)
+                for field, provider in self.subs.items()
+            }
 
-        if not all(value is not None for value in subs.values()):
-            return None
+            if not all(value is not None for value in subs.values()):
+                return None
 
-        return fmt.format(**subs)
+            return fmt.format(**subs)
+        except Exception as e:
+            raise ValueProviderException(str(context.document), self) from e
 
     def many_values(self, context: ProviderContext) -> Iterable[Any]:
         value = self.single_value(context)
         return [value] if value else []
+
+    def __str__(self):
+        return f"StringFormattingValueProvider: { {'format': str(self.fmt), 'subs': str(self.subs) } }"
 
 
 SafeDumper.add_representer(
