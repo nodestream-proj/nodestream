@@ -73,3 +73,15 @@ class ValueProvider(Pluggable, ABC):
     @property
     def is_static(self) -> bool:
         return False
+
+
+class ValueProviderException(Exception):
+    """
+    Exception for ValueProviders
+    """
+
+    def __init__(self, input_str: str | None, value_provider: ValueProvider):
+        message = f"Given {value_provider}."
+        if input_str:
+            message = f"{message} Failed on input: {input_str}"
+        super().__init__(message)
