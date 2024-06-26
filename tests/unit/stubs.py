@@ -12,3 +12,14 @@ class StubbedValueProvider(ValueProvider):
 
     def single_value(self, context: ProviderContext) -> Any:
         return self.values[0]
+
+
+class ErrorValueProvider(ValueProvider):
+    def __init__(self) -> None:
+        pass
+
+    def many_values(self, context: ProviderContext) -> Iterable[Any]:
+        raise
+
+    def single_value(self, context: ProviderContext) -> Any:
+        raise
