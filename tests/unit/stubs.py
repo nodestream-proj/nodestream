@@ -13,6 +13,9 @@ class StubbedValueProvider(ValueProvider):
     def single_value(self, context: ProviderContext) -> Any:
         return self.values[0]
 
+    def __str__(self):
+        return f"StubbedValueProvider: {self.values}"
+
 
 class ErrorValueProvider(ValueProvider):
     def __init__(self) -> None:
