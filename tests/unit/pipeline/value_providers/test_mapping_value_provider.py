@@ -85,7 +85,7 @@ def test_multiple_values_error(blank_context_with_mapping):
 
     with pytest.raises(ValueProviderException) as e_info:
         iterable = subject.many_values(blank_context_with_mapping)
-        next(iterable)
+        list(iterable)
     error_message = str(e_info.value)
 
     assert mapping_name in error_message

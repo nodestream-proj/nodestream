@@ -19,7 +19,7 @@ class ErrorValueProvider(ValueProvider):
         pass
 
     def many_values(self, context: ProviderContext) -> Iterable[Any]:
-        raise
+        raise Exception("testing")
 
     def single_value(self, context: ProviderContext) -> Any:
-        raise
+        raise Exception("testing")
