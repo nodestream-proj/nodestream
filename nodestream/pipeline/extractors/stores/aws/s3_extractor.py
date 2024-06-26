@@ -1,12 +1,13 @@
 from contextlib import contextmanager
 from logging import getLogger
+import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, AsyncGenerator, Optional
 
 from ...credential_utils import AwsClientFactory
 from ...extractor import Extractor
-from ...files import SupportedFileFormat
+from ...files import IngestibleFile, SupportedFileFormat
 
 
 class S3Extractor(Extractor):
@@ -42,15 +43,11 @@ class S3Extractor(Extractor):
         self.s3_client = s3_client
         self.logger = getLogger(__name__)
 
-    @contextmanager
     def get_object_as_tempfile(self, key: str):
         streaming_body = self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"]
-        suffixes = "".join(Path(key).suffixes)
-        temp_file = NamedTemporaryFile("w+b", suffix=suffixes)
-        for chunk in iter(lambda: streaming_body.read(1024), b""):
-            temp_file.write(chunk)
-        temp_file.flush()
-        yield temp_file
+        file = IngestibleFile.from_file_pointer_and_suffixes(streaming_body, Path(key).suffixes)
+        file.on_ingestion = lambda: os.remove(file.path) and self.archive_s3_object(key)
+        return file
 
     def archive_s3_object(self, key: str):
         if self.archive_dir:
@@ -73,10 +70,9 @@ class S3Extractor(Extractor):
 
     @contextmanager
     def get_object_as_file(self, key: str) -> SupportedFileFormat:
-        with self.get_object_as_tempfile(key) as temp_file:
-            path = Path(temp_file.name)
-            with SupportedFileFormat.open(path) as file_format:
-                yield file_format
+        temp_file = self.get_object_as_tempfile(key)
+        with SupportedFileFormat.open(temp_file) as file_format:
+            yield file_format
 
     def is_object_in_archive(self, key: str) -> bool:
         if self.archive_dir:
