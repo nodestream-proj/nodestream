@@ -1,8 +1,7 @@
-import os
 from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
-from typing import Any, AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Generator, Optional
 
 from ...credential_utils import AwsClientFactory
 from ...extractor import Extractor
@@ -48,7 +47,7 @@ class S3Extractor(Extractor):
         file = IngestibleFile.from_file_pointer_and_suffixes(
             streaming_body, Path(key).suffixes
         )
-        file.on_ingestion = lambda: os.remove(file.path) and self.archive_s3_object(key)
+        file.on_ingestion = lambda: file.tempfile_cleanup(self.archive_s3_object(key))
         yield file
 
     def archive_s3_object(self, key: str):
@@ -71,7 +70,9 @@ class S3Extractor(Extractor):
         return object_format
 
     @contextmanager
-    def get_object_as_file(self, key: str) -> SupportedFileFormat:
+    def get_object_as_file(
+        self, key: str
+    ) -> Generator[SupportedFileFormat, None, None]:
         with self.get_object_as_tempfile(key) as temp_file:
             with SupportedFileFormat.open(temp_file) as file_format:
                 yield file_format

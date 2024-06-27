@@ -10,7 +10,7 @@ from csv import DictReader
 from glob import glob
 from io import BufferedReader, IOBase, StringIO, TextIOWrapper
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable, Iterable
+from typing import Any, AsyncGenerator, Callable, Generator, Iterable
 
 import pandas as pd
 from httpx import AsyncClient
@@ -60,12 +60,19 @@ class IngestibleFile:
         return self
 
     def __exit__(self, type, value, traceback):
-        self.ingested()
         if self.fp:
             self.fp.close()
+        self.ingested()
 
     def ingested(self):
         self.on_ingestion()
+
+    def tempfile_cleanup(self, other_cleanup: Callable[[Any], Any] = lambda: ()):
+        if self.fp:
+            self.fp.close()
+        if os.path.isfile(self.path):
+            os.remove(self.path)
+        other_cleanup()
 
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
@@ -97,13 +104,13 @@ class SupportedFileFormat(Pluggable, ABC):
 
     @classmethod
     @contextmanager
-    def open(cls, file: IngestibleFile | Path) -> "SupportedFileFormat":
+    def open(cls, file: IngestibleFile) -> Generator["SupportedFileFormat", None, None]:
         extension = file.extension
         # Decompress file if in Supported Compressed File Format Registry
         while extension in SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY:
-            with SupportedCompressedFileFormat.open(file) as compressed_file_format:
-                file = compressed_file_format.decompress_file()
-                extension = file.extension
+            compressed_file_format = SupportedCompressedFileFormat.open(file)
+            file = compressed_file_format.decompress_file()
+            extension = file.extension
         with open(file.path, "rb") as fp:
             yield cls.from_file_pointer_and_format(fp, extension)
 
@@ -127,21 +134,19 @@ class SupportedCompressedFileFormat(Pluggable, ABC):
         self.file = file
 
     @classmethod
-    @contextmanager
     def open(cls, file: IngestibleFile) -> "SupportedCompressedFileFormat":
         with open(file.path, "rb") as fp:
-            tmpfile = cls.from_file_pointer_and_suffixes(fp, file.suffixes)
-            yield tmpfile
+            return cls.from_file_pointer_and_path(fp, file.path)
 
     @classmethod
-    def from_file_pointer_and_suffixes(
-        cls, fp: IOBase, suffixes: list[str]
+    def from_file_pointer_and_path(
+        cls, fp: IOBase, path: Path
     ) -> "SupportedCompressedFileFormat":
         # Import all compression file formats so that they can register themselves
         cls.import_all()
-        file_format = SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY.get(suffixes[-1])
-        file = IngestibleFile.from_file_pointer_and_suffixes(fp, suffixes)
-        file.on_ingestion = lambda: os.remove(file.path)
+        file_format = SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY.get(path.suffix)
+        file = IngestibleFile(path, fp)
+        file.on_ingestion = lambda: file.tempfile_cleanup()
         return file_format(file)
 
     @abstractmethod
