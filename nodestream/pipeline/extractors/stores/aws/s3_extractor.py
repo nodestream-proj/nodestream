@@ -1,11 +1,11 @@
-from io import StringIO
+from contextlib import contextmanager
 from logging import getLogger
 from pathlib import Path
-from typing import Any, AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Generator, Optional
 
 from ...credential_utils import AwsClientFactory
 from ...extractor import Extractor
-from ...files import SupportedFileFormat
+from ...files import IngestibleFile, SupportedFileFormat
 
 
 class S3Extractor(Extractor):
@@ -41,8 +41,13 @@ class S3Extractor(Extractor):
         self.s3_client = s3_client
         self.logger = getLogger(__name__)
 
-    def get_object_as_io(self, key: str) -> StringIO:
-        return self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"]
+    @contextmanager
+    def get_object_as_tempfile(self, key: str):
+        streaming_body = self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"]
+        file = IngestibleFile.from_file_pointer_and_suffixes(
+            streaming_body, Path(key).suffixes, lambda: self.archive_s3_object(key)
+        )
+        yield file
 
     def archive_s3_object(self, key: str):
         if self.archive_dir:
@@ -63,10 +68,13 @@ class S3Extractor(Extractor):
             )
         return object_format
 
-    def get_object_as_file(self, key: str) -> SupportedFileFormat:
-        io = self.get_object_as_io(key)
-        object_format = self.infer_object_format(key)
-        return SupportedFileFormat.from_file_pointer_and_format(io, object_format)
+    @contextmanager
+    def get_object_as_file(
+        self, key: str
+    ) -> Generator[SupportedFileFormat, None, None]:
+        with self.get_object_as_tempfile(key) as temp_file:
+            with SupportedFileFormat.open(temp_file) as file_format:
+                yield file_format
 
     def is_object_in_archive(self, key: str) -> bool:
         if self.archive_dir:
@@ -84,7 +92,8 @@ class S3Extractor(Extractor):
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for key in self.find_keys_in_bucket():
             try:
-                for record in self.get_object_as_file(key).read_file():
-                    yield record
+                with self.get_object_as_file(key) as records:
+                    for record in records.read_file():
+                        yield record
             finally:
                 self.archive_s3_object(key)

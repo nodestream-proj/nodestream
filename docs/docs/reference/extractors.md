@@ -159,6 +159,9 @@ With the previous minimal configuration, it will use your currently active aws c
 | assume_role_external_id 	| String 	| The external id that is required to assume role. Only used when `assume_role_arn` is set and only needed when the role is configured to require an external id.                           	|
 | **session_args          	| Any    	| Any other argument that you want sent to the [boto3.Session](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/core/session.html) that will be used to interact with AWS. 	|
 
+### Support For Compressed File Formats
+The system seamlessly handles decompression of objects stored in `.gz`
+and `.bz2`file formats. Files are automatically decompressed and processed based on their underlying content type, indicated by the file extension. For instance, a gzip-compressed JSON file should be named with the `.json.gz` extension to ensure it is correctly identified and read as JSON after decompression.
 
 ## `FileExtractor`
 
