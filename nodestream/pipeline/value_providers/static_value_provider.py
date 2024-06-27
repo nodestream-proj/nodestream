@@ -24,6 +24,9 @@ class StaticValueProvider(ValueProvider):
     def is_static(self) -> bool:
         return True
 
+    def __str__(self):
+        return f"StaticValueProvider: { {'value': self.value } }"
+
 
 SafeDumper.add_representer(
     StaticValueProvider,

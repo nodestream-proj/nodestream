@@ -5,7 +5,7 @@ from jmespath.parser import ParsedResult
 from yaml import SafeDumper, SafeLoader
 
 from .context import ProviderContext
-from .value_provider import ValueProvider
+from .value_provider import ValueProvider, ValueProviderException
 
 
 class JmespathValueProvider(ValueProvider):
@@ -39,10 +39,21 @@ class JmespathValueProvider(ValueProvider):
             yield raw_search
 
     def single_value(self, context: ProviderContext) -> Any:
-        return next(self.search(context), None)
+        try:
+            return next(self.search(context), None)
+        except Exception as e:
+            raise ValueProviderException(str(context.document), self) from e
 
     def many_values(self, context: ProviderContext) -> Iterable[Any]:
-        return self.search(context)
+        try:
+            yield from self.search(context)
+        except Exception as e:
+            raise ValueProviderException(str(context.document), self) from e
+
+    def __str__(self) -> str:
+        return (
+            f"JmespathValueProvider: { {'expression': self.compiled_query.expression} }"
+        )
 
 
 SafeDumper.add_representer(

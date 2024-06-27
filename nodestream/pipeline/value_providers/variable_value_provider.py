@@ -30,6 +30,9 @@ class VariableValueProvider(ValueProvider):
             return []
         return value if isinstance(value, list) else [value]
 
+    def __str__(self):
+        return f"VariableValueProvider: { {'variable_name': self.variable_name} }"
+
 
 SafeDumper.add_representer(
     VariableValueProvider,
