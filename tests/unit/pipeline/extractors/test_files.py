@@ -218,7 +218,6 @@ def test_contextmanager_file_deleted_with_tempfile_cleanup_callback(json_file):
         with IngestibleFile.from_file_pointer_and_suffixes(
             fp, json_file.suffixes
         ) as file:
-            file.on_ingestion = lambda: file.tempfile_cleanup()
             path = file.path
             fp = file.fp
             assert_that(file.path.exists(), equal_to(True))
@@ -231,7 +230,6 @@ def test_file_deleted_with_tempfile_cleanup_callback_ingested(json_file):
     fp = IOBase()
     with open(json_file, "rb+") as fp:
         file = IngestibleFile.from_file_pointer_and_suffixes(fp, json_file.suffixes)
-        file.on_ingestion = lambda: file.tempfile_cleanup()
         path = file.path
         fp = file.fp
         assert_that(file.path.exists(), equal_to(True))

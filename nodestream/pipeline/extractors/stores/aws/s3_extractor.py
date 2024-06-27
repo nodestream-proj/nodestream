@@ -45,9 +45,8 @@ class S3Extractor(Extractor):
     def get_object_as_tempfile(self, key: str):
         streaming_body = self.s3_client.get_object(Bucket=self.bucket, Key=key)["Body"]
         file = IngestibleFile.from_file_pointer_and_suffixes(
-            streaming_body, Path(key).suffixes
+            streaming_body, Path(key).suffixes, lambda: self.archive_s3_object(key)
         )
-        file.on_ingestion = lambda: file.tempfile_cleanup(self.archive_s3_object(key))
         yield file
 
     def archive_s3_object(self, key: str):

@@ -30,12 +30,14 @@ class IngestibleFile:
         self,
         path: Path,
         fp: IOBase | None = None,
+        delete_on_ingestion: bool = False,
         on_ingestion: Callable[[Any], Any] = lambda: (),
     ) -> None:
         self.extension = path.suffix
         self.suffixes = path.suffixes
         self.fp = fp
         self.path = path
+        self.delete_on_ingestion = delete_on_ingestion
         self.on_ingestion = on_ingestion
 
     @classmethod
@@ -54,7 +56,7 @@ class IngestibleFile:
             temp_file.flush()
 
         with open(temp_path, "rb+") as fp:
-            return IngestibleFile(Path(temp_path), fp, on_ingestion)
+            return IngestibleFile(Path(temp_path), fp, True, on_ingestion)
 
     def __enter__(self):
         return self
@@ -62,17 +64,19 @@ class IngestibleFile:
     def __exit__(self, type, value, traceback):
         if self.fp:
             self.fp.close()
-        self.ingested()
+        if self.delete_on_ingestion:
+            self.tempfile_cleanup()
 
     def ingested(self):
+        if self.delete_on_ingestion:
+            self.tempfile_cleanup()
         self.on_ingestion()
 
-    def tempfile_cleanup(self, other_cleanup: Callable[[Any], Any] = lambda: ()):
+    def tempfile_cleanup(self):
         if self.fp:
             self.fp.close()
         if os.path.isfile(self.path):
             os.remove(self.path)
-        other_cleanup()
 
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
@@ -220,7 +224,6 @@ class GzipFileFormat(SupportedCompressedFileFormat, alias=".gz"):
         temp_file = IngestibleFile.from_file_pointer_and_suffixes(
             decompressed_data, new_path.suffixes
         )
-        temp_file.on_ingestion = temp_file.tempfile_cleanup
         self.file.ingested()
         return temp_file
 
@@ -240,7 +243,6 @@ class Bz2FileFormat(SupportedCompressedFileFormat, alias=".bz2"):
         temp_file = IngestibleFile.from_file_pointer_and_suffixes(
             decompressed_data, new_path.suffixes
         )
-        temp_file.on_ingestion = temp_file.tempfile_cleanup
         self.file.ingested()
         return temp_file
 
