@@ -4,10 +4,10 @@ from typing import Any, AsyncGenerator, Dict, List, Optional
 from ...credential_utils import AwsClientFactory
 from ...extractor import Extractor
 
-
 """
     Additional Type Format Handlers
 """
+
 
 def leave_untouched(value: Any):
     return value
@@ -43,6 +43,7 @@ def format_null(value: str):
 """
     Result Handlers
 """
+
 
 def convert_scalar(value: Any, type_handler):
     return type_handler(value)
