@@ -53,8 +53,8 @@ class IngestibleFile:
                 temp_file.write(chunk)
             temp_file.flush()
 
-        fp = open(temp_path, "rb+")
-        return IngestibleFile(Path(temp_path), fp, on_ingestion)
+        with open(temp_path, "rb+") as fp:
+            return IngestibleFile(Path(temp_path), fp, on_ingestion)
 
     def __enter__(self):
         return self
