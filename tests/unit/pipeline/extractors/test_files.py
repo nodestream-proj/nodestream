@@ -1,6 +1,9 @@
+import bz2
 import csv
+import gzip
 import itertools
 import json
+from io import IOBase
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -9,7 +12,11 @@ import pytest
 import yaml
 from hamcrest import assert_that, equal_to, has_length
 
-from nodestream.pipeline.extractors.files import FileExtractor, RemoteFileExtractor
+from nodestream.pipeline.extractors.files import (
+    FileExtractor,
+    IngestibleFile,
+    RemoteFileExtractor,
+)
 
 SIMPLE_RECORD = {"record": "value"}
 
@@ -92,6 +99,34 @@ def parquet_file(fixture_directory):
     yield Path(name)
 
 
+@pytest.fixture
+def gzip_file(fixture_directory):
+    with NamedTemporaryFile(
+        "wb", suffix=".json.gz", dir=fixture_directory, delete=False
+    ) as temp_file:
+        json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
+        with gzip.GzipFile(fileobj=temp_file, mode="wb") as gzip_file:
+            gzip_file.write(json_data)
+        name = temp_file.name
+        if not temp_file.name.endswith(".json.gz"):
+            raise Exception("not a json gzip file")
+    yield Path(name)
+
+
+@pytest.fixture
+def bz2_file(fixture_directory):
+    with NamedTemporaryFile(
+        "wb", suffix=".json.bz2", dir=fixture_directory, delete=False
+    ) as temp_file:
+        json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
+        with bz2.BZ2File(fileobj=temp_file, mode="wb") as bz2_file:
+            bz2_file.write(json_data)
+        name = temp_file.name
+        if not temp_file.name.endswith(".json.bz2"):
+            raise Exception("not a json bz2 file")
+    yield Path(name)
+
+
 @pytest.mark.asyncio
 async def test_json_formatting(json_file):
     subject = FileExtractor([json_file])
@@ -134,6 +169,20 @@ async def test_parquet_formatting(parquet_file):
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
 
+@pytest.mark.asyncio
+async def test_gzip_formatting(gzip_file):
+    subject = FileExtractor([gzip_file])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_bz2_formatting(gzip_file):
+    subject = FileExtractor([gzip_file])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
 def test_declarative_init(
     fixture_directory, csv_file, json_file, txt_file, jsonl_file, yaml_file
 ):
@@ -160,3 +209,30 @@ def test_file_ordereing():
     for permutation in itertools.permutations(files_in_order):
         subject = FileExtractor(permutation)
         assert_that(list(subject._ordered_paths()), equal_to(files_in_order))
+
+
+def test_contextmanager_file_deleted_with_tempfile_cleanup_callback(json_file):
+    path = Path()
+    fp = IOBase()
+    with open(json_file, "rb+") as fp:
+        with IngestibleFile.from_file_pointer_and_suffixes(
+            fp, json_file.suffixes
+        ) as file:
+            path = file.path
+            fp = file.fp
+            assert_that(file.path.exists(), equal_to(True))
+    assert_that(path.exists(), equal_to(False))
+    assert_that(fp.closed, equal_to(True))
+
+
+def test_file_deleted_with_tempfile_cleanup_callback_ingested(json_file):
+    path = Path()
+    fp = IOBase()
+    with open(json_file, "rb+") as fp:
+        file = IngestibleFile.from_file_pointer_and_suffixes(fp, json_file.suffixes)
+        path = file.path
+        fp = file.fp
+        assert_that(file.path.exists(), equal_to(True))
+        file.ingested()
+        assert_that(path.exists(), equal_to(False))
+        assert_that(fp.closed, equal_to(True))
