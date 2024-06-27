@@ -43,7 +43,7 @@ class IngestibleFile:
         cls,
         fp: IOBase,
         suffixes: str | list[str],
-        on_ingestion: Callable[[Any], Any] | None = None,
+        on_ingestion: Callable[[Any], Any] = lambda: (),
     ) -> "IngestibleFile":
         fd, temp_path = tempfile.mkstemp(suffix="".join(suffixes))
         os.close(fd)
