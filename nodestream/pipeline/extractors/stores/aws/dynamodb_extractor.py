@@ -1,36 +1,39 @@
 from logging import getLogger
-from typing import Any, Dict, List, AsyncGenerator
+from typing import Any, Dict, List, Optional, AsyncGenerator
 
 from ...credential_utils import AwsClientFactory
 from ...extractor import Extractor
 
-
-class DynamoObject:
-    """
-        Dynamo objects generally come in the form {"attribute_type": value}
-        Example:
-            {"S", "some_string"}
-            {"N", "12345"}
-    """
-    def __init__(self, object: Dict[str, Any]):
-        self.attribute_type = list(object.keys())[0]
-        self.value = list(object.values())[0]
-
-    def items(self) -> tuple[str, Any]:
-        return self.attribute_type, self.value
-    
-    def as_dynamo_representation(self):
-        if isinstance(self.value, dict):
-            return {self.attribute_type: {key: value.as_dynamo_representation() for key, value in self.value.items()}}
-        elif isinstance(self.value, list):
-            return {self.attribute_type: [value.as_dynamo_representation() for value in self.value ]}
-        return {self.attribute_type: self.value}
-
-def leave_untouched(value):
+# Additional Type Format Handlers
+def leave_untouched(value: Any):
     return value
 
-def convert_scalar(value, type_handler):
-    return  None if type_handler is None else type_handler(value)
+def format_number(value: str):
+    if '.' in value:
+        return float(value)
+    return int(value)
+
+# Nested data that are not declared by a set will maintain their Dynamo format of { data_type: raw_data_value }
+def format_nested_value(object: Dict[str, Any]):
+    return DynamoData.from_raw_dynamo_data(object).python_format
+
+def format_boolean(value: str):
+    if value.lower() == "true":
+        return True
+    else:
+        return False
+    
+def format_bytes(value: str):
+    return value.encode("utf-8")
+
+# Null objects come in the form {"NULL": "True"} or {"NULL": "False"}. 
+def format_null(value: str):
+    return None if format_boolean(value) else value
+
+
+# Result Handlers
+def convert_scalar(value: Any, type_handler):
+    return type_handler(value)
 
 def convert_array(array: List[Any], type_handler):
     return [type_handler(value) for value in array]
@@ -38,162 +41,131 @@ def convert_array(array: List[Any], type_handler):
 def convert_map(mapping: Dict[str, Any], type_handler):
     return {key: type_handler(value) for key, value in mapping.items()}
 
-def convert_number(value: str):
-    if '.' in value:
-        return float(value)
-    return int(value)
 
 DEFAULT_HANDLER = (convert_scalar, leave_untouched)
 
-def convert_value(dynamo_object: Dict[str, Any]):
-    attribute_type, value = DynamoObject(dynamo_object).items()
-    result_handler, type_handler = ATTRIBUTE_TYPE_DESCRIPTOR_HANDLERS.get(attribute_type, DEFAULT_HANDLER)
-    return result_handler(value, type_handler)
-
-
 ATTRIBUTE_TYPE_DESCRIPTOR_HANDLERS = {
-    "S": (convert_scalar, str),
-    "N": (convert_scalar, convert_number),
-    "B": (convert_scalar, bytes),
-    "NULL": (convert_scalar, None),
-    "BOOL": (convert_scalar, bool),
-    "SS": (convert_array, str),
-    "NS": (convert_array, convert_number),
-    "BS": (convert_array, bytes),
-    "M": (convert_map, convert_value),
-    "L": (convert_array, convert_value)
+    "S": (convert_scalar, leave_untouched),                     # String format
+    "N": (convert_scalar, format_number),           # Number format (int or float)
+    "B": (convert_scalar, format_bytes),                     # Bytes format (just keep it as a string)
+    "NULL": (convert_scalar, format_null),          # Null format
+    "BOOL": (convert_scalar, format_boolean),                 # Boolean format
+    "SS": (convert_array, leave_untouched),                     # Set of Strings will be a List[str]
+    "NS": (convert_array, format_number),           # Set of Numbers will be a List[str]
+    "BS": (convert_array, format_bytes),                     # Set of Bytes will be a List[str]
+    "M": (convert_map, format_nested_value),        # Map will be a Dict[DynamoData]
+    "L": (convert_array, format_nested_value)       # List will be a List[DynamoData]
 }
 
-class DynamoRowConverter:
-    def __init__(self, item: Dict[str, Any]) -> None:
-        self.item = item
-
-    # { key: {"S": "string"}, secondary_key: { "M": {Stuff} }, tertiary_key: { "L": [Stuff] } }
-    def convert_row(self):
-        return {attribute_name: convert_value(attribute_value) for attribute_name, attribute_value in self.item.items()}
-
-
-def verify_list_consistency(value_list: List[Any]):
-    type_set = set([type(value) for value in value_list])
-    if len(type_set > 1):
-        return "L"
-    return REVERSE_ORDER_DESCRIPTOR_HANDLERS[type_set[0]] + "S"
-
-def boolean_to_dynamo_format_converter(value: None | bool):
-    return True if value is None else False
-
-def convert_value_to_dynamo_format(value: Any):
-    value_type, handler = REVERSE_ORDER_DESCRIPTOR_HANDLERS[type(value)]
-    if (value_type == "LIST"):
-        value_type = verify_list_consistency(value)
-    converted_value = handler(value)
-    return DynamoObject({value_type: converted_value})
-
-def recursive_dynamo_format_converter(value: Dict[str, Any] | List[Any]):
-    if isinstance(value, Dict):
-        return {key: convert_value_to_dynamo_format(item) for key, item in value.items()}
-    return [convert_value_to_dynamo_format(item) for item in value]
-    
-
-REVERSE_ORDER_DESCRIPTOR_HANDLERS = {
-    int: ("N", str),
-    float: ("N", str),
-    str: ("S", leave_untouched),
-    bytes:( "B", leave_untouched),
-    None: ("NULL", boolean_to_dynamo_format_converter),
-    bool: ("BOOL", leave_untouched),
-    dict: ("M", recursive_dynamo_format_converter),
-    list: ("LIST", recursive_dynamo_format_converter)
-}
-
-
-def convert_value_list_to_dynamo_format(value_list: List[Any]):
-    return_values = []
-    for value in value_list:
-        return_values.append(convert_value_to_dynamo_format(value))
-    return return_values
-
-
-class DynamoConditional:
+class DynamoData:
+    """
+        Dynamo Data object is defined by the following key: value pair:
+            {data_type: raw_data_value}
+    """
     @classmethod
-    def from_conditional_data(cls, conditional_data: Dict[str, Any]):
-        return cls(**conditional_data)
+    def from_raw_dynamo_data(cls, raw_dynamo_attribute: Dict[str, Any]):
+        return DynamoData(
+            *list(raw_dynamo_attribute.items())[0]
+        )
     
-    def __init__(self, AttributeValueList: List[Any], ComparisonOperator: str):
-        self.AttributeValueList: List[DynamoObject] = convert_value_list_to_dynamo_format(AttributeValueList)
-        self.ComparisonOperator = ComparisonOperator
+    def __init__(self, data_type: str, raw_data_value: Any):
+        self.data_type = data_type
+        self.raw_data_value = raw_data_value
 
-    def generate_filter_format(self):
-        return {'AttributeValueList': [dynamo_object.as_dynamo_representation() for dynamo_object in self.AttributeValueList], 'ComparisonOperator': self.ComparisonOperator}
+    @property
+    def python_format(self) -> Any:
+        result_handler, type_handler = ATTRIBUTE_TYPE_DESCRIPTOR_HANDLERS.get(self.data_type, DEFAULT_HANDLER)
+        return result_handler(self.raw_data_value, type_handler)
+    
+    def __eq__(self, other: "DynamoData") -> bool:
+        return self.data_type == other.data_type and self.raw_data_value == other.raw_data_value
 
 
-class DynamoFilterConverter:
+class DynamoRecord:
+    """
+        Collection of attributes and their data.
+    """
     @classmethod
-    def from_file_data(cls, scan_filter: Dict[str, Any]):
-        return cls({attribute_name: DynamoConditional.from_conditional_data(conditional_data) for attribute_name, conditional_data in scan_filter.items()})
-    
-    def __init__(self, conditionals: Dict[str, DynamoConditional]):
-        self.conditionals = conditionals
+    def from_raw_dynamo_record(cls, raw_dynamo_entry: Dict[str, Dict[str, Any]]):
+        return DynamoRecord(
+            {attribute_name: DynamoData.from_raw_dynamo_data(attribute_value) for attribute_name, attribute_value in raw_dynamo_entry.items()}
+        )
 
-    def generate_filter_converter(self):
-        return {attribute_name: conditional.generate_filter_format() for attribute_name, conditional in self.conditionals.items()}
-    
+    def __init__(self, record_data: Dict[str, DynamoData]):
+        self.record_data = record_data
+
+    @property
+    def python_format(self) -> Dict[str, Any]:
+        return {attribute_name: attribute_value.python_format for attribute_name, attribute_value in self.record_data.items()}
+
 
 class DynamoDBExtractor(Extractor):
     @classmethod
     def from_file_data(
         cls,
-        table: str,
-        scan_filter: Dict[str, Any] = {},
-        limit: int = 100,
+        TableName: str,
+        Limit: int = 100,
+        ScanFilter: Dict[str, Any] = {},
+        ProjectionExpression: str = None,
+        FilterExpression: str = None,
         **aws_client_args,
-    ):
+    ):  
         print(aws_client_args)
         client = AwsClientFactory(**aws_client_args).make_client("dynamodb")
         return cls(
-            table=table,
-            limit=limit,
-            scan_filter=scan_filter,
             client=client,
+            TableName=TableName,
+            Limit=Limit,
+            ScanFilter=ScanFilter,
+            ProjectionExpression=ProjectionExpression,
+            FilterExpression=FilterExpression,
         )
 
     def __init__(
         self,
-        table,
-        limit: int,
-        scan_filter: Dict[str, Any],
         client,
+        TableName,
+        Limit: int,
+        ScanFilter: Dict[str, Any],
+        ProjectionExpression: Optional[str] = None,
+        FilterExpression: Optional[str] = None, 
     ) -> None:
-        self.table = table
+        
         self.client = client
-        self.scan_filter = DynamoFilterConverter.from_file_data(scan_filter).generate_filter_converter()
-        self.limit = limit
         self.logger = getLogger(self.__class__.__name__)
 
-    def scan_table(self):
-        items = []
-        should_continue = True
-        parameters = { "TableName": self.table, "Limit": self.limit}
-        if self.scan_filter:
-            parameters.update({"ScanFilter": self.scan_filter})
+        self.tentative_parameters = {
+            "TableName": TableName,
+            "Limit": Limit,
+            "ScanFilter": ScanFilter,
+            "ProjectionExpression": ProjectionExpression,
+            "FilterExpression": FilterExpression
+        }
 
+        self.effective_parameters = self.create_effective_parameters()
+        
+    def create_effective_parameters(self):
+        effective_parameters = {}
+        for key, value in self.tentative_parameters.items():
+            if value:
+                effective_parameters[key] = value 
+        return effective_parameters
+
+    def scan_table(self):
+        should_continue = True    
         while (should_continue):
             response: dict = self.client.scan(
-                **parameters
+                **self.effective_parameters
             )
-            items += response["Items"]
+            yield from response["Items"]
             last_evaluated_key = response.get("LastEvaluatedKey", None)
             if last_evaluated_key is not None:
                 should_continue = True
-                parameters.update({"ExclusiveStartKey": last_evaluated_key})
+                self.effective_parameters.update({"ExclusiveStartKey": last_evaluated_key})
             else:
                 should_continue = False
-        return items
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
-        records = self.scan_table()
-        converter = DynamoRowConverter
-        for record in records:
-            converted = converter(record).convert_row()
-            print(converted, '\n\n')
-            yield converted
+        for record in self.scan_table():
+            yield DynamoRecord.from_raw_dynamo_record(record).python_format
+        
