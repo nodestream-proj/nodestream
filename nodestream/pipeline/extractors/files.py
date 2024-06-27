@@ -218,10 +218,10 @@ class GzipFileFormat(SupportedCompressedFileFormat, alias=".gz"):
         decompressed_data.seek(0)
         new_path = self.file.path.with_suffix("")
         temp_file = IngestibleFile.from_file_pointer_and_suffixes(
-            decompressed_data, new_path.suffixes, self.file.on_ingestion
+            decompressed_data, new_path.suffixes
         )
+        temp_file.on_ingestion = temp_file.tempfile_cleanup
         self.file.ingested()
-
         return temp_file
 
 
@@ -238,10 +238,10 @@ class Bz2FileFormat(SupportedCompressedFileFormat, alias=".bz2"):
         decompressed_data.seek(0)
         new_path = self.file.path.with_suffix("")
         temp_file = IngestibleFile.from_file_pointer_and_suffixes(
-            decompressed_data, new_path.suffixes, self.file.on_ingestion
+            decompressed_data, new_path.suffixes
         )
+        temp_file.on_ingestion = temp_file.tempfile_cleanup
         self.file.ingested()
-
         return temp_file
 
 
