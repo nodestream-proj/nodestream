@@ -5,7 +5,10 @@ from ...credential_utils import AwsClientFactory
 from ...extractor import Extractor
 
 
-# Additional Type Format Handlers
+"""
+    Additional Type Format Handlers
+"""
+
 def leave_untouched(value: Any):
     return value
 
@@ -37,7 +40,10 @@ def format_null(value: str):
     return None if format_boolean(value) else value
 
 
-# Result Handlers
+"""
+    Result Handlers
+"""
+
 def convert_scalar(value: Any, type_handler):
     return type_handler(value)
 
@@ -55,7 +61,7 @@ DEFAULT_HANDLER = (convert_scalar, leave_untouched)
 ATTRIBUTE_TYPE_DESCRIPTOR_HANDLERS = {
     "S": (convert_scalar, leave_untouched),  # String format
     "N": (convert_scalar, format_number),  # Number format (int or float)
-    "B": (convert_scalar, format_bytes),  # Bytes format (just keep it as a string)
+    "B": (convert_scalar, format_bytes),  # Bytes format
     "NULL": (convert_scalar, format_null),  # Null format
     "BOOL": (convert_scalar, format_boolean),  # Boolean format
     "SS": (convert_array, leave_untouched),  # Set of Strings will be a List[str]
