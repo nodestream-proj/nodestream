@@ -1,4 +1,8 @@
+import bz2
+import gzip
+import io
 import json
+import os
 import tempfile
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
@@ -6,7 +10,7 @@ from csv import DictReader
 from glob import glob
 from io import BufferedReader, IOBase, StringIO, TextIOWrapper
 from pathlib import Path
-from typing import Any, AsyncGenerator, Iterable, Union
+from typing import Any, AsyncGenerator, Callable, Generator, Iterable
 
 import pandas as pd
 from httpx import AsyncClient
@@ -18,13 +22,68 @@ from ...subclass_registry import SubclassRegistry
 from .extractor import Extractor
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
+SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
+
+
+class IngestibleFile:
+    def __init__(
+        self,
+        path: Path,
+        fp: IOBase | None = None,
+        delete_on_ingestion: bool = False,
+        on_ingestion: Callable[[Any], Any] = lambda: (),
+    ) -> None:
+        self.extension = path.suffix
+        self.suffixes = path.suffixes
+        self.fp = fp
+        self.path = path
+        self.delete_on_ingestion = delete_on_ingestion
+        self.on_ingestion = on_ingestion
+
+    @classmethod
+    def from_file_pointer_and_suffixes(
+        cls,
+        fp: IOBase,
+        suffixes: str | list[str],
+        on_ingestion: Callable[[Any], Any] = lambda: (),
+    ) -> "IngestibleFile":
+        fd, temp_path = tempfile.mkstemp(suffix="".join(suffixes))
+        os.close(fd)
+
+        with open(temp_path, "wb") as temp_file:
+            for chunk in iter(lambda: fp.read(1024), b""):
+                temp_file.write(chunk)
+            temp_file.flush()
+
+        with open(temp_path, "rb+") as fp:
+            return IngestibleFile(Path(temp_path), fp, True, on_ingestion)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self.fp:
+            self.fp.close()
+        if self.delete_on_ingestion:
+            self.tempfile_cleanup()
+
+    def ingested(self):
+        if self.delete_on_ingestion:
+            self.tempfile_cleanup()
+        self.on_ingestion()
+
+    def tempfile_cleanup(self):
+        if self.fp:
+            self.fp.close()
+        if os.path.isfile(self.path):
+            os.remove(self.path)
 
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
 class SupportedFileFormat(Pluggable, ABC):
     reader = None
 
-    def __init__(self, file: Union[Path, IOBase]) -> None:
+    def __init__(self, file: IngestibleFile) -> None:
         self.file = file
 
     @contextmanager
@@ -49,9 +108,15 @@ class SupportedFileFormat(Pluggable, ABC):
 
     @classmethod
     @contextmanager
-    def open(cls, file: Path) -> "SupportedFileFormat":
-        with open(file, "rb") as fp:
-            yield cls.from_file_pointer_and_format(fp, file.suffix)
+    def open(cls, file: IngestibleFile) -> Generator["SupportedFileFormat", None, None]:
+        extension = file.extension
+        # Decompress file if in Supported Compressed File Format Registry
+        while extension in SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY:
+            compressed_file_format = SupportedCompressedFileFormat.open(file)
+            file = compressed_file_format.decompress_file()
+            extension = file.extension
+        with open(file.path, "rb") as fp:
+            yield cls.from_file_pointer_and_format(fp, extension)
 
     @classmethod
     def from_file_pointer_and_format(
@@ -64,6 +129,32 @@ class SupportedFileFormat(Pluggable, ABC):
 
     @abstractmethod
     def read_file_from_handle(self, fp: BufferedReader) -> Iterable[JsonLikeDocument]:
+        ...
+
+
+@SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY.connect_baseclass
+class SupportedCompressedFileFormat(Pluggable, ABC):
+    def __init__(self, file: IngestibleFile) -> None:
+        self.file = file
+
+    @classmethod
+    def open(cls, file: IngestibleFile) -> "SupportedCompressedFileFormat":
+        with open(file.path, "rb") as fp:
+            return cls.from_file_pointer_and_path(fp, file.path)
+
+    @classmethod
+    def from_file_pointer_and_path(
+        cls, fp: IOBase, path: Path
+    ) -> "SupportedCompressedFileFormat":
+        # Import all compression file formats so that they can register themselves
+        cls.import_all()
+        file_format = SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY.get(path.suffix)
+        file = IngestibleFile(path, fp)
+        file.on_ingestion = lambda: file.tempfile_cleanup()
+        return file_format(file)
+
+    @abstractmethod
+    def decompress_file(self) -> IngestibleFile:
         ...
 
 
@@ -118,6 +209,44 @@ class YamlFileFormat(SupportedFileFormat, alias=".yaml"):
         return [safe_load(reader)]
 
 
+class GzipFileFormat(SupportedCompressedFileFormat, alias=".gz"):
+    def decompress_file(self) -> IngestibleFile:
+        decompressed_data = io.BytesIO()
+        with gzip.open(self.file.path, "rb") as f_in:
+            chunk_size = 1024 * 1024
+            while True:
+                chunk = f_in.read(chunk_size)
+                if len(chunk) == 0:
+                    break
+                decompressed_data.write(chunk)
+        decompressed_data.seek(0)
+        new_path = self.file.path.with_suffix("")
+        temp_file = IngestibleFile.from_file_pointer_and_suffixes(
+            decompressed_data, new_path.suffixes
+        )
+        self.file.ingested()
+        return temp_file
+
+
+class Bz2FileFormat(SupportedCompressedFileFormat, alias=".bz2"):
+    def decompress_file(self) -> IngestibleFile:
+        decompressed_data = io.BytesIO()
+        with bz2.open(self.file.path, "rb") as f_in:
+            chunk_size = 1024 * 1024
+            while True:
+                chunk = f_in.read(chunk_size)
+                if len(chunk) == 0:
+                    break
+                decompressed_data.write(chunk)
+        decompressed_data.seek(0)
+        new_path = self.file.path.with_suffix("")
+        temp_file = IngestibleFile.from_file_pointer_and_suffixes(
+            decompressed_data, new_path.suffixes
+        )
+        self.file.ingested()
+        return temp_file
+
+
 class FileExtractor(Extractor):
     @classmethod
     def from_file_data(cls, globs: Iterable[str]):
@@ -137,7 +266,7 @@ class FileExtractor(Extractor):
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for path in self._ordered_paths():
-            with SupportedFileFormat.open(path) as file:
+            with SupportedFileFormat.open(IngestibleFile(path)) as file:
                 for record in file.read_file():
                     yield record
 
