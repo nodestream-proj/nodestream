@@ -136,7 +136,6 @@ class DynamoDBExtractor(Extractor):
         FilterExpression: str = None,
         **aws_client_args,
     ):
-        print(aws_client_args)
         client = AwsClientFactory(**aws_client_args).make_client("dynamodb")
         return cls(
             client=client,
@@ -158,7 +157,6 @@ class DynamoDBExtractor(Extractor):
     ) -> None:
         self.client = client
         self.logger = getLogger(self.__class__.__name__)
-
         self.tentative_parameters = {
             "TableName": TableName,
             "Limit": Limit,
