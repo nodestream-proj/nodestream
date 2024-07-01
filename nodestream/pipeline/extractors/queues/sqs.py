@@ -74,8 +74,8 @@ class SQSQueueConnector(QueueConnector, alias="sqs"):
     def process_messages(self, messages):
         for message in messages:
             yield message["Body"]
-        if self.delete_after_read:
-            messages.delete()
+            if self.delete_after_read:
+                self.delete_message(message)
 
     def get_message_batch(self) -> AsyncGenerator[Any, Any]:
         return self.sqs_client.receive_message(
@@ -84,3 +84,10 @@ class SQSQueueConnector(QueueConnector, alias="sqs"):
             MessageAttributeNames=self.message_attribute_names,
             MaxNumberOfMessages=self.max_batch_size,
         )
+
+    def delete_message(self, msg):
+        receipt_handle = msg.get('ReceiptHandle')
+        return self.sqs_client.delete_message(
+            QueueUrl=self.queue_url,
+            ReceiptHandle=receipt_handle
+        ) 
