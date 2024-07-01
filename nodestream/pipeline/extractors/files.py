@@ -128,8 +128,9 @@ class SupportedFileFormat(Pluggable, ABC):
         return file_format(fp)
 
     @abstractmethod
-    def read_file_from_handle(self, fp: BufferedReader) -> Iterable[JsonLikeDocument]:
-        ...
+    def read_file_from_handle(
+        self, fp: BufferedReader
+    ) -> Iterable[JsonLikeDocument]: ...
 
 
 @SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY.connect_baseclass
@@ -154,8 +155,7 @@ class SupportedCompressedFileFormat(Pluggable, ABC):
         return file_format(file)
 
     @abstractmethod
-    def decompress_file(self) -> IngestibleFile:
-        ...
+    def decompress_file(self) -> IngestibleFile: ...
 
 
 class JsonFileFormat(SupportedFileFormat, alias=".json"):
