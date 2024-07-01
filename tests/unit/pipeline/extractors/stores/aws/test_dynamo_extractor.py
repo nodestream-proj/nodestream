@@ -154,16 +154,16 @@ def test_dynamo_extractor_initialization_with_args():
         "nodestream.pipeline.extractors.credential_utils.AwsClientFactory.make_client"
     ) as client_mock:
         extractor = DynamoDBExtractor.from_file_data(
-            TableName="table_name",
-            Limit=100,
-            ScanFilter={
+            table_name="table_name",
+            limit=100,
+            scan_filter={
                 "number": {
                     "AttributeValueList": [{"N": "90"}],
                     "ComparisonOperator": "GE",
                 }
             },
-            ProjectionExpression="test_projection_expression",
-            FilterExpression="test_filter_expression",
+            projection_expression="test_projection_expression",
+            filter_expression="test_filter_expression",
             assume_role_arn="test_role",
             assume_role_external_id="test_arn",
             region_name="test_region",
@@ -227,11 +227,11 @@ class MockResponder:
 def test_dynamo_extractor_table_scanner():
     extractor = DynamoDBExtractor(
         client=MockResponder(TEST_DATA),
-        TableName="table_name",
-        Limit=2,
-        ScanFilter={},
-        ProjectionExpression=None,
-        FilterExpression=None,
+        table_name="table_name",
+        limit=2,
+        scan_filter={},
+        projection_expression=None,
+        filter_expression=None,
     )
     result = [item for item in extractor.scan_table()]
     assert extractor.client.times_called == 3
@@ -242,11 +242,11 @@ def test_dynamo_extractor_table_scanner():
 async def test_dynamo_extractor_extract_records():
     extractor = DynamoDBExtractor(
         client=MockResponder(TEST_DATA),
-        TableName="table_name",
-        Limit=2,
-        ScanFilter={},
-        ProjectionExpression=None,
-        FilterExpression=None,
+        table_name="table_name",
+        limit=2,
+        scan_filter={},
+        projection_expression=None,
+        filter_expression=None,
     )
     result = [item async for item in extractor.extract_records()]
     assert extractor.client.times_called == 3

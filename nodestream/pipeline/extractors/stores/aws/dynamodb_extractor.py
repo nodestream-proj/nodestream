@@ -25,10 +25,7 @@ def format_nested_value(object: Dict[str, Any]):
 
 
 def format_boolean(value: str):
-    if value.lower() == "true":
-        return True
-    else:
-        return False
+    return value.lower() == "true"
 
 
 def format_bytes(value: str):
@@ -130,40 +127,40 @@ class DynamoDBExtractor(Extractor):
     @classmethod
     def from_file_data(
         cls,
-        TableName: str,
-        Limit: int = 100,
-        ScanFilter: Dict[str, Any] = {},
-        ProjectionExpression: str = None,
-        FilterExpression: str = None,
+        table_name: str,
+        limit: int = 100,
+        scan_filter: Dict[str, Any] = {},
+        projection_expression: str = None,
+        filter_expression: str = None,
         **aws_client_args,
     ):
         client = AwsClientFactory(**aws_client_args).make_client("dynamodb")
         return cls(
             client=client,
-            TableName=TableName,
-            Limit=Limit,
-            ScanFilter=ScanFilter,
-            ProjectionExpression=ProjectionExpression,
-            FilterExpression=FilterExpression,
+            table_name=table_name,
+            limit=limit,
+            scan_filter=scan_filter,
+            projection_expression=projection_expression,
+            filter_expression=filter_expression,
         )
 
     def __init__(
         self,
         client,
-        TableName,
-        Limit: int,
-        ScanFilter: Dict[str, Any],
-        ProjectionExpression: Optional[str] = None,
-        FilterExpression: Optional[str] = None,
+        table_name,
+        limit: int,
+        scan_filter: Dict[str, Any],
+        projection_expression: Optional[str] = None,
+        filter_expression: Optional[str] = None,
     ) -> None:
         self.client = client
         self.logger = getLogger(self.__class__.__name__)
         self.tentative_parameters = {
-            "TableName": TableName,
-            "Limit": Limit,
-            "ScanFilter": ScanFilter,
-            "ProjectionExpression": ProjectionExpression,
-            "FilterExpression": FilterExpression,
+            "TableName": table_name,
+            "Limit": limit,
+            "ScanFilter": scan_filter,
+            "ProjectionExpression": projection_expression,
+            "FilterExpression": filter_expression,
         }
 
         self.effective_parameters = self.create_effective_parameters()
