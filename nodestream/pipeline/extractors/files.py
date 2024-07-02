@@ -1,6 +1,5 @@
 import bz2
 import gzip
-import io
 import json
 import os
 import tempfile
@@ -8,7 +7,7 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from csv import DictReader
 from glob import glob
-from io import BufferedReader, IOBase, StringIO, TextIOWrapper
+from io import BufferedReader, BytesIO, IOBase, StringIO, TextIOWrapper
 from pathlib import Path
 from typing import Any, AsyncGenerator, Callable, Generator, Iterable
 
@@ -211,7 +210,7 @@ class YamlFileFormat(SupportedFileFormat, alias=".yaml"):
 
 class GzipFileFormat(SupportedCompressedFileFormat, alias=".gz"):
     def decompress_file(self) -> IngestibleFile:
-        decompressed_data = io.BytesIO()
+        decompressed_data = BytesIO()
         with gzip.open(self.file.path, "rb") as f_in:
             chunk_size = 1024 * 1024
             while True:
@@ -230,7 +229,7 @@ class GzipFileFormat(SupportedCompressedFileFormat, alias=".gz"):
 
 class Bz2FileFormat(SupportedCompressedFileFormat, alias=".bz2"):
     def decompress_file(self) -> IngestibleFile:
-        decompressed_data = io.BytesIO()
+        decompressed_data = BytesIO()
         with bz2.open(self.file.path, "rb") as f_in:
             chunk_size = 1024 * 1024
             while True:

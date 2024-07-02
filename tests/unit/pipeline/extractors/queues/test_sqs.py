@@ -107,6 +107,7 @@ async def test_poll(subject):
 @pytest.mark.asyncio
 async def test_poll_batch_1(subject):
     subject.max_batch_size = 1
+    subject.max_batches = 1
     results = await subject.poll()
     assert results == ["test-message-1"]
     results = await subject.poll()
