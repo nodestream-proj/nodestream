@@ -115,7 +115,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         node_additional_types: Optional[Iterable[str]] = None,
     ):
         self.can_find_many = find_many or iterate_on is not None
-        self.cardinality = cardinality
+        self.cardinality = Cardinality(cardinality)
         self.outbound = outbound
         self.node_creation_rule = NodeCreationRule(
             node_creation_rule or NodeCreationRule.EAGER.value
