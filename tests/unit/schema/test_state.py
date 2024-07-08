@@ -22,6 +22,11 @@ def test_basic_schema_to_and_from_file(basic_schema):
         rebuilt_schema.relationships_by_name,
         equal_to(basic_schema.relationships_by_name),
     )
+    assert_that(
+        all(
+            (adjacency in rebuilt_schema.cardinalities and rebuilt_schema.cardinalities[adjacency] == cardinality) for adjacency, cardinality, in basic_schema.cardinalities.items()
+        )
+    )
 
 
 def test_basic_schema_merge_with_self_should_be_same(basic_schema):

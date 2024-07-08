@@ -80,6 +80,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
 
     __slots__ = (
         "can_find_many",
+        "cardinality",
         "outbound",
         "node_creation_rule",
         "decomposer",
@@ -107,12 +108,14 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         outbound: bool = True,
         find_many: bool = False,
         iterate_on: Optional[ValueProvider] = None,
+        cardinality: str = "SINGLE",
         node_creation_rule: Optional[str] = None,
         key_normalization: Optional[Dict[str, Any]] = None,
         properties_normalization: Optional[Dict[str, Any]] = None,
         node_additional_types: Optional[Iterable[str]] = None,
     ):
         self.can_find_many = find_many or iterate_on is not None
+        self.cardinality = cardinality
         self.outbound = outbound
         self.node_creation_rule = NodeCreationRule(
             node_creation_rule or NodeCreationRule.EAGER.value
@@ -217,7 +220,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
             to_type = related_node if self.outbound else source_node
             foreign_cardinality = Cardinality.MANY
             source_cardinality = (
-                Cardinality.MANY if self.can_find_many else Cardinality.SINGLE
+                Cardinality.MANY if self.can_find_many else self.cardinality
             )
             if self.outbound:
                 to_side_cardinality, from_side_cardinality = (

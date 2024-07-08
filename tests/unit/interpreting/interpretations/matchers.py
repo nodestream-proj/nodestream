@@ -3,7 +3,8 @@ from typing import Iterable
 from hamcrest.core.base_matcher import BaseMatcher
 from hamcrest.core.description import Description
 
-from nodestream.schema import GraphObjectType, SchemaExpansionCoordinator
+from nodestream.schema import GraphObjectType, SchemaExpansionCoordinator, Cardinality
+from nodestream.schema.state import UnboundAdjacency
 
 
 class HasObjectKeyDefined(BaseMatcher):
@@ -93,6 +94,28 @@ class HasObjectIndexesDefined(BaseMatcher):
             f"has indexes {self.indexes} defined for {self.object_type}"
         )
 
+class HasUnboundAdjacencyDefined(BaseMatcher):
+    def __init__(self,
+                from_node_type_or_alias,
+                to_node_type_or_alias,
+                relationship_type,
+                from_node_cardinality,
+                to_node_cardinality
+            ) -> None:
+        self.unbound_adjacency = UnboundAdjacency(
+            from_node_type_or_alias,
+            to_node_type_or_alias,
+            relationship_type,
+            from_node_cardinality,
+            to_node_cardinality
+        )
+
+    def _matches(self, item: SchemaExpansionCoordinator):
+        return self.unbound_adjacency in item.unbound_adjacencies
+
+    def describe_to(self, description: Description) -> None:
+        description.append_text(f"has node types {self.unbound_adjacency} inside unbound adjacency list.")
+
 
 class DefinedNodeTypes(BaseMatcher):
     def __init__(self, node_types: Iterable[str]) -> None:
@@ -172,9 +195,17 @@ def has_defined_relationships(
     return DefinedRelationshipTypes(relationship_types)
 
 
-def has_adjaceny(
+def has_unbound_adjacency(
     from_node_type_or_alias: str,
     to_node_type_or_alias: str,
-    relaitionship: str,
+    relationship_type: str,
+    from_node_cardinality: Cardinality,
+    to_node_cardinality: Cardinality
 ):
-    pass
+    return HasUnboundAdjacencyDefined(
+        from_node_type_or_alias,
+        to_node_type_or_alias,
+        relationship_type,
+        from_node_cardinality,
+        to_node_cardinality
+    )
