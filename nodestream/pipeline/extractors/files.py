@@ -9,7 +9,7 @@ from csv import DictReader
 from glob import glob
 from io import BufferedReader, BytesIO, IOBase, StringIO, TextIOWrapper
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable, Generator, Iterable
+from typing import Any, AsyncGenerator, Callable, Generator, Iterable, Optional
 
 import pandas as pd
 from httpx import AsyncClient
@@ -107,8 +107,12 @@ class SupportedFileFormat(Pluggable, ABC):
 
     @classmethod
     @contextmanager
-    def open(cls, file: IngestibleFile) -> Generator["SupportedFileFormat", None, None]:
-        extension = file.extension
+    def open(
+        cls, file: IngestibleFile, extension_override: Optional[str] = ""
+    ) -> Generator["SupportedFileFormat", None, None]:
+        extension = extension_override or file.extension
+        if extension == "":
+            raise ValueError(f"File has no extension: '{file.path}'")
         # Decompress file if in Supported Compressed File Format Registry
         while extension in SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY:
             compressed_file_format = SupportedCompressedFileFormat.open(file)
