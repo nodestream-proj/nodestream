@@ -22,6 +22,15 @@ def test_basic_schema_to_and_from_file(basic_schema):
         rebuilt_schema.relationships_by_name,
         equal_to(basic_schema.relationships_by_name),
     )
+    assert_that(
+        all(
+            (
+                adjacency in rebuilt_schema.cardinalities
+                and rebuilt_schema.cardinalities[adjacency] == cardinality
+            )
+            for adjacency, cardinality, in basic_schema.cardinalities.items()
+        )
+    )
 
 
 def test_basic_schema_merge_with_self_should_be_same(basic_schema):
@@ -51,6 +60,18 @@ def test_merge_with_differences(basic_schema):
     assert_that(
         basic_schema.get_node_type_by_name("Person").properties, has_key("new_property")
     )
+
+
+def test_merge_with_adjacency_override(basic_schema):
+    copy = deepcopy(basic_schema)
+    adjacency = Adjacency("Person", "Person", "BEST_FRIEND_OF")
+    cardinality = AdjacencyCardinality("MANY", "MANY")
+    copy.cardinalities.clear()
+    copy.cardinalities[adjacency] = cardinality
+
+    basic_schema.merge(copy)
+    assert_that(len(basic_schema.cardinalities), equal_to(2))
+    assert_that(basic_schema.cardinalities[adjacency], equal_to(cardinality))
 
 
 def test_has_node_of_type(basic_schema):

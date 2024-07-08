@@ -319,6 +319,29 @@ class Adjacency:
     to_node_type: str
     relationship_type: str
 
+    @classmethod
+    def describe_yaml_schema(cls):
+        from schema import Schema
+
+        return Schema(
+            {"from_node_type": str, "to_node_type": str, "relationship_type": str}
+        )
+
+    @classmethod
+    def from_file_data(cls, yaml_data):
+        return cls(
+            from_node_type=yaml_data["from_node_type"],
+            to_node_type=yaml_data["to_node_type"],
+            relationship_type=yaml_data["relationship_type"],
+        )
+
+    def to_file_data(self):
+        return {
+            "from_node_type": self.from_node_type,
+            "to_node_type": self.to_node_type,
+            "relationship_type": self.relationship_type,
+        }
+
 
 @dataclass(slots=True, frozen=True)
 class AdjacencyCardinality:
@@ -326,6 +349,30 @@ class AdjacencyCardinality:
 
     from_side_cardinality: Cardinality = Cardinality.SINGLE
     to_side_cardinality: Cardinality = Cardinality.SINGLE
+
+    @classmethod
+    def describe_yaml_schema(cls):
+        from schema import Schema
+
+        return Schema(
+            {
+                "from_side_cardinality": str,
+                "to_side_cardinality": str,
+            }
+        )
+
+    @classmethod
+    def from_file_data(cls, yaml_data):
+        return cls(
+            from_side_cardinality=Cardinality(yaml_data["from_side_cardinality"]),
+            to_side_cardinality=Cardinality(yaml_data["to_side_cardinality"]),
+        )
+
+    def to_file_data(self):
+        return {
+            "from_side_cardinality": self.from_side_cardinality,
+            "to_side_cardinality": self.to_side_cardinality,
+        }
 
 
 @dataclass(slots=True, frozen=True)
@@ -351,6 +398,12 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
             {
                 Optional("nodes"): [GraphObjectSchema.describe_yaml_schema()],
                 Optional("relationships"): [GraphObjectSchema.describe_yaml_schema()],
+                Optional("cardinalities"): [
+                    {
+                        "adjacency": Adjacency.describe_yaml_schema(),
+                        "cardinality": AdjacencyCardinality.describe_yaml_schema(),
+                    }
+                ],
             }
         )
 
@@ -364,7 +417,12 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
         for relationship_data in yaml_data.get("relationships", []):
             relationship = GraphObjectSchema.from_file_data(relationship_data)
             instance.put_relationship_type(relationship)
-
+        for cardinality_data in yaml_data.get("cardinalities", []):
+            adjacency = Adjacency.from_file_data(cardinality_data["adjacency"])
+            cardinality = AdjacencyCardinality.from_file_data(
+                cardinality_data["cardinality"]
+            )
+            instance.add_adjacency(adjacency, cardinality)
         return instance
 
     def to_file_data(self):
@@ -372,6 +430,13 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
             "nodes": [node.to_file_data() for node in self.nodes],
             "relationships": [
                 relationship.to_file_data() for relationship in self.relationships
+            ],
+            "cardinalities": [
+                {
+                    "adjacency": adjacency.to_file_data(),
+                    "cardinality": cardinality.to_file_data(),
+                }
+                for adjacency, cardinality in self.cardinalities.items()
             ],
         }
 
