@@ -57,6 +57,24 @@ def test_merge_with_differences(basic_schema):
         basic_schema.get_node_type_by_name("Person").properties, has_key("new_property")
     )
 
+def test_merge_with_adjacency_override(basic_schema):
+    copy = deepcopy(basic_schema)
+    adjacency = Adjacency(
+        "Person",
+        "Person",
+        "BEST_FRIEND_OF"
+    )
+    cardinality = AdjacencyCardinality(
+        "MANY",
+        "MANY"
+    )
+    copy.cardinalities.clear()
+    copy.cardinalities[adjacency] = cardinality
+
+    basic_schema.merge(copy)
+    assert_that(len(basic_schema.cardinalities), equal_to(2))
+    assert_that(basic_schema.cardinalities[adjacency], equal_to(cardinality))
+
 
 def test_has_node_of_type(basic_schema):
     assert_that(basic_schema.has_node_of_type("Person"), equal_to(True))
