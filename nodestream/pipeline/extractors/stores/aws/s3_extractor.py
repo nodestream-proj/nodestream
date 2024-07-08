@@ -60,20 +60,12 @@ class S3Extractor(Extractor):
             )
             self.s3_client.delete_object(Bucket=self.bucket, Key=key)
 
-    def infer_object_format(self, key: str) -> str:
-        object_format = self.object_format or Path(key).suffix
-        if not object_format:
-            raise ValueError(
-                f"No object format provided and key has no extension: '{key}'"
-            )
-        return object_format
-
     @contextmanager
     def get_object_as_file(
         self, key: str
     ) -> Generator[SupportedFileFormat, None, None]:
         with self.get_object_as_tempfile(key) as temp_file:
-            with SupportedFileFormat.open(temp_file) as file_format:
+            with SupportedFileFormat.open(temp_file, self.object_format) as file_format:
                 yield file_format
 
     def is_object_in_archive(self, key: str) -> bool:
