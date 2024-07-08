@@ -48,7 +48,7 @@ SNAKE_CASE_REGEX = re.compile(r"^[a-z0-9]+(_[a-z0-9]+)*$")
 
 PROPERTY_TYPE_TO_GRAPQHL_TYPES = {
     PropertyType.STRING: "String",
-    PropertyType.DATETIME: "LocalDateTime",
+    PropertyType.DATETIME: "DateTime",
     PropertyType.INTEGER: "BigInt",
     PropertyType.BOOLEAN: "Boolean",
     PropertyType.FLOAT: "Float",

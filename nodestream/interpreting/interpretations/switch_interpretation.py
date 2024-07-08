@@ -5,8 +5,11 @@ from ...pipeline.value_providers import (
     StaticValueOrValueProvider,
     ValueProvider,
 )
-from ...schema import SchemaExpansionCoordinator
+from typing import Iterable
+from ...schema import ExpandsSchemaFromChildren, ExpandsSchema
 from .interpretation import Interpretation
+
+from ..interpreter import InterpretationPass
 
 
 class UnhandledBranchError(ValueError):
@@ -17,8 +20,7 @@ class UnhandledBranchError(ValueError):
             f"'{missing_branch_value}' was not matched in switch case", *args
         )
 
-
-class SwitchInterpretation(Interpretation, alias="switch"):
+class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="switch"):
     __slots__ = (
         "switch_on",
         "interpretations",
@@ -28,14 +30,10 @@ class SwitchInterpretation(Interpretation, alias="switch"):
     )
 
     @staticmethod
-    def guarantee_interpretation_list_from_file_data(file_data) -> List[Interpretation]:
+    def guarantee_interpretation_pass_from_file_data(file_data) -> InterpretationPass:
         if isinstance(file_data, list):
-            return [
-                Interpretation.from_file_data(**interpretation)
-                for interpretation in file_data
-            ]
-
-        return [Interpretation.from_file_data(**file_data)]
+            return InterpretationPass.from_file_data(file_data)
+        return InterpretationPass.from_file_data([file_data])
 
     def __init__(
         self,
@@ -46,49 +44,43 @@ class SwitchInterpretation(Interpretation, alias="switch"):
         fail_on_unhandled: bool = True,
     ):
         self.switch_on = ValueProvider.guarantee_value_provider(switch_on)
-        self.interpretations = {
-            field_value: self.guarantee_interpretation_list_from_file_data(
+        self.branches = {
+            field_value: self.guarantee_interpretation_pass_from_file_data(
                 interpretation
             )
             for field_value, interpretation in cases.items()
         }
         self.default = (
-            self.guarantee_interpretation_list_from_file_data(default)
+            self.guarantee_interpretation_pass_from_file_data(default)
             if default
             else None
         )
         self.normalization = normalization or {}
         self.fail_on_unhandled = fail_on_unhandled
-
+    
     @property
-    def distinct_branches(self) -> bool:
+    def assigns_source_nodes(self) -> bool:
         # If all branches have at least one interpretation that assigns source nodes,
         # then the branches are distinct and we should not merge their schemas.
         return all(
-            any(interpretation.assigns_source_nodes for interpretation in branch)
-            for branch in self.interpretations.values()
+            branch.assigns_source_nodes for branch in self.branches.values()
         )
+    
+    # There is only a distinct context between children if this interpretation assign source nodes.
+    @property
+    def should_be_distinct(self) -> bool:
+        return self.assigns_source_nodes
 
-    def expand_schema(self, coordinator: SchemaExpansionCoordinator):
-        for branch in self.interpretations.values():
-            for interpretation in branch:
-                interpretation.expand_schema(coordinator)
-            if self.distinct_branches:
-                coordinator.clear_aliases()
-
-        if self.default:
-            for interpretation in self.default:
-                interpretation.expand_schema(coordinator)
+    def get_child_expanders(self) -> Iterable[ExpandsSchema]:
+        yield from list(self.branches.values()) + ([self.default] if self.default is not None else [])
 
     def interpret(self, context: ProviderContext):
         key = self.switch_on.normalize_single_value(context, self.normalization)
-        interpretations = self.interpretations.get(key, self.default)
+        interpretation_pass = self.branches.get(key, self.default)
 
-        if interpretations is None:
+        if interpretation_pass is not None:
+            interpretation_pass.apply_interpretations(context)
+        else:
             if self.fail_on_unhandled:
                 raise UnhandledBranchError(key)
-            else:
-                interpretations = []
-
-        for interpretation in interpretations:
-            interpretation.interpret(context)
+            

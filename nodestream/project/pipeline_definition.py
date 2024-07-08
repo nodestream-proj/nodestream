@@ -165,4 +165,5 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
         return self.initialize(PipelineInitializationArguments.for_introspection())
 
     def expand_schema(self, coordinator: SchemaExpansionCoordinator):
+        print(self.name)
         self.initialize_for_introspection().expand_schema(coordinator)

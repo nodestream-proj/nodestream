@@ -1,0 +1,41 @@
+[RELATIONSHIP] INTERPRETATION_RELATIONSHIP_B:
+  last_ingested_at: DATETIME
+[NODE] InterpretationNodeB:
+  interpretation_key_b: STRING
+  last_ingested_at: DATETIME
+[RELATIONSHIP] GLOBAL_INTERPRETATION_RELATIONSHIP:
+  last_ingested_at: DATETIME
+[NODE] GlobalInterpretationNode:
+  interpretation_global_key: STRING
+  last_ingested_at: DATETIME
+[NODE] SourceNodeA:
+  source_key: STRING
+  last_ingested_at: DATETIME
+[RELATIONSHIP] TYPE_A_RELATIONSHIP:
+  last_ingested_at: DATETIME
+[NODE] RelatedNodeA:
+  relationship_key_a: STRING
+  last_ingested_at: DATETIME
+[NODE] SourceNodeB:
+  source_key: STRING
+  last_ingested_at: DATETIME
+[RELATIONSHIP] TYPE_B_RELATIONSHIP:
+  last_ingested_at: DATETIME
+[NODE] RelatedNodeB:
+  relationship_key_b: STRING
+  last_ingested_at: DATETIME
+[RELATIONSHIP] OTHER_TYPE_A_RELATIONSHIP:
+  last_ingested_at: DATETIME
+[NODE] OtherRelatedNodeA:
+  relationship_key_a: STRING
+  last_ingested_at: DATETIME
+[RELATIONSHIP] OTHER_TYPE_B_RELATIONSHIP:
+  last_ingested_at: DATETIME
+[NODE] OtherRelatedNodeB:
+  relationship_key_b: STRING
+  last_ingested_at: DATETIME
+[RELATIONSHIP] GLOBAL_RELATIONSHIP:
+  last_ingested_at: DATETIME
+[NODE] GlobalNode:
+  global_key: STRING
+  last_ingested_at: DATETIME

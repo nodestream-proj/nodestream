@@ -1,0 +1,75 @@
+# Testing the heaviest level of complexity in a pipeline introspection.
+# Here we want to see recognition that the switch interpretation is the primary source node creator.
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    before_iteration: 
+    - type: switch
+      switch_on: !jmespath 'source_type'
+      fail_on_unhandled: false
+      cases:
+        type_a:
+        - type: source_node
+          node_type: SourceNodeA
+          key:
+            source_key: !jmespath 'source_key'
+        - type: relationship
+          relationship_type: TYPE_A_RELATIONSHIP
+          node_type: RelatedNodeA
+          node_key:
+            relationship_key_a: !jmespath 'relationship_key_a'
+        type_b:
+        - type: source_node
+          node_type: SourceNodeB
+          key:
+            source_key: !jmespath 'source_key'
+        - type: relationship
+          relationship_type: TYPE_B_RELATIONSHIP
+          node_type: RelatedNodeB
+          node_key:
+            relationship_key_b: !jmespath 'relationship_key_b'
+    - type: switch
+      switch_on: !jmespath 'other_source_type'
+      fail_on_unhandled: false
+      cases:
+        other_type_a:
+        - type: relationship
+          relationship_type: OTHER_TYPE_A_RELATIONSHIP
+          node_type: OtherRelatedNodeA
+          node_key:
+            relationship_key_a: !jmespath 'relationship_key_a'
+        other_type_b:
+        - type: relationship
+          relationship_type: OTHER_TYPE_B_RELATIONSHIP
+          node_type: OtherRelatedNodeB
+          node_key:
+            relationship_key_b: !jmespath 'relationship_key_b'
+    - type: properties
+      properties:
+        source_type: !jmespath 'source_type'
+    - type: relationship
+      relationship_type: GLOBAL_RELATIONSHIP
+      node_type: GlobalNode
+      node_key:
+        global_key: !jmespath 'global_key'
+    interpretations:
+    - type: switch
+      switch_on: !jmespath 'interpretation_source_type'
+      fail_on_unhandled: false
+      cases:
+        interpretation_type_A:
+        - type: relationship
+          relationship_type: INTERPRETATION_RELATIONSHIP_A
+          node_type: InterpretationNodeA
+          node_key:
+            interpretation_key_a: !jmespath 'interpretation_key_a'
+        interpretation_type_B:
+        - type: relationship
+          relationship_type: INTERPRETATION_RELATIONSHIP_B
+          node_type: InterpretationNodeB
+          node_key:
+            interpretation_key_b: !jmespath 'interpretation_key_b'
+    - type: relationship
+      relationship_type: GLOBAL_INTERPRETATION_RELATIONSHIP
+      node_type: GlobalInterpretationNode
+      node_key:
+        interpretation_global_key: !jmespath 'interpretation_global_key'
