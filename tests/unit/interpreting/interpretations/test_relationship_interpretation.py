@@ -1,12 +1,12 @@
 import pytest
 from hamcrest import assert_that, equal_to, has_entries, has_length
 
+from nodestream.interpreting.interpretations import SourceNodeInterpretation
 from nodestream.interpreting.interpretations.relationship_interpretation import (
     InvalidKeyLengthError,
     RelationshipInterpretation,
 )
 from nodestream.schema import Cardinality
-from nodestream.interpreting.interpretations import SourceNodeInterpretation
 
 from ...stubs import StubbedValueProvider
 from .matchers import (

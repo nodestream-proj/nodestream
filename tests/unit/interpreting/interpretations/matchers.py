@@ -3,7 +3,7 @@ from typing import Iterable
 from hamcrest.core.base_matcher import BaseMatcher
 from hamcrest.core.description import Description
 
-from nodestream.schema import GraphObjectType, SchemaExpansionCoordinator, Cardinality
+from nodestream.schema import Cardinality, GraphObjectType, SchemaExpansionCoordinator
 from nodestream.schema.state import UnboundAdjacency
 
 
