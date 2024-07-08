@@ -94,27 +94,31 @@ class HasObjectIndexesDefined(BaseMatcher):
             f"has indexes {self.indexes} defined for {self.object_type}"
         )
 
+
 class HasUnboundAdjacencyDefined(BaseMatcher):
-    def __init__(self,
-                from_node_type_or_alias,
-                to_node_type_or_alias,
-                relationship_type,
-                from_node_cardinality,
-                to_node_cardinality
-            ) -> None:
+    def __init__(
+        self,
+        from_node_type_or_alias,
+        to_node_type_or_alias,
+        relationship_type,
+        from_node_cardinality,
+        to_node_cardinality,
+    ) -> None:
         self.unbound_adjacency = UnboundAdjacency(
             from_node_type_or_alias,
             to_node_type_or_alias,
             relationship_type,
             from_node_cardinality,
-            to_node_cardinality
+            to_node_cardinality,
         )
 
     def _matches(self, item: SchemaExpansionCoordinator):
         return self.unbound_adjacency in item.unbound_adjacencies
 
     def describe_to(self, description: Description) -> None:
-        description.append_text(f"has node types {self.unbound_adjacency} inside unbound adjacency list.")
+        description.append_text(
+            f"has node types {self.unbound_adjacency} inside unbound adjacency list."
+        )
 
 
 class DefinedNodeTypes(BaseMatcher):
@@ -200,12 +204,12 @@ def has_unbound_adjacency(
     to_node_type_or_alias: str,
     relationship_type: str,
     from_node_cardinality: Cardinality,
-    to_node_cardinality: Cardinality
+    to_node_cardinality: Cardinality,
 ):
     return HasUnboundAdjacencyDefined(
         from_node_type_or_alias,
         to_node_type_or_alias,
         relationship_type,
         from_node_cardinality,
-        to_node_cardinality
+        to_node_cardinality,
     )

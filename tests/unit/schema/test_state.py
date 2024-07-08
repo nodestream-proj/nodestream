@@ -24,7 +24,11 @@ def test_basic_schema_to_and_from_file(basic_schema):
     )
     assert_that(
         all(
-            (adjacency in rebuilt_schema.cardinalities and rebuilt_schema.cardinalities[adjacency] == cardinality) for adjacency, cardinality, in basic_schema.cardinalities.items()
+            (
+                adjacency in rebuilt_schema.cardinalities
+                and rebuilt_schema.cardinalities[adjacency] == cardinality
+            )
+            for adjacency, cardinality, in basic_schema.cardinalities.items()
         )
     )
 
@@ -57,17 +61,11 @@ def test_merge_with_differences(basic_schema):
         basic_schema.get_node_type_by_name("Person").properties, has_key("new_property")
     )
 
+
 def test_merge_with_adjacency_override(basic_schema):
     copy = deepcopy(basic_schema)
-    adjacency = Adjacency(
-        "Person",
-        "Person",
-        "BEST_FRIEND_OF"
-    )
-    cardinality = AdjacencyCardinality(
-        "MANY",
-        "MANY"
-    )
+    adjacency = Adjacency("Person", "Person", "BEST_FRIEND_OF")
+    cardinality = AdjacencyCardinality("MANY", "MANY")
     copy.cardinalities.clear()
     copy.cardinalities[adjacency] = cardinality
 

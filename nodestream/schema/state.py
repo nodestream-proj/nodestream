@@ -324,11 +324,7 @@ class Adjacency:
         from schema import Schema
 
         return Schema(
-            {
-                "from_node_type": str,
-                "to_node_type": str,
-                "relationship_type": str
-            }
+            {"from_node_type": str, "to_node_type": str, "relationship_type": str}
         )
 
     @classmethod
@@ -336,7 +332,7 @@ class Adjacency:
         return cls(
             from_node_type=yaml_data["from_node_type"],
             to_node_type=yaml_data["to_node_type"],
-            relationship_type=yaml_data["relationship_type"]
+            relationship_type=yaml_data["relationship_type"],
         )
 
     def to_file_data(self):
@@ -346,7 +342,6 @@ class Adjacency:
             "relationship_type": self.relationship_type,
         }
 
-    
 
 @dataclass(slots=True, frozen=True)
 class AdjacencyCardinality:
@@ -403,7 +398,12 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
             {
                 Optional("nodes"): [GraphObjectSchema.describe_yaml_schema()],
                 Optional("relationships"): [GraphObjectSchema.describe_yaml_schema()],
-                Optional("cardinalities"): [{"adjacency": Adjacency.describe_yaml_schema(), "cardinality": AdjacencyCardinality.describe_yaml_schema()}]
+                Optional("cardinalities"): [
+                    {
+                        "adjacency": Adjacency.describe_yaml_schema(),
+                        "cardinality": AdjacencyCardinality.describe_yaml_schema(),
+                    }
+                ],
             }
         )
 
@@ -419,7 +419,9 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
             instance.put_relationship_type(relationship)
         for cardinality_data in yaml_data.get("cardinalities", []):
             adjacency = Adjacency.from_file_data(cardinality_data["adjacency"])
-            cardinality = AdjacencyCardinality.from_file_data(cardinality_data["cardinality"])
+            cardinality = AdjacencyCardinality.from_file_data(
+                cardinality_data["cardinality"]
+            )
             instance.add_adjacency(adjacency, cardinality)
         return instance
 
@@ -432,9 +434,10 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
             "cardinalities": [
                 {
                     "adjacency": adjacency.to_file_data(),
-                    "cardinality": cardinality.to_file_data()
-                } for adjacency, cardinality in self.cardinalities.items()
-            ]
+                    "cardinality": cardinality.to_file_data(),
+                }
+                for adjacency, cardinality in self.cardinalities.items()
+            ],
         }
 
     @property

@@ -16,7 +16,7 @@ from .matchers import (
     has_node_keys,
     has_node_properties,
     has_relationship_keys,
-    has_unbound_adjacency
+    has_unbound_adjacency,
 )
 
 
@@ -251,16 +251,20 @@ def test_relationship_interpretation_generates_cardinality_based_on_iteration_pa
         node_key={"hello": "world"},
         relationship_type="Static",
         iterate_on=StubbedValueProvider(values=["thing1", "thing2"]),
-        find_many=True
+        find_many=True,
     )
     subject.expand_schema(schema_coordinator)
-    assert_that(schema_coordinator, has_unbound_adjacency(
-        from_node_type_or_alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
-        to_node_type_or_alias="Static",
-        relationship_type="Static",
-        from_node_cardinality=Cardinality.MANY,
-        to_node_cardinality=Cardinality.MANY
-    ))
+    assert_that(
+        schema_coordinator,
+        has_unbound_adjacency(
+            from_node_type_or_alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
+            to_node_type_or_alias="Static",
+            relationship_type="Static",
+            from_node_cardinality=Cardinality.MANY,
+            to_node_cardinality=Cardinality.MANY,
+        ),
+    )
+
 
 def test_relationship_interpretation_generates_cardinality_based_on_lack_of_iteration_parameters(
     schema_coordinator,
@@ -271,13 +275,17 @@ def test_relationship_interpretation_generates_cardinality_based_on_lack_of_iter
         relationship_type="Static",
     )
     subject.expand_schema(schema_coordinator)
-    assert_that(schema_coordinator, has_unbound_adjacency(
-        from_node_type_or_alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
-        to_node_type_or_alias="Static",
-        relationship_type="Static",
-        from_node_cardinality=Cardinality.SINGLE,
-        to_node_cardinality=Cardinality.MANY
-    ))
+    assert_that(
+        schema_coordinator,
+        has_unbound_adjacency(
+            from_node_type_or_alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
+            to_node_type_or_alias="Static",
+            relationship_type="Static",
+            from_node_cardinality=Cardinality.SINGLE,
+            to_node_cardinality=Cardinality.MANY,
+        ),
+    )
+
 
 def test_relationship_interpretation_generates_cardinality_based_on_manual_declaration(
     schema_coordinator,
@@ -286,16 +294,19 @@ def test_relationship_interpretation_generates_cardinality_based_on_manual_decla
         node_type="Static",
         node_key={"hello": "world"},
         relationship_type="Static",
-        cardinality="MANY"
+        cardinality="MANY",
     )
     subject.expand_schema(schema_coordinator)
-    assert_that(schema_coordinator, has_unbound_adjacency(
-        from_node_type_or_alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
-        to_node_type_or_alias="Static",
-        relationship_type="Static",
-        from_node_cardinality=Cardinality.MANY,
-        to_node_cardinality=Cardinality.MANY
-    ))
+    assert_that(
+        schema_coordinator,
+        has_unbound_adjacency(
+            from_node_type_or_alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
+            to_node_type_or_alias="Static",
+            relationship_type="Static",
+            from_node_cardinality=Cardinality.MANY,
+            to_node_cardinality=Cardinality.MANY,
+        ),
+    )
 
 
 def test_relationship_interpretation_addtional_node_types(blank_context):
