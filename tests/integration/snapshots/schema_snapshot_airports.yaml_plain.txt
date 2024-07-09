@@ -1,10 +1,3 @@
-[NODE] Airport:
-  identifier: STRING
-  elevation_in_feet: STRING
-  iata_code: STRING
-  local_code: STRING
-  name: STRING
-  last_ingested_at: DATETIME
 [RELATIONSHIP] WITHIN:
   last_ingested_at: DATETIME
 [NODE] Country:
@@ -12,4 +5,11 @@
   last_ingested_at: DATETIME
 [NODE] Region:
   code: STRING
+  last_ingested_at: DATETIME
+[NODE] Airport:
+  identifier: STRING
+  elevation_in_feet: STRING
+  iata_code: STRING
+  local_code: STRING
+  name: STRING
   last_ingested_at: DATETIME

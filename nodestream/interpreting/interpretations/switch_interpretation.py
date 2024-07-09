@@ -1,15 +1,13 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List
 
 from ...pipeline.value_providers import (
     ProviderContext,
     StaticValueOrValueProvider,
     ValueProvider,
 )
-from typing import Iterable
-from ...schema import ExpandsSchemaFromChildren, ExpandsSchema
-from .interpretation import Interpretation
-
+from ...schema import ExpandsSchema, ExpandsSchemaFromChildren
 from ..interpreter import InterpretationPass
+from .interpretation import Interpretation
 
 
 class UnhandledBranchError(ValueError):
@@ -19,6 +17,7 @@ class UnhandledBranchError(ValueError):
         super().__init__(
             f"'{missing_branch_value}' was not matched in switch case", *args
         )
+
 
 class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="switch"):
     __slots__ = (
@@ -38,8 +37,8 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
     def __init__(
         self,
         switch_on: StaticValueOrValueProvider,
-        cases: Dict[str, dict],
-        default: Dict[str, Any] = None,
+        cases: Dict[str, Interpretation | List[Interpretation]],
+        default: Interpretation | List[Interpretation] = None,
         normalization: Dict[str, Any] = None,
         fail_on_unhandled: bool = True,
     ):
@@ -57,30 +56,30 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
         )
         self.normalization = normalization or {}
         self.fail_on_unhandled = fail_on_unhandled
-    
+        print(self.__dict__, self.normalization, self.switch_on, self.default)
+
     @property
     def assigns_source_nodes(self) -> bool:
         # If all branches have at least one interpretation that assigns source nodes,
         # then the branches are distinct and we should not merge their schemas.
-        return all(
-            branch.assigns_source_nodes for branch in self.branches.values()
-        )
-    
+        return all(branch.assigns_source_nodes for branch in self.branches.values())
+
     # There is only a distinct context between children if this interpretation assign source nodes.
     @property
     def should_be_distinct(self) -> bool:
         return self.assigns_source_nodes
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
-        yield from list(self.branches.values()) + ([self.default] if self.default is not None else [])
+        yield from list(self.branches.values()) + (
+            [self.default] if self.default is not None else []
+        )
 
     def interpret(self, context: ProviderContext):
         key = self.switch_on.normalize_single_value(context, self.normalization)
         interpretation_pass = self.branches.get(key, self.default)
 
         if interpretation_pass is not None:
-            interpretation_pass.apply_interpretations(context)
+            interpretation_pass.interpret(context)
         else:
             if self.fail_on_unhandled:
                 raise UnhandledBranchError(key)
-            

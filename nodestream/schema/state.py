@@ -1,10 +1,13 @@
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Callable, Dict, Iterable, Optional, Set, Tuple
+
+from nodestream.additional_types import LayeredDict, LayeredList
 
 from ..file_io import LoadsFromYaml, LoadsFromYamlFile, SavesToYaml, SavesToYamlFile
-from contextlib import contextmanager
+
 
 class GraphObjectType(str, Enum):
     """Represents the type of a graph object."""
@@ -667,7 +670,7 @@ class UnboundAdjacency:
     from_cardinality: Cardinality
     to_cardinality: Cardinality
 
-    def bind(self, schema: Schema, aliases: Dict[str, str]):
+    def bind(self, schema: Schema, aliases: LayeredDict[str, str]):
         from_type = aliases.get(self.from_type_or_alias, self.from_type_or_alias)
         to_type = aliases.get(self.to_type_or_alias, self.to_type_or_alias)
         schema.add_adjacency(
@@ -681,11 +684,14 @@ class SchemaExpansionCoordinator:
     """A coordinator for expanding a schema."""
 
     schema: Schema
-    context_level: int = -1
-    aliases: List[Dict[str, str]] = field(default_factory=lambda: [])
-    unbound_aliases: List[Dict[str, GraphObjectSchema]] = field(default_factory=lambda: [])
-    unbound_adjacencies: List[List[UnboundAdjacency]] = field(default_factory=lambda: [])
-    
+    aliases: LayeredDict[str, str] = field(default_factory=LayeredDict)
+    unbound_aliases: LayeredDict[str, GraphObjectSchema] = field(
+        default_factory=LayeredDict
+    )
+    unbound_adjacencies: LayeredList[UnboundAdjacency] = field(
+        default_factory=LayeredList
+    )
+
     def on_node_schema(
         self,
         fn: Callable[[GraphObjectSchema], None],
@@ -711,11 +717,10 @@ class SchemaExpansionCoordinator:
         # to the node type name.
         if node_type and alias:
             node_schema = self.schema.get_node_type_by_name(node_type)
-            unbound = self.unbound_aliases[self.context_level].pop(alias, GraphObjectSchema(node_type))
-            print("unbound node_type", unbound)
+            unbound = self.unbound_aliases.pop(alias, GraphObjectSchema(node_type))
             unbound.name = node_type
             node_schema.merge(unbound)
-            self.aliases[self.context_level][alias] = node_type
+            self.aliases[alias] = node_type
             fn(node_schema)
 
         # If only the alias is provided, we are "abstracting" the node type name
@@ -723,12 +728,12 @@ class SchemaExpansionCoordinator:
         # the node type name when we find it. Note that we will need to "hold on" to the
         # unbound alias until we find the node type name.
         elif alias:
-            if alias in self.effective_aliases:
-                fn(self.schema.get_node_type_by_name(self.effective_aliases[alias]))
+            if alias in self.aliases:
+                fn(self.schema.get_node_type_by_name(self.aliases[alias]))
             else:
-                unbound = self.effective_unbound_aliases.get(alias, GraphObjectSchema(alias))
-                self.unbound_aliases[self.context_level][alias] = unbound
-                fn(unbound) 
+                unbound = self.unbound_aliases.get(alias, GraphObjectSchema(alias))
+                self.unbound_aliases[alias] = unbound
+                fn(unbound)
 
         # If only the node_type_name is provided, we are not messing with the alias at all.
         # We are just calling the function on the node type name.
@@ -773,51 +778,27 @@ class SchemaExpansionCoordinator:
             from_cardinality,
             to_cardinality,
         )
-        self.unbound_adjacencies[self.context_level].append(unbound)
+        self.unbound_adjacencies.append(unbound)
+
+    def increment_context_level(self):
+        self.unbound_adjacencies.increment_context_level()
+        self.unbound_aliases.increment_context_level()
+        self.aliases.increment_context_level()
 
     def decrement_context_level(self):
-        print("decrementing", self.effective_aliases, [(key, unbound_alias.name) for key, unbound_alias in self.effective_unbound_aliases.items()], [unbound_adjacency.relationship_type for unbound_adjacency in self.effective_unbound_adjacencies])
-        self.aliases.pop()
-        self.unbound_aliases.pop()
-        self.unbound_adjacencies.pop()
-    
-    def increment_context_level(self):
-        self.aliases.append({})
-        self.unbound_aliases.append({})
-        self.unbound_adjacencies.append([])
-        print("incrementing", self.effective_aliases, [(key, unbound_alias.name) for key, unbound_alias in self.effective_unbound_aliases.items()], [unbound_adjacency.relationship_type for unbound_adjacency in self.effective_unbound_adjacencies])
-    
-    @property
-    def effective_unbound_adjacencies(self) -> List[UnboundAdjacency]:
-        effective_unbound_adjacencies = []
-        for unbound_adjacencies_at_context in self.unbound_adjacencies:
-            effective_unbound_adjacencies += unbound_adjacencies_at_context
-        return effective_unbound_adjacencies
-
-    @property
-    def effective_unbound_aliases(self) -> Dict[str, GraphObjectSchema]:
-        effective_unbound_aliases = {}
-        for unbound_aliases_at_context in self.unbound_aliases:
-            for key, value in unbound_aliases_at_context.items():
-                effective_unbound_aliases[key] = value
-        return effective_unbound_aliases
-
-    @property
-    def effective_aliases(self) -> Dict[str, str]:
-        effective_aliases = {}
-        for aliases_at_context in self.aliases:
-            for key, value in aliases_at_context.items():
-                effective_aliases[key] = value
-        return effective_aliases
+        self.unbound_adjacencies.decrement_context_level()
+        self.unbound_aliases.decrement_context_level()
+        self.aliases.decrement_context_level()
 
     def clear_aliases(self):
-        for unbound_adjacency in self.effective_unbound_adjacencies:
-            unbound_adjacency.bind(self.schema, self.effective_aliases)
-        print("clearing", self.effective_aliases, [(key, unbound_alias.name) for key, unbound_alias in self.effective_unbound_aliases.items()], [unbound_adjacency.relationship_type for unbound_adjacency in self.effective_unbound_adjacencies])
+        for unbound_adjacency in self.unbound_adjacencies:
+            unbound_adjacency.bind(self.schema, self.aliases)
 
 
 class SchemaContextManager:
-    def __init__(self, coordinator: SchemaExpansionCoordinator, should_be_distinct: bool):
+    def __init__(
+        self, coordinator: SchemaExpansionCoordinator, should_be_distinct: bool
+    ):
         self.coordinator = coordinator
         self.should_be_distinct = should_be_distinct
 
@@ -834,7 +815,6 @@ class SchemaContextManager:
                 yield
             finally:
                 pass
-            
 
 
 class ExpandsSchema:
@@ -876,10 +856,11 @@ class ExpandsSchemaFromChildren(ExpandsSchema, ABC):
             The expanded schema.
         """
         pass
-    
+
     """
         In most cases, we do not want to inherit the context between children when we expand the schema.
     """
+
     @property
     def should_be_distinct(self):
         return True

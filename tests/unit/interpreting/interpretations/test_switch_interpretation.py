@@ -26,7 +26,9 @@ def test_missing_with_default(blank_context):
         cases={"not_foo": INTERPRETATION_USED_AS_HIT},
         default=INTERPRETATION_USED_AS_HIT,
     )
+    print("Interpreting")
     subject.interpret(blank_context)
+    print("Interpreted")
     properties = blank_context.desired_ingest.source.properties
     assert_that(properties, has_entry("success", True))
     assert_that(properties, not_(has_entry("random", True)))

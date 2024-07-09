@@ -34,10 +34,11 @@ class InterpretationPass(ExpandsSchema, ABC):
 class NullInterpretationPass(InterpretationPass):
     def apply_interpretations(self, context: ProviderContext):
         yield context
-    
+
     @property
     def assigns_source_nodes(self) -> bool:
         return False
+
 
 """
 A switch interpretation can assign a source node
@@ -62,6 +63,7 @@ exclusively_creates_source_nodes: for propagation downwards. I am creating the s
 
 """
 
+
 class SingleSequenceInterpretationPass(InterpretationPass):
     __slots__ = ("interpretations",)
 
@@ -71,40 +73,57 @@ class SingleSequenceInterpretationPass(InterpretationPass):
             Interpretation.from_file_data(**args) for args in interpretation_arg_list
         )
         return cls(*interpretations)
-    
+
     def __init__(self, *interpretations: Interpretation):
         self.interpretations: list[Interpretation] = interpretations
 
     @property
     def assigns_source_nodes(self) -> bool:
-        return any(interpretation.assigns_source_nodes for interpretation in self.interpretations)
-    
+        return any(
+            interpretation.assigns_source_nodes
+            for interpretation in self.interpretations
+        )
+
     # If we assign a source node at this level, add to the schema at this level.
     @property
     def exclusively_assigns_source_nodes(self) -> bool:
-        return any((interpretation.assigns_source_nodes and not isinstance(interpretation, ExpandsSchemaFromChildren)) for interpretation in self.interpretations)
+        return any(
+            (
+                interpretation.assigns_source_nodes
+                and not isinstance(interpretation, ExpandsSchemaFromChildren)
+            )
+            for interpretation in self.interpretations
+        )
 
     def apply_interpretations(self, context: ProviderContext):
         for interpretation in self.interpretations:
             interpretation.interpret(context)
         yield context
 
+    def interpret(self, context: ProviderContext):
+        for interpretation in self.interpretations:
+            interpretation.interpret(context)
+
     @property
     def schema_ordered_interpretations(self):
         source_node_interpretation = None
-        interpretations_copy = [interpretation for interpretation in self.interpretations]
+        interpretations_copy = [
+            interpretation for interpretation in self.interpretations
+        ]
         for index, interpretation in enumerate(self.interpretations):
             if interpretation.assigns_source_nodes:
                 source_node_interpretation = interpretations_copy.pop(index)
-                print(source_node_interpretation.__class__)
-                break
-        return interpretations_copy + ([source_node_interpretation] if source_node_interpretation is not None else [])
+        return interpretations_copy + (
+            [source_node_interpretation]
+            if source_node_interpretation is not None
+            else []
+        )
 
     def expand_schema(self, coordinator: SchemaExpansionCoordinator):
         interpretations = self.interpretations
         if self.assigns_source_nodes:
             interpretations = self.schema_ordered_interpretations
-            
+
         for interpretation in interpretations:
             interpretation.expand_schema(coordinator=coordinator)
 
@@ -125,7 +144,14 @@ class MultiSequenceInterpretationPass(ExpandsSchemaFromChildren, InterpretationP
 
     @property
     def assigns_source_nodes(self) -> bool:
-        return any(interpretation_pass.assigns_source_nodes for interpretation_pass in self.passes)
+        return any(
+            interpretation_pass.assigns_source_nodes
+            for interpretation_pass in self.passes
+        )
+
+    @property
+    def should_be_distinct(self) -> bool:
+        return self.assigns_source_nodes
 
     def apply_interpretations(self, context: ProviderContext):
         for interpretation_pass in self.passes:
@@ -175,10 +201,18 @@ class Interpreter(Transformer, ExpandsSchema):
                 yield from self.interpretations.apply_interpretations(sub_context)
 
     def expand_schema(self, coordinator: SchemaExpansionCoordinator):
-        # Choose between the before_iteration and interpretation passes, which one creates the source nodes. 
-        # Process the schema for the one that processes source nodes last so that the context of the prior is involved for each pass. 
-        context_pass = self.before_iteration if self.interpretations.assigns_source_nodes else self.interpretations
-        head_pass = self.interpretations if self.interpretations.assigns_source_nodes else self.before_iteration
-        
+        # Choose between the before_iteration and interpretation passes, which one creates the source nodes.
+        # Process the schema for the one that processes source nodes last so that the context of the prior is involved for each pass.
+        context_pass = (
+            self.before_iteration
+            if self.interpretations.assigns_source_nodes
+            else self.interpretations
+        )
+        head_pass = (
+            self.interpretations
+            if self.interpretations.assigns_source_nodes
+            else self.before_iteration
+        )
+
         context_pass.expand_schema(coordinator)
         head_pass.expand_schema(coordinator)

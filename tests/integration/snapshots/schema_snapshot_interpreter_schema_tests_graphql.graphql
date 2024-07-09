@@ -1,48 +1,73 @@
 
 
-type GlobalInterpretationNode @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+type FirstPassGlobalInterpretationNode @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
-    interpretation_global_key: String
+    fp_interpretation_global_key: String
 
     last_ingested_at: LocalDateTime
 
     # Inbound Relationships
 
     
-    sourceNodeAGlobalInterpretationRelationship: [SourceNodeA!]!
-        @relationship(type: "GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "GlobalInterpretationRelationship")
+    sourceNodeAFirstPassGlobalInterpretationRelationship: [SourceNodeA!]!
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "FirstPassGlobalInterpretationRelationship")
     
 
     
-    sourceNodeBGlobalInterpretationRelationship: [SourceNodeB!]!
-        @relationship(type: "GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "GlobalInterpretationRelationship")
+    sourceNodeBFirstPassGlobalInterpretationRelationship: [SourceNodeB!]!
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    globalSecondPassSourceNodeFirstPassGlobalInterpretationRelationship: [GlobalSecondPassSourceNode!]!
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "FirstPassGlobalInterpretationRelationship")
     
 
     # Outbound Relationships
 
 }
 
-type GlobalNode @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+type GlobalSecondPassSourceNode @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
-    global_key: String
+    gsp_source_key: String
 
     last_ingested_at: LocalDateTime
 
     # Inbound Relationships
 
     
-    sourceNodeAGlobalRelationship: [SourceNodeA!]!
-        @relationship(type: "GLOBAL_RELATIONSHIP", direction: IN, properties: "GlobalRelationship")
+    sourceNodeAGlobalRelationshipToSecondPass: [SourceNodeA!]!
+        @relationship(type: "GLOBAL_RELATIONSHIP_TO_SECOND_PASS", direction: IN, properties: "GlobalRelationshipToSecondPass")
     
 
     
-    sourceNodeBGlobalRelationship: [SourceNodeB!]!
-        @relationship(type: "GLOBAL_RELATIONSHIP", direction: IN, properties: "GlobalRelationship")
+    sourceNodeBGlobalRelationshipToSecondPass: [SourceNodeB!]!
+        @relationship(type: "GLOBAL_RELATIONSHIP_TO_SECOND_PASS", direction: IN, properties: "GlobalRelationshipToSecondPass")
     
 
     # Outbound Relationships
+
+    
+    interpretationRelationshipAInterpretationNodeA: InterpretationNodeA
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: OUT, properties: "InterpretationRelationshipA")
+    
+
+    
+    interpretationRelationshipBInterpretationNodeB: InterpretationNodeB
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: OUT, properties: "InterpretationRelationshipB")
+    
+
+    
+    firstPassGlobalInterpretationRelationshipFirstPassGlobalInterpretationNode: FirstPassGlobalInterpretationNode
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    secondPassGlobalInterpretationRelationshipSecondPassGlobalInterpretationNode: SecondPassGlobalInterpretationNode
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "SecondPassGlobalInterpretationRelationship")
+    
 
 }
 
@@ -62,6 +87,11 @@ type InterpretationNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOp
 
     
     sourceNodeBInterpretationRelationshipA: [SourceNodeB!]!
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: IN, properties: "InterpretationRelationshipA")
+    
+
+    
+    globalSecondPassSourceNodeInterpretationRelationshipA: [GlobalSecondPassSourceNode!]!
         @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: IN, properties: "InterpretationRelationshipA")
     
 
@@ -85,6 +115,11 @@ type InterpretationNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOp
 
     
     sourceNodeBInterpretationRelationshipB: [SourceNodeB!]!
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: IN, properties: "InterpretationRelationshipB")
+    
+
+    
+    globalSecondPassSourceNodeInterpretationRelationshipB: [GlobalSecondPassSourceNode!]!
         @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: IN, properties: "InterpretationRelationshipB")
     
 
@@ -174,6 +209,34 @@ type RelatedNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(l
 
 }
 
+type SecondPassGlobalInterpretationNode @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    sp_interpretation_global_key: String
+
+    last_ingested_at: LocalDateTime
+
+    # Inbound Relationships
+
+    
+    sourceNodeASecondPassGlobalInterpretationRelationship: [SourceNodeA!]!
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+    
+    sourceNodeBSecondPassGlobalInterpretationRelationship: [SourceNodeB!]!
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+    
+    globalSecondPassSourceNodeSecondPassGlobalInterpretationRelationship: [GlobalSecondPassSourceNode!]!
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+    # Outbound Relationships
+
+}
+
 type SourceNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
@@ -196,8 +259,13 @@ type SourceNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(li
     
 
     
-    globalInterpretationRelationshipGlobalInterpretationNode: GlobalInterpretationNode
-        @relationship(type: "GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "GlobalInterpretationRelationship")
+    firstPassGlobalInterpretationRelationshipFirstPassGlobalInterpretationNode: FirstPassGlobalInterpretationNode
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    secondPassGlobalInterpretationRelationshipSecondPassGlobalInterpretationNode: SecondPassGlobalInterpretationNode
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "SecondPassGlobalInterpretationRelationship")
     
 
     
@@ -211,8 +279,8 @@ type SourceNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(li
     
 
     
-    globalRelationshipGlobalNode: GlobalNode
-        @relationship(type: "GLOBAL_RELATIONSHIP", direction: OUT, properties: "GlobalRelationship")
+    globalRelationshipToSecondPassGlobalSecondPassSourceNode: GlobalSecondPassSourceNode
+        @relationship(type: "GLOBAL_RELATIONSHIP_TO_SECOND_PASS", direction: OUT, properties: "GlobalRelationshipToSecondPass")
     
 
     
@@ -244,8 +312,13 @@ type SourceNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(li
     
 
     
-    globalInterpretationRelationshipGlobalInterpretationNode: GlobalInterpretationNode
-        @relationship(type: "GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "GlobalInterpretationRelationship")
+    firstPassGlobalInterpretationRelationshipFirstPassGlobalInterpretationNode: FirstPassGlobalInterpretationNode
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    secondPassGlobalInterpretationRelationshipSecondPassGlobalInterpretationNode: SecondPassGlobalInterpretationNode
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "SecondPassGlobalInterpretationRelationship")
     
 
     
@@ -259,8 +332,8 @@ type SourceNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(li
     
 
     
-    globalRelationshipGlobalNode: GlobalNode
-        @relationship(type: "GLOBAL_RELATIONSHIP", direction: OUT, properties: "GlobalRelationship")
+    globalRelationshipToSecondPassGlobalSecondPassSourceNode: GlobalSecondPassSourceNode
+        @relationship(type: "GLOBAL_RELATIONSHIP_TO_SECOND_PASS", direction: OUT, properties: "GlobalRelationshipToSecondPass")
     
 
     
@@ -279,7 +352,12 @@ interface InterpretationRelationshipB @relationshipProperties {
     last_ingested_at: LocalDateTime
 
 }
-interface GlobalInterpretationRelationship @relationshipProperties {
+interface FirstPassGlobalInterpretationRelationship @relationshipProperties {
+
+    last_ingested_at: LocalDateTime
+
+}
+interface SecondPassGlobalInterpretationRelationship @relationshipProperties {
 
     last_ingested_at: LocalDateTime
 
@@ -294,7 +372,7 @@ interface OtherTypeBRelationship @relationshipProperties {
     last_ingested_at: LocalDateTime
 
 }
-interface GlobalRelationship @relationshipProperties {
+interface GlobalRelationshipToSecondPass @relationshipProperties {
 
     last_ingested_at: LocalDateTime
 
