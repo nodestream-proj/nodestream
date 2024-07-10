@@ -25,11 +25,10 @@ class PropertiesInterpretation(Interpretation, alias="properties"):
         self.properties.apply_to(context, source.properties, self.norm_args)
 
     def expand_schema(self, coordinator: SchemaExpansionCoordinator):
-        property_list = [property_name for property_name in self.properties]
         coordinator.on_node_schema(
             self.expand_source_node_schema,
             alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
-            property_list=property_list,
+            property_list=list(self.properties),
         )
 
     def expand_source_node_schema(self, schema: GraphObjectSchema):

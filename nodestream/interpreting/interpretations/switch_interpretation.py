@@ -81,9 +81,9 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
 
     @property
     def all_interpretations(self) -> Iterable[Interpretation]:
-        yield from list(self.branches.values()) + (
-            [self.default] if self.default is not None else []
-        )
+        yield from self.branches.values()
+        if self.default:
+            yield self.default
 
     @property
     def assigns_source_nodes(self) -> bool:
