@@ -43,6 +43,7 @@ class Interpreter(Transformer, ExpandsSchema):
         self.interpretations = interpretations
         self.decomposer = decomposer
 
+    # Raise an error if both the interpretations and before_iteration phases create source nodes.
     def verify_completeness(self):
         if all(
             intepretater_phase.assigns_source_nodes

@@ -62,6 +62,7 @@ class SingleSequenceInterpretationPass(InterpretationPass):
     def __init__(self, *interpretations: Interpretation):
         self.interpretations = interpretations
 
+    # Verifies that there is only one source node creator in all of the interpretations
     def verify_uniqueness(self):
         source_node_generator_count = 0
         for interpretation in self.interpretations:
@@ -93,6 +94,7 @@ class SingleSequenceInterpretationPass(InterpretationPass):
             interpretation.interpret(context)
         yield context
 
+    # Ordering the interpretations to leave the source node creator last.
     @property
     def schema_ordered_interpretations(self):
         source_node_interpretation = None
@@ -132,11 +134,9 @@ class MultiSequenceInterpretationPass(ExpandsSchemaFromChildren, InterpretationP
     def __init__(self, *passes: InterpretationPass) -> None:
         self.passes: list[InterpretationPass] = passes
 
+    # If any sequence assigns source nodes, all of the passes must assign source nodes.
     def verify_completeness(self):
-        if any(
-            interpretation_pass.assigns_source_nodes
-            for interpretation_pass in self.passes
-        ) and not all(
+        if self.assigns_source_nodes and not all(
             interpretation_pass.assigns_source_nodes
             for interpretation_pass in self.passes
         ):

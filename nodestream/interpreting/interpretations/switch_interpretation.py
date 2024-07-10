@@ -6,7 +6,7 @@ from ...pipeline.value_providers import (
     ValueProvider,
 )
 from ...schema import ExpandsSchema, ExpandsSchemaFromChildren
-from ..interpretation_passes import InterpretationPass, SingleSequenceInterpretationPass
+from ..interpretation_passes import InterpretationPass, MultiSequenceInterpretationPass
 from .interpretation import Interpretation
 
 SWITCH_COMPLETENESS_ERROR_MESSAGE = (
@@ -49,7 +49,8 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
         else:
             interpretation_pass = InterpretationPass.from_file_data([file_data])
 
-        if not isinstance(interpretation_pass, SingleSequenceInterpretationPass):
+        # We do not support multiple interpretation passes within the switch interpretation.
+        if isinstance(interpretation_pass, MultiSequenceInterpretationPass):
             raise SwitchError(INVALID_SWITCH_ERROR_MESSAGE)
 
         return interpretation_pass
@@ -89,23 +90,22 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
     def should_be_distinct(self) -> bool:
         return self.assigns_source_nodes
 
-    def verify_completeness(self):
-        interpretation_passes = list(self.branches.values()) + (
+    @property
+    def all_interpretations(self) -> Iterable[Interpretation]:
+        yield from list(self.branches.values()) + (
             [self.default] if self.default is not None else []
         )
-        if not all(
+
+    # If this interpretation assigns source nodes, and not all of the branches including the default branch assign source nodes it is incomplete.
+    def verify_completeness(self):
+        if self.assigns_source_nodes and not all(
             interpretation_pass.assigns_source_nodes
-            for interpretation_pass in interpretation_passes
-        ) and any(
-            interpretation_pass.assigns_source_nodes
-            for interpretation_pass in interpretation_passes
+            for interpretation_pass in self.all_interpretations
         ):
             raise SwitchError(SWITCH_COMPLETENESS_ERROR_MESSAGE)
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
-        yield from list(self.branches.values()) + (
-            [self.default] if self.default is not None else []
-        )
+        yield from self.all_interpretations
 
     def interpret(self, context: ProviderContext):
         key = self.switch_on.normalize_single_value(context, self.normalization)

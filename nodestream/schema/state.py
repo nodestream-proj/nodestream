@@ -727,6 +727,8 @@ class SchemaExpansionCoordinator:
             self.aliases[alias] = node_type
             fn(node_schema)
 
+        # If both the property_list and alias are provided, we are adding properties to the existing
+        # object for the alias. We also save this in the unbound aliases to be contextualized.
         elif property_list and alias:
             unbound = self.unbound_aliases.get(alias, GraphObjectSchema(alias))
             unbound.properties.update(
@@ -791,6 +793,10 @@ class SchemaExpansionCoordinator:
             to_cardinality,
         )
         self.unbound_adjacencies.append(unbound)
+
+    """
+        For child expanders, this method is called to maintain the context layer. 
+    """
 
     @contextmanager
     def aquire_context(self, should_be_distinct: bool):

@@ -28,7 +28,8 @@ T = TypeVar("T")
 
 """
     LayeredList Datatype:
-        This datatype mimicks the list datatype in python to the requestor, but involves different layers of data that is aggregated together on reads, and only reveals the top layer on writes. 
+        This datatype mimicks the list datatype in python to the requestor, but involves different 
+        layers of data that is aggregated together on reads, and only reveals the top layer on writes. 
 """
 
 
@@ -78,7 +79,8 @@ V = TypeVar("V")
 
 """
     LayeredDict Datatype:
-        This datatype mimicks the dictionary datatype in python to the requestor, but involves different layers of data that is aggregated together on reads, and only reveals the top layer on writes. 
+        This datatype mimicks the dictionary datatype in python to the requestor, but involves different 
+        layers of data that is aggregated together on reads, and only reveals the top layer on writes. 
 """
 
 
