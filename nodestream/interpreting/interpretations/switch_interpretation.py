@@ -83,7 +83,7 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
     def assigns_source_nodes(self) -> bool:
         # If all branches have at least one interpretation that assigns source nodes,
         # then the branches are distinct and we should not merge their schemas.
-        return all(branch.assigns_source_nodes for branch in self.branches.values())
+        return any(branch.assigns_source_nodes for branch in self.branches.values())
 
     # There is only a distinct context between children if this interpretation assign source nodes.
     @property
