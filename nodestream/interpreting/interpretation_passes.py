@@ -93,10 +93,6 @@ class SingleSequenceInterpretationPass(InterpretationPass):
             interpretation.interpret(context)
         yield context
 
-    def interpret(self, context: ProviderContext):
-        for interpretation in self.interpretations:
-            interpretation.interpret(context)
-
     @property
     def schema_ordered_interpretations(self):
         source_node_interpretation = None
