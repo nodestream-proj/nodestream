@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable, Dict, Iterable, Optional, Set, Tuple
 
-from nodestream.additional_types import LayeredDict, LayeredList
+from nodestream.utils import LayeredDict, LayeredList
 
 from ..file_io import LoadsFromYaml, LoadsFromYamlFile, SavesToYaml, SavesToYamlFile
 
@@ -688,6 +688,9 @@ class SchemaExpansionCoordinator:
     unbound_aliases: LayeredDict[str, GraphObjectSchema] = field(
         default_factory=LayeredDict
     )
+    unbound_properties: LayeredDict[str, GraphObjectSchema] = field(
+        default_factory=LayeredDict
+    )
     unbound_adjacencies: LayeredList[UnboundAdjacency] = field(
         default_factory=LayeredList
     )
@@ -696,6 +699,7 @@ class SchemaExpansionCoordinator:
         self,
         fn: Callable[[GraphObjectSchema], None],
         node_type: Optional[str] = None,
+        property_list: Optional[list[str]] = None,
         alias: Optional[str] = None,
     ):
         """Calls a Function on each type of node in the schema aliased.
@@ -717,11 +721,17 @@ class SchemaExpansionCoordinator:
         # to the node type name.
         if node_type and alias:
             node_schema = self.schema.get_node_type_by_name(node_type)
-            unbound = self.unbound_aliases.pop(alias, GraphObjectSchema(node_type))
+            unbound = self.unbound_aliases.get(alias, GraphObjectSchema(node_type))
             unbound.name = node_type
             node_schema.merge(unbound)
             self.aliases[alias] = node_type
             fn(node_schema)
+
+        elif property_list and alias:
+            unbound = self.unbound_aliases.get(alias, GraphObjectSchema(alias))
+            unbound.properties.update({property_name: PropertyMetadata() for property_name in property_list})
+            self.unbound_aliases[alias] = unbound
+            fn(unbound)
 
         # If only the alias is provided, we are "abstracting" the node type name
         # because we don't know the node type name yet. We will bind the alias to
@@ -780,6 +790,20 @@ class SchemaExpansionCoordinator:
         )
         self.unbound_adjacencies.append(unbound)
 
+    @contextmanager
+    def aquire_context(self, should_be_distinct: bool):
+        if should_be_distinct:
+            try:
+                self.increment_context_level()
+                yield
+            finally:
+                self.decrement_context_level()
+        else:
+            try:
+                yield
+            finally:
+                pass
+
     def increment_context_level(self):
         self.unbound_adjacencies.increment_context_level()
         self.unbound_aliases.increment_context_level()
@@ -793,28 +817,6 @@ class SchemaExpansionCoordinator:
     def clear_aliases(self):
         for unbound_adjacency in self.unbound_adjacencies:
             unbound_adjacency.bind(self.schema, self.aliases)
-
-
-class SchemaContextManager:
-    def __init__(
-        self, coordinator: SchemaExpansionCoordinator, should_be_distinct: bool
-    ):
-        self.coordinator = coordinator
-        self.should_be_distinct = should_be_distinct
-
-    @contextmanager
-    def aquire_context(self):
-        if self.should_be_distinct:
-            try:
-                self.coordinator.increment_context_level()
-                yield
-            finally:
-                self.coordinator.decrement_context_level()
-        else:
-            try:
-                yield
-            finally:
-                pass
 
 
 class ExpandsSchema:
@@ -874,7 +876,6 @@ class ExpandsSchemaFromChildren(ExpandsSchema, ABC):
         Returns:
             The expanded schema.
         """
-        context_manager = SchemaContextManager(coordinator, self.should_be_distinct)
         for child_expander in self.get_child_expanders():
-            with context_manager.aquire_context() as _:
+            with coordinator.aquire_context(self.should_be_distinct):
                 child_expander.expand_schema(coordinator)

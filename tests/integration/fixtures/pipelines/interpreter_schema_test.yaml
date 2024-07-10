@@ -6,6 +6,16 @@
     - - type: switch
         switch_on: !jmespath 'source_type'
         fail_on_unhandled: false
+        default:
+          - type: source_node
+            node_type: DefaultSourceNode
+            key:
+              source_key_default: !jmespath 'source_key_default'
+          - type: relationship
+            relationship_type: DEFAULT_RELATIONSHIP
+            node_type: RelatedNodeDefault
+            node_key:
+              relationship_key_default: !jmespath 'relationship_key_default'
         cases:
           type_a:
           - type: source_node
@@ -45,7 +55,8 @@
               relationship_key_b: !jmespath 'relationship_key_b'
       - type: properties
         properties:
-          source_type: !jmespath 'source_type'
+          property_type: !jmespath 'property_type'
+          additional_property: !jmespath 'source_type'
       - type: relationship
         relationship_type: GLOBAL_RELATIONSHIP_TO_SECOND_PASS
         node_type: GlobalSecondPassSourceNode
