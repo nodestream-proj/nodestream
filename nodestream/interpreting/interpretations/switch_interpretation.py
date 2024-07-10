@@ -80,21 +80,21 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
         self.verify_completeness()
 
     @property
+    def all_interpretations(self) -> Iterable[Interpretation]:
+        yield from list(self.branches.values()) + (
+            [self.default] if self.default is not None else []
+        )
+
+    @property
     def assigns_source_nodes(self) -> bool:
         # If all branches have at least one interpretation that assigns source nodes,
         # then the branches are distinct and we should not merge their schemas.
-        return any(branch.assigns_source_nodes for branch in self.branches.values())
+        return any(branch.assigns_source_nodes for branch in self.all_interpretations)
 
     # There is only a distinct context between children if this interpretation assign source nodes.
     @property
     def should_be_distinct(self) -> bool:
         return self.assigns_source_nodes
-
-    @property
-    def all_interpretations(self) -> Iterable[Interpretation]:
-        yield from list(self.branches.values()) + (
-            [self.default] if self.default is not None else []
-        )
 
     # If this interpretation assigns source nodes, and not all of the branches including the default branch assign source nodes it is incomplete.
     def verify_completeness(self):
