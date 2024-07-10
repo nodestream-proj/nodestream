@@ -1,13 +1,18 @@
-from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Iterable
-from ..pipeline.value_providers import ProviderContext
-from .interpretations import Interpretation
+
 from nodestream.schema.state import SchemaExpansionCoordinator
 
+from ..pipeline.value_providers import ProviderContext
+from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
+from .interpretations import Interpretation
+
 COMPLETENESS_ERROR_MESSAGE = "Each Interpreter Pass in the Multi Sequence interpreter pass must define a source node."
-UNIQUENESS_ERROR_MESSAGE = "Only one interpretation can generate a source node within an interpretation pass."
+UNIQUENESS_ERROR_MESSAGE = (
+    "Only one interpretation can generate a source node within an interpretation pass."
+)
+
 
 class InterpretationPassError(Exception):
     pass
@@ -46,7 +51,7 @@ class SingleSequenceInterpretationPass(InterpretationPass):
 
     @classmethod
     def from_file_data(cls, interpretation_arg_list):
-        
+
         interpretations = (
             Interpretation.from_file_data(**args) for args in interpretation_arg_list
         )
@@ -102,7 +107,7 @@ class SingleSequenceInterpretationPass(InterpretationPass):
         for index, interpretation in enumerate(interpretations_copy):
             if interpretation.assigns_source_nodes:
                 source_node_interpretation = interpretations_copy.pop(index)
-        
+
         return interpretations_copy + (
             [source_node_interpretation]
             if source_node_interpretation is not None
@@ -132,10 +137,12 @@ class MultiSequenceInterpretationPass(ExpandsSchemaFromChildren, InterpretationP
         self.passes: list[InterpretationPass] = passes
 
     def verify_completeness(self):
-        if any (
-            interpretation_pass.assigns_source_nodes for interpretation_pass in self.passes
+        if any(
+            interpretation_pass.assigns_source_nodes
+            for interpretation_pass in self.passes
         ) and not all(
-            interpretation_pass.assigns_source_nodes for interpretation_pass in self.passes
+            interpretation_pass.assigns_source_nodes
+            for interpretation_pass in self.passes
         ):
             raise InterpretationPassError(COMPLETENESS_ERROR_MESSAGE)
 

@@ -9,8 +9,12 @@ from ...schema import ExpandsSchema, ExpandsSchemaFromChildren
 from ..interpretation_passes import InterpretationPass, SingleSequenceInterpretationPass
 from .interpretation import Interpretation
 
-SWITCH_COMPLETENESS_ERROR_MESSAGE = "Every branch within the switch interpreter must contain a source node generator."
-INVALID_SWITCH_ERROR_MESSAGE = "Switch interpretations cannot handle multiple interpretation passes."
+SWITCH_COMPLETENESS_ERROR_MESSAGE = (
+    "Every branch within the switch interpreter must contain a source node generator."
+)
+INVALID_SWITCH_ERROR_MESSAGE = (
+    "Switch interpretations cannot handle multiple interpretation passes."
+)
 
 
 class UnhandledBranchError(ValueError):
@@ -20,6 +24,7 @@ class UnhandledBranchError(ValueError):
         super().__init__(
             f"'{missing_branch_value}' was not matched in switch case", *args
         )
+
 
 class SwitchError(Exception):
     pass
@@ -35,8 +40,10 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
     )
 
     @staticmethod
-    def guarantee_single_interpretation_pass_from_file_data(file_data) -> InterpretationPass:
-        # Check for multiinterpretationpass. 
+    def guarantee_single_interpretation_pass_from_file_data(
+        file_data,
+    ) -> InterpretationPass:
+        # Check for multiinterpretationpass.
         if isinstance(file_data, list):
             interpretation_pass = InterpretationPass.from_file_data(file_data)
         else:
@@ -44,7 +51,7 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
 
         if not isinstance(interpretation_pass, SingleSequenceInterpretationPass):
             raise SwitchError(INVALID_SWITCH_ERROR_MESSAGE)
-        
+
         return interpretation_pass
 
     def __init__(
@@ -81,15 +88,18 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
     @property
     def should_be_distinct(self) -> bool:
         return self.assigns_source_nodes
-    
+
     def verify_completeness(self):
         interpretation_passes = list(self.branches.values()) + (
-                [self.default] if self.default is not None else [] )
+            [self.default] if self.default is not None else []
+        )
         if not all(
-                interpretation_pass.assigns_source_nodes for interpretation_pass in interpretation_passes
-            ) and any(
-                interpretation_pass.assigns_source_nodes for interpretation_pass in interpretation_passes
-            ):
+            interpretation_pass.assigns_source_nodes
+            for interpretation_pass in interpretation_passes
+        ) and any(
+            interpretation_pass.assigns_source_nodes
+            for interpretation_pass in interpretation_passes
+        ):
             raise SwitchError(SWITCH_COMPLETENESS_ERROR_MESSAGE)
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:

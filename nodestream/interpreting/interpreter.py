@@ -1,14 +1,14 @@
-
 from nodestream.schema.state import SchemaExpansionCoordinator
-from .interpretation_passes import InterpretationPass
+
 from ..pipeline import Transformer
 from ..pipeline.value_providers import ProviderContext
 from ..schema import ExpandsSchema
+from .interpretation_passes import InterpretationPass
 from .interpretations import Interpretation
 from .record_decomposers import RecordDecomposer
 
-
 INTERPRETER_UNIQUENESS_ERROR_MESSAGE = "The interpreter must only generate source nodes in either the before_iteration phase, or the interpretations phase, not both."
+
 
 class InterpreterError(Exception):
     pass
@@ -19,7 +19,7 @@ class Interpreter(Transformer, ExpandsSchema):
         "before_iteration",
         "interpretations",
         "decomposer",
-    )   
+    )
 
     @classmethod
     def from_file_data(cls, interpretations, before_iteration=None, iterate_on=None):
@@ -45,10 +45,8 @@ class Interpreter(Transformer, ExpandsSchema):
 
     def verify_completeness(self):
         if all(
-            intepretater_phase.assigns_source_nodes for intepretater_phase in [
-                self.before_iteration,
-                self.interpretations
-            ]
+            intepretater_phase.assigns_source_nodes
+            for intepretater_phase in [self.before_iteration, self.interpretations]
         ):
             raise InterpreterError(INTERPRETER_UNIQUENESS_ERROR_MESSAGE)
 

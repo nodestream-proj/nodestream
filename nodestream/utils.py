@@ -1,7 +1,7 @@
-from difflib import SequenceMatcher
-from typing import Iterable
 from dataclasses import dataclass, field
-from typing import Dict, Generator, Generic, List, TypeVar
+from difflib import SequenceMatcher
+from typing import Dict, Generator, Generic, Iterable, List, TypeVar
+
 
 class StringSuggester:
     """A utility for suggesting alternative strings based on similarity to a given string."""
@@ -30,6 +30,8 @@ T = TypeVar("T")
     LayeredList Datatype:
         This datatype mimicks the list datatype in python to the requestor, but involves different layers of data that is aggregated together on reads, and only reveals the top layer on writes. 
 """
+
+
 @dataclass(slots=True, frozen=True)
 class LayeredList(Generic[T]):
     LATEST_CONTEXT_LEVEL = -1
@@ -78,6 +80,7 @@ V = TypeVar("V")
     LayeredDict Datatype:
         This datatype mimicks the dictionary datatype in python to the requestor, but involves different layers of data that is aggregated together on reads, and only reveals the top layer on writes. 
 """
+
 
 @dataclass(slots=True, frozen=True)
 class LayeredDict(Generic[K, V]):

@@ -2,11 +2,11 @@ import pytest
 from hamcrest import assert_that, has_entry, not_
 
 from nodestream.interpreting.interpretations.switch_interpretation import (
+    INVALID_SWITCH_ERROR_MESSAGE,
+    SWITCH_COMPLETENESS_ERROR_MESSAGE,
+    SwitchError,
     SwitchInterpretation,
     UnhandledBranchError,
-    SwitchError,
-    SWITCH_COMPLETENESS_ERROR_MESSAGE,
-    INVALID_SWITCH_ERROR_MESSAGE
 )
 
 INTERPRETATION_USED_AS_HIT = {"type": "properties", "properties": {"success": True}}
@@ -58,24 +58,35 @@ def test_switch_with_multiple_interpretations(blank_context):
     assert_that(properties, has_entry("success", True))
     assert_that(properties, has_entry("random", True))
 
-TEST_SOURCE_NODE_FILE_DATA = {"type":"source_node","node_type": "Test", "key":{"test_key": "test_value"}}
-TEST_RELATIONSHIP_FILE_DATA = {"type":"relationship", "node_type": "Test", "relationship_type":"TEST_REL", "node_key":{"test_key": "test_value"}}
+
+TEST_SOURCE_NODE_FILE_DATA = {
+    "type": "source_node",
+    "node_type": "Test",
+    "key": {"test_key": "test_value"},
+}
+TEST_RELATIONSHIP_FILE_DATA = {
+    "type": "relationship",
+    "node_type": "Test",
+    "relationship_type": "TEST_REL",
+    "node_key": {"test_key": "test_value"},
+}
 
 INCOMPLETE_SWITCH_ARGS = {
-    "switch_on":"thing",
-    "cases":{
+    "switch_on": "thing",
+    "cases": {
         "case_a": [TEST_SOURCE_NODE_FILE_DATA],
-        "case_b": [TEST_RELATIONSHIP_FILE_DATA]
-    }
+        "case_b": [TEST_RELATIONSHIP_FILE_DATA],
+    },
 }
 
 INVALID_SWITCH_ARGS = {
-    "switch_on":"thing",
-    "cases":{
+    "switch_on": "thing",
+    "cases": {
         "case_a": [[TEST_SOURCE_NODE_FILE_DATA], [TEST_SOURCE_NODE_FILE_DATA]],
-        "case_b": [[TEST_SOURCE_NODE_FILE_DATA], [TEST_SOURCE_NODE_FILE_DATA]]
-    }
+        "case_b": [[TEST_SOURCE_NODE_FILE_DATA], [TEST_SOURCE_NODE_FILE_DATA]],
+    },
 }
+
 
 def test_incomplete_switch_initialization_error():
     with pytest.raises(SwitchError) as error:
@@ -87,5 +98,3 @@ def test_invalid_switch_initialization_error():
     with pytest.raises(SwitchError) as error:
         _ = SwitchInterpretation(**INVALID_SWITCH_ARGS)
         assert error.message == INVALID_SWITCH_ERROR_MESSAGE
-    
-    

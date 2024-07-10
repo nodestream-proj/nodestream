@@ -729,7 +729,9 @@ class SchemaExpansionCoordinator:
 
         elif property_list and alias:
             unbound = self.unbound_aliases.get(alias, GraphObjectSchema(alias))
-            unbound.properties.update({property_name: PropertyMetadata() for property_name in property_list})
+            unbound.properties.update(
+                {property_name: PropertyMetadata() for property_name in property_list}
+            )
             self.unbound_aliases[alias] = unbound
             fn(unbound)
 

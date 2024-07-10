@@ -1,15 +1,19 @@
-from unittest.mock import call
+from unittest.mock import Mock, call
 
 import pytest
 from freezegun import freeze_time
 from hamcrest import assert_that, equal_to
 
+from nodestream.interpreting.interpretation_passes import (
+    NullInterpretationPass,
+    SingleSequenceInterpretationPass,
+)
 from nodestream.interpreting.interpretations import SourceNodeInterpretation
 from nodestream.interpreting.interpreter import (
+    INTERPRETER_UNIQUENESS_ERROR_MESSAGE,
     InterpretationPass,
     Interpreter,
     InterpreterError,
-    INTERPRETER_UNIQUENESS_ERROR_MESSAGE
 )
 from nodestream.interpreting.record_decomposers import (
     RecordDecomposer,
@@ -19,11 +23,6 @@ from nodestream.model import DesiredIngestion
 from nodestream.pipeline import IterableExtractor
 from nodestream.pipeline.value_providers import ProviderContext
 
-from nodestream.interpreting.interpretation_passes import (
-    NullInterpretationPass,
-    SingleSequenceInterpretationPass,
-)
-from unittest.mock import Mock, patch
 
 @pytest.fixture
 def single_pass_interpreter():
@@ -35,6 +34,7 @@ def single_pass_interpreter():
         decomposer=WholeRecordDecomposer(),
     )
 
+
 @pytest.fixture
 def stubbed_interpreter(mocker):
     return Interpreter(
@@ -42,6 +42,7 @@ def stubbed_interpreter(mocker):
         interpretations=mocker.Mock(InterpretationPass),
         decomposer=mocker.Mock(RecordDecomposer),
     )
+
 
 def test_intepret_record_iterates_through_interpretation_process(stubbed_interpreter):
     input_record = 1
@@ -93,38 +94,37 @@ async def test_handle_async_record_stream_returns_iteration_results(
     assert_that(results, equal_to([context[0].desired_ingest for context in contexts]))
 
 
-TEST_SOURCE_NODE_FILE_DATA = {"type":"source_node","node_type": "Test", "key":{"test_key": "test_value"}}
-TEST_RELATIONSHIP_FILE_DATA = {"type":"relationship", "node_type": "Test", "relationship_type":"TEST_REL", "node_key":{"test_key": "test_value"}}
+TEST_SOURCE_NODE_FILE_DATA = {
+    "type": "source_node",
+    "node_type": "Test",
+    "key": {"test_key": "test_value"},
+}
+TEST_RELATIONSHIP_FILE_DATA = {
+    "type": "relationship",
+    "node_type": "Test",
+    "relationship_type": "TEST_REL",
+    "node_key": {"test_key": "test_value"},
+}
 
 TEST_INTERPRETER_FILE_DATA = {
-    "before_iteration": [
-        TEST_SOURCE_NODE_FILE_DATA,
-        TEST_RELATIONSHIP_FILE_DATA
-    ],
-    "interpretations": [
-        TEST_RELATIONSHIP_FILE_DATA,
-        TEST_RELATIONSHIP_FILE_DATA
-    ]
+    "before_iteration": [TEST_SOURCE_NODE_FILE_DATA, TEST_RELATIONSHIP_FILE_DATA],
+    "interpretations": [TEST_RELATIONSHIP_FILE_DATA, TEST_RELATIONSHIP_FILE_DATA],
 }
 
 FAILED_TEST_INTERPRETER_FILE_DATA = {
-    "before_iteration": [
-        TEST_SOURCE_NODE_FILE_DATA,
-        TEST_RELATIONSHIP_FILE_DATA
-    ],
-    "interpretations": [
-        TEST_SOURCE_NODE_FILE_DATA,
-        TEST_RELATIONSHIP_FILE_DATA
-    ]
+    "before_iteration": [TEST_SOURCE_NODE_FILE_DATA, TEST_RELATIONSHIP_FILE_DATA],
+    "interpretations": [TEST_SOURCE_NODE_FILE_DATA, TEST_RELATIONSHIP_FILE_DATA],
 }
 
 
-class MockCoordinator: 
+class MockCoordinator:
     def __init__(self):
         self.final_caller = None
 
+
 def modify_caller_before_iteration(coordinator):
     coordinator.final_caller = "before_iteration"
+
 
 def modify_caller_interpretations(coordinator):
     coordinator.final_caller = "interpretations"
@@ -132,8 +132,12 @@ def modify_caller_interpretations(coordinator):
 
 def test_interpreter_schema_expansion_expands_the_source_generator_last():
     subject = Interpreter.from_file_data(**TEST_INTERPRETER_FILE_DATA)
-    subject.before_iteration.expand_schema = Mock(side_effect=modify_caller_before_iteration)
-    subject.interpretations.expand_schema = Mock(side_effect=modify_caller_interpretations)
+    subject.before_iteration.expand_schema = Mock(
+        side_effect=modify_caller_before_iteration
+    )
+    subject.interpretations.expand_schema = Mock(
+        side_effect=modify_caller_interpretations
+    )
     coordinator = MockCoordinator()
     subject.expand_schema(coordinator)
     assert coordinator.final_caller == "before_iteration"
@@ -143,4 +147,3 @@ def test_interpreter_verifies_source_node_uniqueness():
     with pytest.raises(InterpreterError) as error:
         _ = Interpreter.from_file_data(**FAILED_TEST_INTERPRETER_FILE_DATA)
         assert error.message == INTERPRETER_UNIQUENESS_ERROR_MESSAGE
-
