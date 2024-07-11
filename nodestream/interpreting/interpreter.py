@@ -1,3 +1,5 @@
+from os import environ
+
 from nodestream.schema.state import SchemaExpansionCoordinator
 
 from ..pipeline import Transformer
@@ -8,6 +10,7 @@ from .interpretations import Interpretation
 from .record_decomposers import RecordDecomposer
 
 INTERPRETER_UNIQUENESS_ERROR_MESSAGE = "The interpreter must only generate source nodes in either the before_iteration phase, or the interpretations phase, not both."
+VALIDATION_FLAG = "VALIDATE_PIPELINE_SCHEMA"
 
 
 class InterpreterError(Exception):
@@ -48,7 +51,7 @@ class Interpreter(Transformer, ExpandsSchema):
         if all(
             intepretater_phase.assigns_source_nodes
             for intepretater_phase in [self.before_iteration, self.interpretations]
-        ):
+        ) and environ.get(VALIDATION_FLAG, False):
             raise InterpreterError(INTERPRETER_UNIQUENESS_ERROR_MESSAGE)
 
     async def transform_record(self, record):

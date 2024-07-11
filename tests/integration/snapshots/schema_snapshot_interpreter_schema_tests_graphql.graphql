@@ -9,7 +9,7 @@ type DefaultSourceNode @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOpti
 
     source_key_default: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -62,7 +62,7 @@ type FirstPassGlobalInterpretationNode @exclude(operations: [CREATE, DELETE, UPD
 
     fp_interpretation_global_key: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -95,7 +95,7 @@ type GlobalSecondPassSourceNode @exclude(operations: [CREATE, DELETE, UPDATE]) @
 
     gsp_source_key: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -143,7 +143,7 @@ type InterpretationNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOp
 
     interpretation_key_a: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -176,7 +176,7 @@ type InterpretationNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOp
 
     interpretation_key_b: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -209,7 +209,7 @@ type OtherRelatedNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOpti
 
     relationship_key_a: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -237,7 +237,7 @@ type OtherRelatedNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOpti
 
     relationship_key_b: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -265,7 +265,7 @@ type RelatedNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(l
 
     relationship_key_a: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -283,7 +283,7 @@ type RelatedNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(l
 
     relationship_key_b: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -301,7 +301,7 @@ type RelatedNodeDefault @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOpt
 
     relationship_key_default: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -319,7 +319,7 @@ type SecondPassGlobalInterpretationNode @exclude(operations: [CREATE, DELETE, UP
 
     sp_interpretation_global_key: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -356,7 +356,7 @@ type SourceNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(li
 
     source_key: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -413,7 +413,7 @@ type SourceNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(li
 
     source_key: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -462,51 +462,51 @@ type SourceNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(li
 }
 interface InterpretationRelationshipA @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface InterpretationRelationshipB @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface FirstPassGlobalInterpretationRelationship @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface SecondPassGlobalInterpretationRelationship @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface OtherTypeARelationship @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface OtherTypeBRelationship @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface GlobalRelationshipToSecondPass @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface TypeARelationship @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface TypeBRelationship @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface DefaultRelationship @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }

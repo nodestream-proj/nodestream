@@ -1,3 +1,4 @@
+from os import environ
 from typing import Any, Dict, Iterable, List
 
 from ...pipeline.value_providers import (
@@ -15,6 +16,7 @@ SWITCH_COMPLETENESS_ERROR_MESSAGE = (
 INVALID_SWITCH_ERROR_MESSAGE = (
     "Switch interpretations cannot handle multiple interpretation passes."
 )
+VALIDATION_FLAG = "VALIDATE_PIPELINE_SCHEMA"
 
 
 class UnhandledBranchError(ValueError):
@@ -98,9 +100,13 @@ class SwitchInterpretation(Interpretation, ExpandsSchemaFromChildren, alias="swi
 
     # If this interpretation assigns source nodes, and not all of the branches including the default branch assign source nodes it is incomplete.
     def verify_completeness(self):
-        if self.assigns_source_nodes and not all(
-            interpretation_pass.assigns_source_nodes
-            for interpretation_pass in self.all_interpretations
+        if (
+            self.assigns_source_nodes
+            and not all(
+                interpretation_pass.assigns_source_nodes
+                for interpretation_pass in self.all_interpretations
+            )
+            and environ.get(VALIDATION_FLAG, False)
         ):
             raise SwitchError(SWITCH_COMPLETENESS_ERROR_MESSAGE)
 

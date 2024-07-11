@@ -5,7 +5,7 @@ type A @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {defa
 
     name: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -28,7 +28,7 @@ type CNAME @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {
 
     name: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -46,7 +46,7 @@ type Ipv4 @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {d
 
     address: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -66,7 +66,7 @@ type Unknown @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
     value: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -75,6 +75,6 @@ type Unknown @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 }
 interface ResolvesTo @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }

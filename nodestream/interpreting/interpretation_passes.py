@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from os import environ
 from typing import Iterable
 
 from nodestream.schema.state import SchemaExpansionCoordinator
@@ -12,6 +13,7 @@ COMPLETENESS_ERROR_MESSAGE = "Each Interpreter Pass in the Multi Sequence interp
 UNIQUENESS_ERROR_MESSAGE = (
     "Only one interpretation can generate a source node within an interpretation pass."
 )
+VALIDATION_FLAG = "VALIDATE_PIPELINE_SCHEMA"
 
 
 class InterpretationPassError(Exception):
@@ -68,7 +70,7 @@ class SingleSequenceInterpretationPass(InterpretationPass):
         for interpretation in self.interpretations:
             if interpretation.assigns_source_nodes:
                 source_node_generator_count += 1
-        if source_node_generator_count > 1:
+        if source_node_generator_count > 1 and environ.get(VALIDATION_FLAG, False):
             raise InterpretationPassError(COMPLETENESS_ERROR_MESSAGE)
 
     @property
@@ -136,9 +138,13 @@ class MultiSequenceInterpretationPass(ExpandsSchemaFromChildren, InterpretationP
 
     # If any sequence assigns source nodes, all of the passes must assign source nodes.
     def verify_completeness(self):
-        if self.assigns_source_nodes and not all(
-            interpretation_pass.assigns_source_nodes
-            for interpretation_pass in self.passes
+        if (
+            self.assigns_source_nodes
+            and not all(
+                interpretation_pass.assigns_source_nodes
+                for interpretation_pass in self.passes
+            )
+            and environ.get(VALIDATION_FLAG, False)
         ):
             raise InterpretationPassError(COMPLETENESS_ERROR_MESSAGE)
 

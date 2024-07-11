@@ -1,9 +1,12 @@
+from os import environ
+
 import pytest
 from hamcrest import assert_that, equal_to, instance_of
 
 from nodestream.interpreting.interpretation_passes import (
     COMPLETENESS_ERROR_MESSAGE,
     UNIQUENESS_ERROR_MESSAGE,
+    VALIDATION_FLAG,
     InterpretationPassError,
     MultiSequenceInterpretationPass,
     NullInterpretationPass,
@@ -189,7 +192,14 @@ MULTI_SEQUENCE_INCOMPLETE_SOURCE_NODE_GENERATORS = [
 ]
 
 
-def test_multisequence_interpretation_pass_verifies_source_node_completeness():
+@pytest.fixture
+def environment_flag():
+    environ[VALIDATION_FLAG] = "True"
+
+
+def test_multisequence_interpretation_pass_verifies_source_node_completeness(
+    environment_flag,
+):
     with pytest.raises(InterpretationPassError) as error:
         _ = InterpretationPass.from_file_data(
             SINGLE_SEQUENCE_MULTIPLE_SOURCE_NODE_GENERATORS

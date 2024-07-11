@@ -1,9 +1,12 @@
+from os import environ
+
 import pytest
 from hamcrest import assert_that, has_entry, not_
 
 from nodestream.interpreting.interpretations.switch_interpretation import (
     INVALID_SWITCH_ERROR_MESSAGE,
     SWITCH_COMPLETENESS_ERROR_MESSAGE,
+    VALIDATION_FLAG,
     SwitchError,
     SwitchInterpretation,
     UnhandledBranchError,
@@ -88,7 +91,12 @@ INVALID_SWITCH_ARGS = {
 }
 
 
-def test_incomplete_switch_initialization_error():
+@pytest.fixture
+def environment_flag():
+    environ[VALIDATION_FLAG] = "True"
+
+
+def test_incomplete_switch_initialization_error(environment_flag):
     with pytest.raises(SwitchError) as error:
         _ = SwitchInterpretation(**INCOMPLETE_SWITCH_ARGS)
         assert error.message == SWITCH_COMPLETENESS_ERROR_MESSAGE

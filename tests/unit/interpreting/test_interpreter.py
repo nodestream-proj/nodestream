@@ -1,3 +1,4 @@
+from os import environ
 from unittest.mock import Mock, call
 
 import pytest
@@ -11,6 +12,7 @@ from nodestream.interpreting.interpretation_passes import (
 from nodestream.interpreting.interpretations import SourceNodeInterpretation
 from nodestream.interpreting.interpreter import (
     INTERPRETER_UNIQUENESS_ERROR_MESSAGE,
+    VALIDATION_FLAG,
     InterpretationPass,
     Interpreter,
     InterpreterError,
@@ -143,7 +145,12 @@ def test_interpreter_schema_expansion_expands_the_source_generator_last():
     assert coordinator.final_caller == "before_iteration"
 
 
-def test_interpreter_verifies_source_node_uniqueness():
+@pytest.fixture
+def environment_flag():
+    environ[VALIDATION_FLAG] = "True"
+
+
+def test_interpreter_verifies_source_node_uniqueness(environment_flag):
     with pytest.raises(InterpreterError) as error:
         _ = Interpreter.from_file_data(**FAILED_TEST_INTERPRETER_FILE_DATA)
         assert error.message == INTERPRETER_UNIQUENESS_ERROR_MESSAGE
