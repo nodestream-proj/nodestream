@@ -41,11 +41,11 @@ type Person @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
         @relationship(type: "BEST_FRIEND_OF", direction: OUT, properties: "BestFriendOf")
 }
 interface BestFriendOf @relationshipProperties {
-    since: LocalDateTime
+    since: DateTime
 
 }
 interface HasEmployee @relationshipProperties {
-    since: LocalDateTime
+    since: DateTime
 
 }
 """

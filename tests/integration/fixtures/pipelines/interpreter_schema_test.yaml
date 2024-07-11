@@ -1,0 +1,97 @@
+# Testing the heaviest level of complexity in a pipeline introspection.
+# Here we want to see recognition that the switch interpretation is the primary source node creator.
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    before_iteration: 
+    - - type: switch
+        switch_on: !jmespath 'source_type'
+        fail_on_unhandled: false
+        default:
+          - type: source_node
+            node_type: DefaultSourceNode
+            key:
+              source_key_default: !jmespath 'source_key_default'
+          - type: relationship
+            relationship_type: DEFAULT_RELATIONSHIP
+            node_type: RelatedNodeDefault
+            node_key:
+              relationship_key_default: !jmespath 'relationship_key_default'
+        cases:
+          type_a:
+          - type: source_node
+            node_type: SourceNodeA
+            key:
+              source_key: !jmespath 'source_key'
+          - type: relationship
+            relationship_type: TYPE_A_RELATIONSHIP
+            node_type: RelatedNodeA
+            node_key:
+              relationship_key_a: !jmespath 'relationship_key_a'
+          type_b:
+          - type: source_node
+            node_type: SourceNodeB
+            key:
+              source_key: !jmespath 'source_key'
+          - type: relationship
+            relationship_type: TYPE_B_RELATIONSHIP
+            node_type: RelatedNodeB
+            node_key:
+              relationship_key_b: !jmespath 'relationship_key_b'
+      - type: switch
+        switch_on: !jmespath 'other_source_type'
+        fail_on_unhandled: false
+        cases:
+          other_type_a:
+          - type: relationship
+            relationship_type: OTHER_TYPE_A_RELATIONSHIP
+            node_type: OtherRelatedNodeA
+            node_key:
+              relationship_key_a: !jmespath 'relationship_key_a'
+          other_type_b:
+          - type: relationship
+            relationship_type: OTHER_TYPE_B_RELATIONSHIP
+            node_type: OtherRelatedNodeB
+            node_key:
+              relationship_key_b: !jmespath 'relationship_key_b'
+      - type: properties
+        properties:
+          property_type: !jmespath 'property_type'
+          additional_property: !jmespath 'source_type'
+      - type: relationship
+        relationship_type: GLOBAL_RELATIONSHIP_TO_SECOND_PASS
+        node_type: GlobalSecondPassSourceNode
+        node_key:
+          gsp_source_key: !jmespath 'gsp_source_key'
+
+    - - type: source_node
+        node_type: GlobalSecondPassSourceNode
+        key:
+          gsp_source_key: !jmespath 'gsp_source_key'
+    interpretations:
+    - - type: switch
+        switch_on: !jmespath 'interpretation_source_type'
+        fail_on_unhandled: false
+        cases:
+          interpretation_type_A:
+          - type: relationship
+            relationship_type: INTERPRETATION_RELATIONSHIP_A
+            node_type: InterpretationNodeA
+            node_key:
+              interpretation_key_a: !jmespath 'interpretation_key_a'
+          interpretation_type_B:
+          - type: relationship
+            relationship_type: INTERPRETATION_RELATIONSHIP_B
+            node_type: InterpretationNodeB
+            node_key:
+              interpretation_key_b: !jmespath 'interpretation_key_b'
+      - type: relationship
+        relationship_type: FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP
+        node_type: FirstPassGlobalInterpretationNode
+        node_key:
+          fp_interpretation_global_key: !jmespath 'interpretation_global_key'
+          
+    - - type: relationship
+        relationship_type: SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP
+        node_type: SecondPassGlobalInterpretationNode
+        node_key:
+          sp_interpretation_global_key: !jmespath 'sp_interpretation_global_key'

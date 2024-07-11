@@ -5,7 +5,7 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
     name: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -33,7 +33,7 @@ type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
 
     potential: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -61,7 +61,7 @@ type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit
 
     name: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -79,7 +79,7 @@ type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {d
 
     name: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -93,16 +93,16 @@ type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {d
 }
 interface OriginatesFrom @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface LinesUpAt @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }
 interface PlaysFor @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }

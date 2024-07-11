@@ -1,11 +1,3 @@
-[NODE] Player:
-  player_id: STRING
-  name: STRING
-  overall: STRING
-  hits: STRING
-  age: STRING
-  potential: STRING
-  last_ingested_at: DATETIME
 [RELATIONSHIP] ORIGINATES_FROM:
   last_ingested_at: DATETIME
 [NODE] Country:
@@ -20,4 +12,12 @@
   last_ingested_at: DATETIME
 [NODE] Team:
   name: STRING
+  last_ingested_at: DATETIME
+[NODE] Player:
+  player_id: STRING
+  name: STRING
+  overall: STRING
+  hits: STRING
+  age: STRING
+  potential: STRING
   last_ingested_at: DATETIME
