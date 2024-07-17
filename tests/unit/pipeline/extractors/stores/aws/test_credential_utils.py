@@ -72,26 +72,21 @@ def test_get_boto_session_with_refreshable_credentials(mocker, client_with_role)
 def test_assume_role_if_supplied_and_get_session(mocker, client_with_role):
     # create a AwsClientFactory with a role arn and mock get_boto_session_with_refreshable_credentials.
     # assert that a the result of get_boto_session_with_refreshable_credentials is what is returned.
-    client_with_role.get_boto_session_with_refreshable_credentials = mocker.MagicMock(
-        return_value="test_session"
+    client_with_role.get_boto_session_with_refreshable_credentials = mocker.MagicMock()
+    client = client_with_role.make_client("sqs")
+    client._session = (
+        client_with_role.get_boto_session_with_refreshable_credentials.return_value
     )
-    session = client_with_role.assume_role_if_supplied_and_get_session()
-    assert_that(session, equal_to("test_session"))
 
 
 def test_assume_role_if_supplied_and_get_session_no_role_arn(
     mocker, client_without_role
 ):
-    from botocore.session import Session
-
-    # create a AwsClientFactory without a role arn and mock get_boto_session_with_refreshable_credentials.
-    # assert that a the result of get_boto_session_with_refreshable_credentials is what is returned.
-    client_without_role.get_boto_session_with_refreshable_credentials = (
-        mocker.MagicMock()
+    mock_boto3_client = mocker.patch(
+        "nodestream.pipeline.extractors.credential_utils.boto3.client"
     )
-    session = client_without_role.assume_role_if_supplied_and_get_session()
-    client_without_role.get_boto_session_with_refreshable_credentials.assert_not_called()
-    assert_that(session, instance_of(Session))
+    client = client_without_role.make_client("sqs")
+    assert_that(client, equal_to(mock_boto3_client.return_value))
 
 
 def test_make_client(mocker, client_without_role):
