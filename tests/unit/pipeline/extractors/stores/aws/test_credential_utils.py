@@ -51,13 +51,13 @@ def test_assume_role_and_get_credentials(mocker, client_with_role):
             "Expiration": datetime.datetime(2020, 1, 1),
         }
     }
-    credentials = client_with_role.assume_role_and_get_credentials()
+    credentials = client_with_role.get_credentials_from_assume_role()
     assert_that(credentials["access_key"], equal_to("test_access_key"))
 
 
 def test_get_boto_session_with_refreshable_credentials(mocker, client_with_role):
     # mock assume_role_and_get_credentials and assert that a session was created with refreshable credentials
-    client_with_role.assume_role_and_get_credentials = mocker.MagicMock(
+    client_with_role.get_credentials_from_assume_role = mocker.MagicMock(
         return_value={
             "access_key": "test_access_key",
             "secret_key": "test_secret_key",
@@ -67,6 +67,21 @@ def test_get_boto_session_with_refreshable_credentials(mocker, client_with_role)
     )
     session = client_with_role.get_boto_session_with_refreshable_credentials()
     assert_that(session._credentials.method, equal_to("sts-assume-role"))
+
+
+def test_get_boto_session_with_refreshable_credentials_from_static(
+    mocker, client_without_role
+):
+    client_without_role.get_credentials_from_provider_chain = mocker.MagicMock(
+        return_value={
+            "access_key": "test_access_key",
+            "secret_key": "test_secret_key",
+            "token": "test_token",
+            "expiry_time": datetime.datetime.now().isoformat(),
+        }
+    )
+    client_without_role.get_boto_session_with_refreshable_credentials()
+    client_without_role.get_credentials_from_provider_chain.assert_called_once()
 
 
 def test_assume_role_if_supplied_and_get_session(mocker, client_with_role):
@@ -82,11 +97,13 @@ def test_assume_role_if_supplied_and_get_session(mocker, client_with_role):
 def test_assume_role_if_supplied_and_get_session_no_role_arn(
     mocker, client_without_role
 ):
-    mock_boto3_client = mocker.patch(
-        "nodestream.pipeline.extractors.credential_utils.boto3.client"
+    client_without_role.get_boto_session_with_refreshable_credentials = (
+        mocker.MagicMock()
     )
     client = client_without_role.make_client("sqs")
-    assert_that(client, equal_to(mock_boto3_client.return_value))
+    client._session = (
+        client_without_role.get_boto_session_with_refreshable_credentials.return_value
+    )
 
 
 def test_make_client(mocker, client_without_role):
