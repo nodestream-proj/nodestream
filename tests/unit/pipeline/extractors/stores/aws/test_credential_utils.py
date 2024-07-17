@@ -1,7 +1,7 @@
 import datetime
 
 import pytest
-from hamcrest import assert_that, equal_to, has_key, instance_of, not_
+from hamcrest import assert_that, equal_to, has_key, not_
 
 
 @pytest.fixture
@@ -51,13 +51,13 @@ def test_assume_role_and_get_credentials(mocker, client_with_role):
             "Expiration": datetime.datetime(2020, 1, 1),
         }
     }
-    credentials = client_with_role.assume_role_and_get_credentials()
+    credentials = client_with_role.get_credentials_from_assume_role()
     assert_that(credentials["access_key"], equal_to("test_access_key"))
 
 
 def test_get_boto_session_with_refreshable_credentials(mocker, client_with_role):
     # mock assume_role_and_get_credentials and assert that a session was created with refreshable credentials
-    client_with_role.assume_role_and_get_credentials = mocker.MagicMock(
+    client_with_role.get_credentials_from_assume_role = mocker.MagicMock(
         return_value={
             "access_key": "test_access_key",
             "secret_key": "test_secret_key",
@@ -69,29 +69,41 @@ def test_get_boto_session_with_refreshable_credentials(mocker, client_with_role)
     assert_that(session._credentials.method, equal_to("sts-assume-role"))
 
 
+def test_get_boto_session_with_refreshable_credentials_from_static(
+    mocker, client_without_role
+):
+    client_without_role.get_credentials_from_provider_chain = mocker.MagicMock(
+        return_value={
+            "access_key": "test_access_key",
+            "secret_key": "test_secret_key",
+            "token": "test_token",
+            "expiry_time": datetime.datetime.now().isoformat(),
+        }
+    )
+    client_without_role.get_boto_session_with_refreshable_credentials()
+    client_without_role.get_credentials_from_provider_chain.assert_called_once()
+
+
 def test_assume_role_if_supplied_and_get_session(mocker, client_with_role):
     # create a AwsClientFactory with a role arn and mock get_boto_session_with_refreshable_credentials.
     # assert that a the result of get_boto_session_with_refreshable_credentials is what is returned.
-    client_with_role.get_boto_session_with_refreshable_credentials = mocker.MagicMock(
-        return_value="test_session"
+    client_with_role.get_boto_session_with_refreshable_credentials = mocker.MagicMock()
+    client = client_with_role.make_client("sqs")
+    client._session = (
+        client_with_role.get_boto_session_with_refreshable_credentials.return_value
     )
-    session = client_with_role.assume_role_if_supplied_and_get_session()
-    assert_that(session, equal_to("test_session"))
 
 
 def test_assume_role_if_supplied_and_get_session_no_role_arn(
     mocker, client_without_role
 ):
-    from botocore.session import Session
-
-    # create a AwsClientFactory without a role arn and mock get_boto_session_with_refreshable_credentials.
-    # assert that a the result of get_boto_session_with_refreshable_credentials is what is returned.
     client_without_role.get_boto_session_with_refreshable_credentials = (
         mocker.MagicMock()
     )
-    session = client_without_role.assume_role_if_supplied_and_get_session()
-    client_without_role.get_boto_session_with_refreshable_credentials.assert_not_called()
-    assert_that(session, instance_of(Session))
+    client = client_without_role.make_client("sqs")
+    client._session = (
+        client_without_role.get_boto_session_with_refreshable_credentials.return_value
+    )
 
 
 def test_make_client(mocker, client_without_role):
