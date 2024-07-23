@@ -81,6 +81,7 @@ class IngestibleFile:
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
 class SupportedFileFormat(Pluggable, ABC):
     reader = None
+    entrypoint_name = "file_formats"
 
     def __init__(self, file: IngestibleFile) -> None:
         self.file = file
