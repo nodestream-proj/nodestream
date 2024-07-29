@@ -32,6 +32,11 @@ SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 
 
+class Utf8TextIOWrapper(TextIOWrapper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, encoding="utf-8")
+
+
 @abstractmethod
 class ReadableFile:
     def as_reader(self, cls: type[IOBase]) -> AsyncContextManager[IOBase]:
@@ -240,7 +245,7 @@ class JsonFileFormat(FileCodec, alias=".json"):
     suffix .json, it will use this class to read the file.
     """
 
-    reader = TextIOWrapper
+    reader = Utf8TextIOWrapper
 
     def read_file_from_handle(
         self, reader: TextIOWrapper
@@ -262,7 +267,7 @@ class LineSeperatedJsonFileFormat(FileCodec, alias=".jsonl"):
     The class reads the file line by line and loads each line as a JSON object.
     """
 
-    reader = TextIOWrapper
+    reader = Utf8TextIOWrapper
 
     def read_file_from_handle(
         self, reader: TextIOWrapper
@@ -305,7 +310,7 @@ class TextFileFormat(FileCodec, alias=".txt"):
     a dictionary with a single key "line".
     """
 
-    reader = TextIOWrapper
+    reader = Utf8TextIOWrapper
 
     def read_file_from_handle(
         self, reader: TextIOWrapper
@@ -328,7 +333,7 @@ class CommaSeperatedValuesFileFormat(FileCodec, alias=".csv"):
     records one by one as they are read
     """
 
-    reader = TextIOWrapper
+    reader = Utf8TextIOWrapper
 
     def read_file_from_handle(
         self, reader: TextIOWrapper
@@ -351,7 +356,7 @@ class YamlFileFormat(FileCodec, alias=".yaml"):
     record which is the entire file.
     """
 
-    reader = TextIOWrapper
+    reader = Utf8TextIOWrapper
 
     def read_file_from_handle(
         self, reader: TextIOWrapper
