@@ -129,7 +129,7 @@ class RemoteFile(ReadableFile):
 
     @asynccontextmanager
     async def as_reader(self, cls: type[IOBase]):
-        if sys.version_info.minor >= (3, 11):
+        if sys.version_info >= (3, 11):
             temp_file = tempfile.SpooledTemporaryFile(max_size=self.max_memory_spooling)
         else:
             temp_file = tempfile.TemporaryFile()
