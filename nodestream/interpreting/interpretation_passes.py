@@ -53,7 +53,6 @@ class SingleSequenceInterpretationPass(InterpretationPass):
 
     @classmethod
     def from_file_data(cls, interpretation_arg_list):
-
         interpretations = (
             Interpretation.from_file_data(**args) for args in interpretation_arg_list
         )
