@@ -197,6 +197,6 @@ async def test_remote_file_extractor_extract_records(mocker, httpx_mock):
             method="GET",
             json=SIMPLE_RECORD,
         )
-    subject = RemoteFileExtractor(files)
+    subject = RemoteFileExtractor.from_file_data(urls=files)
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))

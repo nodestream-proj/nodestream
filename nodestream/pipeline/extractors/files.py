@@ -527,7 +527,7 @@ class FileExtractor(UnifiedFileExtractor):
 
     @classmethod
     def from_file_data(cls, globs: Iterable[str]):
-        return cls([LocalFileSource.from_globs(globs)])
+        return cls([LocalFileSource.from_globs(*globs)])
 
 
 class RemoteFileExtractor(UnifiedFileExtractor):
