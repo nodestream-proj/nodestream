@@ -72,17 +72,13 @@ class S3FileSource(FileSource):
     def find_keys_in_bucket(self) -> Iterable[str]:
         # Returns all keys in the bucket that are not in the archive dir
         # and have the prefix.
-        print("find keys in bucket")
-        print(self.s3_client)
         paginator = self.s3_client.get_paginator("list_objects_v2")
         page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
         for page in page_iterator:
             keys = (obj["Key"] for obj in page.get("Contents", []))
-            print(keys)
             yield from filter(lambda k: not self.object_is_in_archive(k), keys)
 
     async def get_files(self):
-        print("get files")
         for key in self.find_keys_in_bucket():
             yield S3File(
                 key=key,
