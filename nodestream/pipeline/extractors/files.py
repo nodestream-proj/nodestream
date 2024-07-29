@@ -51,7 +51,7 @@ class ReadableFile:
         operations in the context manager on exit
         (i.e after the yield statement).
         """
-        ...
+        raise NotImplementedError
 
     def path_like(self) -> Path:
         """Return a Path object that represents the path to the file.
@@ -64,12 +64,12 @@ class ReadableFile:
         This will be called to sniff the file format and compression format of
         the file from the suffixes of the path.
         """
-        ...
+        raise NotImplementedError
 
     @asynccontextmanager
     async def popped_suffix_tempfile(
         self,
-    ) -> AsyncContextManager[Tuple[Path, tempfile.SpooledTemporaryFile]]:
+    ) -> AsyncContextManager[Tuple[Path, tempfile.NamedTemporaryFile]]:
         """Create a temporary file with the same suffixes sans the last one.
 
         This method creates a temporary file with the same suffixes as the
@@ -160,7 +160,7 @@ class FileSource:
         by the pipeline. The Extractor class will then read the files and
         extract the records from them.
         """
-        ...
+        raise NotImplementedError
 
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
@@ -193,7 +193,7 @@ class FileCodec(Pluggable, ABC):
         The method should yield the records one by one as they are read from
         the file.
         """
-        ...
+        raise NotImplementedError
 
 
 @SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY.connect_baseclass
