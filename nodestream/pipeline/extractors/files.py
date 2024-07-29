@@ -2,6 +2,7 @@ import bz2
 import gzip
 import json
 import tempfile
+import sys
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from csv import DictReader
@@ -123,7 +124,12 @@ class RemoteFile(ReadableFile):
 
     @asynccontextmanager
     async def as_reader(self, cls: type[IOBase]):
-        with tempfile.SpooledTemporaryFile(max_size=self.max_memory_spooling) as fp:
+        if sys.version_info > (3, 10):
+            temp_file = tempfile.SpooledTemporaryFile(max_size=self.max_memory_spooling)
+        else:
+            temp_file = tempfile.TemporaryFile()
+
+        with temp_file as fp:
             async with self.client.stream("GET", self.url) as response:
                 async for chunk in response.aiter_bytes():
                     fp.write(chunk)
