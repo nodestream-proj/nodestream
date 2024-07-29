@@ -26,6 +26,17 @@ def fixture_directory():
 
 
 @pytest.fixture
+def unspported_file(fixture_directory):
+    with NamedTemporaryFile(
+        "w+", suffix=".unsupported", dir=fixture_directory, delete=False
+    ) as temp_file:
+        name = temp_file.name
+        temp_file.write("hello world")
+        temp_file.seek(0)
+    yield Path(name)
+
+
+@pytest.fixture
 def json_file(fixture_directory):
     with NamedTemporaryFile(
         "w+", suffix=".json", dir=fixture_directory, delete=False
@@ -123,6 +134,13 @@ def bz2_file(fixture_directory):
         if not temp_file.name.endswith(".json.bz2"):
             raise Exception("not a json bz2 file")
     yield Path(name)
+
+
+@pytest.mark.asyncio
+async def test_unsupported_file(unspported_file):
+    subject = FileExtractor([LocalFileSource([unspported_file])])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([]))
 
 
 @pytest.mark.asyncio

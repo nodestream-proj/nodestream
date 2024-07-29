@@ -230,7 +230,7 @@ class CompressionCodec(Pluggable, ABC):
         remove the .gz suffix. And store it in an intermediary file which can
         be read by the file format codec (.txt in this case).
         """
-        ...
+        raise NotImplementedError
 
 
 class JsonFileFormat(FileCodec, alias=".json"):
