@@ -1,13 +1,13 @@
 import pytest
 
 from nodestream.pipeline.pipeline import (
+    PielineOutput,
+    PipelineProgressReporter,
+    Step,
+    StepContext,
     StepExecutor,
     StepInput,
     StepOuput,
-    StepContext,
-    Step,
-    PielineOutput,
-    PipelineProgressReporter,
 )
 
 
