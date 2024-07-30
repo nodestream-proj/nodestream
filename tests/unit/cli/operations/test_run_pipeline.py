@@ -5,6 +5,7 @@ from nodestream.cli.operations.run_pipeline import (
     WARNING_NO_TARGETS_PROVIDED,
     RunPipeline,
     SpinnerProgressIndicator,
+    ProgressIndicator,
 )
 from nodestream.pipeline.meta import PipelineContext
 from nodestream.project import PipelineConfiguration, PipelineDefinition, Project
@@ -62,6 +63,16 @@ def test_spinner_progress_callback(mocker):
     spinner.progress.set_message.assert_called_once()
 
 
+def test_spinner_error_condition(mocker):
+    spinner = SpinnerProgressIndicator(mocker.Mock(), "pipeline_name")
+    spinner.on_start()
+    spinner.on_fatal_error(Exception())
+    spinner.progress.set_message.assert_called_once()
+
+    with pytest.raises(Exception):
+        spinner.on_finish(PipelineContext())
+
+
 @pytest.mark.parametrize(
     "from_cli,from_pipeline,expected",
     [
@@ -109,3 +120,9 @@ def test_get_pipleines_to_run(
     cmd.argument.return_value = provided_pipelines
     results = RunPipeline(project_with_default_scope).get_pipelines_to_run(cmd)
     assert_that([result.name for result in results], equal_to(expected))
+
+
+def test_progress_indicator_error(mocker):
+    indicator = ProgressIndicator(mocker.Mock(), "pipeline_name")
+    indicator.on_fatal_error(Exception("Boom"))
+    indicator.command.line.assert_called_with("<error>Boom</error>")
