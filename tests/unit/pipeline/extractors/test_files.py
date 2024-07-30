@@ -14,6 +14,7 @@ from nodestream.pipeline.extractors.files import (
     FileExtractor,
     LocalFileSource,
     RemoteFileExtractor,
+    UnifiedFileExtractor,
 )
 
 SIMPLE_RECORD = {"record": "value"}
@@ -26,7 +27,7 @@ def fixture_directory():
 
 
 @pytest.fixture
-def unspported_file(fixture_directory):
+def unsupported_file(fixture_directory):
     with NamedTemporaryFile(
         "w+", suffix=".unsupported", dir=fixture_directory, delete=False
     ) as temp_file:
@@ -137,8 +138,17 @@ def bz2_file(fixture_directory):
 
 
 @pytest.mark.asyncio
-async def test_unsupported_file(unspported_file):
-    subject = FileExtractor([LocalFileSource([unspported_file])])
+async def test_unsupported_file(unsupported_file):
+    subject = FileExtractor([LocalFileSource([unsupported_file])])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([]))
+
+
+@pytest.mark.asyncio
+async def test_supported_file_unified(unsupported_file):
+    subject = UnifiedFileExtractor.from_file_data(
+        [{"type": "local", "globs": [str(unsupported_file)]}]
+    )
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([]))
 
@@ -151,8 +161,26 @@ async def test_json_formatting(json_file):
 
 
 @pytest.mark.asyncio
+async def test_json_formatting_unified(json_file):
+    subject = UnifiedFileExtractor.from_file_data(
+        [{"type": "local", "globs": [str(json_file)]}]
+    )
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
 async def test_csv_formatting(csv_file):
     subject = FileExtractor([LocalFileSource([csv_file])])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_csv_formatting_unified(csv_file):
+    subject = UnifiedFileExtractor.from_file_data(
+        [{"type": "local", "globs": [str(csv_file)]}]
+    )
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
@@ -165,8 +193,26 @@ async def test_txt_formatting(txt_file):
 
 
 @pytest.mark.asyncio
+async def test_txt_formatting_unified(txt_file):
+    subject = UnifiedFileExtractor.from_file_data(
+        [{"type": "local", "globs": [str(txt_file)]}]
+    )
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([{"line": "hello world"}]))
+
+
+@pytest.mark.asyncio
 async def test_jsonl_formatting(jsonl_file):
     subject = FileExtractor([LocalFileSource([jsonl_file])])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_jsonl_formatting_unified(jsonl_file):
+    subject = UnifiedFileExtractor.from_file_data(
+        [{"type": "local", "globs": [str(jsonl_file)]}]
+    )
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
 
@@ -179,8 +225,26 @@ async def test_yaml_formatting(yaml_file):
 
 
 @pytest.mark.asyncio
+async def test_yaml_formatting_unified(yaml_file):
+    subject = UnifiedFileExtractor.from_file_data(
+        [{"type": "local", "globs": [str(yaml_file)]}]
+    )
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
 async def test_parquet_formatting(parquet_file):
     subject = FileExtractor([LocalFileSource([parquet_file])])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_parquet_formatting_unified(parquet_file):
+    subject = UnifiedFileExtractor.from_file_data(
+        [{"type": "local", "globs": [str(parquet_file)]}]
+    )
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
@@ -193,8 +257,26 @@ async def test_gzip_formatting(gzip_file):
 
 
 @pytest.mark.asyncio
+async def test_gzip_formatting_unified(gzip_file):
+    subject = UnifiedFileExtractor.from_file_data(
+        [{"type": "local", "globs": [str(gzip_file)]}]
+    )
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
 async def test_bz2_formatting(bz2_file):
     subject = FileExtractor([LocalFileSource([bz2_file])])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_bz2_formatting_unified(bz2_file):
+    subject = UnifiedFileExtractor.from_file_data(
+        [{"type": "local", "globs": [str(bz2_file)]}]
+    )
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
@@ -218,3 +300,24 @@ async def test_remote_file_extractor_extract_records(mocker, httpx_mock):
     subject = RemoteFileExtractor.from_file_data(urls=files)
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_unified_extractor_multiple_source_types(json_file, csv_file, httpx_mock):
+    urls = ["https://example.com/file.json", "https://example.com/file2.json"]
+    for url in urls:
+        httpx_mock.add_response(
+            url=url,
+            method="GET",
+            json=SIMPLE_RECORD,
+        )
+
+    subject = UnifiedFileExtractor.from_file_data(
+        [
+            {"type": "local", "globs": [str(json_file)]},
+            {"type": "local", "globs": [str(csv_file)]},
+            {"type": "http", "urls": urls},
+        ]
+    )
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([SIMPLE_RECORD] * 4))
