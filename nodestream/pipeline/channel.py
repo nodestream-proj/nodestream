@@ -1,3 +1,4 @@
+import asyncio
 from asyncio import Queue, wait_for
 from typing import Optional, Tuple
 
@@ -66,7 +67,7 @@ class Channel:
         try:
             await wait_for(self.queue.put(obj), timeout=CHANNEL_TIMEOUT)
             return True
-        except TimeoutError:
+        except (TimeoutError, asyncio.TimeoutError):
             return False
 
 
