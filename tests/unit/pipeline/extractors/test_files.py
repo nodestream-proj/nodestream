@@ -1,9 +1,7 @@
 import bz2
 import csv
 import gzip
-import itertools
 import json
-from io import IOBase
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
@@ -14,7 +12,7 @@ from hamcrest import assert_that, equal_to, has_length
 
 from nodestream.pipeline.extractors.files import (
     FileExtractor,
-    IngestibleFile,
+    LocalFileSource,
     RemoteFileExtractor,
 )
 
@@ -25,6 +23,17 @@ SIMPLE_RECORD = {"record": "value"}
 def fixture_directory():
     with TemporaryDirectory() as tempdir:
         yield tempdir
+
+
+@pytest.fixture
+def unspported_file(fixture_directory):
+    with NamedTemporaryFile(
+        "w+", suffix=".unsupported", dir=fixture_directory, delete=False
+    ) as temp_file:
+        name = temp_file.name
+        temp_file.write("hello world")
+        temp_file.seek(0)
+    yield Path(name)
 
 
 @pytest.fixture
@@ -119,66 +128,73 @@ def bz2_file(fixture_directory):
         "wb", suffix=".json.bz2", dir=fixture_directory, delete=False
     ) as temp_file:
         json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
-        with bz2.BZ2File(fileobj=temp_file, mode="wb") as bz2_file:
-            bz2_file.write(json_data)
         name = temp_file.name
+        with bz2.BZ2File(name, mode="wb") as bz2_file:
+            bz2_file.write(json_data)
         if not temp_file.name.endswith(".json.bz2"):
             raise Exception("not a json bz2 file")
     yield Path(name)
 
 
 @pytest.mark.asyncio
+async def test_unsupported_file(unspported_file):
+    subject = FileExtractor([LocalFileSource([unspported_file])])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([]))
+
+
+@pytest.mark.asyncio
 async def test_json_formatting(json_file):
-    subject = FileExtractor([json_file])
+    subject = FileExtractor([LocalFileSource([json_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
 
 @pytest.mark.asyncio
 async def test_csv_formatting(csv_file):
-    subject = FileExtractor([csv_file])
+    subject = FileExtractor([LocalFileSource([csv_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
 
 @pytest.mark.asyncio
 async def test_txt_formatting(txt_file):
-    subject = FileExtractor([txt_file])
+    subject = FileExtractor([LocalFileSource([txt_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([{"line": "hello world"}]))
 
 
 @pytest.mark.asyncio
 async def test_jsonl_formatting(jsonl_file):
-    subject = FileExtractor([jsonl_file])
+    subject = FileExtractor([LocalFileSource([jsonl_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
 
 
 @pytest.mark.asyncio
 async def test_yaml_formatting(yaml_file):
-    subject = FileExtractor([yaml_file])
+    subject = FileExtractor([LocalFileSource([yaml_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
 
 @pytest.mark.asyncio
 async def test_parquet_formatting(parquet_file):
-    subject = FileExtractor([parquet_file])
+    subject = FileExtractor([LocalFileSource([parquet_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
 
 @pytest.mark.asyncio
 async def test_gzip_formatting(gzip_file):
-    subject = FileExtractor([gzip_file])
+    subject = FileExtractor([LocalFileSource([gzip_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
 
 @pytest.mark.asyncio
-async def test_bz2_formatting(gzip_file):
-    subject = FileExtractor([gzip_file])
+async def test_bz2_formatting(bz2_file):
+    subject = FileExtractor([LocalFileSource([bz2_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
@@ -187,7 +203,7 @@ def test_declarative_init(
     fixture_directory, csv_file, json_file, txt_file, jsonl_file, yaml_file
 ):
     subject = FileExtractor.from_file_data(globs=[f"{fixture_directory}/**"])
-    assert_that(list(subject.paths), has_length(5))
+    assert_that(list(subject.file_sources[0].paths), has_length(5))
 
 
 @pytest.mark.asyncio
@@ -199,40 +215,6 @@ async def test_remote_file_extractor_extract_records(mocker, httpx_mock):
             method="GET",
             json=SIMPLE_RECORD,
         )
-    subject = RemoteFileExtractor(files)
+    subject = RemoteFileExtractor.from_file_data(urls=files)
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
-
-
-def test_file_ordereing():
-    files_in_order = [Path(f"file{i}.json") for i in range(1, 4)]
-    for permutation in itertools.permutations(files_in_order):
-        subject = FileExtractor(permutation)
-        assert_that(list(subject._ordered_paths()), equal_to(files_in_order))
-
-
-def test_contextmanager_file_deleted_with_tempfile_cleanup_callback(json_file):
-    path = Path()
-    fp = IOBase()
-    with open(json_file, "rb+") as fp:
-        with IngestibleFile.from_file_pointer_and_suffixes(
-            fp, json_file.suffixes
-        ) as file:
-            path = file.path
-            fp = file.fp
-            assert_that(file.path.exists(), equal_to(True))
-    assert_that(path.exists(), equal_to(False))
-    assert_that(fp.closed, equal_to(True))
-
-
-def test_file_deleted_with_tempfile_cleanup_callback_ingested(json_file):
-    path = Path()
-    fp = IOBase()
-    with open(json_file, "rb+") as fp:
-        file = IngestibleFile.from_file_pointer_and_suffixes(fp, json_file.suffixes)
-        path = file.path
-        fp = file.fp
-        assert_that(file.path.exists(), equal_to(True))
-        file.ingested()
-        assert_that(path.exists(), equal_to(False))
-        assert_that(fp.closed, equal_to(True))
