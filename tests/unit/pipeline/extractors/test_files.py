@@ -14,6 +14,8 @@ from nodestream.pipeline.extractors.files import (
     FileExtractor,
     LocalFileSource,
     RemoteFileExtractor,
+    UnifiedFileExtractor,
+    RemoteFileSource,
 )
 
 SIMPLE_RECORD = {"record": "value"}
@@ -218,3 +220,52 @@ async def test_remote_file_extractor_extract_records(mocker, httpx_mock):
     subject = RemoteFileExtractor.from_file_data(urls=files)
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_no_files_found_from_local_source(mocker):
+    subject = UnifiedFileExtractor([LocalFileSource([])])
+    subject.logger = mocker.Mock()
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([]))
+    subject.logger.warning.assert_called_once_with(
+        "No files found for source: 0 local files"
+    )
+
+
+@pytest.mark.asyncio
+async def test_no_files_found_from_remote_source(mocker):
+    subject = UnifiedFileExtractor([RemoteFileSource([], 10)])
+    subject.logger = mocker.Mock()
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([]))
+    subject.logger.warning.assert_called_once_with(
+        "No files found for source: 0 remote files"
+    )
+
+
+def test_remote_file_source_single_file_description():
+    url = "https://example.com/file.json"
+    subject = RemoteFileSource([url], 10)
+    assert_that(subject.describe(), equal_to(url))
+
+
+def test_remote_file_source_multiple_file_description():
+    urls = ["https://example.com/file.json", "https://example.com/file2.json"]
+    subject = RemoteFileSource(urls, 10)
+    assert_that(subject.describe(), equal_to("2 remote files"))
+
+
+def test_local_file_source_single_file_description(fixture_directory):
+    path = Path(f"{fixture_directory}/file.json")
+    subject = LocalFileSource([path])
+    assert_that(subject.describe(), equal_to(str(path)))
+
+
+def test_local_file_source_multiple_file_description(fixture_directory):
+    paths = [
+        Path(f"{fixture_directory}/file.json"),
+        Path(f"{fixture_directory}/file2.json"),
+    ]
+    subject = LocalFileSource(paths)
+    assert_that(subject.describe(), equal_to("2 local files"))

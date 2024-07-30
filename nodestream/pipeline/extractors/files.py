@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from csv import DictReader
 from glob import glob
 from io import BufferedReader, IOBase, TextIOWrapper
+from logging import getLogger
 from pathlib import Path
 from typing import (
     Any,
@@ -161,6 +162,16 @@ class FileSource:
         extract the records from them.
         """
         raise NotImplementedError
+
+    def describe(self) -> str:
+        """Return a human-readable description of the file source.
+
+        This method should return a human-readable description of the file source.
+        The description should be a string that describes the file source in a
+        way that is understandable to the user. The description should be
+        concise and informative.
+        """
+        return str(self)
 
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
@@ -437,6 +448,12 @@ class LocalFileSource(FileSource):
         for path in self.paths:
             yield LocalFile(path)
 
+    def describe(self) -> str:
+        if len(self.paths) == 1:
+            return f"{self.paths[0]}"
+        else:
+            return f"{len(self.paths)} local files"
+
 
 class RemoteFileSource(FileSource):
     """A class that represents a source of remote files to be read.
@@ -458,6 +475,12 @@ class RemoteFileSource(FileSource):
             for url in self.urls:
                 yield RemoteFile(url, client, self.memory_spooling_max_size)
 
+    def describe(self) -> str:
+        if len(self.urls) == 1:
+            return f"{self.urls[0]}"
+        else:
+            return f"{len(self.urls)} remote files"
+
 
 class UnifiedFileExtractor(Extractor):
     """A class that extracts records from files.
@@ -471,6 +494,7 @@ class UnifiedFileExtractor(Extractor):
 
     def __init__(self, file_sources: Iterable[FileSource]) -> None:
         self.file_sources = file_sources
+        self.logger = getLogger(__name__)
 
     async def read_file(self, file: ReadableFile) -> Iterable[JsonLikeDocument]:
         intermediaries: List[AsyncContextManager[ReadableFile]] = []
@@ -516,9 +540,16 @@ class UnifiedFileExtractor(Extractor):
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for file_source in self.file_sources:
+            total_files_from_source = 0
             async for file in file_source.get_files():
+                total_files_from_source += 1
                 async for record in self.read_file(file):
                     yield record
+
+            if total_files_from_source == 0:
+                self.logger.warning(
+                    f"No files found for source: {file_source.describe()}"
+                )
 
 
 # DEPRECATED CODE BELOW ##
