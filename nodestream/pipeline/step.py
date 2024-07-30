@@ -60,6 +60,15 @@ class StepContext:
         """
         self.reporter.logger.info(message, extra=dict(index=self.index, **extras))
 
+    def warning(self, message: str, **extras):
+        """Log a warning message.
+
+        This method is used to log a warning message. It can be used to log
+        information about the state of the pipeline and the steps in the
+        pipeline.
+        """
+        self.reporter.logger.warning(message, extra=dict(index=self.index, **extras))
+
 
 class Step:
     """A `Step` is a unit of work that can be executed in a pipeline.
@@ -99,7 +108,7 @@ class Step:
         during the processing of records.
         """
         for record in ():
-            yield record
+            yield record  # pragma: no cover
 
     async def finish(self, context: StepContext):
         """Finish the step.
