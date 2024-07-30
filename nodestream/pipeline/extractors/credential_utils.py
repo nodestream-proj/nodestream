@@ -1,7 +1,10 @@
+from datetime import datetime
+from time import time
 from typing import Optional
 from uuid import uuid4
 
 import boto3
+import pytz
 from botocore.credentials import RefreshableCredentials
 from botocore.session import Session
 
@@ -11,11 +14,13 @@ class AwsClientFactory:
         self,
         assume_role_arn: Optional[str] = None,
         assume_role_external_id: Optional[str] = None,
+        session_ttl: int = 3000,
         **boto_session_args
     ) -> None:
         self.assume_role_arn = assume_role_arn
         self.assume_role_external_id = assume_role_external_id
         self.session_args = self._init_session_args(**boto_session_args)
+        self.session_ttl = session_ttl
 
     @staticmethod
     def _init_session_args(**boto_session_args):
@@ -24,7 +29,7 @@ class AwsClientFactory:
             del session_args["profile_name"]
         return session_args
 
-    def assume_role_and_get_credentials(self):
+    def get_credentials_from_assume_role(self):
         sts_client = boto3.client("sts", **self.session_args)
         role_session_name = str(uuid4())
         assume_role_kwargs = {
@@ -41,23 +46,36 @@ class AwsClientFactory:
             "expiry_time": assumed_role_object["Credentials"]["Expiration"].isoformat(),
         }
 
+    def get_credentials_from_provider_chain(self):
+        session = Session()
+        session_credentials = session.get_credentials().get_frozen_credentials()
+        return {
+            "access_key": session_credentials.access_key,
+            "secret_key": session_credentials.secret_key,
+            "token": session_credentials.token,
+            "expiry_time": datetime.fromtimestamp(time() + self.session_ttl)
+            .replace(tzinfo=pytz.utc)
+            .isoformat(),
+        }
+
     def get_boto_session_with_refreshable_credentials(self):
+        creds = (
+            self.get_credentials_from_assume_role
+            if self.assume_role_arn
+            else self.get_credentials_from_provider_chain
+        )
+
         refreshable_credentials = RefreshableCredentials.create_from_metadata(
-            metadata=self.assume_role_and_get_credentials(),
-            refresh_using=self.assume_role_and_get_credentials,
+            metadata=creds(),
+            refresh_using=creds,
             method="sts-assume-role",
         )
         session = Session()
         session._credentials = refreshable_credentials
         return session
 
-    def assume_role_if_supplied_and_get_session(self):
-        if self.assume_role_arn:
-            return self.get_boto_session_with_refreshable_credentials()
-        return Session()
-
     def make_client(self, client_name: str):
-        session = self.assume_role_if_supplied_and_get_session()
-        return boto3.Session(botocore_session=session, **self.session_args).client(
-            client_name
-        )
+        botocore_session = self.get_boto_session_with_refreshable_credentials()
+        return boto3.Session(
+            botocore_session=botocore_session, **self.session_args
+        ).client(client_name)

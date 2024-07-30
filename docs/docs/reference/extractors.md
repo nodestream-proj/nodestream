@@ -55,6 +55,54 @@ set the `record_format` to be `json` in the `StreamExtractor` configuration. For
      record_format: json
 ```
 
+## `QueueExtractor`
+
+The `QueueExtractor` provides a convenient abstraction for extracting records from different types of queues
+by allowing customization of the underlying queue system and the record format. By implementing the `QueueConnector`
+and `StreamRecordFormat` subclasses, one can easily adapt the extraction process to various queue sources and
+record formats.
+
+The documentation below contains information on the supported `QueueConnector` options and
+how to configure them. See the [Customizing The Queue Extractor](../guides/customizing-the-queue-extractor.md) guide
+to learn how to add your own implementations of these classes.
+
+#### Top Level Arguments
+
+```yaml
+- implementation: nodestream.pipeline.extractors.queues:QueueExtractor
+  arguments:
+     # rest of the queue extractor format arguments
+     max_batch_size: 1 # default 10. Max number of records to retrieve at one time, max size depends on connector implementation.
+     max_batches: 1 # default 10. Number of batches to process
+```
+
+### `QueueConnector`
+
+The `QueueConnector` describes how to poll data from the underlying queue mechanism.
+
+#### `AWS SQS`
+
+```yaml
+- implementation: nodestream.pipeline.extractors.queues:QueueExtractor
+  arguments:
+     # rest of the stream extractor format arguments
+     connector: sqs
+     queue_url: "https://sqs.us-east-1.amazonaws.com/177715257436/MyQueue"
+```
+
+### Additional Arguments
+With the previous minimal configuration, it will use your currently active aws credentials to read messages from
+`https://sqs.us-east-1.amazonaws.com/177715257436/MyQueue`. However, there are many options you can add to this:
+
+| Parameter Name          	| Type   	| Description                                                                                                                                                                               	|
+|-------------------------	|--------	|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| message_system_attribute_names                  	| String 	| A list of attributes that need to be returned along with each message. (Default: "All")                                                                                                     	|
+| message_attribute_names                  	| String 	| A list of attribute names to receive. (Default: "All")                                                                                                     	|
+| delete_after_read                  	| Boolean 	| Deletes the batch of messages from the queue after they are yielded to the next pipeline step. (Default: True)               
+| assume_role_arn         	| String 	| The ARN of a role to assume before interacting with the SQS Queue. Of course the appropriate configuration is needed on both the current credentials as well as the target role.             	|
+| assume_role_external_id 	| String 	| The external id that is required to assume role. Only used when `assume_role_arn` is set and only needed when the role is configured to require an external id.                           	|
+| **session_args          	| Any    	| Any other argument that you want sent to the [boto3.Session](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/core/session.html) that will be used to interact with AWS. 	|
+
 ## `AthenaExtractor`
 
 The `AthenaExtractor` issues a query to Amazon Athena, and returns yields each row as a record to the pipeline. For
@@ -107,6 +155,41 @@ With the previous minimal configuration, it will use your currently active aws c
 | prefix                  	| String 	| Filter the objects pulled from S3 to only the ones that have this prefix in the name.                                                                                                     	|
 | object_format           	| String 	| Regardless of the file's extension, use the format provided from the list of [file format](./file-formats.md) supported.                                                                  	|
 | archive_dir             	| String 	| After a object has been processed, move the object for its current location to an a specified `archive` folder inside the bucket. Objects inside this folder are ignored when processing. 	|
+| assume_role_arn         	| String 	| The ARN of a role to assume before interacting with the bucket. Of course the appropriate configuration is needed on both the current credentials as well as the target role.             	|
+| assume_role_external_id 	| String 	| The external id that is required to assume role. Only used when `assume_role_arn` is set and only needed when the role is configured to require an external id.                           	|
+| **session_args          	| Any    	| Any other argument that you want sent to the [boto3.Session](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/core/session.html) that will be used to interact with AWS. 	|
+
+### Support For Compressed File Formats
+The system seamlessly handles decompression of objects stored in `.gz`
+and `.bz2`file formats. Files are automatically decompressed and processed based on their underlying content type, indicated by the file extension. For instance, a gzip-compressed JSON file should be named with the `.json.gz` extension to ensure it is correctly identified and read as JSON after decompression.
+
+## `DynamoDBExtractor`
+
+The `DynamoDBExtractor` issues a query to an Amazon DynamoDB table using the scan method. The details on this AWS api call can be found [here](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb/client/scan.html), and some of the parameters that are exposed by the interface are shown below. 
+
+```yaml
+- implementation: nodestream.pipeline.extractors.stores.aws:AthenaExtractor
+  arguments:
+    table_name: test_table;
+    limit: 100
+    scan_filter:
+      attribute_name:
+        AttributeValueList:
+        - S: 'some_string'
+        ComparisonOperator: 'EQ'
+    projection_expression: 'string expression'
+    filter_expression: 'string expression'
+```
+
+### Arguments
+
+| Parameter Name          	| Type   	| Description                                                                                                                                                                               	|
+|-------------------------	|--------	|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
+| table_name                   	| String 	| The name of the dynamoDB table within the account.                                                                 	|
+| limit               	| Integer 	| The maximum number of records to be collected from the table for each call.                 	|
+| scan_filter         	| Dict 	| Filter for the results to be returned, does not minimize DynamoDB credit usage. See [DynamoDB Scan Docs](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb/client/scan.html) for detailed information on use.                            	|
+| projection_expression                	| String 	| String expression for projecting the results. See [DynamoDB Projection Docs](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Attributes.html) for detailed information on the format.  |
+| filter_expression                	| String 	| String expression for filtering the results (alternative to the scan_filter). See [DynamoDB Filter Docs](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.FilterExpression) for detailed information on the format.   	|
 | assume_role_arn         	| String 	| The ARN of a role to assume before interacting with the bucket. Of course the appropriate configuration is needed on both the current credentials as well as the target role.             	|
 | assume_role_external_id 	| String 	| The external id that is required to assume role. Only used when `assume_role_arn` is set and only needed when the role is configured to require an external id.                           	|
 | **session_args          	| Any    	| Any other argument that you want sent to the [boto3.Session](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/core/session.html) that will be used to interact with AWS. 	|

@@ -33,3 +33,12 @@ You will get a record in the following shape:
 
 `.yaml` files are loaded using `yaml.load` and the one record is returned per file.
 The record is the entire parsed contents of the `.yaml` file.
+
+
+# Compressed File Formats
+
+## `.gz`
+`{File Format Extension}.gz` files are decompressed using `gzip.open` and stripped of the .gz extension and processed in the subsequent extension.
+
+## `.bz2`
+`{File Format Extension}.bz2` files are decompressed using `bz2.open` and stripped of the .bz2 extension and processed in the subsequent extension.

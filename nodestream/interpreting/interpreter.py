@@ -1,79 +1,20 @@
-from abc import ABC, abstractmethod
-from copy import deepcopy
-from typing import Iterable
+from os import environ
 
 from nodestream.schema.state import SchemaExpansionCoordinator
 
 from ..pipeline import Transformer
 from ..pipeline.value_providers import ProviderContext
-from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
+from ..schema import ExpandsSchema
+from .interpretation_passes import InterpretationPass
 from .interpretations import Interpretation
 from .record_decomposers import RecordDecomposer
 
-
-class InterpretationPass(ExpandsSchema, ABC):
-    @classmethod
-    def from_file_data(self, args):
-        if args is None:
-            return NullInterpretationPass()
-
-        if len(args) > 0 and isinstance(args[0], list):
-            return MultiSequenceInterpretationPass.from_file_data(args)
-
-        return SingleSequenceInterpretationPass.from_file_data(args)
-
-    @abstractmethod
-    def apply_interpretations(self, context: ProviderContext):
-        pass
+INTERPRETER_UNIQUENESS_ERROR_MESSAGE = "The interpreter must only generate source nodes in either the before_iteration phase, or the interpretations phase, not both."
+VALIDATION_FLAG = "VALIDATE_PIPELINE_SCHEMA"
 
 
-class NullInterpretationPass(InterpretationPass):
-    def apply_interpretations(self, context: ProviderContext):
-        yield context
-
-
-class MultiSequenceInterpretationPass(InterpretationPass):
-    __slots__ = ("passes",)
-
-    @classmethod
-    def from_file_data(cls, args):
-        return cls(*(InterpretationPass.from_file_data(arg) for arg in args))
-
-    def __init__(self, *passes: InterpretationPass) -> None:
-        self.passes = passes
-
-    def apply_interpretations(self, context: ProviderContext):
-        for interpretation_pass in self.passes:
-            provided_subcontext = deepcopy(context)
-            for res in interpretation_pass.apply_interpretations(provided_subcontext):
-                yield res
-
-    def expand_schema(self, coordinator: SchemaExpansionCoordinator):
-        for interpretation_pass in self.passes:
-            interpretation_pass.expand_schema(coordinator)
-            coordinator.clear_aliases()
-
-
-class SingleSequenceInterpretationPass(ExpandsSchemaFromChildren, InterpretationPass):
-    __slots__ = ("interpretations",)
-
-    @classmethod
-    def from_file_data(cls, interpretation_arg_list):
-        interpretations = (
-            Interpretation.from_file_data(**args) for args in interpretation_arg_list
-        )
-        return cls(*interpretations)
-
-    def __init__(self, *interpretations: Interpretation):
-        self.interpretations = interpretations
-
-    def apply_interpretations(self, context: ProviderContext):
-        for interpretation in self.interpretations:
-            interpretation.interpret(context)
-        yield context
-
-    def get_child_expanders(self) -> Iterable[ExpandsSchema]:
-        yield from self.interpretations
+class InterpreterError(Exception):
+    pass
 
 
 class Interpreter(Transformer, ExpandsSchema):
@@ -87,12 +28,13 @@ class Interpreter(Transformer, ExpandsSchema):
     def from_file_data(cls, interpretations, before_iteration=None, iterate_on=None):
         # Import all interpretation plugins before we try to load any interpretations.
         Interpretation.import_all()
-
-        return cls(
+        interpreter_class = cls(
             before_iteration=InterpretationPass.from_file_data(before_iteration),
             interpretations=InterpretationPass.from_file_data(interpretations),
             decomposer=RecordDecomposer.from_iteration_arguments(iterate_on),
         )
+        interpreter_class.verify_completeness()
+        return interpreter_class
 
     def __init__(
         self,
@@ -103,6 +45,14 @@ class Interpreter(Transformer, ExpandsSchema):
         self.before_iteration = before_iteration
         self.interpretations = interpretations
         self.decomposer = decomposer
+
+    # Raise an error if both the interpretations and before_iteration phases create source nodes.
+    def verify_completeness(self):
+        if all(
+            intepretater_phase.assigns_source_nodes
+            for intepretater_phase in [self.before_iteration, self.interpretations]
+        ) and environ.get(VALIDATION_FLAG, False):
+            raise InterpreterError(INTERPRETER_UNIQUENESS_ERROR_MESSAGE)
 
     async def transform_record(self, record):
         for output_context in self.interpret_record(record):
@@ -115,6 +65,18 @@ class Interpreter(Transformer, ExpandsSchema):
                 yield from self.interpretations.apply_interpretations(sub_context)
 
     def expand_schema(self, coordinator: SchemaExpansionCoordinator):
-        self.before_iteration.expand_schema(coordinator)
-        self.interpretations.expand_schema(coordinator)
-        coordinator.clear_aliases()
+        # Choose between the before_iteration and interpretation passes, which one creates the source nodes.
+        # Process the schema for the one that processes source nodes last so that the context of the prior is involved for each pass.
+        context_pass = (
+            self.before_iteration
+            if self.interpretations.assigns_source_nodes
+            else self.interpretations
+        )
+        head_pass = (
+            self.interpretations
+            if self.interpretations.assigns_source_nodes
+            else self.before_iteration
+        )
+
+        context_pass.expand_schema(coordinator)
+        head_pass.expand_schema(coordinator)

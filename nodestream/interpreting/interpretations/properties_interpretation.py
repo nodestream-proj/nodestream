@@ -28,6 +28,7 @@ class PropertiesInterpretation(Interpretation, alias="properties"):
         coordinator.on_node_schema(
             self.expand_source_node_schema,
             alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
+            property_list=list(self.properties),
         )
 
     def expand_source_node_schema(self, schema: GraphObjectSchema):

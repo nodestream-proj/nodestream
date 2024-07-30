@@ -1,7 +1,13 @@
+from os import environ
+
 import pytest
 from hamcrest import assert_that, has_entry, not_
 
 from nodestream.interpreting.interpretations.switch_interpretation import (
+    INVALID_SWITCH_ERROR_MESSAGE,
+    SWITCH_COMPLETENESS_ERROR_MESSAGE,
+    VALIDATION_FLAG,
+    SwitchError,
     SwitchInterpretation,
     UnhandledBranchError,
 )
@@ -54,3 +60,49 @@ def test_switch_with_multiple_interpretations(blank_context):
     properties = blank_context.desired_ingest.source.properties
     assert_that(properties, has_entry("success", True))
     assert_that(properties, has_entry("random", True))
+
+
+TEST_SOURCE_NODE_FILE_DATA = {
+    "type": "source_node",
+    "node_type": "Test",
+    "key": {"test_key": "test_value"},
+}
+TEST_RELATIONSHIP_FILE_DATA = {
+    "type": "relationship",
+    "node_type": "Test",
+    "relationship_type": "TEST_REL",
+    "node_key": {"test_key": "test_value"},
+}
+
+INCOMPLETE_SWITCH_ARGS = {
+    "switch_on": "thing",
+    "cases": {
+        "case_a": [TEST_SOURCE_NODE_FILE_DATA],
+        "case_b": [TEST_RELATIONSHIP_FILE_DATA],
+    },
+}
+
+INVALID_SWITCH_ARGS = {
+    "switch_on": "thing",
+    "cases": {
+        "case_a": [[TEST_SOURCE_NODE_FILE_DATA], [TEST_SOURCE_NODE_FILE_DATA]],
+        "case_b": [[TEST_SOURCE_NODE_FILE_DATA], [TEST_SOURCE_NODE_FILE_DATA]],
+    },
+}
+
+
+@pytest.fixture
+def environment_flag():
+    environ[VALIDATION_FLAG] = "True"
+
+
+def test_incomplete_switch_initialization_error(environment_flag):
+    with pytest.raises(SwitchError) as error:
+        _ = SwitchInterpretation(**INCOMPLETE_SWITCH_ARGS)
+        assert error.message == SWITCH_COMPLETENESS_ERROR_MESSAGE
+
+
+def test_invalid_switch_initialization_error():
+    with pytest.raises(SwitchError) as error:
+        _ = SwitchInterpretation(**INVALID_SWITCH_ARGS)
+        assert error.message == INVALID_SWITCH_ERROR_MESSAGE

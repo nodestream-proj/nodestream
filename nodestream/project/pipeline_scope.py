@@ -3,6 +3,7 @@ from importlib import resources
 from typing import Dict, Iterable, Optional
 
 from ..file_io import LoadsFromYaml, SavesToYaml
+from ..pipeline.meta import start_context
 from ..pipeline.scope_config import ScopeConfig
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .pipeline_definition import PipelineConfiguration, PipelineDefinition
@@ -89,7 +90,8 @@ class PipelineScope(ExpandsSchemaFromChildren, LoadsFromYaml, SavesToYaml):
             return 0
 
         run_request.set_configuration(self.config)
-        await run_request.execute_with_definition(self[name])
+        with start_context(name, self.name):
+            await run_request.execute_with_definition(self[name])
         return 1
 
     def __getitem__(self, pipeline_name):

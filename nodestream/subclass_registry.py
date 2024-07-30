@@ -36,6 +36,9 @@ class SubclassRegistry:
         self.linked_base = None
         self.ignore_overrides = ignore_overrides
 
+    def __contains__(self, sub_class):
+        return sub_class in self.registry
+
     def connect_baseclass(self, base_class):
         """Connect a base class to this registry."""
 

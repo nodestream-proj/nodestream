@@ -1,3 +1,5 @@
+import bz2
+import gzip
 import json
 
 import pytest
@@ -19,22 +21,16 @@ def s3_client():
 
 @pytest.fixture
 def subject(mocker):
-    from nodestream.pipeline.extractors.stores.aws.credential_utils import (
-        AwsClientFactory,
-    )
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
     from nodestream.pipeline.extractors.stores.aws.s3_extractor import S3Extractor
 
     mocker.patch.object(AwsClientFactory, "make_client")
-    return S3Extractor(
-        bucket="bucket",
-        prefix=PREFIX,
-        s3_client=AwsClientFactory().make_client("s3"),
-    )
+    return S3Extractor.from_file_data(bucket="bucket", prefix=PREFIX)
 
 
 @pytest.fixture
 def subject_with_populated_objects(subject, s3_client):
-    subject.s3_client = s3_client
+    subject.file_sources[0].s3_client = s3_client
     s3_client.create_bucket(Bucket=BUCKET_NAME)
     s3_client.put_object(Bucket=BUCKET_NAME, Key="notprefixed", Body="hello".encode())
     for i in range(NUM_OBJECTS):
@@ -47,8 +43,22 @@ def subject_with_populated_objects(subject, s3_client):
 
 
 @pytest.fixture
+def subject_with_populated_objects_and_no_extension(subject, s3_client):
+    subject.file_sources[0].s3_client = s3_client
+    s3_client.create_bucket(Bucket=BUCKET_NAME)
+    s3_client.put_object(Bucket=BUCKET_NAME, Key="notprefixed", Body="hello".encode())
+    for i in range(NUM_OBJECTS):
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=f"{PREFIX}/foo/{i}",
+            Body=json.dumps({"hello": i}),
+        )
+    return subject
+
+
+@pytest.fixture
 def subject_with_populated_csv_objects(subject, s3_client):
-    subject.s3_client = s3_client
+    subject.file_sources[0].s3_client = s3_client
     s3_client.create_bucket(Bucket=BUCKET_NAME)
     s3_client.put_object(Bucket=BUCKET_NAME, Key="notprefixed", Body="hello".encode())
     for i in range(NUM_OBJECTS):
@@ -62,7 +72,7 @@ def subject_with_populated_csv_objects(subject, s3_client):
 
 @pytest.fixture
 def subject_with_populated_jsonl_objects(subject, s3_client):
-    subject.s3_client = s3_client
+    subject.file_sources[0].s3_client = s3_client
     s3_client.create_bucket(Bucket=BUCKET_NAME)
     for i in range(1):
         s3_client.put_object(
@@ -75,7 +85,7 @@ def subject_with_populated_jsonl_objects(subject, s3_client):
 
 @pytest.fixture
 def subject_with_populated_text_objects(subject, s3_client):
-    subject.s3_client = s3_client
+    subject.file_sources[0].s3_client = s3_client
     s3_client.create_bucket(Bucket=BUCKET_NAME)
     for i in range(1):
         s3_client.put_object(
@@ -95,6 +105,61 @@ def subject_with_archieved_objects(subject_with_archiving_enabled, s3_client):
             Body=json.dumps({"hello": i}),
         )
     return subject_with_archiving_enabled
+
+
+@pytest.fixture
+def subject_with_populated_and_gz_compressed_objects(subject, s3_client):
+    subject.file_sources[0].s3_client = s3_client
+    s3_client.create_bucket(Bucket=BUCKET_NAME)
+
+    for i in range(NUM_OBJECTS):
+        body_data = json.dumps({"hello": i}).encode()
+        gzipped_body = gzip.compress(body_data)
+
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=f"{PREFIX}/foo/{i}.json.gz",
+            Body=gzipped_body,
+        )
+
+    return subject
+
+
+@pytest.fixture
+def subject_with_populated_and_bz2_compressed_objects(subject, s3_client):
+    subject.file_sources[0].s3_client = s3_client
+    s3_client.create_bucket(Bucket=BUCKET_NAME)
+
+    for i in range(NUM_OBJECTS):
+        body_data = json.dumps({"hello": i}).encode()
+        bz2_body = bz2.compress(body_data)
+
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=f"{PREFIX}/foo/{i}.json.bz2",
+            Body=bz2_body,
+        )
+
+    return subject
+
+
+@pytest.fixture
+def subject_with_populated_double_compressed_objects(subject, s3_client):
+    subject.file_sources[0].s3_client = s3_client
+    s3_client.create_bucket(Bucket=BUCKET_NAME)
+
+    for i in range(NUM_OBJECTS):
+        body_data = json.dumps({"hello": i}).encode()
+        gzipped_body = gzip.compress(body_data)
+        double_zipped_body = bz2.compress(gzipped_body)
+
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=f"{PREFIX}/foo/{i}.json.gz.bz2",
+            Body=double_zipped_body,
+        )
+
+    return subject
 
 
 @pytest.mark.asyncio
@@ -138,7 +203,7 @@ async def test_s3_extractor_properly_loads_text_files(
 
 @pytest.fixture
 def subject_with_archiving_enabled(subject_with_populated_objects):
-    subject_with_populated_objects.archive_dir = "archive"
+    subject_with_populated_objects.file_sources[0].archive_dir = "archive"
     return subject_with_populated_objects
 
 
@@ -147,6 +212,61 @@ async def test_s3_extractor_pages_and_reads_all_files(subject_with_populated_obj
     expected_results = [{"hello": i} for i in range(NUM_OBJECTS)]
     results = [
         result async for result in subject_with_populated_objects.extract_records()
+    ]
+    assert_that(results, has_length(NUM_OBJECTS))
+    assert_that(results, has_items(*expected_results))
+
+
+@pytest.mark.asyncio
+async def test_s3_extractor_pages_and_reads_all_files_with_object_format(
+    subject_with_populated_objects_and_no_extension,
+):
+    subject_with_populated_objects_and_no_extension.file_sources[0].object_format = (
+        ".json"
+    )
+    expected_results = [{"hello": i} for i in range(NUM_OBJECTS)]
+    results = [
+        result
+        async for result in subject_with_populated_objects_and_no_extension.extract_records()
+    ]
+    assert_that(results, has_length(NUM_OBJECTS))
+    assert_that(results, has_items(*expected_results))
+
+
+@pytest.mark.asyncio
+async def test_s3_extractor_pages_and_reads_all_gz_compressed_files(
+    subject_with_populated_and_gz_compressed_objects,
+):
+    expected_results = [{"hello": i} for i in range(NUM_OBJECTS)]
+    results = [
+        result
+        async for result in subject_with_populated_and_gz_compressed_objects.extract_records()
+    ]
+    assert_that(results, has_length(NUM_OBJECTS))
+    assert_that(results, has_items(*expected_results))
+
+
+@pytest.mark.asyncio
+async def test_s3_extractor_pages_and_reads_all_bz2_compressed_files(
+    subject_with_populated_and_bz2_compressed_objects,
+):
+    expected_results = [{"hello": i} for i in range(NUM_OBJECTS)]
+    results = [
+        result
+        async for result in subject_with_populated_and_bz2_compressed_objects.extract_records()
+    ]
+    assert_that(results, has_length(NUM_OBJECTS))
+    assert_that(results, has_items(*expected_results))
+
+
+@pytest.mark.asyncio
+async def test_s3_extractor_pages_and_reads_double_compressed_files(
+    subject_with_populated_double_compressed_objects,
+):
+    expected_results = [{"hello": i} for i in range(NUM_OBJECTS)]
+    results = [
+        result
+        async for result in subject_with_populated_double_compressed_objects.extract_records()
     ]
     assert_that(results, has_length(NUM_OBJECTS))
     assert_that(results, has_items(*expected_results))
@@ -172,22 +292,3 @@ async def test_s3_extractor_does_not_archive_objects_when_archive_dir_is_none(
         s3_client.list_objects(Bucket=BUCKET_NAME, Prefix="archive", MaxKeys=1000),
         not_(has_key("Contents")),
     )
-
-
-@pytest.mark.parametrize(
-    "key,object_format_arg,expected_object_format",
-    [
-        ["foo/bar/baz.json", None, ".json"],
-        ["foo/bar/baz.csv", None, ".csv"],
-        ["foo/bar/baz", None, None],
-        ["foo/bar/baz.jsonbar", ".json", ".json"],
-        ["foo/bar/baz", ".json", ".json"],
-    ],
-)
-def test_infer_object_format(subject, key, object_format_arg, expected_object_format):
-    subject.object_format = object_format_arg
-    if expected_object_format is None:
-        with pytest.raises(ValueError):
-            subject.infer_object_format(key)
-    else:
-        assert_that(subject.infer_object_format(key), expected_object_format)

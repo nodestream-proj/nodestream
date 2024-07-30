@@ -1,0 +1,512 @@
+
+
+type DefaultSourceNode @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    property_type: String
+
+    additional_property: String
+
+    source_key_default: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    interpretationRelationshipAInterpretationNodeA: InterpretationNodeA
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: OUT, properties: "InterpretationRelationshipA")
+    
+
+    
+    interpretationRelationshipBInterpretationNodeB: InterpretationNodeB
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: OUT, properties: "InterpretationRelationshipB")
+    
+
+    
+    firstPassGlobalInterpretationRelationshipFirstPassGlobalInterpretationNode: FirstPassGlobalInterpretationNode
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    secondPassGlobalInterpretationRelationshipSecondPassGlobalInterpretationNode: SecondPassGlobalInterpretationNode
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+    
+    otherTypeARelationshipOtherRelatedNodeA: OtherRelatedNodeA
+        @relationship(type: "OTHER_TYPE_A_RELATIONSHIP", direction: OUT, properties: "OtherTypeARelationship")
+    
+
+    
+    otherTypeBRelationshipOtherRelatedNodeB: OtherRelatedNodeB
+        @relationship(type: "OTHER_TYPE_B_RELATIONSHIP", direction: OUT, properties: "OtherTypeBRelationship")
+    
+
+    
+    globalRelationshipToSecondPassGlobalSecondPassSourceNode: GlobalSecondPassSourceNode
+        @relationship(type: "GLOBAL_RELATIONSHIP_TO_SECOND_PASS", direction: OUT, properties: "GlobalRelationshipToSecondPass")
+    
+
+    
+    defaultRelationshipRelatedNodeDefault: RelatedNodeDefault
+        @relationship(type: "DEFAULT_RELATIONSHIP", direction: OUT, properties: "DefaultRelationship")
+    
+
+}
+
+type FirstPassGlobalInterpretationNode @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    fp_interpretation_global_key: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    sourceNodeAFirstPassGlobalInterpretationRelationship: [SourceNodeA!]!
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    sourceNodeBFirstPassGlobalInterpretationRelationship: [SourceNodeB!]!
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    defaultSourceNodeFirstPassGlobalInterpretationRelationship: [DefaultSourceNode!]!
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    globalSecondPassSourceNodeFirstPassGlobalInterpretationRelationship: [GlobalSecondPassSourceNode!]!
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    # Outbound Relationships
+
+}
+
+type GlobalSecondPassSourceNode @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    gsp_source_key: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    sourceNodeAGlobalRelationshipToSecondPass: [SourceNodeA!]!
+        @relationship(type: "GLOBAL_RELATIONSHIP_TO_SECOND_PASS", direction: IN, properties: "GlobalRelationshipToSecondPass")
+    
+
+    
+    sourceNodeBGlobalRelationshipToSecondPass: [SourceNodeB!]!
+        @relationship(type: "GLOBAL_RELATIONSHIP_TO_SECOND_PASS", direction: IN, properties: "GlobalRelationshipToSecondPass")
+    
+
+    
+    defaultSourceNodeGlobalRelationshipToSecondPass: [DefaultSourceNode!]!
+        @relationship(type: "GLOBAL_RELATIONSHIP_TO_SECOND_PASS", direction: IN, properties: "GlobalRelationshipToSecondPass")
+    
+
+    # Outbound Relationships
+
+    
+    interpretationRelationshipAInterpretationNodeA: InterpretationNodeA
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: OUT, properties: "InterpretationRelationshipA")
+    
+
+    
+    interpretationRelationshipBInterpretationNodeB: InterpretationNodeB
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: OUT, properties: "InterpretationRelationshipB")
+    
+
+    
+    firstPassGlobalInterpretationRelationshipFirstPassGlobalInterpretationNode: FirstPassGlobalInterpretationNode
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    secondPassGlobalInterpretationRelationshipSecondPassGlobalInterpretationNode: SecondPassGlobalInterpretationNode
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+}
+
+type InterpretationNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    interpretation_key_a: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    sourceNodeAInterpretationRelationshipA: [SourceNodeA!]!
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: IN, properties: "InterpretationRelationshipA")
+    
+
+    
+    sourceNodeBInterpretationRelationshipA: [SourceNodeB!]!
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: IN, properties: "InterpretationRelationshipA")
+    
+
+    
+    defaultSourceNodeInterpretationRelationshipA: [DefaultSourceNode!]!
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: IN, properties: "InterpretationRelationshipA")
+    
+
+    
+    globalSecondPassSourceNodeInterpretationRelationshipA: [GlobalSecondPassSourceNode!]!
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: IN, properties: "InterpretationRelationshipA")
+    
+
+    # Outbound Relationships
+
+}
+
+type InterpretationNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    interpretation_key_b: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    sourceNodeAInterpretationRelationshipB: [SourceNodeA!]!
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: IN, properties: "InterpretationRelationshipB")
+    
+
+    
+    sourceNodeBInterpretationRelationshipB: [SourceNodeB!]!
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: IN, properties: "InterpretationRelationshipB")
+    
+
+    
+    defaultSourceNodeInterpretationRelationshipB: [DefaultSourceNode!]!
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: IN, properties: "InterpretationRelationshipB")
+    
+
+    
+    globalSecondPassSourceNodeInterpretationRelationshipB: [GlobalSecondPassSourceNode!]!
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: IN, properties: "InterpretationRelationshipB")
+    
+
+    # Outbound Relationships
+
+}
+
+type OtherRelatedNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    relationship_key_a: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    sourceNodeAOtherTypeARelationship: [SourceNodeA!]!
+        @relationship(type: "OTHER_TYPE_A_RELATIONSHIP", direction: IN, properties: "OtherTypeARelationship")
+    
+
+    
+    sourceNodeBOtherTypeARelationship: [SourceNodeB!]!
+        @relationship(type: "OTHER_TYPE_A_RELATIONSHIP", direction: IN, properties: "OtherTypeARelationship")
+    
+
+    
+    defaultSourceNodeOtherTypeARelationship: [DefaultSourceNode!]!
+        @relationship(type: "OTHER_TYPE_A_RELATIONSHIP", direction: IN, properties: "OtherTypeARelationship")
+    
+
+    # Outbound Relationships
+
+}
+
+type OtherRelatedNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    relationship_key_b: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    sourceNodeAOtherTypeBRelationship: [SourceNodeA!]!
+        @relationship(type: "OTHER_TYPE_B_RELATIONSHIP", direction: IN, properties: "OtherTypeBRelationship")
+    
+
+    
+    sourceNodeBOtherTypeBRelationship: [SourceNodeB!]!
+        @relationship(type: "OTHER_TYPE_B_RELATIONSHIP", direction: IN, properties: "OtherTypeBRelationship")
+    
+
+    
+    defaultSourceNodeOtherTypeBRelationship: [DefaultSourceNode!]!
+        @relationship(type: "OTHER_TYPE_B_RELATIONSHIP", direction: IN, properties: "OtherTypeBRelationship")
+    
+
+    # Outbound Relationships
+
+}
+
+type RelatedNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    relationship_key_a: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    sourceNodeATypeARelationship: [SourceNodeA!]!
+        @relationship(type: "TYPE_A_RELATIONSHIP", direction: IN, properties: "TypeARelationship")
+    
+
+    # Outbound Relationships
+
+}
+
+type RelatedNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    relationship_key_b: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    sourceNodeBTypeBRelationship: [SourceNodeB!]!
+        @relationship(type: "TYPE_B_RELATIONSHIP", direction: IN, properties: "TypeBRelationship")
+    
+
+    # Outbound Relationships
+
+}
+
+type RelatedNodeDefault @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    relationship_key_default: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    defaultSourceNodeDefaultRelationship: [DefaultSourceNode!]!
+        @relationship(type: "DEFAULT_RELATIONSHIP", direction: IN, properties: "DefaultRelationship")
+    
+
+    # Outbound Relationships
+
+}
+
+type SecondPassGlobalInterpretationNode @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    sp_interpretation_global_key: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    sourceNodeASecondPassGlobalInterpretationRelationship: [SourceNodeA!]!
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+    
+    sourceNodeBSecondPassGlobalInterpretationRelationship: [SourceNodeB!]!
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+    
+    defaultSourceNodeSecondPassGlobalInterpretationRelationship: [DefaultSourceNode!]!
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+    
+    globalSecondPassSourceNodeSecondPassGlobalInterpretationRelationship: [GlobalSecondPassSourceNode!]!
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: IN, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+    # Outbound Relationships
+
+}
+
+type SourceNodeA @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    property_type: String
+
+    additional_property: String
+
+    source_key: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    interpretationRelationshipAInterpretationNodeA: InterpretationNodeA
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: OUT, properties: "InterpretationRelationshipA")
+    
+
+    
+    interpretationRelationshipBInterpretationNodeB: InterpretationNodeB
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: OUT, properties: "InterpretationRelationshipB")
+    
+
+    
+    firstPassGlobalInterpretationRelationshipFirstPassGlobalInterpretationNode: FirstPassGlobalInterpretationNode
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    secondPassGlobalInterpretationRelationshipSecondPassGlobalInterpretationNode: SecondPassGlobalInterpretationNode
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+    
+    otherTypeARelationshipOtherRelatedNodeA: OtherRelatedNodeA
+        @relationship(type: "OTHER_TYPE_A_RELATIONSHIP", direction: OUT, properties: "OtherTypeARelationship")
+    
+
+    
+    otherTypeBRelationshipOtherRelatedNodeB: OtherRelatedNodeB
+        @relationship(type: "OTHER_TYPE_B_RELATIONSHIP", direction: OUT, properties: "OtherTypeBRelationship")
+    
+
+    
+    globalRelationshipToSecondPassGlobalSecondPassSourceNode: GlobalSecondPassSourceNode
+        @relationship(type: "GLOBAL_RELATIONSHIP_TO_SECOND_PASS", direction: OUT, properties: "GlobalRelationshipToSecondPass")
+    
+
+    
+    typeARelationshipRelatedNodeA: RelatedNodeA
+        @relationship(type: "TYPE_A_RELATIONSHIP", direction: OUT, properties: "TypeARelationship")
+    
+
+}
+
+type SourceNodeB @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    property_type: String
+
+    additional_property: String
+
+    source_key: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    interpretationRelationshipAInterpretationNodeA: InterpretationNodeA
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_A", direction: OUT, properties: "InterpretationRelationshipA")
+    
+
+    
+    interpretationRelationshipBInterpretationNodeB: InterpretationNodeB
+        @relationship(type: "INTERPRETATION_RELATIONSHIP_B", direction: OUT, properties: "InterpretationRelationshipB")
+    
+
+    
+    firstPassGlobalInterpretationRelationshipFirstPassGlobalInterpretationNode: FirstPassGlobalInterpretationNode
+        @relationship(type: "FIRST_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "FirstPassGlobalInterpretationRelationship")
+    
+
+    
+    secondPassGlobalInterpretationRelationshipSecondPassGlobalInterpretationNode: SecondPassGlobalInterpretationNode
+        @relationship(type: "SECOND_PASS_GLOBAL_INTERPRETATION_RELATIONSHIP", direction: OUT, properties: "SecondPassGlobalInterpretationRelationship")
+    
+
+    
+    otherTypeARelationshipOtherRelatedNodeA: OtherRelatedNodeA
+        @relationship(type: "OTHER_TYPE_A_RELATIONSHIP", direction: OUT, properties: "OtherTypeARelationship")
+    
+
+    
+    otherTypeBRelationshipOtherRelatedNodeB: OtherRelatedNodeB
+        @relationship(type: "OTHER_TYPE_B_RELATIONSHIP", direction: OUT, properties: "OtherTypeBRelationship")
+    
+
+    
+    globalRelationshipToSecondPassGlobalSecondPassSourceNode: GlobalSecondPassSourceNode
+        @relationship(type: "GLOBAL_RELATIONSHIP_TO_SECOND_PASS", direction: OUT, properties: "GlobalRelationshipToSecondPass")
+    
+
+    
+    typeBRelationshipRelatedNodeB: RelatedNodeB
+        @relationship(type: "TYPE_B_RELATIONSHIP", direction: OUT, properties: "TypeBRelationship")
+    
+
+}
+interface InterpretationRelationshipA @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface InterpretationRelationshipB @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface FirstPassGlobalInterpretationRelationship @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface SecondPassGlobalInterpretationRelationship @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface OtherTypeARelationship @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface OtherTypeBRelationship @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface GlobalRelationshipToSecondPass @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface TypeARelationship @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface TypeBRelationship @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface DefaultRelationship @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}

@@ -13,7 +13,7 @@ type Airport @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
     name: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -36,7 +36,7 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
     code: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -54,7 +54,7 @@ type Region @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
 
     code: String
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -68,6 +68,6 @@ type Region @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
 }
 interface Within @relationshipProperties {
 
-    last_ingested_at: LocalDateTime
+    last_ingested_at: DateTime
 
 }

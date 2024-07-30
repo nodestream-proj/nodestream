@@ -3,10 +3,6 @@
 [NODE] Organization:
   name: STRING
   last_ingested_at: DATETIME
-[NODE] Person:
-  first_name: STRING
-  last_name: STRING
-  last_ingested_at: DATETIME
 [RELATIONSHIP] HAS_CONTACT:
   last_ingested_at: DATETIME
 [NODE] Email:
@@ -14,4 +10,8 @@
   last_ingested_at: DATETIME
 [NODE] Phone:
   phone: STRING
+  last_ingested_at: DATETIME
+[NODE] Person:
+  first_name: STRING
+  last_name: STRING
   last_ingested_at: DATETIME

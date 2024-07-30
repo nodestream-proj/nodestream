@@ -68,7 +68,7 @@ async def test_execute_migration_fail_to_execute_operation(
     assert_that(migrator.commit_transaction.await_count, equal_to(1))
     migrator.rollback_transaction.assert_awaited_once()
     migrator.acquire_lock.assert_awaited_once()
-    migrator.release_lock.assert_not_called()
+    migrator.release_lock.assert_awaited_once()
 
 
 @pytest.mark.asyncio

@@ -1,10 +1,12 @@
 import pytest
 from hamcrest import assert_that, equal_to, has_entries, has_length
 
+from nodestream.interpreting.interpretations import SourceNodeInterpretation
 from nodestream.interpreting.interpretations.relationship_interpretation import (
     InvalidKeyLengthError,
     RelationshipInterpretation,
 )
+from nodestream.schema import Cardinality
 
 from ...stubs import StubbedValueProvider
 from .matchers import (
@@ -14,6 +16,7 @@ from .matchers import (
     has_node_keys,
     has_node_properties,
     has_relationship_keys,
+    has_unbound_adjacency,
 )
 
 
@@ -238,6 +241,72 @@ def test_relationship_interpretation_gather_object_shapes_not_static_node(
     )
     subject.expand_schema(schema_coordinator)
     assert_that(schema_coordinator, has_no_defined_nodes())
+
+
+def test_relationship_interpretation_generates_cardinality_based_on_iteration_parameters(
+    schema_coordinator,
+):
+    subject = RelationshipInterpretation(
+        node_type="Static",
+        node_key={"hello": "world"},
+        relationship_type="Static",
+        iterate_on=StubbedValueProvider(values=["thing1", "thing2"]),
+        find_many=True,
+    )
+    subject.expand_schema(schema_coordinator)
+    assert_that(
+        schema_coordinator,
+        has_unbound_adjacency(
+            from_node_type_or_alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
+            to_node_type_or_alias="Static",
+            relationship_type="Static",
+            from_node_cardinality=Cardinality.MANY,
+            to_node_cardinality=Cardinality.MANY,
+        ),
+    )
+
+
+def test_relationship_interpretation_generates_cardinality_based_on_lack_of_iteration_parameters(
+    schema_coordinator,
+):
+    subject = RelationshipInterpretation(
+        node_type="Static",
+        node_key={"hello": "world"},
+        relationship_type="Static",
+    )
+    subject.expand_schema(schema_coordinator)
+    assert_that(
+        schema_coordinator,
+        has_unbound_adjacency(
+            from_node_type_or_alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
+            to_node_type_or_alias="Static",
+            relationship_type="Static",
+            from_node_cardinality=Cardinality.SINGLE,
+            to_node_cardinality=Cardinality.MANY,
+        ),
+    )
+
+
+def test_relationship_interpretation_generates_cardinality_based_on_manual_declaration(
+    schema_coordinator,
+):
+    subject = RelationshipInterpretation(
+        node_type="Static",
+        node_key={"hello": "world"},
+        relationship_type="Static",
+        cardinality="MANY",
+    )
+    subject.expand_schema(schema_coordinator)
+    assert_that(
+        schema_coordinator,
+        has_unbound_adjacency(
+            from_node_type_or_alias=SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS,
+            to_node_type_or_alias="Static",
+            relationship_type="Static",
+            from_node_cardinality=Cardinality.MANY,
+            to_node_cardinality=Cardinality.MANY,
+        ),
+    )
 
 
 def test_relationship_interpretation_addtional_node_types(blank_context):
