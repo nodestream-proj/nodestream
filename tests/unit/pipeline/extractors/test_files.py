@@ -14,8 +14,8 @@ from nodestream.pipeline.extractors.files import (
     FileExtractor,
     LocalFileSource,
     RemoteFileExtractor,
-    UnifiedFileExtractor,
     RemoteFileSource,
+    UnifiedFileExtractor,
 )
 
 SIMPLE_RECORD = {"record": "value"}
