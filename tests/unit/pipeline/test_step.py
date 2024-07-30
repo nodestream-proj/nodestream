@@ -1,7 +1,7 @@
 import pytest
 
-from nodestream.pipeline.step import Step, StepContext
 from nodestream.pipeline.progress_reporter import PipelineProgressReporter
+from nodestream.pipeline.step import Step, StepContext
 
 
 @pytest.mark.asyncio
