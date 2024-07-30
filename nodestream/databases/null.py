@@ -14,7 +14,7 @@ from .query_executor import (
 
 async def empty_async_generator():
     for i in []:
-        yield i
+        yield i  # pragma: no cover
 
 
 class NullMigrator(Migrator):
