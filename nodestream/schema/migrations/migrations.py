@@ -177,7 +177,6 @@ class MigrationGraph:
             # add it to the plan only if none of the migrations that it replaces
             # have been completed.
             if migration.is_squashed_migration():
-                print("squashed", migration.name)
                 if any(r in completed_migration_names for r in migration.replaces):
                     continue
 
