@@ -49,7 +49,7 @@ class ProjectMigrations:
             Each migration and a boolean indicating if it is pending.
         """
         completed_migrations = await migrator.get_completed_migrations(self.graph)
-        for migration in self.graph.get_ordered_migration_plan():
+        for migration in self.graph.topological_order():
             yield migration, migration not in completed_migrations
 
     async def execute_pending(self, migrator: Migrator) -> AsyncIterable[Migration]:
