@@ -14,12 +14,9 @@ class SquashMigration(NodestreamCommand):
             "from",
             description="The name of the migration to squash from.",
             value_required=True,
+            flag=False,
         ),
-        option(
-            "to",
-            description="The name of the migration to squash to.",
-            value_required=True,
-        ),
+        option("to", description="The name of the migration to squash to.", flag=False),
     ]
 
     async def handle_async(self):

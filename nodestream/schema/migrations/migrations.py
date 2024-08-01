@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Optional
 
 from ...file_io import LoadsFromYamlFile, SavesToYamlFile
 from .operations import Operation
@@ -217,7 +217,10 @@ class MigrationGraph:
         return visited_order
 
     def squash_between(
-        self, name: str, from_migration: Migration, to_migration: Migration
+        self,
+        name: str,
+        from_migration: Migration,
+        to_migration: Optional[Migration] = None,
     ):
         """Squash all migrations between two migrations.
 
@@ -231,7 +234,7 @@ class MigrationGraph:
         """
         ordered = self.topological_order()
         from_index = ordered.index(from_migration)
-        to_index = ordered.index(to_migration)
+        to_index = ordered.index(to_migration) if to_migration else len(ordered) - 1
         migrations_to_squash = ordered[from_index : to_index + 1]
         return Migration.squash(name, migrations_to_squash)
 

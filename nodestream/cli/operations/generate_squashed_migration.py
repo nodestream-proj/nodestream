@@ -15,7 +15,11 @@ class GenerateSquashedMigration(Operation):
 
     async def perform(self, command: NodestreamCommand):
         from_migration = self.migrations.graph.get_migration(self.from_migration_name)
-        to_migration = self.migrations.graph.get_migration(self.to_migration_name)
+        to_migration = (
+            self.migrations.graph.get_migration(self.to_migration_name)
+            if self.to_migration_name
+            else None
+        )
         migration, path = self.migrations.create_squash_between(
             from_migration, to_migration
         )
