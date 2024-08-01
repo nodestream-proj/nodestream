@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from io import IOBase
+from io import IOBase, BytesIO
 from logging import getLogger
 from pathlib import Path
 from typing import Iterable, Optional
@@ -47,7 +47,7 @@ class S3File(ReadableFile):
         streaming_body = self.s3_client.get_object(Bucket=self.bucket, Key=self.key)[
             "Body"
         ]
-        yield reader(streaming_body._raw_stream)
+        yield reader(BytesIO(streaming_body.read()))
         self.archive_if_required(self.key)
 
 
