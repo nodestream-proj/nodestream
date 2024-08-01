@@ -604,11 +604,11 @@ def test_operation_chain_optimization_complex():
     i = DropRelationshipType("Likes")
     j = CreateNodeType("Team", {"name"}, {})
     k = DropNodeProperty("Team", "mascot")
-    l = DropRelationshipProperty("Likes", "since")
+    dl = DropRelationshipProperty("Likes", "since")
     m = DropNodeType("Team")
 
     # Intertwined and shuffled operations
-    operations = [a, f, b, g, c, j, h, d, k, i, e, l, m]
+    operations = [a, f, b, g, c, j, h, d, k, i, e, dl, m]
 
     assert_that(
         Operation.optimize(operations),
