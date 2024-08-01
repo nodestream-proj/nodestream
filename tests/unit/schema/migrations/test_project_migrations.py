@@ -49,3 +49,9 @@ async def test_detect_changes(subject, basic_schema):
     # mocking out a bunch of stuff.
     result = await subject.detect_changes(MigratorInput(), basic_schema)
     assert_that(result.operations, has_length(4))
+
+
+def test_squash_between(subject, root_migration, leaf_migration):
+    migration, path = subject.create_squash_between(root_migration, leaf_migration)
+    assert_that(migration.replaces, has_length(2))
+    assert_that(path.parent, equal_to(subject.source_directory))

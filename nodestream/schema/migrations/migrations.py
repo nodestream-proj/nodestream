@@ -86,17 +86,6 @@ class Migration(LoadsFromYamlFile, SavesToYamlFile):
         """
         return len(self.replaces) > 0
 
-    def replaces_migration(self, migration: "Migration") -> bool:
-        """Check if this migration replaces another migration.
-
-        Args:
-            migration: The migration to check if this migration replaces.
-
-        Returns:
-            True if this migration replaces the other migration, False otherwise.
-        """
-        return migration.name in self.replaces
-
     @classmethod
     def squash(
         cls,
@@ -127,7 +116,7 @@ class Migration(LoadsFromYamlFile, SavesToYamlFile):
             }
         )
         if optimize_operations:
-            effective_operations = Operation.optimize_operations(effective_operations)
+            effective_operations = Operation.optimize(effective_operations)
 
         return cls(
             name=new_name,
