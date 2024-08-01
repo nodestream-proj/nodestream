@@ -55,3 +55,9 @@ def test_squash_between(subject, root_migration, leaf_migration):
     migration, path = subject.create_squash_between(root_migration, leaf_migration)
     assert_that(migration.replaces, has_length(2))
     assert_that(path.parent, equal_to(subject.source_directory))
+
+
+def test_squash_between_no_to_migration(subject, root_migration):
+    migration, path = subject.create_squash_between(root_migration)
+    assert_that(migration.replaces, has_length(2))
+    assert_that(path.parent, equal_to(subject.source_directory))
