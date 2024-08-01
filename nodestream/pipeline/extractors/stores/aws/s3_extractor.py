@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from io import IOBase, BytesIO
+from io import BytesIO, IOBase
 from logging import getLogger
 from pathlib import Path
 from typing import Iterable, Optional
