@@ -179,11 +179,9 @@ class MigrationGraph:
             # the squashed migration to the plan but will want to add the
             # migrations that were replaced to the plan.
             if (replacement := replacement_index.get(migration.name)) is not None:
-                print("was replaced", migration.name)
                 if not any(
                     r in completed_migration_names for r in replacement.replaces
                 ):
-                    print("skipping", migration.name)
                     continue
 
             # Similarly, if we are looking at a squashed migration, we want to
@@ -192,7 +190,6 @@ class MigrationGraph:
             if migration.is_squashed_migration():
                 print("squashed", migration.name)
                 if any(r in completed_migration_names for r in migration.replaces):
-                    print("skipping", migration.name)
                     continue
 
             # Now here we are in one of three stats:
@@ -230,6 +227,25 @@ class MigrationGraph:
             )
 
         return visited_order
+
+    def squash_between(
+        self, name: str, from_migration: Migration, to_migration: Migration
+    ):
+        """Squash all migrations between two migrations.
+
+        Args:
+            name: The name of the new squashed migration.
+            from_migration: The migration to start squashing from.
+            to_migration: The migration to stop squashing at.
+
+        Returns:
+            The new squashed migration.
+        """
+        ordered = self.topological_order()
+        from_index = ordered.index(from_migration)
+        to_index = ordered.index(to_migration)
+        migrations_to_squash = ordered[from_index : to_index + 1]
+        return Migration.squash(name, migrations_to_squash)
 
     def topological_order(self):
         return self._iterative_dfs_traversal(*self.get_leaf_migrations())

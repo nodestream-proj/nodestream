@@ -10,6 +10,7 @@ from .run_migrations import RunMigrations
 from .scaffold import Scaffold
 from .show import Show
 from .show_migrations import ShowMigrations
+from .squash_migrations import SquashMigration
 
 __all__ = (
     "AuditCommand",
@@ -24,4 +25,5 @@ __all__ = (
     "Scaffold",
     "ShowMigrations",
     "Show",
+    "SquashMigration",
 )

@@ -112,3 +112,20 @@ class ProjectMigrations:
             return None
         path = migration.write_to_file_with_default_name(self.source_directory)
         return migration, path
+
+    def create_squash_between(
+        self, from_migration: Migration, to_migration: Migration
+    ) -> Tuple[Migration, Path]:
+        """Create a squashed migration between two migrations.
+
+        Args:
+            from_migration: The migration to squash from.
+            to_migration: The migration to squash to.
+
+        Returns:
+            The squashed migration and the path to the file.
+        """
+        name = "squash_from_{}_to_{}".format(from_migration.name, to_migration.name)
+        squashed = self.graph.squash_between(name, from_migration, to_migration)
+        path = squashed.write_to_file_with_default_name(self.source_directory)
+        return squashed, path
