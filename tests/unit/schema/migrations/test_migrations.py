@@ -157,21 +157,6 @@ def test_migration_graph_navigates_around_squashed_migrations_when_nothing_appli
     assert_that(plan, is_(equal_to([a, squash, d])))
 
 
-def test_migration_graph_navigates_around_squashed_migrations_when_nothing_applied():
-    a = Migration(name="a", operations=[], dependencies=[])
-    b = Migration(name="b", operations=[], dependencies=["a"])
-    c = Migration(name="c", operations=[], dependencies=["b"])
-    squash = Migration(
-        name="squash", operations=[], dependencies=["a"], replaces=["b", "c"]
-    )
-    d = Migration(name="d", operations=[], dependencies=["squash"])
-
-    graph = MigrationGraph.from_iterable([a, b, c, squash, d])
-
-    plan = graph.get_ordered_migration_plan([])
-    assert_that(plan, is_(equal_to([a, squash, d])))
-
-
 def test_migraiton_graph_handles_dependencies_fulfilled_through_squash():
     a = Migration(name="a", operations=[], dependencies=[])
     b = Migration(name="b", operations=[], dependencies=["a"])
