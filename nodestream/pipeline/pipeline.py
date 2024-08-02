@@ -176,7 +176,8 @@ class Pipeline(ExpandsSchemaFromChildren):
         # will be used to run the steps concurrently. The steps are created in
         # reverse order so that the output of each step is connected to the
         # input of the next step.
-        for index, step in reversed(list(enumerate(self.steps))):
+        for reversed_index, step in reversed(list(enumerate(self.steps))):
+            index = len(self.steps) - reversed_index - 1
             context = StepContext(index, reporter)
             current_input, next_output = channel(self.step_outbox_size)
             exec = StepExecutor(step, current_input, current_output, context)
