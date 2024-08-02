@@ -51,7 +51,7 @@ class MigrationGraphStateProvider(StateProvider):
 
     async def get_schema(self) -> Schema:
         migrator = InMemoryMigrator()
-        for migration in self.migrations.get_ordered_migration_plan():
+        for migration in self.migrations.get_ordered_migration_plan([]):
             await migrator.execute_migration(migration)
         return migrator.schema
 

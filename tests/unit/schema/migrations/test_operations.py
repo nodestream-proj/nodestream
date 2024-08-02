@@ -303,3 +303,314 @@ def test_rename_node_type_new_name():
 def test_drop_node_type_index_name():
     name = DropNodeType("Person").proposed_index_name
     assert_that(name, equal_to("Person_node_key"))
+
+
+def test_create_node_type_reduce():
+    a = CreateNodeType("Person", {"name"}, {"age"})
+    b = DropNodeType("Person")
+    assert_that(a.reduce(b), equal_to([]))
+
+
+def test_create_node_type_reduce_no_match():
+    a = CreateNodeType("Person", {"name"}, {"age"})
+    b = DropNodeType("Human")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_create_node_type_reduce_irrelevant_type():
+    a = CreateNodeType("Person", {"name"}, {"age"})
+    b = AddNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_create_relationship_type_reduce():
+    a = CreateRelationshipType("KNOWS", {"since"}, {"since"})
+    b = DropRelationshipType("KNOWS")
+    assert_that(a.reduce(b), equal_to([]))
+
+
+def test_create_relationship_type_reduce_no_match():
+    a = CreateRelationshipType("KNOWS", {"since"}, {"since"})
+    b = DropRelationshipType("LIKES")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_create_relationship_type_reduce_irrelevant_type():
+    a = CreateRelationshipType("KNOWS", {"since"}, {"since"})
+    b = AddRelationshipProperty("KNOWS", "known_since")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_drop_node_type_reduce():
+    a = DropNodeType("Person")
+    b = CreateNodeType("Person", {"name"}, {"age"})
+    assert_that(a.reduce(b), equal_to([]))
+
+
+def test_drop_node_type_reduce_no_match():
+    a = DropNodeType("Person")
+    b = CreateNodeType("Human", {"name"}, {"age"})
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_drop_node_type_reduce_irrelevant_type():
+    a = DropNodeType("Person")
+    b = AddNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([a]))
+
+
+def test_drop_relationship_type_reduce():
+    a = DropRelationshipType("KNOWS")
+    b = CreateRelationshipType("KNOWS", {"since"}, {"since"})
+    assert_that(a.reduce(b), equal_to([]))
+
+
+def test_drop_relationship_type_reduce_no_match():
+    a = DropRelationshipType("KNOWS")
+    b = CreateRelationshipType("LIKES", {"since"}, {"since"})
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_drop_relationship_type_reduce_dropping_added_property():
+    a = DropRelationshipType("KNOWS")
+    b = AddRelationshipProperty("KNOWS", "known_since")
+    assert_that(a.reduce(b), equal_to([a]))
+
+
+def test_rename_node_property_reduce_add():
+    a = RenameNodeProperty("Person", "full_name", "fuller_name")
+    b = AddNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([AddNodeProperty("Person", "fuller_name")]))
+
+
+def test_rename_node_property_reduce_drop():
+    a = RenameNodeProperty("Person", "full_name", "fuller_name")
+    b = DropNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([DropNodeProperty("Person", "full_name")]))
+
+
+def test_rename_node_property_reduce_no_match():
+    a = RenameNodeProperty("Person", "full_name", "fuller_name")
+    b = AddNodeProperty("Person", "name")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_rename_node_property_reduce_irrelevant_type():
+    a = RenameNodeProperty("Person", "full_name", "fuller_name")
+    b = AddRelationshipProperty("KNOWS", "known_since")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_rename_relationship_property_reduce_add():
+    a = RenameRelationshipProperty("KNOWS", "known_since", "known_since_date")
+    b = AddRelationshipProperty("KNOWS", "known_since")
+    assert_that(
+        a.reduce(b), equal_to([AddRelationshipProperty("KNOWS", "known_since_date")])
+    )
+
+
+def test_rename_relationship_property_reduce_drop():
+    a = RenameRelationshipProperty("KNOWS", "known_since", "known_since_date")
+    b = DropRelationshipProperty("KNOWS", "known_since")
+    assert_that(
+        a.reduce(b), equal_to([DropRelationshipProperty("KNOWS", "known_since")])
+    )
+
+
+def test_rename_relationship_property_reduce_no_match():
+    a = RenameRelationshipProperty("KNOWS", "known_since", "known_since_date")
+    b = AddRelationshipProperty("KNOWS", "since")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_rename_relationship_property_reduce_irrelevant_type():
+    a = RenameRelationshipProperty("KNOWS", "known_since", "known_since_date")
+    b = AddNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_rename_node_type_reduce():
+    a = RenameNodeType("Person", "Human")
+    b = CreateNodeType("Person", {"name"}, {"age"})
+    assert_that(a.reduce(b), equal_to([CreateNodeType("Human", {"name"}, {"age"})]))
+
+
+def test_rename_node_type_reduce_drop():
+    a = RenameNodeType("Person", "Human")
+    b = DropNodeType("Human")
+    assert_that(a.reduce(b), equal_to([DropNodeType("Person")]))
+
+
+def test_rename_node_type_reduce_no_match():
+    a = RenameNodeType("Person", "Human")
+    b = CreateNodeType("Human", {"name"}, {"age"})
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_rename_node_type_reduce_irrelevant_type():
+    a = RenameNodeType("Person", "Human")
+    b = AddNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_rename_relationship_type_reduce():
+    a = RenameRelationshipType("KNOWS", "LIKES")
+    b = CreateRelationshipType("KNOWS", {"since"}, {"since"})
+    assert_that(
+        a.reduce(b), equal_to([CreateRelationshipType("LIKES", {"since"}, {"since"})])
+    )
+
+
+def test_rename_relationship_type_reduce_drop():
+    a = RenameRelationshipType("KNOWS", "LIKES")
+    b = DropRelationshipType("LIKES")
+    assert_that(a.reduce(b), equal_to([DropRelationshipType("KNOWS")]))
+
+
+def test_rename_relationship_type_reduce_no_match():
+    a = RenameRelationshipType("KNOWS", "LIKES")
+    b = CreateRelationshipType("LIKES", {"since"}, {"since"})
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_rename_relationship_type_reduce_irrelevant_type():
+    a = RenameRelationshipType("KNOWS", "LIKES")
+    b = AddNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_add_node_property_reduce_drop():
+    a = AddNodeProperty("Person", "full_name")
+    b = DropNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([]))
+
+
+def test_add_node_property_reduce_rename():
+    a = AddNodeProperty("Person", "full_name")
+    b = RenameNodeProperty("Person", "full_name", "fuller_name")
+    assert_that(a.reduce(b), equal_to([AddNodeProperty("Person", "fuller_name")]))
+
+
+def test_add_node_property_reduce_no_match():
+    a = AddNodeProperty("Person", "full_name")
+    b = DropNodeProperty("Person", "name")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_add_node_property_reduce_irrelevant_type():
+    a = AddNodeProperty("Person", "full_name")
+    b = AddRelationshipProperty("KNOWS", "known_since")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_add_relationship_property_reduce_drop():
+    a = AddRelationshipProperty("KNOWS", "known_since")
+    b = DropRelationshipProperty("KNOWS", "known_since")
+    assert_that(a.reduce(b), equal_to([]))
+
+
+def test_add_relationship_property_reduce_rename():
+    a = AddRelationshipProperty("KNOWS", "known_since")
+    b = RenameRelationshipProperty("KNOWS", "known_since", "known_since_date")
+    assert_that(
+        a.reduce(b), equal_to([AddRelationshipProperty("KNOWS", "known_since_date")])
+    )
+
+
+def test_add_relationship_property_reduce_no_match():
+    a = AddRelationshipProperty("KNOWS", "known_since")
+    b = DropRelationshipProperty("KNOWS", "since")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_add_relationship_property_reduce_irrelevant_type():
+    a = AddRelationshipProperty("KNOWS", "known_since")
+    b = AddNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_drop_node_property_reduce():
+    a = DropNodeProperty("Person", "full_name")
+    b = AddNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([]))
+
+
+def test_drop_node_property_reduce_rename():
+    a = DropNodeProperty("Person", "full_name")
+    b = RenameNodeProperty("Person", "full_name", "fuller_name")
+    assert_that(a.reduce(b), equal_to([DropNodeProperty("Person", "full_name")]))
+
+
+def test_drop_node_property_reduce_no_match():
+    a = DropNodeProperty("Person", "full_name")
+    b = AddNodeProperty("Person", "name")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_drop_node_property_reduce_irrelevant_type():
+    a = DropNodeProperty("Person", "full_name")
+    b = AddRelationshipProperty("KNOWS", "known_since")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_drop_relationship_property_reduce():
+    a = DropRelationshipProperty("KNOWS", "known_since")
+    b = AddRelationshipProperty("KNOWS", "known_since")
+    assert_that(a.reduce(b), equal_to([]))
+
+
+def test_drop_relationship_property_reduce_rename():
+    a = DropRelationshipProperty("KNOWS", "known_since")
+    b = RenameRelationshipProperty("KNOWS", "known_since", "known_since_date")
+    assert_that(
+        a.reduce(b), equal_to([DropRelationshipProperty("KNOWS", "known_since")])
+    )
+
+
+def test_drop_relationship_property_reduce_no_match():
+    a = DropRelationshipProperty("KNOWS", "known_since")
+    b = AddRelationshipProperty("KNOWS", "since")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_drop_relationship_property_reduce_irrelevant_type():
+    a = DropRelationshipProperty("KNOWS", "known_since")
+    b = AddNodeProperty("Person", "full_name")
+    assert_that(a.reduce(b), equal_to([a, b]))
+
+
+def test_operation_chain_optimization():
+    a = CreateNodeType("Person", {"name"}, {"age"})
+    b = CreateNodeType("Sport", {"name"}, {})
+    c = AddNodeProperty("Person", "full_name")
+    d = DropNodeProperty("Person", "age")
+    e = DropNodeType("Person")
+
+    assert_that(
+        Operation.optimize([a, b, c, d, e]),
+        equal_to([CreateNodeType("Sport", {"name"}, {})]),
+    )
+
+
+def test_operation_chain_optimization_complex():
+    a = CreateNodeType("Person", {"name"}, {"age"})
+    b = CreateNodeType("Sport", {"name"}, {})
+    c = AddNodeProperty("Person", "full_name")
+    d = DropNodeProperty("Person", "age")
+    e = DropNodeType("Person")
+    f = CreateRelationshipType("Likes", {}, {})
+    g = AddRelationshipProperty("Likes", "since")
+    h = AddNodeProperty("Team", "mascot")
+    i = DropRelationshipType("Likes")
+    j = CreateNodeType("Team", {"name"}, {})
+    k = DropNodeProperty("Team", "mascot")
+    dl = DropRelationshipProperty("Likes", "since")
+    m = DropNodeType("Team")
+
+    # Intertwined and shuffled operations
+    operations = [a, f, b, g, c, j, h, d, k, i, e, dl, m]
+
+    assert_that(
+        Operation.optimize(operations),
+        equal_to([CreateNodeType("Sport", {"name"}, {})]),
+    )

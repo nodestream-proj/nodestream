@@ -66,7 +66,7 @@ def test_migration_to_and_from_file_data():
     ],
 )
 def test_migration_graph_test_get_ordered_migration_plan(migration_graph):
-    plan = migration_graph.get_ordered_migration_plan()
+    plan = migration_graph.get_ordered_migration_plan([])
     assert_that(len(plan), is_(equal_to(len(migration_graph.migrations_by_name))))
     for i, migration in enumerate(plan):
         migrations_to_current = {m.name for m in plan[0:i]}
@@ -110,3 +110,63 @@ def test_migration_graph_from_directory(tmp_path):
 def test_migration_graph_get_by_name(migration_graph, root_migration):
     result = migration_graph.get_migration("root_migration")
     assert_that(result, equal_to(root_migration))
+
+
+def test_migration_graph_navigates_around_squashed_migrations_when_partially_applied():
+    a = Migration(name="a", operations=[], dependencies=[])
+    b = Migration(name="b", operations=[], dependencies=["a"])
+    c = Migration(name="c", operations=[], dependencies=["b"])
+    squash = Migration(
+        name="squash", operations=[], dependencies=["a"], replaces=["b", "c"]
+    )
+    d = Migration(name="d", operations=[], dependencies=["squash"])
+
+    graph = MigrationGraph.from_iterable([a, b, c, squash, d])
+
+    plan = graph.get_ordered_migration_plan([a, b])
+    assert_that(plan, is_(equal_to([d, c])))
+
+
+def test_migration_graph_navigates_around_squashed_migrations_when_fully_applied():
+    a = Migration(name="a", operations=[], dependencies=[])
+    b = Migration(name="b", operations=[], dependencies=["a"])
+    c = Migration(name="c", operations=[], dependencies=["b"])
+    squash = Migration(
+        name="squash", operations=[], dependencies=["a"], replaces=["b", "c"]
+    )
+    d = Migration(name="d", operations=[], dependencies=["squash"])
+
+    graph = MigrationGraph.from_iterable([a, b, c, squash, d])
+
+    plan = graph.get_ordered_migration_plan([a, b, c])
+    assert_that(plan, is_(equal_to([d])))
+
+
+def test_migration_graph_navigates_around_squashed_migrations_when_nothing_applied():
+    a = Migration(name="a", operations=[], dependencies=[])
+    b = Migration(name="b", operations=[], dependencies=["a"])
+    c = Migration(name="c", operations=[], dependencies=["b"])
+    squash = Migration(
+        name="squash", operations=[], dependencies=["a"], replaces=["b", "c"]
+    )
+    d = Migration(name="d", operations=[], dependencies=["squash"])
+
+    graph = MigrationGraph.from_iterable([a, b, c, squash, d])
+
+    plan = graph.get_ordered_migration_plan([])
+    assert_that(plan, is_(equal_to([a, squash, d])))
+
+
+def test_migraiton_graph_handles_dependencies_fulfilled_through_squash():
+    a = Migration(name="a", operations=[], dependencies=[])
+    b = Migration(name="b", operations=[], dependencies=["a"])
+    c = Migration(name="c", operations=[], dependencies=["b"])
+    squash = Migration(
+        name="squash", operations=[], dependencies=["a"], replaces=["b", "c"]
+    )
+    d = Migration(name="d", operations=[], dependencies=["b"])
+
+    graph = MigrationGraph.from_iterable([a, b, c, squash, d])
+
+    plan = graph.get_ordered_migration_plan([a, squash])
+    assert_that(plan, is_(equal_to([d])))
