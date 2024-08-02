@@ -1,7 +1,7 @@
 import pytest
 
 from nodestream.pipeline.pipeline import (
-    PielineOutput,
+    PipelineOutput,
     PipelineProgressReporter,
     Step,
     StepContext,
@@ -128,7 +128,7 @@ async def test_pipeline_output_call_handling_errors(mocker):
     def on_start_callback():
         raise Exception("Boom")
 
-    output = PielineOutput(
+    output = PipelineOutput(
         mocker.Mock(StepInput),
         PipelineProgressReporter(
             on_start_callback=on_start_callback,

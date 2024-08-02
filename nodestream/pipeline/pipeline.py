@@ -85,7 +85,7 @@ class StepExecutor:
         self.context.debug(f"Finished step {self.step.__class__.__name__}")
 
 
-class PielineOutput:
+class PipelineOutput:
     """`PipelineOutput` is an output channel for a pipeline.
 
     A `PipelineOutput` is used to consume records from the last step in a
@@ -170,7 +170,7 @@ class Pipeline(ExpandsSchemaFromChildren):
         # the flow of records between the steps.
         executors: List[StepExecutor] = []
         current_input, current_output = channel(self.step_outbox_size)
-        pipeline_output = PielineOutput(current_input, reporter)
+        pipeline_output = PipelineOutput(current_input, reporter)
 
         # Create the executors for the steps in the pipeline. The executors
         # will be used to run the steps concurrently. The steps are created in
