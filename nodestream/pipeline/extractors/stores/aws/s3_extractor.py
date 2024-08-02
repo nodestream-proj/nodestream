@@ -27,7 +27,7 @@ class S3File(ReadableFile):
 
     def archive_if_required(self, key: str):
         if not self.archive_dir:
-            pass
+            return
 
         LOGGER.info("Archiving S3 Object", extra=dict(key=key))
         filename = Path(key).name
