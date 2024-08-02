@@ -72,6 +72,8 @@ class ConcurrentTransformer(Transformer):
             else:
                 remaining_pending_tasks.append(task)
 
+        await self.yield_processor()
+
         self.pending_tasks[:] = remaining_pending_tasks
         if tasks_drained:
             self.logger.debug(
@@ -82,7 +84,7 @@ class ConcurrentTransformer(Transformer):
 
     async def process_record(self, record: Any, _) -> Any:
         if record is Flush:
-            async for outstanding in self.emit_outstanding_records():
+            async for outstanding in self.drain_completed_tasks():
                 yield outstanding
             yield record
         else:
@@ -109,7 +111,6 @@ class ConcurrentTransformer(Transformer):
         while self.pending_tasks:
             async for result in self.drain_completed_tasks():
                 yield result
-        await self.yield_processor()
 
     async def finish(self, _: StepContext):
         await asyncio.get_event_loop().run_in_executor(
