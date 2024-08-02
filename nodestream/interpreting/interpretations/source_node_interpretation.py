@@ -93,14 +93,27 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         additional_indexes: Optional[List[str]] = None,
         additional_types: Optional[List[str]] = None,
         normalization: Optional[Dict[str, Any]] = None,
+        properties_normalization: Optional[Dict[str, Any]] = None,
+        key_normalization: Optional[Dict[str, Any]] = None,
         allow_create: bool = True,
     ):
+        if normalization and (properties_normalization or key_normalization):
+            raise ValueError(
+                "You cannot specify normalization both at the root and at the key/properties level."
+            )
+
+        properties_normalization = properties_normalization or normalization
+        key_normalization = key_normalization or normalization
+        self.key_normalization = {
+            **DEFAULT_NORMALIZATION_ARGUMENTS,
+            **(key_normalization or {}),
+        }
+        self.properties_normalization = properties_normalization or {}
         self.node_type = ValueProvider.guarantee_value_provider(node_type)
         self.key = PropertyMapping.from_file_data(key or {})
         self.properties = PropertyMapping.from_file_data(properties or {})
         self.additional_indexes = additional_indexes or []
         self.additional_types = tuple(additional_types or [])
-        self.norm_args = {**DEFAULT_NORMALIZATION_ARGUMENTS, **(normalization or {})}
         if allow_create:
             self.creation_rule = NodeCreationRule.EAGER
         else:
@@ -108,9 +121,11 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
 
     def interpret(self, context: ProviderContext):
         normalized_key: PropertySet = PropertySet()
-        self.key.apply_to(context, normalized_key, self.norm_args)
+        self.key.apply_to(context, normalized_key, self.key_normalization)
         normalized_properties: PropertySet = PropertySet()
-        self.properties.apply_to(context, normalized_properties, self.norm_args)
+        self.properties.apply_to(
+            context, normalized_properties, self.properties_normalization
+        )
 
         context.desired_ingest.add_source_node(
             self.node_type.single_value(context),

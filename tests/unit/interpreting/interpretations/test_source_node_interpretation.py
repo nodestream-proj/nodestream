@@ -60,7 +60,7 @@ def test_source_node_interpretaton_applies_static_properties(blank_context):
 
 def test_source_node_interpretation_applies_dynamic_properties(blank_context):
     first_name = "zach"
-    expected_properties = {"first_name": first_name, "last_name": "probst"}
+    expected_properties = {"first_name": first_name, "last_name": "Probst"}
     dynamic_first_name = StubbedValueProvider(values=[first_name])
     subject = SourceNodeInterpretation(
         node_type=EXPECTED_NODE_TYPE,
@@ -140,3 +140,23 @@ def test_source_node_interpretation_with_properties_from_value_provider_wrong_ty
             properties=StubbedValueProvider(values=["prop"]),
         )
         subject.interpret(blank_context)
+
+
+def test_source_node_interpretation_setting_both_normalization_and_properties_normalization():
+    with pytest.raises(ValueError):
+        SourceNodeInterpretation(
+            node_type="Static",
+            key={"hello": "world"},
+            properties_normalization={"foo": "bar"},
+            normalization={"baz": "qux"},
+        )
+
+
+def test_source_node_interpretation_setting_both_normalization_and_key_normalization():
+    with pytest.raises(ValueError):
+        SourceNodeInterpretation(
+            node_type="Static",
+            key={"hello": "world"},
+            key_normalization={"foo": "bar"},
+            normalization={"baz": "qux"},
+        )
