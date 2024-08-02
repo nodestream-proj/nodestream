@@ -32,7 +32,7 @@ async def test_start_step_error(step_executor, mocker):
     step_executor.step.start.side_effect = Exception("Boom")
     await step_executor.start_step()
     step_executor.context.report_error.assert_called_once_with(
-        f"Error starting step {step_executor.step.__class__.__name__}", mocker.ANY
+        "Error starting step", mocker.ANY
     )
 
 
@@ -47,7 +47,7 @@ async def test_stop_step_error(step_executor, mocker):
     step_executor.step.finish.side_effect = Exception("Boom")
     await step_executor.stop_step()
     step_executor.context.report_error.assert_called_once_with(
-        f"Error stopping step {step_executor.step.__class__.__name__}", mocker.ANY
+        "Error stopping step", mocker.ANY
     )
 
 
@@ -78,9 +78,7 @@ async def test_drive_step(step_executor, mocker):
     step_executor.input.get = mocker.AsyncMock(side_effect=[record, None])
     await step_executor.drive_step()
     step_executor.output.put.assert_called_once_with(record)
-    step_executor.context.debug.assert_called_once_with(
-        f"Step {step_executor.step.__class__.__name__} finished emitting"
-    )
+    step_executor.context.debug.assert_called_once_with("Step finished emitting")
 
 
 @pytest.mark.asyncio
@@ -88,7 +86,7 @@ async def test_drive_step_error(step_executor, mocker):
     step_executor.input.get.side_effect = Exception("Boom")
     await step_executor.drive_step()
     step_executor.context.report_error.assert_called_once_with(
-        f"Error running step {step_executor.step.__class__.__name__}",
+        "Error running step",
         mocker.ANY,
         fatal=True,
     )

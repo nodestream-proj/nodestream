@@ -10,9 +10,12 @@ class StepContext:
     and report and perist information about the state of the pipeline.
     """
 
-    __slots__ = ("reporter", "index")
+    __slots__ = ("reporter", "index", "name")
 
-    def __init__(self, index: int, reporter: PipelineProgressReporter) -> None:
+    def __init__(
+        self, name: str, index: int, reporter: PipelineProgressReporter
+    ) -> None:
+        self.name = name
         self.reporter = reporter
         self.index = index
 
@@ -21,6 +24,7 @@ class StepContext:
         message: str,
         exception: Optional[Exception] = None,
         fatal: bool = False,
+        **extras,
     ):
         """Report an error.
 
@@ -35,7 +39,7 @@ class StepContext:
         """
         self.reporter.logger.error(
             message,
-            extra={"index": self.index, "fatal": fatal},
+            extra=dict(index=self.index, fatal=fatal, step_name=self.name, **extras),
             exc_info=exception,
             stack_info=True,
         )
@@ -49,7 +53,9 @@ class StepContext:
         information about the state of the pipeline and the steps in the
         pipeline.
         """
-        self.reporter.logger.debug(message, extra=dict(index=self.index, **extras))
+        self.reporter.logger.debug(
+            message, extra=dict(index=self.index, step_name=self.name, **extras)
+        )
 
     def info(self, message: str, **extras):
         """Log an info message.
@@ -58,7 +64,9 @@ class StepContext:
         information about the state of the pipeline and the steps in the
         pipeline.
         """
-        self.reporter.logger.info(message, extra=dict(index=self.index, **extras))
+        self.reporter.logger.info(
+            message, extra=dict(index=self.index, step_name=self.name, **extras)
+        )
 
     def warning(self, message: str, **extras):
         """Log a warning message.
@@ -67,7 +75,9 @@ class StepContext:
         information about the state of the pipeline and the steps in the
         pipeline.
         """
-        self.reporter.logger.warning(message, extra=dict(index=self.index, **extras))
+        self.reporter.logger.warning(
+            message, extra=dict(index=self.index, step_name=self.name, **extras)
+        )
 
 
 class Step:

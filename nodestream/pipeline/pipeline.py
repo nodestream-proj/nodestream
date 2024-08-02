@@ -34,17 +34,13 @@ class StepExecutor:
         try:
             await self.step.start(self.context)
         except Exception as e:
-            self.context.report_error(
-                f"Error starting step {self.step.__class__.__name__}", e
-            )
+            self.context.report_error("Error starting step", e)
 
     async def stop_step(self):
         try:
             await self.step.finish(self.context)
         except Exception as e:
-            self.context.report_error(
-                f"Error stopping step {self.step.__class__.__name__}", e
-            )
+            self.context.report_error("Error stopping step", e)
 
     async def emit_record(self, record):
         can_continue = await self.output.put(record)
@@ -67,22 +63,18 @@ class StepExecutor:
                 if not await self.emit_record(record):
                     return
 
-            self.context.debug(f"Step {self.step.__class__.__name__} finished emitting")
+            self.context.debug("Step finished emitting")
         except Exception as e:
-            self.context.report_error(
-                f"Error running step {self.step.__class__.__name__}",
-                e,
-                fatal=True,
-            )
+            self.context.report_error("Error running step", e, fatal=True)
 
     async def run(self):
-        self.context.debug(f"Starting step {self.step.__class__.__name__}")
+        self.context.debug("Starting step")
         await self.start_step()
         await self.drive_step()
         await self.output.done()
         self.input.done()
         await self.stop_step()
-        self.context.debug(f"Finished step {self.step.__class__.__name__}")
+        self.context.debug("Finished step")
 
 
 class PipelineOutput:
@@ -178,7 +170,7 @@ class Pipeline(ExpandsSchemaFromChildren):
         # input of the next step.
         for reversed_index, step in reversed(list(enumerate(self.steps))):
             index = len(self.steps) - reversed_index - 1
-            context = StepContext(index, reporter)
+            context = StepContext(step.__class__.__name__, index, reporter)
             current_input, next_output = channel(self.step_outbox_size)
             exec = StepExecutor(step, current_input, current_output, context)
             current_output = next_output
