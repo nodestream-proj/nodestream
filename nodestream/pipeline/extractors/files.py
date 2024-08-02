@@ -436,7 +436,7 @@ class LocalFileSource(FileSource, alias="local"):
     """
 
     @classmethod
-    def from_file_data(cls, globs: str) -> "LocalFileSource":
+    def from_file_data(cls, globs: List[str]) -> "LocalFileSource":
         all_matches = (
             Path(file)
             for glob_string in globs
