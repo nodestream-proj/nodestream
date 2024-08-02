@@ -92,7 +92,7 @@ class StepOuput:
         processing records. This allows downstream steps to know when the step
         is done and they can stop processing records.
         """
-        await self.channel.put(DoneObject)
+        await self.put(DoneObject)
 
     async def put(self, obj) -> bool:
         """Put an object in the output channel.
