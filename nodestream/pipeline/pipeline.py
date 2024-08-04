@@ -2,7 +2,7 @@ from asyncio import create_task, gather
 from typing import Iterable, List, Tuple
 
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
-from .channel import StepInput, StepOuput, channel
+from .channel import StepInput, StepOutput, channel
 from .meta import get_context
 from .progress_reporter import PipelineProgressReporter
 from .step import Step, StepContext
@@ -22,7 +22,7 @@ class StepExecutor:
         self,
         step: Step,
         input: StepInput,
-        output: StepOuput,
+        output: StepOutput,
         context: StepContext,
     ) -> None:
         self.step = step

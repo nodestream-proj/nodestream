@@ -71,7 +71,7 @@ class Channel:
             return False
 
 
-class StepOuput:
+class StepOutput:
     """`StepOutput` is an output channel for a step in a pipeline.
 
     A `StepOutput` is used to pass records from a step to the next step in a
@@ -153,11 +153,11 @@ class StepInput:
         self.channel.input_dropped = True
 
 
-def channel(size: int) -> Tuple[StepInput, StepOuput]:
+def channel(size: int) -> Tuple[StepInput, StepOutput]:
     """Create a new input and output channel.
 
     Args:
         size: The size of the channel.
     """
     channel = Channel(size)
-    return StepInput(channel), StepOuput(channel)
+    return StepInput(channel), StepOutput(channel)

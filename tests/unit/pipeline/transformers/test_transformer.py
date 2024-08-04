@@ -44,7 +44,7 @@ B: With the proper transformer it yields the processor
 
 How do we know?
 If it hogs the processor the downstream client will only recieve the results in bulk
-If it doesn't the downstream client will recieve the result in aync pieces. 
+If it doesn't the downstream client will recieve the result in aync pieces.
 
 Test:
     A transformer ingests data from a mock input stream
@@ -55,7 +55,7 @@ Test:
 
 @pytest.mark.asyncio
 async def test_normal_concurrent_transformer_passes_processor():
-    items = list(range(ITEM_COUNT))
+    items = list(range(ITEM_COUNT)) + [Flush]
     transformer = AddOneConcurrently()
 
     async def transform():

@@ -7,7 +7,7 @@ from nodestream.pipeline.pipeline import (
     StepContext,
     StepExecutor,
     StepInput,
-    StepOuput,
+    StepOutput,
 )
 
 
@@ -15,7 +15,7 @@ from nodestream.pipeline.pipeline import (
 def step_executor(mocker):
     step = mocker.Mock(Step)
     input = mocker.Mock(StepInput)
-    output = mocker.Mock(StepOuput)
+    output = mocker.Mock(StepOutput)
     context = mocker.Mock(StepContext)
 
     return StepExecutor(step, input, output, context)
