@@ -2,7 +2,11 @@ import pytest
 from hamcrest import assert_that, equal_to, is_
 
 from nodestream.schema.migrations import Migration, MigrationGraph
-from nodestream.schema.migrations.operations import CreateNodeType
+from nodestream.schema.migrations.operations import (
+    AddNodeProperty,
+    CreateNodeType,
+    DropNodeType,
+)
 
 
 def test_migration_is_root_migration(root_migration):
@@ -157,7 +161,7 @@ def test_migration_graph_navigates_around_squashed_migrations_when_nothing_appli
     assert_that(plan, is_(equal_to([a, squash, d])))
 
 
-def test_migraiton_graph_handles_dependencies_fulfilled_through_squash():
+def test_migration_graph_handles_dependencies_fulfilled_through_squash():
     a = Migration(name="a", operations=[], dependencies=[])
     b = Migration(name="b", operations=[], dependencies=["a"])
     c = Migration(name="c", operations=[], dependencies=["b"])
@@ -170,3 +174,42 @@ def test_migraiton_graph_handles_dependencies_fulfilled_through_squash():
 
     plan = graph.get_ordered_migration_plan([a, squash])
     assert_that(plan, is_(equal_to([d])))
+
+
+def test_migration_squash_optimizes_operations():
+    migrations = [
+        Migration(
+            name="a",
+            operations=[CreateNodeType("Person", {"name"}, {"age"})],
+            dependencies=[],
+        ),
+        Migration(
+            name="b",
+            operations=[CreateNodeType("Team", {"name"}, {"mascot"})],
+            dependencies=["a"],
+        ),
+        Migration(
+            name="c",
+            operations=[AddNodeProperty("Person", "full_name")],
+            dependencies=["a"],
+        ),
+        Migration(
+            name="d",
+            operations=[DropNodeType("Person")],
+            dependencies=["c"],
+        ),
+    ]
+
+    assert_that(
+        Migration.squash("bob", migrations),
+        equal_to(
+            Migration(
+                name="bob",
+                operations=[
+                    CreateNodeType("Team", {"name"}, {"mascot"}),
+                ],
+                dependencies=[],
+                replaces=["a", "d", "b", "c"],
+            )
+        ),
+    )
