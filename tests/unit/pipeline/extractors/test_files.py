@@ -8,10 +8,11 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 import pandas as pd
 import pytest
 import yaml
-from hamcrest import assert_that, equal_to, has_length
+from hamcrest import assert_that, contains_string, equal_to, has_length
 
 from nodestream.pipeline.extractors.files import (
     FileExtractor,
+    FileSource,
     LocalFileSource,
     RemoteFileExtractor,
     RemoteFileSource,
@@ -269,3 +270,12 @@ def test_local_file_source_multiple_file_description(fixture_directory):
     ]
     subject = LocalFileSource(paths)
     assert_that(subject.describe(), equal_to("2 local files"))
+
+
+def test_file_source_default_description():
+    class SomeFileSource(FileSource):
+        def get_files(self):
+            pass
+
+    subject = SomeFileSource()
+    assert_that(subject.describe(), contains_string("SomeFileSource"))
