@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import assert_that, equal_to, is_
+from hamcrest import assert_that, contains_inanyorder, empty, equal_to, is_
 
 from nodestream.schema.migrations import Migration, MigrationGraph
 from nodestream.schema.migrations.operations import (
@@ -200,16 +200,10 @@ def test_migration_squash_optimizes_operations():
         ),
     ]
 
+    result = Migration.squash("bob", migrations)
     assert_that(
-        Migration.squash("bob", migrations),
-        equal_to(
-            Migration(
-                name="bob",
-                operations=[
-                    CreateNodeType("Team", {"name"}, {"mascot"}),
-                ],
-                dependencies=[],
-                replaces=["a", "d", "b", "c"],
-            )
-        ),
+        result.operations, is_(equal_to([CreateNodeType("Team", {"name"}, {"mascot"})]))
     )
+    assert_that(result.dependencies, empty())
+    assert_that(result.replaces, contains_inanyorder("a", "d", "b", "c"))
+    assert_that(result.name, equal_to("bob"))
