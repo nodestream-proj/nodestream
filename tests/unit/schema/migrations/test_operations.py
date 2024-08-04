@@ -593,22 +593,21 @@ def test_operation_chain_optimization():
 
 
 def test_operation_chain_optimization_complex():
-    a = CreateNodeType("Person", {"name"}, {"age"})
-    b = CreateNodeType("Sport", {"name"}, {})
-    c = AddNodeProperty("Person", "full_name")
-    d = DropNodeProperty("Person", "age")
-    e = DropNodeType("Person")
-    f = CreateRelationshipType("Likes", {}, {})
-    g = AddRelationshipProperty("Likes", "since")
-    h = AddNodeProperty("Team", "mascot")
-    i = DropRelationshipType("Likes")
-    j = CreateNodeType("Team", {"name"}, {})
-    k = DropNodeProperty("Team", "mascot")
-    dl = DropRelationshipProperty("Likes", "since")
-    m = DropNodeType("Team")
-
-    # Intertwined and shuffled operations
-    operations = [a, f, b, g, c, j, h, d, k, i, e, dl, m]
+    operations = [
+        CreateNodeType("Person", {"name"}, {"age"}),
+        CreateRelationshipType("Likes", {}, {}),
+        CreateNodeType("Sport", {"name"}, {}),
+        AddRelationshipProperty("Likes", "since"),
+        AddNodeProperty("Person", "full_name"),
+        CreateNodeType("Team", {"name"}, {}),
+        DropNodeProperty("Person", "age"),
+        DropRelationshipType("Likes"),
+        DropNodeProperty("Team", "mascot"),
+        DropNodeType("Person"),
+        DropRelationshipProperty("Likes", "since"),
+        AddNodeProperty("Team", "mascot"),
+        DropNodeType("Team"),
+    ]
 
     assert_that(
         Operation.optimize(operations),
