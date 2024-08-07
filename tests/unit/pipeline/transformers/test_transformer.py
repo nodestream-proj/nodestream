@@ -22,24 +22,15 @@ class AddOneConcurrently(ConcurrentTransformer):
         return record + 1
 
 
-class AddOneConcurrentlyGreedy(AddOneConcurrently):
-    async def yield_processor(self):
-        pass
-
-
 ITEM_COUNT = 100
 
 
 @pytest.mark.asyncio
 async def test_concurrent_transformer_alL_items_collect():
     items = list(range(100))
-
-    async def input_record_stream():
-        for i in items:
-            yield i
-
     add = AddOneConcurrently()
-    result = [r async for r in add.handle_async_record_stream(input_record_stream())]
+    result = [r for i in items async for r in add.process_record(i, None)]
+    result.extend([r async for r in add.emit_outstanding_records()])
     assert_that(result, contains_inanyorder(*[i + 1 for i in items]))
     assert_that(result, has_length(len(items)))
 
@@ -53,7 +44,7 @@ B: With the proper transformer it yields the processor
 
 How do we know?
 If it hogs the processor the downstream client will only recieve the results in bulk
-If it doesn't the downstream client will recieve the result in aync pieces. 
+If it doesn't the downstream client will recieve the result in aync pieces.
 
 Test:
     A transformer ingests data from a mock input stream
@@ -63,43 +54,14 @@ Test:
 
 
 @pytest.mark.asyncio
-async def test_greedy_concurrent_transformer_does_not_pass_processor():
-    items = list(range(ITEM_COUNT))
-    transformer = AddOneConcurrentlyGreedy()
-
-    async def input_record_stream():
-        for i in items:
-            yield i
-
-    async def transform():
-        async for _ in transformer.handle_async_record_stream(input_record_stream()):
-            transformer.queue_size += 1
-        transformer.done = True
-
-    async def downstream_client():
-        should_continue = True
-        while should_continue:
-            if transformer.queue_size > 0:
-                assert transformer.queue_size >= ITEM_COUNT
-            transformer.queue_size -= 1
-            should_continue = not transformer.done
-            await asyncio.sleep(0)
-
-    await asyncio.gather(transform(), downstream_client())
-
-
-@pytest.mark.asyncio
 async def test_normal_concurrent_transformer_passes_processor():
-    items = list(range(ITEM_COUNT))
+    items = list(range(ITEM_COUNT)) + [Flush]
     transformer = AddOneConcurrently()
 
-    async def input_record_stream():
-        for i in items:
-            yield i
-
     async def transform():
-        async for _ in transformer.handle_async_record_stream(input_record_stream()):
-            transformer.queue_size += 1
+        for i in items:
+            async for _ in transformer.process_record(i, None):
+                transformer.queue_size += 1
         transformer.done = True
 
     async def downstream_client():
@@ -117,19 +79,17 @@ async def test_normal_concurrent_transformer_passes_processor():
 async def test_concurrent_transformer_worker_cleanup(mocker):
     add = AddOneConcurrently()
     add.thread_pool = mocker.Mock()
-    await add.finish()
-    add.thread_pool.shutdown.assert_called_once_with(wait=True)
+    await add.finish(None)
+    add.thread_pool.shutdown.assert_called_once_with(True)
 
 
 @pytest.mark.asyncio
 async def test_concurrent_transformer_flush(mocker):
-    async def input_record_stream():
-        yield 1
-        yield Flush
-        yield 2
-
     add = AddOneConcurrently()
-    result = [r async for r in add.handle_async_record_stream(input_record_stream())]
+    result = [
+        r for record in (1, Flush, 2) async for r in add.process_record(record, None)
+    ]
+    result.extend([r async for r in add.emit_outstanding_records()])
     assert_that(result, contains_inanyorder(2, 3, Flush))
 
 
@@ -176,11 +136,6 @@ TEST_RESULTS_WITH_NO_DEFAULT = [
 ]
 
 
-async def switch_input_record_stream():
-    for record in TEST_DATA:
-        yield record
-
-
 @pytest.mark.asyncio
 async def test_switch_transformer_with_default():
     switch_transformer = SwitchTransformer.from_file_data(
@@ -189,9 +144,8 @@ async def test_switch_transformer_with_default():
 
     results = [
         r
-        async for r in switch_transformer.handle_async_record_stream(
-            switch_input_record_stream()
-        )
+        for record in TEST_DATA
+        async for r in switch_transformer.process_record(record, None)
     ]
     assert results == TEST_RESULTS_WITH_DEFAULT
 
@@ -203,8 +157,7 @@ async def test_switch_transformer_without_default():
     )
     results = [
         r
-        async for r in switch_transformer.handle_async_record_stream(
-            switch_input_record_stream()
-        )
+        for record in TEST_DATA
+        async for r in switch_transformer.process_record(record, None)
     ]
     assert results == TEST_RESULTS_WITH_NO_DEFAULT
