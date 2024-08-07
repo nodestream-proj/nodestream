@@ -33,7 +33,7 @@ format: venv
 .PHONY: lint
 lint: venv
 	poetry run black nodestream tests --check
-	poetry run ruff nodestream tests
+	poetry run ruff check nodestream tests
 
 .PHONY: test-unit
 test-unit: venv

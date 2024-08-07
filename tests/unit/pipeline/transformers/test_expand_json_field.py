@@ -22,9 +22,5 @@ DEEP_OUTPUT = {"a": 1, "d": "d", "b": {"c": {"d": {"hello": "world"}}}}
 )
 async def test_expand_json_fields(input, output, path):
     subject = ExpandJsonField.from_file_data(path)
-
-    async def upstream():
-        yield input
-
-    results = [r async for r in subject.handle_async_record_stream(upstream())]
+    results = [r async for r in subject.process_record(input, None)]
     assert_that(results, equal_to([output]))

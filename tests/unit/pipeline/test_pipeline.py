@@ -1,152 +1,138 @@
-from unittest.mock import patch
-
 import pytest
 
-from nodestream.pipeline import PipelineProgressReporter
 from nodestream.pipeline.pipeline import (
-    Pipeline,
-    PipelineException,
-    PipelineState,
-    StepException,
+    PipelineOutput,
+    PipelineProgressReporter,
+    Step,
+    StepContext,
     StepExecutor,
-    empty_async_generator,
+    StepInput,
+    StepOutput,
 )
-from nodestream.pipeline.step import PassStep
-
-
-async def async_range(size):
-    for i in range(size):
-        yield i
 
 
 @pytest.fixture
-def pipeline_state():
-    return PipelineState()
+def step_executor(mocker):
+    step = mocker.Mock(Step)
+    input = mocker.Mock(StepInput)
+    output = mocker.Mock(StepOutput)
+    context = mocker.Mock(StepContext)
 
-
-@pytest.fixture
-def pipeline(mocker):
-    s1, s2 = PassStep(), PassStep()
-    s1.handle_async_record_stream = mocker.Mock(return_value=empty_async_generator())
-    s2.handle_async_record_stream = mocker.Mock(return_value=empty_async_generator())
-    s1.finish, s2.finish = mocker.AsyncMock(), mocker.AsyncMock()
-    return Pipeline([s1, s2], 10)
-
-
-@pytest.fixture
-def step_executor(mocker, pipeline_state):
-    step = PassStep()
-    step.handle_async_record_stream = mocker.Mock(return_value=empty_async_generator())
-    step.finish = mocker.AsyncMock()
-    return StepExecutor(pipeline_state, step=step, upstream=None)
+    return StepExecutor(step, input, output, context)
 
 
 @pytest.mark.asyncio
-async def test_pipeline_run(pipeline):
-    await pipeline.run()
-    for step in pipeline.steps:
-        step.handle_async_record_stream.assert_called_once()
-        step.finish.assert_awaited_once()
+async def test_start_step(step_executor):
+    await step_executor.start_step()
+    step_executor.step.start.assert_called_once_with(step_executor.context)
 
 
 @pytest.mark.asyncio
-async def test_pipeline_run_with_error_on_start(pipeline, mocker):
-    with pytest.raises(expected_exception=PipelineException):
-        await pipeline.run(
-            PipelineProgressReporter(
-                on_start_callback=mocker.Mock(side_effect=Exception("test"))
-            )
-        )
-    for step in pipeline.steps:
-        step.handle_async_record_stream.assert_called_once()
-        step.finish.assert_awaited_once()
+async def test_start_step_error(step_executor, mocker):
+    step_executor.step.start.side_effect = Exception("Boom")
+    await step_executor.start_step()
+    step_executor.context.report_error.assert_called_once_with(
+        "Error starting step", mocker.ANY
+    )
 
 
 @pytest.mark.asyncio
-async def test_pipeline_run_with_error_on_work_body(pipeline):
-    for step in pipeline.steps:
-        step.handle_async_record_stream.side_effect = Exception("test")
-
-    with pytest.raises(expected_exception=PipelineException):
-        await pipeline.run()
-
-    for step in pipeline.steps:
-        step.finish.assert_called_once()
+async def test_stop_step(step_executor):
+    await step_executor.stop_step()
+    step_executor.step.finish.assert_called_once_with(step_executor.context)
 
 
 @pytest.mark.asyncio
-async def test_pipeline_run_with_error_on_finish(pipeline, mocker):
-    with pytest.raises(expected_exception=PipelineException):
-        await pipeline.run(
-            PipelineProgressReporter(
-                on_finish_callback=mocker.Mock(side_effect=Exception("test"))
-            )
-        )
+async def test_stop_step_error(step_executor, mocker):
+    step_executor.step.finish.side_effect = Exception("Boom")
+    await step_executor.stop_step()
+    step_executor.context.report_error.assert_called_once_with(
+        "Error stopping step", mocker.ANY
+    )
 
 
 @pytest.mark.asyncio
-@patch("nodestream.pipeline.pipeline.StepExecutor.start", side_effect=Exception("test"))
-async def test_step_executor_throws_start_exception(start_mock, step_executor):
-    step = step_executor.step
-    with pytest.raises(expected_exception=StepException):
-        await step_executor.work_loop()
-    step.handle_async_record_stream.assert_called_once()
-    step.finish.assert_called_once()
+async def test_emit_record(step_executor, mocker):
+    record = mocker.Mock()
+    step_executor.output.put.return_value = True
+    await step_executor.emit_record(record)
+    step_executor.output.put.assert_called_once_with(record)
 
 
 @pytest.mark.asyncio
-@patch(
-    "nodestream.pipeline.pipeline.StepExecutor.work_body", side_effect=Exception("test")
-)
-async def test_step_executor_throws_work_body_exception(work_body_mock, step_executor):
-    step = step_executor.step
-    with pytest.raises(expected_exception=StepException):
-        await step_executor.work_loop()
-    step.finish.assert_called_once()
+async def test_emit_record_full(step_executor, mocker):
+    record = mocker.Mock()
+    step_executor.output.put.return_value = False
+    await step_executor.emit_record(record)
+    step_executor.output.put.assert_called_once_with(record)
+    step_executor.context.debug.assert_called_once_with(
+        "Downstream is not accepting more records. Gracefully stopping."
+    )
 
 
 @pytest.mark.asyncio
-@patch("nodestream.pipeline.pipeline.StepExecutor.stop", side_effect=Exception("test"))
-async def test_step_executor_throws_finish_exception(finish_mock, step_executor):
-    with pytest.raises(expected_exception=StepException):
-        await step_executor.work_loop()
+async def test_drive_step(step_executor, mocker):
+    record = mocker.Mock()
+    step = Step()
+    step_executor.step = step
+    step_executor.input.get = mocker.AsyncMock(side_effect=[record, None])
+    await step_executor.drive_step()
+    step_executor.output.put.assert_called_once_with(record)
+    step_executor.context.debug.assert_called_once_with("Step finished emitting")
 
 
 @pytest.mark.asyncio
-@patch("nodestream.pipeline.pipeline.StepExecutor.start", side_effect=Exception("test"))
-@patch(
-    "nodestream.pipeline.pipeline.StepExecutor.work_body", side_effect=Exception("test")
-)
-async def test_step_executor_collects_multiple_errors(
-    start_mock, work_body_mock, step_executor
+async def test_drive_step_error(step_executor, mocker):
+    step_executor.input.get.side_effect = Exception("Boom")
+    await step_executor.drive_step()
+    step_executor.context.report_error.assert_called_once_with(
+        "Error running step",
+        mocker.ANY,
+        fatal=True,
+    )
+
+
+@pytest.mark.asyncio
+async def test_drive_step_cannot_continue(step_executor, mocker):
+    record = mocker.Mock()
+    step = Step()
+    step_executor.step = step
+    step_executor.input.get = mocker.AsyncMock(side_effect=[record, None])
+    step_executor.output.put.return_value = False
+    await step_executor.drive_step()
+    step_executor.output.put.assert_called_once_with(record)
+
+
+@pytest.mark.asyncio
+async def test_drive_step_cannot_continue_in_emit_outstanding_records(
+    step_executor, mocker
 ):
-    with pytest.raises(expected_exception=StepException):
-        await step_executor.work_loop()
-    assert len(step_executor.exceptions) == 2
+    record = mocker.Mock()
+
+    async def emit_outstanding_records():
+        yield record
+
+    step_executor.input.get = mocker.AsyncMock(side_effect=[None])
+    step_executor.step.emit_outstanding_records.return_value = (
+        emit_outstanding_records()
+    )
+    step_executor.output.put.return_value = False
+    await step_executor.drive_step()
+    step_executor.output.put.assert_called_once_with(record)
 
 
 @pytest.mark.asyncio
-@patch("nodestream.pipeline.pipeline.StepExecutor.start", side_effect=Exception("test"))
-@patch(
-    "nodestream.pipeline.pipeline.StepExecutor.work_body", side_effect=Exception("test")
-)
-async def test_pipeline_errors_are_kept_in_exception(
-    start_mock, work_body_mock, pipeline, mocker
-):
-    with pytest.raises(expected_exception=PipelineException):
-        await pipeline.run()
-    assert len(pipeline.errors) == 2
-    for error in pipeline.errors:
-        assert type(error) == StepException
-        assert "Exception in Start Process:" in error.exceptions
-        assert "Exception in Work Body:" in error.exceptions
+async def test_pipeline_output_call_handling_errors(mocker):
+    def on_start_callback():
+        raise Exception("Boom")
 
+    output = PipelineOutput(
+        mocker.Mock(StepInput),
+        PipelineProgressReporter(
+            on_start_callback=on_start_callback,
+            logger=mocker.Mock(),
+        ),
+    )
 
-@pytest.mark.asyncio
-async def test_pipeline_terminates_when_step_executor_raises_exception(mocker):
-    steps = mocker.Mock(), mocker.Mock()
-    pipeline = Pipeline(steps, 100)
-    steps[0].handle_async_record_stream.return_value = async_range(1000)
-    steps[1].handle_async_record_stream.side_effect = Exception("test")
-    with pytest.raises(PipelineException):
-        await pipeline.run()
+    await output.call_handling_errors(output.reporter.on_start_callback)
+    output.reporter.logger.exception.assert_called_once()
