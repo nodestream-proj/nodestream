@@ -4,7 +4,7 @@ import json
 
 import pytest
 from hamcrest import assert_that, has_items, has_key, has_length, not_
-from moto import mock_s3
+from moto import mock_aws
 
 BUCKET_NAME = "bucket"
 PREFIX = "prefix"
@@ -13,7 +13,7 @@ NUM_OBJECTS = 10
 
 @pytest.fixture
 def s3_client():
-    with mock_s3():
+    with mock_aws():
         import boto3
 
         yield boto3.client("s3", region_name="us-east-1")
