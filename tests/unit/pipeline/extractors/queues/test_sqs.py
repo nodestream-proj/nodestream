@@ -1,20 +1,20 @@
 from unittest.mock import patch
 
 import pytest
-from moto import mock_sqs
+from moto import mock_aws
 
 from nodestream.pipeline.extractors.queues.sqs import SQSQueueConnector
 
 
 @pytest.fixture
 def mock_client():
-    with mock_sqs():
+    with mock_aws():
         import boto3
 
         yield boto3.client("sqs", region_name="us-east-1")
 
 
-@mock_sqs
+@mock_aws
 @pytest.fixture
 def sqs_queue(mock_client):
     response = mock_client.create_queue(QueueName="queue1")
@@ -24,7 +24,7 @@ def sqs_queue(mock_client):
     yield url
 
 
-@mock_sqs
+@mock_aws
 @pytest.fixture
 def sqs_queue_no_messages(mock_client):
     response = mock_client.create_queue(QueueName="queue1")
@@ -32,7 +32,7 @@ def sqs_queue_no_messages(mock_client):
     yield url
 
 
-@mock_sqs
+@mock_aws
 @pytest.fixture
 def subject(sqs_queue, mock_client):
     return SQSQueueConnector(
@@ -43,7 +43,7 @@ def subject(sqs_queue, mock_client):
     )
 
 
-@mock_sqs
+@mock_aws
 @pytest.fixture
 def subject_no_messages(sqs_queue_no_messages, mock_client):
     return SQSQueueConnector(
