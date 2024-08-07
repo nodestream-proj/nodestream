@@ -91,6 +91,62 @@ class Operation(LoadsFromYaml, SavesToYaml):
             "arguments": asdict(self),
         }
 
+    def reduce(self, other: "Operation") -> List["Operation"]:
+        """Reduce this operation with another operation.
+
+        This method should be implemented by subclasses to reduce this
+        operation with another operation. The result of this operation should
+        be a list of operations that are equivalent to applying this operation
+        and then the other operation. If the operations cannot be reduced, then
+        this method should return both operations in a list.
+        """
+        return [self] if self == other else [self, other]
+
+    @classmethod
+    def optimize(cls, operations: List["Operation"]) -> List["Operation"]:
+        """Optimize a list of operations.
+
+        This method should be implemented by subclasses to optimize a list of
+        operations. The result of this operation should be a list of operations
+        that are equivalent to applying all of the operations in the input list.
+        """
+        return OperationReducer(operations).reduce()
+
+
+class OperationReducer:
+    """A class that can reduce a list of operations."""
+
+    def __init__(self, operations: List[Operation]):
+        self.operations = operations
+
+    def reduce(self) -> List[Operation]:
+        """Reduce the list of operations.
+
+        Returns:
+            A list of operations that are equivalent to applying all of the
+            operations in the input list.
+        """
+        current = self.operations
+        while True:
+            reduced = self.reduce_once(current)
+            if reduced == current:
+                break
+            current = reduced
+        return current
+
+    def reduce_once(self, operations: List[Operation]) -> List[Operation]:
+        # We are going to go from back to front and
+        # reduce exactly one operation per iteration.
+        for i, operation in enumerate(reversed(operations)):
+            others = operations[: len(operations) - i - 1]
+            for other in reversed(others):
+                reduced = operation.reduce(other)
+                if len(reduced) < 2:
+                    unchanged = [o for o in operations if o not in (operation, other)]
+                    return unchanged + reduced
+
+        return operations
+
 
 @dataclass(frozen=True, slots=True)
 class CreateNodeType(Operation):
@@ -122,6 +178,11 @@ class CreateNodeType(Operation):
         schema.add_keys(self.keys)
         schema.add_properties(self.properties)
         return schema
+
+    def reduce(self, other: Operation) -> List[Operation]:
+        if isinstance(other, DropNodeType) and other.name == self.name:
+            return []
+        return Operation.reduce(self, other)
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,6 +216,11 @@ class CreateRelationshipType(Operation):
         schema.add_properties(self.properties)
         return schema
 
+    def reduce(self, other: Operation) -> List[Operation]:
+        if isinstance(other, DropRelationshipType) and other.name == self.name:
+            return []
+        return Operation.reduce(self, other)
+
 
 @dataclass(frozen=True, slots=True)
 class DropNodeType(Operation):
@@ -179,6 +245,18 @@ class DropNodeType(Operation):
     def describe(self) -> str:
         return f"Drop node type {self.name}"
 
+    def reduce(self, other: Operation) -> List[Operation]:
+        if isinstance(other, CreateNodeType) and other.name == self.name:
+            return []
+
+        if (
+            isinstance(other, (AddNodeProperty, DropNodeProperty, RenameNodeProperty))
+            and other.node_type == self.name
+        ):
+            return [self]
+
+        return Operation.reduce(self, other)
+
 
 @dataclass(frozen=True, slots=True)
 class DropRelationshipType(Operation):
@@ -196,6 +274,25 @@ class DropRelationshipType(Operation):
 
     def describe(self) -> str:
         return f"Drop relationship {self.name}"
+
+    def reduce(self, other: Operation) -> List[Operation]:
+        if isinstance(other, CreateRelationshipType) and other.name == self.name:
+            return []
+
+        if (
+            isinstance(
+                other,
+                (
+                    AddRelationshipProperty,
+                    DropRelationshipProperty,
+                    RenameRelationshipProperty,
+                ),
+            )
+            and other.relationship_type == self.name
+        ):
+            return [self]
+
+        return Operation.reduce(self, other)
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,6 +316,26 @@ class RenameNodeProperty(Operation):
     def describe(self) -> str:
         return f"Rename node property {self.old_property_name} to {self.new_property_name} on node type {self.node_type}"
 
+    def reduce(self, other: Operation) -> List[Operation]:
+        # If we add and then rename, we can just add with the new name.
+        # if we rename and then drop, we can just drop the old name.
+        if (
+            isinstance(other, AddNodeProperty)
+            and other.node_type == self.node_type
+            and other.property_name == self.old_property_name
+        ):
+            return [
+                AddNodeProperty(self.node_type, self.new_property_name, other.default)
+            ]
+        if (
+            isinstance(other, DropNodeProperty)
+            and other.node_type == self.node_type
+            and other.property_name == self.old_property_name
+        ):
+            return [DropNodeProperty(self.node_type, self.old_property_name)]
+
+        return Operation.reduce(self, other)
+
 
 @dataclass(frozen=True, slots=True)
 class RenameRelationshipProperty(Operation):
@@ -240,6 +357,31 @@ class RenameRelationshipProperty(Operation):
 
     def describe(self) -> str:
         return f"Rename relationship property {self.old_property_name} to {self.new_property_name} on relationship type {self.relationship_type}"
+
+    def reduce(self, other: Operation) -> List[Operation]:
+        # If we add and then rename, we can just add with the new name.
+        # if we rename and then drop, we can just drop the old name.
+        if (
+            isinstance(other, AddRelationshipProperty)
+            and other.relationship_type == self.relationship_type
+            and other.property_name == self.old_property_name
+        ):
+            return [
+                AddRelationshipProperty(
+                    self.relationship_type, self.new_property_name, other.default
+                )
+            ]
+
+        if (
+            isinstance(other, DropRelationshipProperty)
+            and other.relationship_type == self.relationship_type
+            and other.property_name == self.old_property_name
+        ):
+            return [
+                DropRelationshipProperty(self.relationship_type, self.old_property_name)
+            ]
+
+        return Operation.reduce(self, other)
 
 
 @dataclass(frozen=True, slots=True)
@@ -269,6 +411,17 @@ class RenameNodeType(Operation):
     def describe(self) -> str:
         return f"Rename node type {self.old_type} to {self.new_type}"
 
+    def reduce(self, other: Operation) -> List[Operation]:
+        # If we create and then rename, we can just create with the new name.
+        # If we rename and then drop, we can just drop the old name.
+        if isinstance(other, CreateNodeType) and other.name == self.old_type:
+            return [CreateNodeType(self.new_type, other.keys, other.properties)]
+
+        if isinstance(other, DropNodeType) and other.name == self.new_type:
+            return [DropNodeType(self.old_type)]
+
+        return Operation.reduce(self, other)
+
 
 @dataclass(frozen=True, slots=True)
 class RenameRelationshipType(Operation):
@@ -288,6 +441,17 @@ class RenameRelationshipType(Operation):
 
     def describe(self) -> str:
         return f"Rename relationship type {self.old_type} to {self.new_type}"
+
+    def reduce(self, other: Operation) -> List[Operation]:
+        # If we create and then rename, we can just create with the new name.
+        # If we rename and then drop, we can just drop the old name.
+        if isinstance(other, CreateRelationshipType) and other.name == self.old_type:
+            return [CreateRelationshipType(self.new_type, other.keys, other.properties)]
+
+        if isinstance(other, DropRelationshipType) and other.name == self.new_type:
+            return [DropRelationshipType(self.old_type)]
+
+        return Operation.reduce(self, other)
 
 
 @dataclass(frozen=True, slots=True)
@@ -400,6 +564,27 @@ class AddNodeProperty(Operation):
     def describe(self) -> str:
         return f"Add property {self.property_name} to node type {self.node_type}"
 
+    def reduce(self, other: Operation) -> List[Operation]:
+        # If we add and then rename, we can just add with the new name.
+        # If we add and then drop, we can just no-op.
+        if (
+            isinstance(other, RenameNodeProperty)
+            and other.node_type == self.node_type
+            and other.old_property_name == self.property_name
+        ):
+            return [
+                AddNodeProperty(self.node_type, other.new_property_name, self.default)
+            ]
+
+        if (
+            isinstance(other, DropNodeProperty)
+            and other.node_type == self.node_type
+            and other.property_name == self.property_name
+        ):
+            return []
+
+        return Operation.reduce(self, other)
+
 
 @dataclass(frozen=True, slots=True)
 class AddRelationshipProperty(Operation):
@@ -423,6 +608,29 @@ class AddRelationshipProperty(Operation):
     def describe(self) -> str:
         return f"Add property {self.property_name} to relationship type {self.relationship_type}"
 
+    def reduce(self, other: Operation) -> List[Operation]:
+        # If we add and then rename, we can just add with the new name.
+        # If we add and then drop, we can just no-op.
+        if (
+            isinstance(other, RenameRelationshipProperty)
+            and other.relationship_type == self.relationship_type
+            and other.old_property_name == self.property_name
+        ):
+            return [
+                AddRelationshipProperty(
+                    self.relationship_type, other.new_property_name, self.default
+                )
+            ]
+
+        if (
+            isinstance(other, DropRelationshipProperty)
+            and other.relationship_type == self.relationship_type
+            and other.property_name == self.property_name
+        ):
+            return []
+
+        return Operation.reduce(self, other)
+
 
 @dataclass(frozen=True, slots=True)
 class DropNodeProperty(Operation):
@@ -442,6 +650,25 @@ class DropNodeProperty(Operation):
     def describe(self) -> str:
         return f"Drop property {self.property_name} from node type {self.node_type}"
 
+    def reduce(self, other: Operation) -> List[Operation]:
+        # If we add and then drop, we can just no-op.
+        # If we rename and then drop, we can just drop the original name.
+        if (
+            isinstance(other, AddNodeProperty)
+            and other.node_type == self.node_type
+            and other.property_name == self.property_name
+        ):
+            return []
+
+        if (
+            isinstance(other, RenameNodeProperty)
+            and other.node_type == self.node_type
+            and other.old_property_name == self.property_name
+        ):
+            return [self]
+
+        return Operation.reduce(self, other)
+
 
 @dataclass(frozen=True, slots=True)
 class DropRelationshipProperty(Operation):
@@ -460,6 +687,25 @@ class DropRelationshipProperty(Operation):
 
     def describe(self) -> str:
         return f"Drop property {self.property_name} from relationship type {self.relationship_type}"
+
+    def reduce(self, other: Operation) -> List[Operation]:
+        # If we add and then drop, we can just no-op.
+        # If we rename and then drop, we can just drop the original name.
+        if (
+            isinstance(other, AddRelationshipProperty)
+            and other.relationship_type == self.relationship_type
+            and other.property_name == self.property_name
+        ):
+            return []
+
+        if (
+            isinstance(other, RenameRelationshipProperty)
+            and other.relationship_type == self.relationship_type
+            and other.old_property_name == self.property_name
+        ):
+            return [self]
+
+        return Operation.reduce(self, other)
 
 
 @dataclass(frozen=True, slots=True)
