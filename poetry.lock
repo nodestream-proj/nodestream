@@ -103,17 +103,17 @@ uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
 name = "boto3"
-version = "1.34.92"
+version = "1.34.155"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.92-py3-none-any.whl", hash = "sha256:db7bbb1c6059e99b74dcf634e497b04addcac4c527ae2b2696e47c39eccc6c50"},
-    {file = "boto3-1.34.92.tar.gz", hash = "sha256:684cba753d64978a486e8ea9645d53de0d4e3b4a3ab1495b26bd04b9541cea2d"},
+    {file = "boto3-1.34.155-py3-none-any.whl", hash = "sha256:445239ea2ba7f4084ddbd71f721c14d0a6d08e06f6ba51b5403a16b6544b3f1e"},
+    {file = "boto3-1.34.155.tar.gz", hash = "sha256:e8d2e128c74e84199edccdc3a6b4b1c6fb36d6fdb5688eb92931827f02c6fa5b"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.92,<1.35.0"
+botocore = ">=1.34.155,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -122,13 +122,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.92"
+version = "1.34.155"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.92-py3-none-any.whl", hash = "sha256:4211a22a1f6c6935e70cbb84c2cd93b29f9723eaf5036d59748dd104f389a681"},
-    {file = "botocore-1.34.92.tar.gz", hash = "sha256:d1ca4886271f184445ec737cd2e752498648cca383887c5a37b2e01c8ab94039"},
+    {file = "botocore-1.34.155-py3-none-any.whl", hash = "sha256:f2696c11bb0cad627d42512937befd2e3f966aedd15de00d90ee13cf7a16b328"},
+    {file = "botocore-1.34.155.tar.gz", hash = "sha256:3aa88abfef23909f68d3e6679a3d4b4bb3c6288a6cfbf9e253aa68dac8edad64"},
 ]
 
 [package.dependencies]
@@ -137,7 +137,7 @@ python-dateutil = ">=2.1,<3.0.0"
 urllib3 = {version = ">=1.25.4,<2.2.0 || >2.2.0,<3", markers = "python_version >= \"3.10\""}
 
 [package.extras]
-crt = ["awscrt (==0.20.9)"]
+crt = ["awscrt (==0.21.2)"]
 
 [[package]]
 name = "certifi"
@@ -302,45 +302,45 @@ files = [
 
 [[package]]
 name = "confluent-kafka"
-version = "2.3.0"
+version = "2.5.0"
 description = "Confluent's Python client for Apache Kafka"
 optional = false
 python-versions = "*"
 files = [
-    {file = "confluent-kafka-2.3.0.tar.gz", hash = "sha256:4069e7b56e0baf9db18c053a605213f0ab2d8f23715dca7b3bd97108df446ced"},
-    {file = "confluent_kafka-2.3.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:5df845755cd3ebb9165ca00fd1d3a7d514c61e84d9fcbe7babb91193fe9b369c"},
-    {file = "confluent_kafka-2.3.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:9ab2217875b731bd390582952e0f9cbe3e7b34774490f01afca70728f0d8b469"},
-    {file = "confluent_kafka-2.3.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:62046e8a75c7a6883a0f1f4a635573fd7e1665eeacace65e7f6d59cbaa94697d"},
-    {file = "confluent_kafka-2.3.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:1eba38061e9ed1c0a369c129bf01d07499286cc3cb295398b88a7037c14371fb"},
-    {file = "confluent_kafka-2.3.0-cp310-cp310-win_amd64.whl", hash = "sha256:a6abece28598fa2b59d2b9399fcec03440aaa73fd207fdad048a6030d7e897e1"},
-    {file = "confluent_kafka-2.3.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:d55fbdcd75586dd17fe3fe64f4b4efa1c93ce9dd09c275de46f75772826e8860"},
-    {file = "confluent_kafka-2.3.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ec17b26d6155feeaded4a435ba949095aea9699afb65309d8f22e55722f53c48"},
-    {file = "confluent_kafka-2.3.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e9b42bf1b75fdd9aa20c77b27f166f6289440ac649f70622a0117a8e7aa6169d"},
-    {file = "confluent_kafka-2.3.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:7f9f4099aaf2c5daae828d2f356e4277d0ef0485ec883dbe395f0c0e054450d0"},
-    {file = "confluent_kafka-2.3.0-cp311-cp311-win_amd64.whl", hash = "sha256:1c6b29d57df99dabd45e67fd0aa46f17f195b057734ad84cf9cfdc2542855c10"},
-    {file = "confluent_kafka-2.3.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:6b46ce75bda0c092da103dbd55cb0ba429c73c232e70b476b19a0ab247ec9057"},
-    {file = "confluent_kafka-2.3.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:af60af786a7b8cbeafea51a9416664b96b0f5ef6243172b0bc59e5f75e8bd86a"},
-    {file = "confluent_kafka-2.3.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e08b601e09a584c6a4a8c323a71e92fca31a8826ed33b5b95b26783b7a996026"},
-    {file = "confluent_kafka-2.3.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:7fd1ab257d4fa0e2a98529e4eb2102cf8352ad6b3d22110d6cf0bb1f598893d9"},
-    {file = "confluent_kafka-2.3.0-cp312-cp312-win_amd64.whl", hash = "sha256:1ccf6483d86535627cad7b94982ea95d9fa9ae04ddb552e097c1211ffcde5ea7"},
-    {file = "confluent_kafka-2.3.0-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:030fb237927ec2296882a9bb96237ebf86e48388166b15ec0bbf3fdeb48df81a"},
-    {file = "confluent_kafka-2.3.0-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:bc24c57a52c206648685e1c536afb8447d1cbbbf3871cacebccf2e5b67bdf535"},
-    {file = "confluent_kafka-2.3.0-cp36-cp36m-manylinux_2_28_aarch64.whl", hash = "sha256:25292a9a8ef7765c85636851d6c4d5e5e98d6ead627b59637b24a5779e8a4b02"},
-    {file = "confluent_kafka-2.3.0-cp36-cp36m-win_amd64.whl", hash = "sha256:d634d4d9914b0a28ec3e37ab7b150173aa34c81fd5bd0b4dcac972b520ad56cc"},
-    {file = "confluent_kafka-2.3.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:ebf460d90478bcd1b4564023a5b081c6e5390b28dbabbb17ee664e223830465d"},
-    {file = "confluent_kafka-2.3.0-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cec97f8c6564b16504d30fe42c22fd4a86c406dbcd45c337b93c21e876e20628"},
-    {file = "confluent_kafka-2.3.0-cp37-cp37m-manylinux_2_28_aarch64.whl", hash = "sha256:128ddb28c19ab57c18c0e3d8209d089b6b90ff111b20108764f6798468432693"},
-    {file = "confluent_kafka-2.3.0-cp37-cp37m-win_amd64.whl", hash = "sha256:0470dc5e56e639693149961409bc6b663df94d68ceae296ae9c42e079fe65d00"},
-    {file = "confluent_kafka-2.3.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:b539064fef35386936a0d2dadf8a82b8b0ae325af95d9263a2431b82671c4702"},
-    {file = "confluent_kafka-2.3.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:4f9998f781a1da0c9dcb5506792a39799cb54e28c6f986ddc73e362887042f7c"},
-    {file = "confluent_kafka-2.3.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f175e11facaf12130abd5d2d471db39d7cc89126c4d991527cf14e3da22c635c"},
-    {file = "confluent_kafka-2.3.0-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:f9842720ed0debcf4620710e01d356681a4812441f1ff49664fc205d1f9120e5"},
-    {file = "confluent_kafka-2.3.0-cp38-cp38-win_amd64.whl", hash = "sha256:cf015e547b82a74a87d7363d0d42e4cd0ca23b01cdb479639a340f385581ea04"},
-    {file = "confluent_kafka-2.3.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:e5c740ead14a2510e15f63e67b19d48ae48a7f30ef4823d5af125bad528033d1"},
-    {file = "confluent_kafka-2.3.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:6ae5e6a6dcd5ce85b9153c21c9f0b83e0cc88a5955b5334079db76c2267deb63"},
-    {file = "confluent_kafka-2.3.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ca36a8d1d49fd55cca1b7ec3090ca2684a933e63f196f0e3e506194b189fc31e"},
-    {file = "confluent_kafka-2.3.0-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:210f2d346d1006e9b95c5204f7255735d4cb5ec962a3d1a68ac60c02e2763ae4"},
-    {file = "confluent_kafka-2.3.0-cp39-cp39-win_amd64.whl", hash = "sha256:cb279e369121e07ccb419220fc039127345a9e5f72f4abf7dda0e2e06a12b604"},
+    {file = "confluent-kafka-2.5.0.tar.gz", hash = "sha256:551cabaade717bb56ec13eb860ce439bedbcf1c97f4a4aa26957572ed1bfa74f"},
+    {file = "confluent_kafka-2.5.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:5509a219128fb177fa4186a8669071cc52acd52eba436f339edb9063aabb486d"},
+    {file = "confluent_kafka-2.5.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ff98d8fbe7d3671cac3e1b692c13f160cf508b525c110a89906ffabd1cc140fe"},
+    {file = "confluent_kafka-2.5.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:72ffae4387d283cb5657b6381a893c7231c26a9b4248557e7f030de76156290a"},
+    {file = "confluent_kafka-2.5.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:75873087fd1bd753e082f74ab97f68cc3a0765d6b600c2ac3d3a0beffbdc569d"},
+    {file = "confluent_kafka-2.5.0-cp310-cp310-win_amd64.whl", hash = "sha256:2af917f93ac3a0aa88e6bee9b2056c1c176621e4a9c8f7051cc8646b81f91327"},
+    {file = "confluent_kafka-2.5.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:efc8c48d5dbbcd1b56afe737df8156a74e62b50481ccffe581b9926eaa16c014"},
+    {file = "confluent_kafka-2.5.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:7b9f867c7e955a48ed60dee0da9c157b0f84e67724f7e42591bbcf6867e3865f"},
+    {file = "confluent_kafka-2.5.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:b064baf6a93ab58199e63bddf73d9f2c855b89cc376d5313c2f89c633aa3254a"},
+    {file = "confluent_kafka-2.5.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:a55f3d761c8463c504012ad9b06be33ef07f301f246e61d656cc927d35763f82"},
+    {file = "confluent_kafka-2.5.0-cp311-cp311-win_amd64.whl", hash = "sha256:c05a677b1dbdcf2a4532e2cf41e78d2e2ffb3a6829347caf2825f472cda59e69"},
+    {file = "confluent_kafka-2.5.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:db987d8953d0d58a28a455e43a1da74a0e9dec7a12a74f5abd85a7cb308aefd4"},
+    {file = "confluent_kafka-2.5.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:7d828ebb45db153cd462e72c575f8683c2c56ddba62b282aa36d9c365847e212"},
+    {file = "confluent_kafka-2.5.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:fb863f76605e9bbbb1d7f02abf05899cf1435421aa721a5be212c600bd054aa3"},
+    {file = "confluent_kafka-2.5.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:92efb98908e29f597c77ab97faa064f670b681f4540c3eabc415b8a6e58df9bf"},
+    {file = "confluent_kafka-2.5.0-cp312-cp312-win_amd64.whl", hash = "sha256:d668b5c426af595271bf6fce2917a6c3a15453656077a59db85f440958b5ccc2"},
+    {file = "confluent_kafka-2.5.0-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:797250f1a66024dd8b1c94764cc75e1d7bd1b7224a0b982678eafbb39714874e"},
+    {file = "confluent_kafka-2.5.0-cp36-cp36m-manylinux_2_28_aarch64.whl", hash = "sha256:e81dc0a2980e597848b73983ce6e0b4ae7d129c01370cd9f31599c15c5d02a5d"},
+    {file = "confluent_kafka-2.5.0-cp36-cp36m-manylinux_2_28_x86_64.whl", hash = "sha256:ffda33c86f5fee6ae678cca039915a0c4c1863bbc592b6f2f82abfddc173b0d3"},
+    {file = "confluent_kafka-2.5.0-cp36-cp36m-win_amd64.whl", hash = "sha256:7410bd5b0d6f54df5fa3313c75801a6ebcfab7cbfb947c3f56149e38b0fe924c"},
+    {file = "confluent_kafka-2.5.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:9a29dc4b7d4a754037d7d8e3ad1873a27b16e7de8c0a06755456b20803a70b16"},
+    {file = "confluent_kafka-2.5.0-cp37-cp37m-manylinux_2_28_aarch64.whl", hash = "sha256:089b68a43c3b911356a4ff08fa862245f1333387b79221ac7f60d99e5b4e24d6"},
+    {file = "confluent_kafka-2.5.0-cp37-cp37m-manylinux_2_28_x86_64.whl", hash = "sha256:c3a17ebdd97c803cf369c8615a474ca0bea39b5f5944e51f1c320aee8d6d5da9"},
+    {file = "confluent_kafka-2.5.0-cp37-cp37m-win_amd64.whl", hash = "sha256:151656afaeb623b46c042a752091d8b17fd05ff7d309be6d8b4953b8dc0783bc"},
+    {file = "confluent_kafka-2.5.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:570fc091cdcf9d1baf90c5f4965322cea8185ba8698d0f02cd1c8bd38bf6664a"},
+    {file = "confluent_kafka-2.5.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:bd57edf51434d6ec289339a0c9b627ca1f1e7c1130e348c0b411407183db53c6"},
+    {file = "confluent_kafka-2.5.0-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:8975fea2ccd6927aad188e198e1688ef16589dc36b42f7a33ad07b1ca1341901"},
+    {file = "confluent_kafka-2.5.0-cp38-cp38-manylinux_2_28_x86_64.whl", hash = "sha256:7c0b1a7774905c9e3c24d09d9b8463d771685e4105150c2503185537a6a590f9"},
+    {file = "confluent_kafka-2.5.0-cp38-cp38-win_amd64.whl", hash = "sha256:eaf01cd79b4d2cdbdf1e7b6ace9c846ae9ad9f4cf573617bbb5735a5c48cbd20"},
+    {file = "confluent_kafka-2.5.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:fa789332fd40a9e99b9388f87f28db8fc7dd8ca54a1d24d0bcd0ad33f50f3528"},
+    {file = "confluent_kafka-2.5.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:e917db155dc3a64e1496b293a3ceb0a8edf23e0bd6f93d43576c40f0c59d3067"},
+    {file = "confluent_kafka-2.5.0-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:a8bb3af6d1f109aaac5514c65a46cac933d78b3935f6fea52fe1f2ea6a9951bf"},
+    {file = "confluent_kafka-2.5.0-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:a1fb72461dcf7aa7e1834133eb733f824331aafda87ef48ec917d9b09c805a99"},
+    {file = "confluent_kafka-2.5.0-cp39-cp39-win_amd64.whl", hash = "sha256:4bda1b5fa87cb993bcd964d271a76cc11cafa2455de02ab5eff6efd9e688d55e"},
 ]
 
 [package.extras]
@@ -548,39 +548,40 @@ files = [
 
 [[package]]
 name = "httpcore"
-version = "0.17.3"
+version = "1.0.5"
 description = "A minimal low-level HTTP client."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "httpcore-0.17.3-py3-none-any.whl", hash = "sha256:c2789b767ddddfa2a5782e3199b2b7f6894540b17b16ec26b2c4d8e103510b87"},
-    {file = "httpcore-0.17.3.tar.gz", hash = "sha256:a6f30213335e34c1ade7be6ec7c47f19f50c56db36abef1a9dfa3815b1cb3888"},
+    {file = "httpcore-1.0.5-py3-none-any.whl", hash = "sha256:421f18bac248b25d310f3cacd198d55b8e6125c107797b609ff9b7a6ba7991b5"},
+    {file = "httpcore-1.0.5.tar.gz", hash = "sha256:34a38e2f9291467ee3b44e89dd52615370e152954ba21721378a87b2960f7a61"},
 ]
 
 [package.dependencies]
-anyio = ">=3.0,<5.0"
 certifi = "*"
 h11 = ">=0.13,<0.15"
-sniffio = "==1.*"
 
 [package.extras]
+asyncio = ["anyio (>=4.0,<5.0)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
+trio = ["trio (>=0.22.0,<0.26.0)"]
 
 [[package]]
 name = "httpx"
-version = "0.24.1"
+version = "0.27.0"
 description = "The next generation HTTP client."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "httpx-0.24.1-py3-none-any.whl", hash = "sha256:06781eb9ac53cde990577af654bd990a4949de37a28bdb4a230d434f3a30b9bd"},
-    {file = "httpx-0.24.1.tar.gz", hash = "sha256:5853a43053df830c20f8110c5e69fe44d035d850b2dfe795e196f00fdb774bdd"},
+    {file = "httpx-0.27.0-py3-none-any.whl", hash = "sha256:71d5465162c13681bff01ad59b2cc68dd838ea1f10e51574bac27103f00c91a5"},
+    {file = "httpx-0.27.0.tar.gz", hash = "sha256:a0cb88a46f32dc874e04ee956e4c2764aba2aa228f650b06788ba6bda2962ab5"},
 ]
 
 [package.dependencies]
+anyio = "*"
 certifi = "*"
-httpcore = ">=0.15.0,<0.18.0"
+httpcore = "==1.*"
 idna = "*"
 sniffio = "*"
 
@@ -789,30 +790,30 @@ pyarrow = ["pyarrow (>=1.0.0)"]
 
 [[package]]
 name = "nodestream"
-version = "0.12.2"
+version = "0.13.0b1"
 description = "A Fast, Declarative ETL for Graph Databases."
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "nodestream-0.12.2-py3-none-any.whl", hash = "sha256:77137e89243c11ca1c51f3337405c2300367b834ae5b7e53662062b35fdcd57d"},
-    {file = "nodestream-0.12.2.tar.gz", hash = "sha256:283082b49651d0736021733cf6218102b093297d26136a881fe04c2458963ffd"},
+    {file = "nodestream-0.13.0b1-py3-none-any.whl", hash = "sha256:5699490c47d0f1dedfa7a25425f4037c358511b1f147bced88783e8057cbc7b3"},
+    {file = "nodestream-0.13.0b1.tar.gz", hash = "sha256:7116b6fc5060c66bf818d79c125df8ab6919b02ccedb0e3c0ed28cbe8e4466a2"},
 ]
 
 [package.dependencies]
-boto3 = ">=1.26.137,<2.0.0"
-cleo = ">=2.0.1,<3.0.0"
-confluent-kafka = ">=2.3.0,<3.0.0"
-cookiecutter = ">=2.1.1,<3.0.0"
-httpx = ">=0.24.1,<0.25.0"
+boto3 = ">=1.34.127,<2.0.0"
+cleo = ">=2.0,<3.0"
+confluent-kafka = ">=2.5,<3.0"
+cookiecutter = ">=2.0,<3.0"
+httpx = ">=0.27,<0.28"
 Jinja2 = ">=3,<4"
-jmespath = ">=1.0.1,<2.0.0"
+jmespath = ">=1.0,<2.0"
 pandas = ">=2,<3"
-psutil = ">=5.9.6,<6.0.0"
-pyarrow = ">=15.0.0,<16.0.0"
-python-json-logger = ">=2.0.4,<3.0.0"
+psutil = ">=6.0,<7.0"
+pyarrow = ">=17.0.0,<18.0.0"
+python-json-logger = ">=2.0,<3.0"
 pyyaml = ">=6.0,<7.0"
-schema = ">=0.7.5,<0.8.0"
-uvloop = {version = ">=0.17.0,<=0.18.0", markers = "sys_platform == \"darwin\" or sys_platform == \"linux\""}
+schema = ">=0.7,<0.8"
+uvloop = {version = ">=0.17.0,<=0.19.0", markers = "sys_platform == \"darwin\" or sys_platform == \"linux\""}
 
 [[package]]
 name = "numpy"
@@ -987,27 +988,28 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "psutil"
-version = "5.9.8"
+version = "6.0.0"
 description = "Cross-platform lib for process and system monitoring in Python."
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
 files = [
-    {file = "psutil-5.9.8-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:26bd09967ae00920df88e0352a91cff1a78f8d69b3ecabbfe733610c0af486c8"},
-    {file = "psutil-5.9.8-cp27-cp27m-manylinux2010_i686.whl", hash = "sha256:05806de88103b25903dff19bb6692bd2e714ccf9e668d050d144012055cbca73"},
-    {file = "psutil-5.9.8-cp27-cp27m-manylinux2010_x86_64.whl", hash = "sha256:611052c4bc70432ec770d5d54f64206aa7203a101ec273a0cd82418c86503bb7"},
-    {file = "psutil-5.9.8-cp27-cp27mu-manylinux2010_i686.whl", hash = "sha256:50187900d73c1381ba1454cf40308c2bf6f34268518b3f36a9b663ca87e65e36"},
-    {file = "psutil-5.9.8-cp27-cp27mu-manylinux2010_x86_64.whl", hash = "sha256:02615ed8c5ea222323408ceba16c60e99c3f91639b07da6373fb7e6539abc56d"},
-    {file = "psutil-5.9.8-cp27-none-win32.whl", hash = "sha256:36f435891adb138ed3c9e58c6af3e2e6ca9ac2f365efe1f9cfef2794e6c93b4e"},
-    {file = "psutil-5.9.8-cp27-none-win_amd64.whl", hash = "sha256:bd1184ceb3f87651a67b2708d4c3338e9b10c5df903f2e3776b62303b26cb631"},
-    {file = "psutil-5.9.8-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:aee678c8720623dc456fa20659af736241f575d79429a0e5e9cf88ae0605cc81"},
-    {file = "psutil-5.9.8-cp36-abi3-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:8cb6403ce6d8e047495a701dc7c5bd788add903f8986d523e3e20b98b733e421"},
-    {file = "psutil-5.9.8-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d06016f7f8625a1825ba3732081d77c94589dca78b7a3fc072194851e88461a4"},
-    {file = "psutil-5.9.8-cp36-cp36m-win32.whl", hash = "sha256:7d79560ad97af658a0f6adfef8b834b53f64746d45b403f225b85c5c2c140eee"},
-    {file = "psutil-5.9.8-cp36-cp36m-win_amd64.whl", hash = "sha256:27cc40c3493bb10de1be4b3f07cae4c010ce715290a5be22b98493509c6299e2"},
-    {file = "psutil-5.9.8-cp37-abi3-win32.whl", hash = "sha256:bc56c2a1b0d15aa3eaa5a60c9f3f8e3e565303b465dbf57a1b730e7a2b9844e0"},
-    {file = "psutil-5.9.8-cp37-abi3-win_amd64.whl", hash = "sha256:8db4c1b57507eef143a15a6884ca10f7c73876cdf5d51e713151c1236a0e68cf"},
-    {file = "psutil-5.9.8-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:d16bbddf0693323b8c6123dd804100241da461e41d6e332fb0ba6058f630f8c8"},
-    {file = "psutil-5.9.8.tar.gz", hash = "sha256:6be126e3225486dff286a8fb9a06246a5253f4c7c53b475ea5f5ac934e64194c"},
+    {file = "psutil-6.0.0-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:a021da3e881cd935e64a3d0a20983bda0bb4cf80e4f74fa9bfcb1bc5785360c6"},
+    {file = "psutil-6.0.0-cp27-cp27m-manylinux2010_i686.whl", hash = "sha256:1287c2b95f1c0a364d23bc6f2ea2365a8d4d9b726a3be7294296ff7ba97c17f0"},
+    {file = "psutil-6.0.0-cp27-cp27m-manylinux2010_x86_64.whl", hash = "sha256:a9a3dbfb4de4f18174528d87cc352d1f788b7496991cca33c6996f40c9e3c92c"},
+    {file = "psutil-6.0.0-cp27-cp27mu-manylinux2010_i686.whl", hash = "sha256:6ec7588fb3ddaec7344a825afe298db83fe01bfaaab39155fa84cf1c0d6b13c3"},
+    {file = "psutil-6.0.0-cp27-cp27mu-manylinux2010_x86_64.whl", hash = "sha256:1e7c870afcb7d91fdea2b37c24aeb08f98b6d67257a5cb0a8bc3ac68d0f1a68c"},
+    {file = "psutil-6.0.0-cp27-none-win32.whl", hash = "sha256:02b69001f44cc73c1c5279d02b30a817e339ceb258ad75997325e0e6169d8b35"},
+    {file = "psutil-6.0.0-cp27-none-win_amd64.whl", hash = "sha256:21f1fb635deccd510f69f485b87433460a603919b45e2a324ad65b0cc74f8fb1"},
+    {file = "psutil-6.0.0-cp36-abi3-macosx_10_9_x86_64.whl", hash = "sha256:c588a7e9b1173b6e866756dde596fd4cad94f9399daf99ad8c3258b3cb2b47a0"},
+    {file = "psutil-6.0.0-cp36-abi3-manylinux_2_12_i686.manylinux2010_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:6ed2440ada7ef7d0d608f20ad89a04ec47d2d3ab7190896cd62ca5fc4fe08bf0"},
+    {file = "psutil-6.0.0-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5fd9a97c8e94059b0ef54a7d4baf13b405011176c3b6ff257c247cae0d560ecd"},
+    {file = "psutil-6.0.0-cp36-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e2e8d0054fc88153ca0544f5c4d554d42e33df2e009c4ff42284ac9ebdef4132"},
+    {file = "psutil-6.0.0-cp36-cp36m-win32.whl", hash = "sha256:fc8c9510cde0146432bbdb433322861ee8c3efbf8589865c8bf8d21cb30c4d14"},
+    {file = "psutil-6.0.0-cp36-cp36m-win_amd64.whl", hash = "sha256:34859b8d8f423b86e4385ff3665d3f4d94be3cdf48221fbe476e883514fdb71c"},
+    {file = "psutil-6.0.0-cp37-abi3-win32.whl", hash = "sha256:a495580d6bae27291324fe60cea0b5a7c23fa36a7cd35035a16d93bdcf076b9d"},
+    {file = "psutil-6.0.0-cp37-abi3-win_amd64.whl", hash = "sha256:33ea5e1c975250a720b3a6609c490db40dae5d83a4eb315170c4fe0d8b1f34b3"},
+    {file = "psutil-6.0.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:ffe7fc9b6b36beadc8c322f84e1caff51e8703b88eee1da46d1e3a6ae11b4fd0"},
+    {file = "psutil-6.0.0.tar.gz", hash = "sha256:8faae4f310b6d969fa26ca0545338b21f73c6b15db7c4a8d934a5482faa818f2"},
 ]
 
 [package.extras]
@@ -1015,51 +1017,54 @@ test = ["enum34", "ipaddress", "mock", "pywin32", "wmi"]
 
 [[package]]
 name = "pyarrow"
-version = "15.0.2"
+version = "17.0.0"
 description = "Python library for Apache Arrow"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pyarrow-15.0.2-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:88b340f0a1d05b5ccc3d2d986279045655b1fe8e41aba6ca44ea28da0d1455d8"},
-    {file = "pyarrow-15.0.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:eaa8f96cecf32da508e6c7f69bb8401f03745c050c1dd42ec2596f2e98deecac"},
-    {file = "pyarrow-15.0.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:23c6753ed4f6adb8461e7c383e418391b8d8453c5d67e17f416c3a5d5709afbd"},
-    {file = "pyarrow-15.0.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f639c059035011db8c0497e541a8a45d98a58dbe34dc8fadd0ef128f2cee46e5"},
-    {file = "pyarrow-15.0.2-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:290e36a59a0993e9a5224ed2fb3e53375770f07379a0ea03ee2fce2e6d30b423"},
-    {file = "pyarrow-15.0.2-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:06c2bb2a98bc792f040bef31ad3e9be6a63d0cb39189227c08a7d955db96816e"},
-    {file = "pyarrow-15.0.2-cp310-cp310-win_amd64.whl", hash = "sha256:f7a197f3670606a960ddc12adbe8075cea5f707ad7bf0dffa09637fdbb89f76c"},
-    {file = "pyarrow-15.0.2-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:5f8bc839ea36b1f99984c78e06e7a06054693dc2af8920f6fb416b5bca9944e4"},
-    {file = "pyarrow-15.0.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:f5e81dfb4e519baa6b4c80410421528c214427e77ca0ea9461eb4097c328fa33"},
-    {file = "pyarrow-15.0.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3a4f240852b302a7af4646c8bfe9950c4691a419847001178662a98915fd7ee7"},
-    {file = "pyarrow-15.0.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4e7d9cfb5a1e648e172428c7a42b744610956f3b70f524aa3a6c02a448ba853e"},
-    {file = "pyarrow-15.0.2-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:2d4f905209de70c0eb5b2de6763104d5a9a37430f137678edfb9a675bac9cd98"},
-    {file = "pyarrow-15.0.2-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:90adb99e8ce5f36fbecbbc422e7dcbcbed07d985eed6062e459e23f9e71fd197"},
-    {file = "pyarrow-15.0.2-cp311-cp311-win_amd64.whl", hash = "sha256:b116e7fd7889294cbd24eb90cd9bdd3850be3738d61297855a71ac3b8124ee38"},
-    {file = "pyarrow-15.0.2-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:25335e6f1f07fdaa026a61c758ee7d19ce824a866b27bba744348fa73bb5a440"},
-    {file = "pyarrow-15.0.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:90f19e976d9c3d8e73c80be84ddbe2f830b6304e4c576349d9360e335cd627fc"},
-    {file = "pyarrow-15.0.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a22366249bf5fd40ddacc4f03cd3160f2d7c247692945afb1899bab8a140ddfb"},
-    {file = "pyarrow-15.0.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c2a335198f886b07e4b5ea16d08ee06557e07db54a8400cc0d03c7f6a22f785f"},
-    {file = "pyarrow-15.0.2-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:3e6d459c0c22f0b9c810a3917a1de3ee704b021a5fb8b3bacf968eece6df098f"},
-    {file = "pyarrow-15.0.2-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:033b7cad32198754d93465dcfb71d0ba7cb7cd5c9afd7052cab7214676eec38b"},
-    {file = "pyarrow-15.0.2-cp312-cp312-win_amd64.whl", hash = "sha256:29850d050379d6e8b5a693098f4de7fd6a2bea4365bfd073d7c57c57b95041ee"},
-    {file = "pyarrow-15.0.2-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:7167107d7fb6dcadb375b4b691b7e316f4368f39f6f45405a05535d7ad5e5058"},
-    {file = "pyarrow-15.0.2-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:e85241b44cc3d365ef950432a1b3bd44ac54626f37b2e3a0cc89c20e45dfd8bf"},
-    {file = "pyarrow-15.0.2-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:248723e4ed3255fcd73edcecc209744d58a9ca852e4cf3d2577811b6d4b59818"},
-    {file = "pyarrow-15.0.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3ff3bdfe6f1b81ca5b73b70a8d482d37a766433823e0c21e22d1d7dde76ca33f"},
-    {file = "pyarrow-15.0.2-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:f3d77463dee7e9f284ef42d341689b459a63ff2e75cee2b9302058d0d98fe142"},
-    {file = "pyarrow-15.0.2-cp38-cp38-manylinux_2_28_x86_64.whl", hash = "sha256:8c1faf2482fb89766e79745670cbca04e7018497d85be9242d5350cba21357e1"},
-    {file = "pyarrow-15.0.2-cp38-cp38-win_amd64.whl", hash = "sha256:28f3016958a8e45a1069303a4a4f6a7d4910643fc08adb1e2e4a7ff056272ad3"},
-    {file = "pyarrow-15.0.2-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:89722cb64286ab3d4daf168386f6968c126057b8c7ec3ef96302e81d8cdb8ae4"},
-    {file = "pyarrow-15.0.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:cd0ba387705044b3ac77b1b317165c0498299b08261d8122c96051024f953cd5"},
-    {file = "pyarrow-15.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ad2459bf1f22b6a5cdcc27ebfd99307d5526b62d217b984b9f5c974651398832"},
-    {file = "pyarrow-15.0.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:58922e4bfece8b02abf7159f1f53a8f4d9f8e08f2d988109126c17c3bb261f22"},
-    {file = "pyarrow-15.0.2-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:adccc81d3dc0478ea0b498807b39a8d41628fa9210729b2f718b78cb997c7c91"},
-    {file = "pyarrow-15.0.2-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:8bd2baa5fe531571847983f36a30ddbf65261ef23e496862ece83bdceb70420d"},
-    {file = "pyarrow-15.0.2-cp39-cp39-win_amd64.whl", hash = "sha256:6669799a1d4ca9da9c7e06ef48368320f5856f36f9a4dd31a11839dda3f6cc8c"},
-    {file = "pyarrow-15.0.2.tar.gz", hash = "sha256:9c9bc803cb3b7bfacc1e96ffbfd923601065d9d3f911179d81e72d99fd74a3d9"},
+    {file = "pyarrow-17.0.0-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:a5c8b238d47e48812ee577ee20c9a2779e6a5904f1708ae240f53ecbee7c9f07"},
+    {file = "pyarrow-17.0.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:db023dc4c6cae1015de9e198d41250688383c3f9af8f565370ab2b4cb5f62655"},
+    {file = "pyarrow-17.0.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:da1e060b3876faa11cee287839f9cc7cdc00649f475714b8680a05fd9071d545"},
+    {file = "pyarrow-17.0.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:75c06d4624c0ad6674364bb46ef38c3132768139ddec1c56582dbac54f2663e2"},
+    {file = "pyarrow-17.0.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:fa3c246cc58cb5a4a5cb407a18f193354ea47dd0648194e6265bd24177982fe8"},
+    {file = "pyarrow-17.0.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:f7ae2de664e0b158d1607699a16a488de3d008ba99b3a7aa5de1cbc13574d047"},
+    {file = "pyarrow-17.0.0-cp310-cp310-win_amd64.whl", hash = "sha256:5984f416552eea15fd9cee03da53542bf4cddaef5afecefb9aa8d1010c335087"},
+    {file = "pyarrow-17.0.0-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:1c8856e2ef09eb87ecf937104aacfa0708f22dfeb039c363ec99735190ffb977"},
+    {file = "pyarrow-17.0.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:2e19f569567efcbbd42084e87f948778eb371d308e137a0f97afe19bb860ccb3"},
+    {file = "pyarrow-17.0.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6b244dc8e08a23b3e352899a006a26ae7b4d0da7bb636872fa8f5884e70acf15"},
+    {file = "pyarrow-17.0.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0b72e87fe3e1db343995562f7fff8aee354b55ee83d13afba65400c178ab2597"},
+    {file = "pyarrow-17.0.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:dc5c31c37409dfbc5d014047817cb4ccd8c1ea25d19576acf1a001fe07f5b420"},
+    {file = "pyarrow-17.0.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:e3343cb1e88bc2ea605986d4b94948716edc7a8d14afd4e2c097232f729758b4"},
+    {file = "pyarrow-17.0.0-cp311-cp311-win_amd64.whl", hash = "sha256:a27532c38f3de9eb3e90ecab63dfda948a8ca859a66e3a47f5f42d1e403c4d03"},
+    {file = "pyarrow-17.0.0-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:9b8a823cea605221e61f34859dcc03207e52e409ccf6354634143e23af7c8d22"},
+    {file = "pyarrow-17.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:f1e70de6cb5790a50b01d2b686d54aaf73da01266850b05e3af2a1bc89e16053"},
+    {file = "pyarrow-17.0.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0071ce35788c6f9077ff9ecba4858108eebe2ea5a3f7cf2cf55ebc1dbc6ee24a"},
+    {file = "pyarrow-17.0.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:757074882f844411fcca735e39aae74248a1531367a7c80799b4266390ae51cc"},
+    {file = "pyarrow-17.0.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:9ba11c4f16976e89146781a83833df7f82077cdab7dc6232c897789343f7891a"},
+    {file = "pyarrow-17.0.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:b0c6ac301093b42d34410b187bba560b17c0330f64907bfa4f7f7f2444b0cf9b"},
+    {file = "pyarrow-17.0.0-cp312-cp312-win_amd64.whl", hash = "sha256:392bc9feabc647338e6c89267635e111d71edad5fcffba204425a7c8d13610d7"},
+    {file = "pyarrow-17.0.0-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:af5ff82a04b2171415f1410cff7ebb79861afc5dae50be73ce06d6e870615204"},
+    {file = "pyarrow-17.0.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:edca18eaca89cd6382dfbcff3dd2d87633433043650c07375d095cd3517561d8"},
+    {file = "pyarrow-17.0.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7c7916bff914ac5d4a8fe25b7a25e432ff921e72f6f2b7547d1e325c1ad9d155"},
+    {file = "pyarrow-17.0.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f553ca691b9e94b202ff741bdd40f6ccb70cdd5fbf65c187af132f1317de6145"},
+    {file = "pyarrow-17.0.0-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:0cdb0e627c86c373205a2f94a510ac4376fdc523f8bb36beab2e7f204416163c"},
+    {file = "pyarrow-17.0.0-cp38-cp38-manylinux_2_28_x86_64.whl", hash = "sha256:d7d192305d9d8bc9082d10f361fc70a73590a4c65cf31c3e6926cd72b76bc35c"},
+    {file = "pyarrow-17.0.0-cp38-cp38-win_amd64.whl", hash = "sha256:02dae06ce212d8b3244dd3e7d12d9c4d3046945a5933d28026598e9dbbda1fca"},
+    {file = "pyarrow-17.0.0-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:13d7a460b412f31e4c0efa1148e1d29bdf18ad1411eb6757d38f8fbdcc8645fb"},
+    {file = "pyarrow-17.0.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:9b564a51fbccfab5a04a80453e5ac6c9954a9c5ef2890d1bcf63741909c3f8df"},
+    {file = "pyarrow-17.0.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:32503827abbc5aadedfa235f5ece8c4f8f8b0a3cf01066bc8d29de7539532687"},
+    {file = "pyarrow-17.0.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a155acc7f154b9ffcc85497509bcd0d43efb80d6f733b0dc3bb14e281f131c8b"},
+    {file = "pyarrow-17.0.0-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:dec8d129254d0188a49f8a1fc99e0560dc1b85f60af729f47de4046015f9b0a5"},
+    {file = "pyarrow-17.0.0-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:a48ddf5c3c6a6c505904545c25a4ae13646ae1f8ba703c4df4a1bfe4f4006bda"},
+    {file = "pyarrow-17.0.0-cp39-cp39-win_amd64.whl", hash = "sha256:42bf93249a083aca230ba7e2786c5f673507fa97bbd9725a1e2754715151a204"},
+    {file = "pyarrow-17.0.0.tar.gz", hash = "sha256:4beca9521ed2c0921c1023e68d097d0299b62c362639ea315572a58f3f50fd28"},
 ]
 
 [package.dependencies]
-numpy = ">=1.16.6,<2"
+numpy = ">=1.16.6"
+
+[package.extras]
+test = ["cffi", "hypothesis", "pandas", "pytest", "pytz"]
 
 [[package]]
 name = "pygments"
@@ -1761,4 +1766,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "96b8670ac844e3debb6bec5deacc4701919593d97f8984d1260a8fce6ef54ba7"
+content-hash = "a9ea0097bc5e106d9d9b4734a3f46c8bc630958a9ba6c377db82141b18fdbaa9"
