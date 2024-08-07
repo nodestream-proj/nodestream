@@ -3,6 +3,7 @@ from .commit_project_to_disk import CommitProjectToDisk
 from .execute_migration import ExecuteMigrations
 from .generate_migration import GenerateMigration
 from .generate_pipeline_scaffold import GeneratePipelineScaffold
+from .generate_squashed_migration import GenerateSquashedMigration
 from .initialize_logger import InitializeLogger
 from .initialize_project import InitializeProject
 from .operation import Operation
@@ -20,6 +21,7 @@ __all__ = (
     "ExecuteMigrations",
     "GenerateMigration",
     "GeneratePipelineScaffold",
+    "GenerateSquashedMigration",
     "InitializeLogger",
     "InitializeProject",
     "Operation",

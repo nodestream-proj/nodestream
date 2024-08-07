@@ -1,280 +1,188 @@
-import asyncio
-import traceback
-from logging import getLogger
-from typing import Any, AsyncGenerator, Iterable, List, Optional
+from asyncio import create_task, gather
+from typing import Iterable, List, Tuple
 
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
+from .channel import StepInput, StepOutput, channel
 from .meta import get_context
 from .progress_reporter import PipelineProgressReporter
-from .step import Step
-
-
-async def empty_async_generator():
-    for item in []:
-        yield item
-
-
-async def enumerate_async(iterable):
-    count = 0
-
-    async for item in iterable:
-        yield count, item
-        count += 1
-
-
-class DoneObject:
-    pass
-
-
-START_EXCEPTION = "Exception in Start Process:"
-WORK_BODY_EXCEPTION = "Exception in Work Body:"
-STOP_EXCEPTION = "Exception in Stop Process:"
-OUTBOX_POLL_TIME = 0.1
-PRECHECK_MESSAGE = "Detected fatal error in pipeline while attempting to process record, this step can no longer continue."
-TIMEOUT_MESSAGE = "Unable to place record into outbox because the pipeline has failed, this step can no longer continue."
-
-
-class StepException(Exception):
-    """
-    Exception Format:
-        Exceptions in StepExecutor {exec_num} ({step_name})
-            Exception in Start
-                Stack
-            Exception in Work Body
-                Stack
-            Exception in Stop
-                Stack
-    """
-
-    def __init__(self, errors: dict[str, Exception], identifier: Optional[str]):
-        self.exceptions = errors
-        self.identifier = identifier
-        super().__init__(self.build_message())
-
-    def build_message(self):
-        message = ""
-        for section, exception in self.exceptions.items():
-            sub_message = "".join(traceback.format_tb(exception.__traceback__))
-            # Break it apart, add a tab, bring it back together.
-            message += f"\t{section}\n"
-            for sentence in [
-                "\t\t" + sentence + "\n" for sentence in sub_message.split("\n")
-            ]:
-                message += sentence
-        return f"Exceptions in {self.identifier}:\n" + message
-
-
-class ForwardProgressHalted(Exception):
-    pass
-
-
-class PipelineException(Exception):
-    """
-    Exception in Pipeline:
-        Output from StepException 0
-        Output from StepException 1
-    """
-
-    def __init__(self, errors: list[Exception]):
-        self.errors = errors
-        super().__init__(self.build_message())
-
-    def build_message(self):
-        message = ""
-        sub_message = ""
-        for error in self.errors:
-            sub_message += error.build_message()
-
-        # Break it apart, add a tab, bring it back together.
-        for sentence in [
-            "\t" + sentence + "\n" for sentence in sub_message.split("\n")
-        ]:
-            message += sentence
-
-        return "Exceptions in Pipeline:\n" + message
-
-
-class PipelineState:
-    def __init__(self) -> None:
-        self.has_fatal_error = False
-
-    def signal_fatal_error(self):
-        self.has_fatal_error = True
+from .step import Step, StepContext
 
 
 class StepExecutor:
+    """`StepExecutor` is a utility that is used to run a step in a pipeline.
+
+    The `StepExecutor` is responsible for starting, stopping, and running a
+    step in a pipeline. It is used to execute a step by passing records
+    between the input and output channels of the step.
+    """
+
+    __slots__ = ("step", "input", "output", "context")
+
     def __init__(
         self,
-        pipeline_state: PipelineState,
-        upstream: Optional["StepExecutor"],
         step: Step,
-        outbox_size: int = 0,
-        step_index: Optional[int] = 0,
-        progress_reporter: Optional[PipelineProgressReporter] = None,
+        input: StepInput,
+        output: StepOutput,
+        context: StepContext,
     ) -> None:
-        self.pipeline_state = pipeline_state
-        self.outbox = asyncio.Queue(maxsize=outbox_size)
-        self.upstream = upstream
-        self.done = False
         self.step = step
-        self.step_index = step_index
-        self.progress_reporter = progress_reporter
-        self.end_of_line = False
-        self.identifier = f"{self.__class__.__name__} {self.step_index} ({self.step.__class__.__name__})"
-        self.logger = getLogger(name=self.identifier)
-        self.exceptions = {}
+        self.input = input
+        self.output = output
+        self.context = context
 
-    async def outbox_generator(self):
-        while not self.done or not self.outbox.empty():
-            if (value := await self.outbox.get()) is not DoneObject:
-                yield value
-            self.outbox.task_done()
-
-    def start(self):
-        if self.progress_reporter:
-            self.progress_reporter.on_start_callback()
-
-    def set_end_of_line(self, progress_reporter: Optional[PipelineProgressReporter]):
-        self.progress_reporter = progress_reporter
-        self.end_of_line = True
-
-    def pipeline_has_died(self) -> bool:
-        return self.pipeline_state.has_fatal_error
-
-    async def submit_object_or_die_trying(self, obj):
-        should_continue = True
-        while should_continue:
-            if self.pipeline_has_died() and not self.done:
-                raise ForwardProgressHalted(PRECHECK_MESSAGE)
-            try:
-                await asyncio.wait_for(self.outbox.put(obj), timeout=OUTBOX_POLL_TIME)
-                should_continue = False
-            except asyncio.TimeoutError:
-                # We timed out, now we need to check if the pipeline has died and if so, raise an exception.
-                if self.pipeline_has_died():
-                    raise ForwardProgressHalted(TIMEOUT_MESSAGE)
-
-    async def stop(self):
-        self.done = True
-        await self.submit_object_or_die_trying(DoneObject)
-        await self.step.finish()
-
-        if self.progress_reporter:
-            self.progress_reporter.on_finish_callback(get_context())
-
-    async def work_body(self):
-        if self.upstream is None:
-            upstream = empty_async_generator()
-        else:
-            upstream = self.upstream.outbox_generator()
-        results = self.step.handle_async_record_stream(upstream)
-        async for index, record in enumerate_async(results):
-            if not self.end_of_line:
-                await self.submit_object_or_die_trying(record)
-            if self.progress_reporter:
-                self.progress_reporter.report(index, record)
-
-    def try_start(self):
-        # Start only calls some callbacks on the reporter.
-        # If this fails, we can just log the error and move on.
+    async def start_step(self):
         try:
-            self.start()
-        except Exception as start_exception:
-            self.logger.exception(
-                f"Exception during start for step {self.step.__class__.__name__}. This will not be considered fatal.",
-                stack_info=True,
-                extra={"step": self.step.__class__.__name__},
-            )
-            self.exceptions[START_EXCEPTION] = start_exception
+            await self.step.start(self.context)
+        except Exception as e:
+            self.context.report_error("Error starting step", e)
 
-    async def try_work_body(self):
-        # During the main exection of the code, we want to catch any
-        # exceptions that happen and log them.
-        # Since this step can no longer do any work, we will raise the
-        # exception so that the pipeline can safely come to a stop.
+    async def stop_step(self):
         try:
-            await self.work_body()
-        except Exception as work_body_exception:
-            self.logger.exception(
-                f"Exception during the work body for step {self.step.__class__.__name__}. This will not be considered fatal.",
-                stack_info=True,
-                extra={"step": self.step.__class__.__name__},
-            )
-            self.exceptions[WORK_BODY_EXCEPTION] = work_body_exception
+            await self.step.finish(self.context)
+        except Exception as e:
+            self.context.report_error("Error stopping step", e)
 
-    async def try_stop(self):
-        # When we're done, we need to try to call stop on the step.
-        # This is because the step may have some cleanup to do.
-        # If this fails, we are near the end of the exection of the pipeline
-        # so we can just log the error and move on.
+    async def emit_record(self, record):
+        can_continue = await self.output.put(record)
+        if not can_continue:
+            self.context.debug(
+                "Downstream is not accepting more records. Gracefully stopping."
+            )
+
+        return can_continue
+
+    async def drive_step(self):
         try:
-            await self.stop()
-        except Exception as stop_exception:
-            self.logger.exception(
-                f"Exception during stop for step {self.step.__class__.__name__}. This will not be considered fatal.",
-                stack_info=True,
-                extra={"step": self.step.__class__.__name__},
-            )
-            self.exceptions[STOP_EXCEPTION] = stop_exception
+            while (next_record := await self.input.get()) is not None:
+                results = self.step.process_record(next_record, self.context)
+                async for record in results:
+                    if not await self.emit_record(record):
+                        return
 
-    def raise_encountered_exceptions(self):
-        if self.exceptions:
-            self.pipeline_state.signal_fatal_error()
-            raise StepException(errors=self.exceptions, identifier=self.identifier)
+            async for record in self.step.emit_outstanding_records():
+                if not await self.emit_record(record):
+                    return
 
-    async def work_loop(self):
-        self.try_start()
-        await self.try_work_body()
-        await self.try_stop()
-        self.raise_encountered_exceptions()
+            self.context.debug("Step finished emitting")
+        except Exception as e:
+            self.context.report_error("Error running step", e, fatal=True)
+
+    async def run(self):
+        self.context.debug("Starting step")
+        await self.start_step()
+        await self.drive_step()
+        await self.output.done()
+        self.input.done()
+        await self.stop_step()
+        self.context.debug("Finished step")
+
+
+class PipelineOutput:
+    """`PipelineOutput` is an output channel for a pipeline.
+
+    A `PipelineOutput` is used to consume records from the last step in a
+    pipeline and report the progress of the pipeline.
+    """
+
+    __slots__ = ("input", "reporter")
+
+    def __init__(self, input: StepInput, reporter: PipelineProgressReporter):
+        self.input = input
+        self.reporter = reporter
+
+    async def call_handling_errors(self, f, *args):
+        try:
+            f(*args)
+        except Exception:
+            self.reporter.logger.exception(f"Error running {f.__name__}")
+
+    async def run(self):
+        """Run the pipeline output.
+
+        This method is used to run the pipeline output. It will consume records
+        from the last step in the pipeline and report the progress of the
+        pipeline using the `PipelineProgressReporter`. The pipeline output will
+        block until all records have been consumed from the last step in the
+        pipeline.
+        """
+        await self.call_handling_errors(self.reporter.on_start_callback)
+
+        index = 0
+        while (obj := await self.input.get()) is not None:
+            if index % self.reporter.reporting_frequency == 0:
+                await self.call_handling_errors(self.reporter.callback, index, obj)
+            index += 1
+
+        await self.call_handling_errors(self.reporter.on_finish_callback, get_context())
 
 
 class Pipeline(ExpandsSchemaFromChildren):
-    """A pipeline is a series of steps that are executed in order."""
+    """`Pipeline` is a collection of steps that are executed in sequence.
 
-    __slots__ = ("steps",)
+    A `Pipeline` is a collection of steps that are executed in sequence. Each
+    step processes records and emits new records that are passed to the next
+    step in the pipeline. The pipeline is responsible for starting, stopping,
+    and running the steps in the pipeline.
+    """
 
-    def __init__(self, steps: List[Step], step_outbox_size: int) -> None:
+    __slots__ = ("steps", "step_outbox_size")
+
+    def __init__(self, steps: Tuple[Step, ...], step_outbox_size: int) -> None:
         self.steps = steps
         self.step_outbox_size = step_outbox_size
-        self.logger = getLogger(self.__class__.__name__)
-        self.errors = []
-
-    def build_steps_into_tasks(
-        self, progress_reporter: Optional[PipelineProgressReporter] = None
-    ):
-        current_executor = None
-        tasks = []
-        state = PipelineState()
-        for step_index, step in enumerate(self.steps):
-            current_executor = StepExecutor(
-                pipeline_state=state,
-                upstream=current_executor,
-                step=step,
-                outbox_size=self.step_outbox_size,
-                step_index=step_index,
-            )
-            tasks.append(asyncio.create_task(current_executor.work_loop()))
-        current_executor.set_end_of_line(progress_reporter)
-        return tasks
-
-    def propogate_errors_from_return_states(self, return_states):
-        for return_state in return_states:
-            if return_state:
-                self.errors.append(return_state)
-
-        # Raise the error and log it.
-        if self.errors:
-            raise PipelineException(self.errors)
-
-    async def run(
-        self, progress_reporter: Optional[PipelineProgressReporter] = None
-    ) -> AsyncGenerator[Any, Any]:
-        self.logger.info("Starting Pipeline")
-        tasks = self.build_steps_into_tasks(progress_reporter)
-        return_states = await asyncio.gather(*tasks, return_exceptions=True)
-        self.propogate_errors_from_return_states(return_states)
-        self.logger.info("Pipeline Completed")
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return (s for s in self.steps if isinstance(s, ExpandsSchema))
+
+    async def run(self, reporter: PipelineProgressReporter):
+        """Run the pipeline.
+
+        This method is used to run the pipeline. It will start, stop, and run
+        the steps in the pipeline in sequence. It will pass records between the
+        steps in the pipeline using channels. The pipeline will report on the
+        progress of the pipeline using the `PipelineProgressReporter`. The
+        pipeline will run in an asynchronous context. The pipeline will block
+        until all steps in the pipeline are finished.
+
+        This method does not return anything. If an error occurs during the
+        processing of the pipeline, it will be reported using the
+        `PipelineProgressReporter`.
+
+        Args:
+            channel_size: The size of the channels used to pass records between
+                steps in the pipeline.
+            reporter: The `PipelineProgressReporter` used to report on the
+                progress of the pipeline.
+        """
+        # Create the input and output channels for the pipeline. The input
+        # channel is used to pass records from the previous step to the current
+        # step. The output channel is used to pass records from the current
+        # step to the next step. The channels are used to pass records between
+        # the steps in the pipeline. The channels have a fixed size to control
+        # the flow of records between the steps.
+        executors: List[StepExecutor] = []
+        current_input, current_output = channel(self.step_outbox_size)
+        pipeline_output = PipelineOutput(current_input, reporter)
+
+        # Create the executors for the steps in the pipeline. The executors
+        # will be used to run the steps concurrently. The steps are created in
+        # reverse order so that the output of each step is connected to the
+        # input of the next step.
+        for reversed_index, step in reversed(list(enumerate(self.steps))):
+            index = len(self.steps) - reversed_index - 1
+            context = StepContext(step.__class__.__name__, index, reporter)
+            current_input, next_output = channel(self.step_outbox_size)
+            exec = StepExecutor(step, current_input, current_output, context)
+            current_output = next_output
+            executors.append(exec)
+
+        # There is a "leftover" input channel that is not connected to any
+        # step. This channel is connected to the first step in the pipeline
+        # so we can mark it as done since we are not going to produce anything
+        # onto it.
+        await current_output.done()
+
+        # Run the pipeline by running all the steps and the pipeline output
+        # concurrently. This will block until all steps are finished.
+        running_steps = (create_task(executor.run()) for executor in executors)
+        await gather(*running_steps, create_task(pipeline_output.run()))

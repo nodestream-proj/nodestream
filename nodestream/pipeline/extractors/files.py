@@ -15,6 +15,7 @@ from typing import (
     AsyncContextManager,
     AsyncGenerator,
     AsyncIterator,
+    Dict,
     Iterable,
     List,
     Tuple,
@@ -31,6 +32,7 @@ from .extractor import Extractor
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
+SUPPORTED_FILE_SOURCES_REGISTRY = SubclassRegistry()
 
 
 class Utf8TextIOWrapper(TextIOWrapper):
@@ -146,8 +148,20 @@ class RemoteFile(ReadableFile):
         return Path(self.url)
 
 
-@abstractmethod
-class FileSource:
+@SUPPORTED_FILE_SOURCES_REGISTRY.connect_baseclass
+class FileSource(Pluggable, ABC):
+    entrypoint_name = "file_sources"
+
+    @classmethod
+    def from_file_data_with_type_label(cls, data: Dict[str, Any]) -> "FileSource":
+        type = data.pop("type")
+        return SUPPORTED_FILE_SOURCES_REGISTRY.get(type).from_file_data(**data)
+
+    @classmethod
+    def from_file_data(cls, **kwargs) -> "FileSource":
+        return cls(**kwargs)
+
+    @abstractmethod
     def get_files(self) -> AsyncIterator[ReadableFile]:
         """Return an async iterator of files to be processed.
 
@@ -422,7 +436,7 @@ class Bz2FileFormat(CompressionCodec, alias=".bz2"):
             yield LocalFile(new_path, temp_file)
 
 
-class LocalFileSource(FileSource):
+class LocalFileSource(FileSource, alias="local"):
     """A class that represents a source of local files to be read.
 
     This class is used to read files from the local filesystem. The class
@@ -432,14 +446,14 @@ class LocalFileSource(FileSource):
     can be read by the pipeline.
     """
 
-    @staticmethod
-    def from_globs(*globs: str) -> "LocalFileSource":
+    @classmethod
+    def from_file_data(cls, globs: List[str]) -> "LocalFileSource":
         all_matches = (
             Path(file)
             for glob_string in globs
             for file in glob(glob_string, recursive=True)
         )
-        return LocalFileSource(list(sorted(filter(Path.is_file, all_matches))))
+        return cls(list(sorted(filter(Path.is_file, all_matches))))
 
     def __init__(self, paths: List[Path]) -> None:
         self.paths = paths
@@ -455,7 +469,7 @@ class LocalFileSource(FileSource):
             return f"{len(self.paths)} local files"
 
 
-class RemoteFileSource(FileSource):
+class RemoteFileSource(FileSource, alias="http"):
     """A class that represents a source of remote files to be read.
 
     This class is used to read files from remote URLs. The class takes a list
@@ -465,7 +479,7 @@ class RemoteFileSource(FileSource):
     """
 
     def __init__(
-        self, urls: Iterable[str], memory_spooling_max_size_in_mb: int
+        self, urls: Iterable[str], memory_spooling_max_size_in_mb: int = 10
     ) -> None:
         self.urls = urls
         self.memory_spooling_max_size = memory_spooling_max_size_in_mb * 1024 * 1024
@@ -491,6 +505,12 @@ class UnifiedFileExtractor(Extractor):
     codecs. The class yields the records one by one as they are read from the
     files.
     """
+
+    @classmethod
+    def from_file_data(cls, sources: List[Dict[str, Any]]) -> "UnifiedFileExtractor":
+        return cls(
+            [FileSource.from_file_data_with_type_label(source) for source in sources]
+        )
 
     def __init__(self, file_sources: Iterable[FileSource]) -> None:
         self.file_sources = file_sources
@@ -569,7 +589,7 @@ class FileExtractor(UnifiedFileExtractor):
 
     @classmethod
     def from_file_data(cls, globs: Iterable[str]):
-        return cls([LocalFileSource.from_globs(*globs)])
+        return UnifiedFileExtractor.from_file_data([{"type": "local", "globs": globs}])
 
 
 class RemoteFileExtractor(UnifiedFileExtractor):
@@ -583,9 +603,17 @@ class RemoteFileExtractor(UnifiedFileExtractor):
     def from_file_data(
         cls,
         urls: Iterable[str],
-        memory_spooling_max_size_in_mb: int = 10,  # TODO: Check that this is named correctly.
+        memory_spooling_max_size_in_mb: int = 10,
     ):
-        return cls([RemoteFileSource(urls, memory_spooling_max_size_in_mb)])
+        return UnifiedFileExtractor.from_file_data(
+            [
+                {
+                    "type": "http",
+                    "urls": urls,
+                    "memory_spooling_max_size_in_mb": memory_spooling_max_size_in_mb,
+                }
+            ]
+        )
 
 
 SupportedFileFormat = FileCodec

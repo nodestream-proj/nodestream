@@ -51,14 +51,31 @@ class S3File(ReadableFile):
         self.archive_if_required(self.key)
 
 
-class S3FileSource(FileSource):
+class S3FileSource(FileSource, alias="s3"):
+    @classmethod
+    def from_file_data(
+        cls,
+        bucket: str,
+        prefix: Optional[str] = None,
+        archive_dir: Optional[str] = None,
+        object_format: Optional[str] = None,
+        **aws_client_args,
+    ):
+        return cls(
+            bucket=bucket,
+            prefix=prefix,
+            archive_dir=archive_dir,
+            object_format=object_format,
+            s3_client=AwsClientFactory(**aws_client_args).make_client("s3"),
+        )
+
     def __init__(
         self,
         bucket: str,
         s3_client,
-        archive_dir: str,
-        object_format: str,
-        prefix: str | None = None,
+        archive_dir: Optional[str] = None,
+        object_format: Optional[str] = None,
+        prefix: Optional[str] = None,
     ):
         self.bucket = bucket
         self.s3_client = s3_client
@@ -99,20 +116,5 @@ class S3Extractor(UnifiedFileExtractor):
     """
 
     @classmethod
-    def from_file_data(
-        cls,
-        bucket: str,
-        prefix: Optional[str] = None,
-        archive_dir: Optional[str] = None,
-        object_format: Optional[str] = None,
-        **aws_client_args,
-    ):
-        source = S3FileSource(
-            bucket=bucket,
-            prefix=prefix,
-            archive_dir=archive_dir,
-            object_format=object_format,
-            s3_client=AwsClientFactory(**aws_client_args).make_client("s3"),
-        )
-
-        return cls([source])
+    def from_file_data(cls, **kwargs):
+        return cls([S3FileSource.from_file_data(**kwargs)])
