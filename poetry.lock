@@ -790,13 +790,13 @@ pyarrow = ["pyarrow (>=1.0.0)"]
 
 [[package]]
 name = "nodestream"
-version = "0.13.0b1"
+version = "0.13.0"
 description = "A Fast, Declarative ETL for Graph Databases."
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "nodestream-0.13.0b1-py3-none-any.whl", hash = "sha256:5699490c47d0f1dedfa7a25425f4037c358511b1f147bced88783e8057cbc7b3"},
-    {file = "nodestream-0.13.0b1.tar.gz", hash = "sha256:7116b6fc5060c66bf818d79c125df8ab6919b02ccedb0e3c0ed28cbe8e4466a2"},
+    {file = "nodestream-0.13.0-py3-none-any.whl", hash = "sha256:f3d0fc4264492288415d95236b9437d9c789a5de49598b5dc1aae834c44a5dc1"},
+    {file = "nodestream-0.13.0.tar.gz", hash = "sha256:93ab9802c3c1e9b7efc40bc730ed6c3c67d21ff982717c15c7040a74fc3f942c"},
 ]
 
 [package.dependencies]
@@ -1766,4 +1766,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "a9ea0097bc5e106d9d9b4734a3f46c8bc630958a9ba6c377db82141b18fdbaa9"
+content-hash = "f4462f2c88fde8683c40c1b94762bc1c1399eb1bec3f8680083bd52f2e497c80"
