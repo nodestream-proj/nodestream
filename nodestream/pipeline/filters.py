@@ -10,16 +10,13 @@ from .value_providers import ProviderContext, StaticValueOrValueProvider, ValueP
 class Filter(Step):
     """A `Filter` takes a given record and evaluates whether or not it should continue downstream.
 
-    `Filter` steps generally make up the middle of an ETL pipeline and are responsible
-    for ensuring only relevant records make it through.
+    `Filter` steps generally make up the middle of an ETL pipeline and are
+    responsible for ensuring only relevant records make it through.
     """
 
-    async def handle_async_record_stream(
-        self, record_stream: AsyncGenerator[Any, Any]
-    ) -> AsyncGenerator[Any, Any]:
-        async for record in record_stream:
-            if record is Flush or not await self.filter_record(record):
-                yield record
+    async def process_record(self, record, _) -> AsyncGenerator[object, None]:
+        if record is Flush or not await self.filter_record(record):
+            yield record
 
     @abstractmethod
     async def filter_record(self, record: Any) -> bool:
