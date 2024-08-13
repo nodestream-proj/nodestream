@@ -1,4 +1,5 @@
 from asyncio import create_task, gather
+from logging import getLogger
 from typing import Iterable, List, Tuple
 
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
@@ -130,6 +131,7 @@ class Pipeline(ExpandsSchemaFromChildren):
     def __init__(self, steps: Tuple[Step, ...], step_outbox_size: int) -> None:
         self.steps = steps
         self.step_outbox_size = step_outbox_size
+        self.logger = getLogger(self.__class__.__name__)
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return (s for s in self.steps if isinstance(s, ExpandsSchema))
@@ -185,4 +187,7 @@ class Pipeline(ExpandsSchemaFromChildren):
         # Run the pipeline by running all the steps and the pipeline output
         # concurrently. This will block until all steps are finished.
         running_steps = (create_task(executor.run()) for executor in executors)
+
+        self.logger.info("Starting Pipeline")
         await gather(*running_steps, create_task(pipeline_output.run()))
+        self.logger.info("Pipeline Completed")
