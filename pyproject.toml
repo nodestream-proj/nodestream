@@ -12,13 +12,14 @@ dev-dependencies = [
     "pytest-httpx>=0.30.0",
     "moto[s3]>=5.0.13",
     "testcontainers[neo4j]>=3.7.1",
+    "pytest-xdist>=3.6.1",
 ]
 
 [tool.uv.workspace]
 members = ["nodestream", "plugins/*"]
 
-
 [tool.pytest.ini_options]
+addopts = "--cov nodestream/nodestream --cov plugins/neo4j/nodestream_plugin_neo4j --cov-report term --cov-report xml"
 markers = [
     "integration: marks the test as an integration test (deselect with '-m \"not integration\"')",
     "e2e: marks the test as an end-to-end test (deselect with '-m \"not e2e\"')",
