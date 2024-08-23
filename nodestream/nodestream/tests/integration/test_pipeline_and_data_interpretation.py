@@ -55,8 +55,6 @@ def drive_definition_to_completion():
 async def test_pipeline_interpretation_snapshot(
     snapshot, drive_definition_to_completion, pipeline_name, mocker
 ):
-    from pandas import Timestamp
-
     mocked_ts = mocker.patch("pandas.Timestamp.utcnow")
     mocked_ts.return_value = Timestamp("2021-06-18")
     snapshot.snapshot_dir = "nodestream/nodestream/tests/integration/snapshots"

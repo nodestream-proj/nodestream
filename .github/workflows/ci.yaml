@@ -25,9 +25,9 @@ jobs:
         run: uv run pytest -m "not e2e"
       - name: Run Lints
         run: |
-          uv run ruff check nodestream tests
-          uv run black nodestream tests --check
-          uv run isort nodestream tests --check-only
+          uv run ruff check nodestream plugins
+          uv run black nodestream plugins --check
+          uv run isort nodestream plugins --check-only
       - name: Run End To End Tests
         run: uv run pytest -m "e2e"
       - name: Upload coverage reports to Codecov
