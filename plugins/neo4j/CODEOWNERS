@@ -1,0 +1,3 @@
+#This is used to automatically add reviewers to PR's. Developers can still manually add reviewers in addition to the below users.
+
+* @zprobst @ccloes

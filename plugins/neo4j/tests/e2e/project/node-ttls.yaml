@@ -1,0 +1,8 @@
+- implementation: nodestream.pipeline.extractors:TimeToLiveConfigurationExtractor
+  arguments:
+    graph_object_type: NODE
+    configurations: 
+    - object_type: ObjectA
+      expiry_in_hours: 48
+    - object_type: ObjectB
+      expiry_in_hours: 24
