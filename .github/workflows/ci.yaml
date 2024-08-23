@@ -21,7 +21,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
       - name: Run Tests
         run: uv run pytest -m "not e2e"
       - name: Run Lints
