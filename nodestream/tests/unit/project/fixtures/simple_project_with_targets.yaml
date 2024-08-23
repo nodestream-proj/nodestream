@@ -1,0 +1,8 @@
+scopes:
+  perpetual:
+    pipelines:
+      - "nodestream/tests/unit/project/fixtures/pipelines/pipeline_one.yaml"
+
+targets:
+  t1:
+    a: b

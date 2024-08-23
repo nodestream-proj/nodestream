@@ -1,0 +1,63 @@
+[project]
+name = "nodestream"
+version = "0.13.1"
+description = "A Declarative Framework for Building, Maintaining, and Analyzing Graph Data."
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6",
+    "jmespath>=1",
+    "cleo>=2",
+    "python-json-logger>=2",
+    "boto3>=1.35",
+    "confluent-kafka>=2.5",
+    "jinja2>=3",
+    "pandas>=2",
+    "pyarrow>=17",
+    "schema>=0.7",
+    "cookiecutter>=2",
+    "httpx>=0.27",
+    "psutil>=6",
+    "uvloop>=0.17, <=0.19; platform_system == 'Linux'",
+    "uvloop>=0.17, <=0.19; platform_system == 'Darwin'",
+]
+authors = [
+    { name = "Zach Probst", email = "Zach_Probst@intuit.com"},
+    { name = "Chad Cloes", email = "Chad_Cloes@intuit.com"},
+    { name = "Angelo Santos", email = "Angelo_Santos@intuit.com"},
+    { name = "Grant Hoffman"},
+    { name = "Yason Khaburzaniya"},
+]
+license = {text = "Apache 2.0"}
+keywords = ["etl", "neo4j", "declarative", "data", "kafka", "ingest"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Natural Language :: English",
+    "Topic :: Database"
+]
+
+[project.urls]
+Homepage = "https://nodestream-proj.github.io/docs/"
+Documentation = "https://nodestream-proj.github.io/docs/docs/"
+Repository = "https://github.com/nodestream-proj/nodestream.git"
+Issues = "https://github.com/nodestream-proj/nodestream/issues"
+Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
+
+[project.entry-points."nodestream.plugins"]
+"argument_resolvers" = "nodestream.pipeline.argument_resolvers"
+"file_formats" = "nodestream.pipeline.extractors.files"
+"interpretations" = "nodestream.interpreting.interpretations"
+"normalizers" = "nodestream.pipeline.normalizers"
+"value_providers" = "nodestream.pipeline.value_providers"
+"record_formats" = "nodestream.pipeline.extractors.streams"
+"stream_connectors" = "nodestream.pipeline.extractors.streams"
+"commands" = "nodestream.cli.commands"
+"audits" = "nodestream.project.audits"
+"schema_printers" = "nodestream.schema.printers"
+"databases" = "nodestream.databases.null"
+
+[project.scripts]
+nodestream = 'nodestream.cli.application:run'
