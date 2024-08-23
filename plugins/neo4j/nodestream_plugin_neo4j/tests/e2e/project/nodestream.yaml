@@ -1,15 +1,15 @@
 scopes:
   default:
     pipelines:
-      - path: plugins/neo4j/nodestream_plugin_neo4j/project/airports.yaml
+      - path: plugins/neo4j/nodestream_plugin_neo4j/tests/project/airports.yaml
         name: airports
-      - path: plugins/neo4j/nodestream_plugin_neo4j/project/fifa_2021_player_data.yaml
+      - path: plugins/neo4j/nodestream_plugin_neo4j/tests/project/fifa_2021_player_data.yaml
         name: fifa
-      - path: plugins/neo4j/nodestream_plugin_neo4j/project/node-ttls.yaml
+      - path: plugins/neo4j/nodestream_plugin_neo4j/tests/project/node-ttls.yaml
         name: node-ttls
-      - path: plugins/neo4j/nodestream_plugin_neo4j/project/relationship-ttls.yaml
+      - path: plugins/neo4j/nodestream_plugin_neo4j/tests/project/relationship-ttls.yaml
         name: relationship-ttls
-      - path: plugins/neo4j/nodestream_plugin_neo4j/project/extractor_integration.yaml
+      - path: plugins/neo4j/nodestream_plugin_neo4j/tests/project/extractor_integration.yaml
         name: extractor_integration
   
 targets:
