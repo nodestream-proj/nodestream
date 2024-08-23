@@ -16,7 +16,9 @@ from .conftest import TESTED_NEO4J_VERSIONS
 
 @pytest.fixture
 def project():
-    return Project.read_from_file(Path("tests/e2e/project/nodestream.yaml"))
+    return Project.read_from_file(
+        Path("plugins/neo4j/nodestream_plugin_neo4j/project/nodestream.yaml")
+    )
 
 
 def validate_airports(session):
