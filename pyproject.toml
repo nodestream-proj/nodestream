@@ -20,7 +20,6 @@ members = ["nodestream", "plugins/*"]
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
-addopts = "--cov=nodestream --cov=plugins --cov-report=term --cov-report=xml"
 markers = [
     "integration: marks the test as an integration test (deselect with '-m \"not integration\"')",
     "e2e: marks the test as an end-to-end test (deselect with '-m \"not e2e\"')",
