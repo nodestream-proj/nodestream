@@ -2,7 +2,6 @@ from os import environ
 from unittest.mock import Mock, call
 
 import pytest
-from freezegun import freeze_time
 from hamcrest import assert_that, equal_to
 
 from nodestream.interpreting.interpretation_passes import (
@@ -77,7 +76,6 @@ def test_intepret_record_iterates_through_interpretation_process(stubbed_interpr
 
 
 @pytest.mark.asyncio
-@freeze_time("1998-03-25 12:00:01")
 async def test_transform_record_returns_iteration_results(stubbed_interpreter, mocker):
     contexts = [[ProviderContext.fresh(i)] for i in range(5)]
     stubbed_interpreter.interpret_record = mocker.Mock(side_effect=contexts)

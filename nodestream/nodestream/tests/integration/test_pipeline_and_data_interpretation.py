@@ -46,8 +46,8 @@ def drive_definition_to_completion():
 @pytest.mark.parametrize(
     "pipeline_name",
     [
-        "fifa_2021_player_data.yaml",
         "airports.yaml",
+        "fifa_2021_player_data.yaml",
         "source_match_only.yaml",
         "source_eager.yaml",
     ],
