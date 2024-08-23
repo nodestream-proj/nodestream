@@ -1,0 +1,30 @@
+- implementation: nodestream.pipeline.extractors:FileExtractor
+  arguments:
+    globs:
+      - nodestream/nodestream/tests/data/people.json
+
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    before_iteration:
+      - type: relationship
+        relationship_type: IS_MEMBER_OF
+        node_type: Organization
+        node_key:
+          name: !jmespath organization.name
+    iterate_on: !jmespath people
+    interpretations:
+      - type: source_node
+        node_type: Person
+        key:
+          first_name: !jmespath name
+          last_name: !jmespath surname
+      - type: relationship
+        relationship_type: HAS_CONTACT
+        node_type: Email
+        node_key:
+          email: !jmespath contact.email
+      - type: relationship
+        relationship_type: HAS_CONTACT
+        node_type: Phone
+        node_key:
+          phone: !jmespath contact.phone

@@ -61,3 +61,10 @@ Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
 
 [project.scripts]
 nodestream = 'nodestream.cli.application:run'
+
+[tool.hatch.build]
+exclude = ["nodestream/tests/**"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

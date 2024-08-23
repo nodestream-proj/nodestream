@@ -1,40 +1,48 @@
-[tool.poetry]
+[project]
 name = "nodestream-plugin-neo4j"
 version = "0.13.0"
-description = ""
-authors = ["Zach Probst <Zach_Probst@intuit.com>"]
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-neo4j = "^5.16.0"
-nodestream = "^0.13.0"
-cymple = "^0.11.0"
-
-[tool.poetry.group.dev.dependencies]
-black = "^23.12.1"
-pyhamcrest = "^2.1.0"
-freezegun = "^1.4.0"
-pytest = "^7.4.4"
-pytest-mock = "^3.12.0"
-pytest-cov = "^4.1.0"
-pytest-asyncio = "^0.23.3"
-testcontainers = {extras = ["neo4j"], version = "^3.7.1"}
-ruff = "^0.1.13"
-isort = "^5.13.2"
-
-[tool.pytest.ini_options]
-markers = [
-    "integration: marks the test as an integration test (deselect with '-m \"not integration\"')",
-    "e2e: marks the test as an end-to-end test (deselect with '-m \"not e2e\"')",
+description = "An official nodestream plugin for Neo4j Integration."
+requires-python = ">=3.10"
+dependencies = [
+    "nodestream",
+    "neo4j>=5.16",
+    "cymple>=0.11",
+]
+authors = [
+    { name = "Zach Probst", email = "Zach_Probst@intuit.com"},
+    { name = "Chad Cloes", email = "Chad_Cloes@intuit.com"},
+    { name = "Angelo Santos", email = "Angelo_Santos@intuit.com"},
+    { name = "Grant Hoffman"},
+    { name = "Yason Khaburzaniya"},
+]
+license = {text = "Apache 2.0"}
+keywords = ["etl", "neo4j", "declarative", "data", "kafka", "ingest"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Natural Language :: English",
+    "Topic :: Database"
 ]
 
-[tool.isort]
-profile = "black"
+[project.urls]
+Homepage = "https://nodestream-proj.github.io/docs/"
+Documentation = "https://nodestream-proj.github.io/docs/docs/"
+Repository = "https://github.com/nodestream-proj/nodestream.git"
+Issues = "https://github.com/nodestream-proj/nodestream/issues"
+Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
+
+[project.entry-points."nodestream.plugins"]
+"databases" = "nodestream_plugin_neo4j"
+
+[tool.uv.sources]
+nodestream = { workspace = true }
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry.plugins."nodestream.plugins"]
-"databases" = "nodestream_plugin_neo4j"
+[tool.hatch.build.targets.wheel]
+exclude = ["nodestream_plugin_neo4j/tests/*"]

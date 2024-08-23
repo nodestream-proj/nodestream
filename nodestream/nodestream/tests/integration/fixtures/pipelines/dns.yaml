@@ -1,0 +1,38 @@
+- implementation: nodestream.pipeline.extractors:FileExtractor
+  arguments:
+    globs:
+      - nodestream/nodestream/tests/data/dns.csv
+
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: switch
+        switch_on: !jmespath 'type'
+        default:
+          - type: source_node
+            node_type: Unknown
+            key:
+              name: !jmespath 'name'
+            properties:
+              value: !jmespath 'value'
+        cases:
+          A:
+          - type: source_node
+            node_type: A
+            key:
+              name: !jmespath 'name'
+          - type: relationship
+            node_type: Ipv4
+            relationship_type: RESOLVES_TO
+            node_key:
+              address: !jmespath 'value'
+          CNAME:
+          - type: source_node
+            node_type: CNAME
+            key:
+              name: !jmespath 'name'
+          - type: relationship
+            node_type: A
+            relationship_type: RESOLVES_TO
+            node_key:
+              name: !jmespath 'value'

@@ -11,6 +11,7 @@ dev-dependencies = [
     "pytest-snapshot>=0.9.0",
     "pytest-httpx>=0.30.0",
     "moto[s3]>=5.0.13",
+    "testcontainers[neo4j]>=3.7.1",
 ]
 
 [tool.uv.workspace]

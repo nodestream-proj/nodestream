@@ -1,0 +1,10 @@
+scopes:
+  perpetual:
+    annotations:
+      concurrency: 1
+    pipelines:
+      - "nodestream/nodestream/tests/unit/project/fixtures/pipelines/pipeline_one.yaml"
+      - path: "nodestream/nodestream/tests/unit/project/fixtures/pipelines/pipeline_two.yaml"
+        name: "just a random value"
+        annotations:
+          concurrency: 2
