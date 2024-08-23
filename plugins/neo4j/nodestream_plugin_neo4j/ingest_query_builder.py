@@ -3,6 +3,8 @@ from functools import cache, wraps
 from typing import Iterable
 
 from cymple.builder import NodeAfterMergeAvailable, NodeAvailable, QueryBuilder
+from pandas import Timedelta, Timestamp
+
 from nodestream.databases.query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
@@ -17,7 +19,6 @@ from nodestream.model import (
     TimeToLiveConfiguration,
 )
 from nodestream.schema import GraphObjectType
-from pandas import Timedelta, Timestamp
 
 from .query import Query, QueryBatch
 

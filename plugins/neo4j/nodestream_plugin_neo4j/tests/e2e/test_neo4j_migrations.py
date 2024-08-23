@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from nodestream.schema.migrations import Migration
 from nodestream.schema.migrations.operations import (
     AddAdditionalNodePropertyIndex,
@@ -24,7 +25,6 @@ from nodestream.schema.migrations.operations import (
     RenameRelationshipProperty,
     RenameRelationshipType,
 )
-
 from nodestream_plugin_neo4j.migrator import Neo4jDatabaseConnection, Neo4jMigrator
 
 from .conftest import TESTED_NEO4J_VERSIONS

@@ -1,6 +1,7 @@
 import pytest
 from hamcrest import assert_that
 from neo4j import AsyncSession
+
 from nodestream.schema.migrations.operations import (
     AddAdditionalNodePropertyIndex,
     AddAdditionalRelationshipPropertyIndex,
@@ -22,7 +23,6 @@ from nodestream.schema.migrations.operations import (
     RenameRelationshipProperty,
     RenameRelationshipType,
 )
-
 from nodestream_plugin_neo4j.migrator import Neo4jDatabaseConnection, Neo4jMigrator
 from nodestream_plugin_neo4j.query import Query
 

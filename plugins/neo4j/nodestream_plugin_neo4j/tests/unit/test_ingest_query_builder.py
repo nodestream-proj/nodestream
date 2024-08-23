@@ -2,6 +2,8 @@ from unittest.mock import patch
 
 import pytest
 from hamcrest import assert_that, equal_to, equal_to_ignoring_whitespace
+from pandas import Timestamp
+
 from nodestream.databases.query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
@@ -15,8 +17,6 @@ from nodestream.model import (
     TimeToLiveConfiguration,
 )
 from nodestream.schema import GraphObjectType
-from pandas import Timestamp
-
 from nodestream_plugin_neo4j.ingest_query_builder import (
     DELETE_NODE_QUERY,
     DELETE_REL_QUERY,

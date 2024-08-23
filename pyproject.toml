@@ -28,3 +28,4 @@ markers = [
 
 [tool.isort]
 profile = "black"
+known_first_party = ["nodestream", "nodestream_plugin_neo4j"]

@@ -2,13 +2,13 @@ from pathlib import Path
 
 import pytest
 from neo4j import Session
+from pandas import Timedelta, Timestamp
+
 from nodestream.pipeline import (
     PipelineInitializationArguments,
     PipelineProgressReporter,
 )
 from nodestream.project import Project, RunRequest
-from pandas import Timedelta, Timestamp
-
 from nodestream_plugin_neo4j.query import Query
 
 from .conftest import TESTED_NEO4J_VERSIONS

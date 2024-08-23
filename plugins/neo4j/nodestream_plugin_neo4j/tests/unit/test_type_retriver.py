@@ -2,8 +2,8 @@ import pytest
 from hamcrest import assert_that, equal_to, has_length
 from neo4j.graph import Node as Neo4jNode
 from neo4j.graph import Relationship as Neo4jRelationship
-from nodestream.model import Node, Relationship
 
+from nodestream.model import Node, Relationship
 from nodestream_plugin_neo4j.neo4j_database import Neo4jDatabaseConnection
 from nodestream_plugin_neo4j.type_retriever import Neo4jTypeRetriever
 

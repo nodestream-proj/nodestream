@@ -2,6 +2,7 @@ from logging import getLogger
 from typing import Any, Dict, Optional
 
 from neo4j import RoutingControl
+
 from nodestream.pipeline import Extractor
 
 from .neo4j_database import Neo4jDatabaseConnection

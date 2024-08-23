@@ -2,6 +2,7 @@ from typing import AsyncGenerator
 
 from neo4j.graph import Node as Neo4jNode
 from neo4j.graph import Relationship as Neo4jRelationship
+
 from nodestream.databases import TypeRetriever
 from nodestream.model import Node, PropertySet, Relationship, RelationshipWithNodes
 

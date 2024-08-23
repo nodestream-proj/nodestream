@@ -1,8 +1,8 @@
 import pytest
 from hamcrest import assert_that
+
 from nodestream.model import TimeToLiveConfiguration
 from nodestream.schema import GraphObjectType
-
 from nodestream_plugin_neo4j.neo4j_database import Neo4jDatabaseConnection
 from nodestream_plugin_neo4j.query import Query, QueryBatch
 from nodestream_plugin_neo4j.query_executor import Neo4jQueryExecutor
