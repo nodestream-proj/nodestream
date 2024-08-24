@@ -25,7 +25,7 @@ Nodestream even decouples you from the underyling database technology so you can
 - Clean up your own data with TTLs ([Docs](https://nodestream-proj.github.io/docs/docs/tutorials-intermediate/removing-data/#implementing-a-ttl-pipeline))
 - Infinite Customizability Since Nearly Everything is Pluggable!
 
-> [Website](https://nodestream-proj.github.io/docs/) • [Blog](https://nodestream-proj.github.io/docs/blog/) • [Discussions](https://github.com/orgs/nodestream-proj/discussions) • [Contributing Developer Guides](https://nodestream-proj.github.io/docs/docs/category/developer-reference/) • [Talks from Maintainers](https://www.youtube.com/watch?v=2F-xx4LcTng&list=PLUiAbWRQecSOorv_V6TzfUBoIZyf-6r6R&pp=gAQBiAQB)
+> [Website](https://nodestream-proj.github.io/docs/) • [Blog](https://nodestream-proj.github.io/docs/blog/) • [Discussions](https://github.com/orgs/nodestream-proj/discussions)  • [Contributing](#contributing) • [Contributing Developer Guides](https://nodestream-proj.github.io/docs/docs/category/developer-reference/) • [Talks from Maintainers](https://www.youtube.com/watch?v=2F-xx4LcTng&list=PLUiAbWRQecSOorv_V6TzfUBoIZyf-6r6R&pp=gAQBiAQB)
 
 ## Features 
 
@@ -110,3 +110,107 @@ Be sure to checkout or [Contributing Docs](https://nodestream-proj.github.io/doc
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+### Contributing 
+
+Need a quick reference guide on how to contribute? Here you go!
+
+#### Project Structure
+
+This project is a monorepo. 
+Each pacakge is a separate python package. 
+The `nodestream` package is the core package and the `nodestream-plugin-*` packages are plugins dependant on the main library.
+This project uses [`uv`](https://astral.sh/blog/uv-unified-python-packaging) for dependency management. 
+A conceptutual  overview of the project structure is below. 
+
+```
+.
+├── nodestream
+│   ├── nodestream
+│   │   ├── __init__.py
+│   │   ├── *.py
+│   │   ├── tests
+│   │   │   ├── __init__.py
+│   │   │   ├── test_*.py
+|   ├── pyproject.toml
+├── plugins
+│   ├── nodestream-plugin-neo4j
+│   │   ├── nodestream_plugin_neo4j
+│   │   │   ├── __init__.py
+│   │   │   ├── *.py
+│   │   │   ├── tests
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── test_*.py
+|   │   ├── pyproject.toml
+# ... more plugins
+```
+
+> [!NOTE]  
+> Each package has its own `pyproject.toml` file and `tests` directory inside of it. This allows you to run tests for each package individually or all at once. 
+
+> [!NOTE]  
+> There is also a root `pyproject.toml` file that contains dev dependencies and acts as the "workspace" configuration.
+
+#### Getting Setup 
+
+To get started you'll need to install uv.
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+You don't need to install dependencies explicitly.
+It will happen automatically when you run `uv` commands. 
+
+#### Running Tests
+
+To run tests for the entire project, run the following command:
+
+```bash
+uv run pytest
+```
+
+To run tests for a specific package, run the following command:
+
+```bash
+cd plugins/nodestream-plugin-neo4j
+uv run pytest
+```
+
+In may cases, you may want to skip running the e2e tests.
+To do this, you can run the following command:
+
+```bash
+uv run pytest -m "not e2e"
+```
+
+#### Versioning a Package
+
+To version a package, you can run the following command:
+
+```bash
+uv run scripts/versioning.py --version 0.13.2 --package nodestream 
+```
+
+This will update the version of the `nodestream` package to `0.13.2`. 
+Just commit the changes and push to the repository.
+If you want to version all packages, you can run the following command:
+
+```bash
+uv run scripts/versioning.py --version 0.13.2 --package all
+```
+
+#### Making a Release
+
+> [!NOTE]  
+> This section is for maintainers only.
+
+The versioning script will print out the expected release / tag names for each package to use in github. 
+For example, the output might look like this:
+
+```
+# uv run scripts/versioning.py --version 0.13.2 --package nodestream
+nodestream: nodestream/v0.13.2
+```
+
+You can then create a release in Github with the tag name `nodestream/v0.13.2` to release the nodestream package.
