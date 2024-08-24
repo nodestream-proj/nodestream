@@ -1,7 +1,7 @@
 - implementation: nodestream.pipeline.extractors.files:FileExtractor
   arguments:
     globs:
-      - tests/data/fifa_2021_player_data.csv
+      - plugins/neo4j/nodestream_plugin_neo4j/tests/data/fifa_2021_player_data.csv
 
 - implementation: nodestream.interpreting:Interpreter
   arguments:

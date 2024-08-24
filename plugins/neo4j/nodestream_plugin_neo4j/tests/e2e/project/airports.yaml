@@ -1,7 +1,7 @@
 - implementation: nodestream.pipeline.extractors:FileExtractor
   arguments:
     globs:
-      - tests/data/airport-codes.csv
+      - plugins/neo4j/nodestream_plugin_neo4j/tests/data/airport-codes.csv
 
 - implementation: nodestream.interpreting:Interpreter
   arguments:
