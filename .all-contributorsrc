@@ -52,6 +52,15 @@
         "code",
         "review"
       ]
+    },
+    {
+      "login": "khneal",
+      "name": "khneal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40273388?v=4",
+      "profile": "https://github.com/khneal",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
