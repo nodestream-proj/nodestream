@@ -11,6 +11,10 @@ jobs:
     # Name of the job for the workflow.
     name: Publish Package to PyPI
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ["nodestream", "nodestream-plugin-neo4j"]
     
     # Get the oidc token with write permissions to upload the package to PyPI.
     # We have configured the trusted OIDC token in the pypi project settings.
@@ -23,15 +27,16 @@ jobs:
     # See here: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
     environment:
       name: pypi
-      url: https://pypi.org/p/nodestream/
+      url: https://pypi.org/p/${{ matrix.package }}
     
     steps:
       # Checkout the repository subject to the release.
       - uses: actions/checkout@v4
 
-      # Install poetry to build the package.
-      - name: Install poetry
-        run: pipx install poetry
+      # Install uv to build the package.
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        if: ${{ startswith(github.ref, format('refs/tags/{}', matrix.package)) || startsWith(github.ref, 'refs/tags/all') }}
 
       # Set up Python 3.12 to build the package.
       # Python version here does not really matter as long as it works with 
@@ -39,16 +44,17 @@ jobs:
       # with CI testing before this step.
       - name: Set up Python 3.12 
         uses: actions/setup-python@v5
+        if: ${{ !startswith(github.ref, format('refs/tags/{}', matrix.package))}}
         with:
           python-version: 3.12
-          cache: 'poetry'
-      
+
       # Build the package using poetry. This will create a dist directory with the package.
       # Poetry isn't _special_ in the sense that it builds packages in some unique way.
       # Therefore, we can use poetry built packaes with PyPA's action for publishing packages below.
       # See: https://python-poetry.org/docs/cli/#build
       - name: Build Package
-        run: poetry build
+        run: uv run scripts/versioning.py --build --package ${{ matrix.package }} --move-to dist/
+        if: ${{ !startswith(github.ref, format('refs/tags/{}', matrix.package))}}
       
       # Publish the package to PyPI using the OIDC token and PyPA's action for publishing packages.
       # By default, this action will publish to the PyPI server and pull artifacts from the dist directory.
@@ -58,12 +64,14 @@ jobs:
       # - https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        if: ${{ !startswith(github.ref, format('refs/tags/{}', matrix.package))}}
 
       # We are then going to store the built package as an artifact. 
       # This is so we can sign the package and upload it to the GitHub release.
       # this is being done as a seperate job so that we can minimize the permissions needed for the publish job.
       - name: Store the Built Package
         uses: actions/upload-artifact@v3
+        if: ${{ !startswith(github.ref, format('refs/tags/{}', matrix.package))}}
         with:
           name: python-package-distribution
           path: dist/
@@ -72,5 +80,6 @@ jobs:
       # This action will sign the package and upload the signature to the GitHub release.
       # This is to ensure that the package is verified and trusted by the user.
       - uses: actions/attest-build-provenance@v1
+        if: ${{ !startswith(github.ref, format('refs/tags/{}', matrix.package))}}
         with:
           subject-path: 'dist/*'
