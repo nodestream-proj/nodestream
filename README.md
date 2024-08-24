@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/gh/nodestream-proj/nodestream/branch/main/graph/badge.svg?token=HAPEVKQ6OQ)](https://codecov.io/gh/nodestream-proj/nodestream)
 [![ApacheV2 License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://opensource.org/license/apache-2-0/)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 **Nodestream allows you to work with graphs declaratively.** With nodestream, you unlock a bounty of features purpose built for working with graphs. 
@@ -88,6 +88,9 @@ Be sure to checkout or [Contributing Docs](https://nodestream-proj.github.io/doc
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/khneal"><img src="https://avatars.githubusercontent.com/u/40273388?v=4?s=100" width="100px;" alt="khneal"/><br /><sub><b>khneal</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=khneal" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/orozen"><img src="https://avatars.githubusercontent.com/u/62594754?v=4?s=100" width="100px;" alt="orozen"/><br /><sub><b>orozen</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=orozen" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://sites.google.com/view/ai4allrobotics"><img src="https://avatars.githubusercontent.com/u/66497192?v=4?s=100" width="100px;" alt="Sophia Don Tranho"/><br /><sub><b>Sophia Don Tranho</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=sophiadt" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/bechbd"><img src="https://avatars.githubusercontent.com/u/6898505?v=4?s=100" width="100px;" alt="bechbd"/><br /><sub><b>bechbd</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=bechbd" title="Code">💻</a></td>
     </tr>
   </tbody>
   <tfoot>
