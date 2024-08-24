@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/gh/nodestream-proj/nodestream/branch/main/graph/badge.svg?token=HAPEVKQ6OQ)](https://codecov.io/gh/nodestream-proj/nodestream)
 [![ApacheV2 License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://opensource.org/license/apache-2-0/)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 **Nodestream allows you to work with graphs declaratively.** With nodestream, you unlock a bounty of features purpose built for working with graphs. 
@@ -92,6 +92,7 @@ Be sure to checkout or [Contributing Docs](https://nodestream-proj.github.io/doc
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bechbd"><img src="https://avatars.githubusercontent.com/u/6898505?v=4?s=100" width="100px;" alt="bechbd"/><br /><sub><b>bechbd</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=bechbd" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/yasonk"><img src="https://avatars.githubusercontent.com/u/6750414?v=4?s=100" width="100px;" alt="yasonk"/><br /><sub><b>yasonk</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=yasonk" title="Code">💻</a> <a href="https://github.com/nodestream-proj/nodestream/pulls?q=is%3Apr+reviewed-by%3Ayasonk" title="Reviewed Pull Requests">👀</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/stuartio"><img src="https://avatars.githubusercontent.com/u/22449467?v=4?s=100" width="100px;" alt="Stuart Macleod"/><br /><sub><b>Stuart Macleod</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=stuartio" title="Code">💻</a></td>
     </tr>
   </tbody>
   <tfoot>

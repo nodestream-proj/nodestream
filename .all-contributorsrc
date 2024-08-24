@@ -98,6 +98,15 @@
         "code",
         "review"
       ]
+    },
+    {
+      "login": "stuartio",
+      "name": "Stuart Macleod",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22449467?v=4",
+      "profile": "https://github.com/stuartio",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
