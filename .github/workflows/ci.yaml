@@ -22,17 +22,18 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run Tests
-        run: uv run pytest -m "not e2e" --cov=nodestream --cov=plugins --cov-report=term --cov-report=xml
+        run: uv run pytest -m "not e2e" --cov=nodestream --cov=plugins --cov-report=term --cov-report=xml:unit-coverage.xml
       - name: Run Lints
         run: |
           uv run ruff check nodestream plugins
           uv run black nodestream plugins --check
           uv run isort nodestream plugins --check-only
       - name: Run End To End Tests
-        run: uv run pytest -m "e2e"
+        run: uv run pytest -m "e2e" --cov=nodestream --cov=plugins --cov-report=term --cov-report=xml:e2e-coverage.xml
         if: "runner.os == 'Linux'"
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./unit-coverage.xml ./e2e-coverage.xml
           flags: ${{ matrix.python-version }}-${{ matrix.os }}
