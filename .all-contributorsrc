@@ -88,6 +88,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "yasonk",
+      "name": "yasonk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6750414?v=4",
+      "profile": "https://github.com/yasonk",
+      "contributions": [
+        "code",
+        "review"
+      ]
     }
   ],
   "contributorsPerLine": 7,
