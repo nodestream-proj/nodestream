@@ -7,6 +7,9 @@
 [![Continuous Integration](https://github.com/nodestream-proj/nodestream/actions/workflows/ci.yaml/badge.svg)](https://github.com/nodestream-proj/nodestream/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/nodestream-proj/nodestream/branch/main/graph/badge.svg?token=HAPEVKQ6OQ)](https://codecov.io/gh/nodestream-proj/nodestream)
 [![ApacheV2 License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://opensource.org/license/apache-2-0/)
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 **Nodestream allows you to work with graphs declaratively.** With nodestream, you unlock a bounty of features purpose built for working with graphs. 
 Semantically model your graph and map labels and properties directly to your data. 
@@ -71,3 +74,28 @@ Nodestream is built on a Highly Pluggable and Modular Architecture. Thus... we h
 
 Nodestream is a community project. We welcome all contributions. 
 Be sure to checkout or [Contributing Docs](https://nodestream-proj.github.io/docs/docs/category/developer-reference/) and our [Code of Conduct](./CODE_OF_CONDUCT.md) before contributing. 
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zprobst"><img src="https://avatars.githubusercontent.com/u/22159145?v=4?s=100" width="100px;" alt="Zach Probst"/><br /><sub><b>Zach Probst</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=zprobst" title="Code">💻</a> <a href="https://github.com/nodestream-proj/nodestream/pulls?q=is%3Apr+reviewed-by%3Azprobst" title="Reviewed Pull Requests">👀</a> <a href="#maintenance-zprobst" title="Maintenance">🚧</a></td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td align="center" size="13px" colspan="7">
+        <img src="https://raw.githubusercontent.com/all-contributors/all-contributors-cli/1b8533af435da9854653492b1327a23a4dbd0a10/assets/logo-small.svg">
+          <a href="https://all-contributors.js.org/docs/en/bot/usage">Add your contributions</a>
+        </img>
+      </td>
+    </tr>
+  </tfoot>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
