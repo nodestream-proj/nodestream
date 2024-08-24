@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/gh/nodestream-proj/nodestream/branch/main/graph/badge.svg?token=HAPEVKQ6OQ)](https://codecov.io/gh/nodestream-proj/nodestream)
 [![ApacheV2 License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://opensource.org/license/apache-2-0/)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 **Nodestream allows you to work with graphs declaratively.** With nodestream, you unlock a bounty of features purpose built for working with graphs. 
@@ -84,6 +84,7 @@ Be sure to checkout or [Contributing Docs](https://nodestream-proj.github.io/doc
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zprobst"><img src="https://avatars.githubusercontent.com/u/22159145?v=4?s=100" width="100px;" alt="Zach Probst"/><br /><sub><b>Zach Probst</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=zprobst" title="Code">💻</a> <a href="https://github.com/nodestream-proj/nodestream/pulls?q=is%3Apr+reviewed-by%3Azprobst" title="Reviewed Pull Requests">👀</a> <a href="#maintenance-zprobst" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ccloes"><img src="https://avatars.githubusercontent.com/u/1000538?v=4?s=100" width="100px;" alt="Chad Cloes"/><br /><sub><b>Chad Cloes</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=ccloes" title="Code">💻</a> <a href="https://github.com/nodestream-proj/nodestream/pulls?q=is%3Apr+reviewed-by%3Accloes" title="Reviewed Pull Requests">👀</a> <a href="#maintenance-ccloes" title="Maintenance">🚧</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/angelosantos4"><img src="https://avatars.githubusercontent.com/u/142852840?v=4?s=100" width="100px;" alt="asantos4"/><br /><sub><b>asantos4</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=angelosantos4" title="Code">💻</a> <a href="https://github.com/nodestream-proj/nodestream/pulls?q=is%3Apr+reviewed-by%3Aangelosantos4" title="Reviewed Pull Requests">👀</a> <a href="#maintenance-angelosantos4" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/grantleehoffman"><img src="https://avatars.githubusercontent.com/u/603848?v=4?s=100" width="100px;" alt="Grant Hoffman"/><br /><sub><b>Grant Hoffman</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=grantleehoffman" title="Code">💻</a> <a href="https://github.com/nodestream-proj/nodestream/pulls?q=is%3Apr+reviewed-by%3Agrantleehoffman" title="Reviewed Pull Requests">👀</a></td>
     </tr>
   </tbody>
   <tfoot>
