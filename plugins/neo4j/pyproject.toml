@@ -4,7 +4,7 @@ version = "0.13.0"
 description = "An official nodestream plugin for Neo4j Integration."
 requires-python = ">=3.10"
 dependencies = [
-    "nodestream",
+    "nodestream>=0.13.0",
     "neo4j>=5.16",
     "cymple>=0.11",
 ]
