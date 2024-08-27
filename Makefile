@@ -43,14 +43,6 @@ test-unit: venv
 test-e2e: venv
 	poetry run pytest -m "e2e"
 
-.PHONY: docs-build
-docs-build: venv
-	poetry run mkdocs build
-
-.PHONY: docs-server
-docs-server: venv
-	poetry run mkdocs serve
-
 .PHONY: snapshot
 snapshot: venv
 	poetry run pytest --snapshot-update
