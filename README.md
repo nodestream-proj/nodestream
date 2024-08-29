@@ -120,42 +120,6 @@ Be sure to checkout or [Contributing Docs](https://nodestream-proj.github.io/doc
 
 Need a quick reference guide on how to contribute? Here you go!
 
-#### Project Structure
-
-This project is a monorepo. 
-Each pacakge is a separate python package. 
-The `nodestream` package is the core package and the `nodestream-plugin-*` packages are plugins dependant on the main library.
-This project uses [`uv`](https://astral.sh/blog/uv-unified-python-packaging) for dependency management. 
-A conceptutual  overview of the project structure is below. 
-
-```
-.
-├── nodestream
-│   ├── nodestream
-│   │   ├── __init__.py
-│   │   ├── *.py
-│   │   ├── tests
-│   │   │   ├── __init__.py
-│   │   │   ├── test_*.py
-|   ├── pyproject.toml
-├── plugins
-│   ├── nodestream-plugin-neo4j
-│   │   ├── nodestream_plugin_neo4j
-│   │   │   ├── __init__.py
-│   │   │   ├── *.py
-│   │   │   ├── tests
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── test_*.py
-|   │   ├── pyproject.toml
-# ... more plugins
-```
-
-> [!NOTE]  
-> Each package has its own `pyproject.toml` file and `tests` directory inside of it. This allows you to run tests for each package individually or all at once. 
-
-> [!NOTE]  
-> There is also a root `pyproject.toml` file that contains dev dependencies and acts as the "workspace" configuration.
-
 #### Getting Setup 
 
 To get started you'll need to install poery.
