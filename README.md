@@ -1,9 +1,8 @@
-# Nodestream
+# Nodestream 
 
-
-<picture>
+<picture >
   <source media="(prefers-color-scheme: dark)" srcset="./docs/img/NodeSteamLogo_Small_Light.png">
-  <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="./docs/img/NodeSteamLogo_Small_Dark.png" width="360">
+  <img alt="Nodestream Logo" src="./docs/img/NodeSteamLogo_Small_Dark.png" width="300" align="right">
 </picture>
 
 
