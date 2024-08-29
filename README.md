@@ -1,7 +1,12 @@
 # Nodestream
 
-<img src="https://nodestream-proj.github.io/docs/img/nodestream.png" align="right"
-     alt="Nodestream Execution Demo" width="360">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/img/NodeSteamLogo_Small_Light.png">
+  <img alt="Text changing depending on mode. Light: 'So light!' Dark: 'So dark!'" src="./docs/img/NodeSteamLogo_Small_Dark.png" width="360">
+</picture>
+
+
 > A Declarative framework for Building, Maintaining, and Analyzing Graph Data 🚀
 
 [![Continuous Integration](https://github.com/nodestream-proj/nodestream/actions/workflows/ci.yaml/badge.svg)](https://github.com/nodestream-proj/nodestream/actions/workflows/ci.yaml)
@@ -154,64 +159,24 @@ A conceptutual  overview of the project structure is below.
 
 #### Getting Setup 
 
-To get started you'll need to install uv.
+To get started you'll need to install poery.
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+curl -sSL https://install.python-poetry.org | python3 -
 ```
 
-You don't need to install dependencies explicitly.
-It will happen automatically when you run `uv` commands. 
+You then can install the project dependencies with the following command:
+
+```bash
+poetry install
+```
+
+No need to active a virtual environment. Poetry handles that for you with `poetry run` and `poetry shell`.
 
 #### Running Tests
 
 To run tests for the entire project, run the following command:
 
 ```bash
-uv run pytest
+poetry run pytest
 ```
-
-To run tests for a specific package, run the following command:
-
-```bash
-cd plugins/nodestream-plugin-neo4j
-uv run pytest
-```
-
-In may cases, you may want to skip running the e2e tests.
-To do this, you can run the following command:
-
-```bash
-uv run pytest -m "not e2e"
-```
-
-#### Versioning a Package
-
-To version a package, you can run the following command:
-
-```bash
-uv run scripts/versioning.py --version 0.13.2 --package nodestream 
-```
-
-This will update the version of the `nodestream` package to `0.13.2`. 
-Just commit the changes and push to the repository.
-If you want to version all packages, you can run the following command:
-
-```bash
-uv run scripts/versioning.py --version 0.13.2 --package all
-```
-
-#### Making a Release
-
-> [!NOTE]  
-> This section is for maintainers only.
-
-The versioning script will print out the expected release / tag names for each package to use in github. 
-For example, the output might look like this:
-
-```
-# uv run scripts/versioning.py --version 0.13.2 --package nodestream
-nodestream: nodestream/v0.13.2
-```
-
-You can then create a release in Github with the tag name `nodestream/v0.13.2` to release the nodestream package.
