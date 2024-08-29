@@ -1,0 +1,123 @@
+{
+  "projectName": "nodestream",
+  "projectOwner": "nodestream-proj",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "none",
+  "contributors": [
+    {
+      "login": "zprobst",
+      "name": "Zach Probst",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22159145?v=4",
+      "profile": "https://github.com/zprobst",
+      "contributions": [
+        "code",
+        "review",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "ccloes",
+      "name": "Chad Cloes",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1000538?v=4",
+      "profile": "https://github.com/ccloes",
+      "contributions": [
+        "code",
+        "review",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "angelosantos4",
+      "name": "asantos4",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142852840?v=4",
+      "profile": "https://github.com/angelosantos4",
+      "contributions": [
+        "code",
+        "review",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "grantleehoffman",
+      "name": "Grant Hoffman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/603848?v=4",
+      "profile": "https://github.com/grantleehoffman",
+      "contributions": [
+        "code",
+        "review"
+      ]
+    },
+    {
+      "login": "khneal",
+      "name": "khneal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40273388?v=4",
+      "profile": "https://github.com/khneal",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "orozen",
+      "name": "orozen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/62594754?v=4",
+      "profile": "https://github.com/orozen",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "sophiadt",
+      "name": "Sophia Don Tranho",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66497192?v=4",
+      "profile": "https://sites.google.com/view/ai4allrobotics",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "bechbd",
+      "name": "bechbd",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6898505?v=4",
+      "profile": "https://github.com/bechbd",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "yasonk",
+      "name": "yasonk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6750414?v=4",
+      "profile": "https://github.com/yasonk",
+      "contributions": [
+        "code",
+        "review"
+      ]
+    },
+    {
+      "login": "stuartio",
+      "name": "Stuart Macleod",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22449467?v=4",
+      "profile": "https://github.com/stuartio",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Cole-Greer",
+      "name": "Cole Greer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/112986082?v=4",
+      "profile": "https://github.com/Cole-Greer",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "linkToUsage": true
+}
