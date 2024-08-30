@@ -64,3 +64,7 @@ class IngestionStrategy(ABC):
     async def flush(self):
         """Flush any pending operations to the database."""
         pass
+
+    async def finish(self):
+        """Close connector by calling finish method from Step"""
+        self.connector.finish()
