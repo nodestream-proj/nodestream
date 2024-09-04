@@ -50,3 +50,7 @@ class QueryExecutor(ABC):
     @abstractmethod
     async def execute_hook(self, hook: IngestionHook):
         raise NotImplementedError
+
+    @abstractmethod
+    async def finish(self):
+        raise NotImplementedError
