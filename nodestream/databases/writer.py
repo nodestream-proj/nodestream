@@ -60,7 +60,7 @@ class GraphDatabaseWriter(Writer):
         if self.pending_records >= self.batch_size:
             await self.flush()
 
-    async def finish(self):
+    async def finish(self, _):
         """Close connector by calling finish method from Step"""
         await self.flush()
         await self.ingest_strategy.finish()
