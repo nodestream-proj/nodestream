@@ -41,6 +41,10 @@ class NullQueryExecutor(QueryExecutor):
     async def execute_hook(self, _: IngestionHook):
         pass
 
+    async def finish(self):
+        """Close connector by calling finish method from Step"""
+        pass
+
 
 class NullRetriver(TypeRetriever):
     def get_nodes_of_type(self, _: str) -> AsyncGenerator[Node, None]:

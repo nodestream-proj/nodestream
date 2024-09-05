@@ -105,3 +105,10 @@ async def test_flush_hooks_after_ingest_calls_executor(ingest_strategy, mocker):
     await ingest_strategy.flush()
     ingest_strategy.executor.execute_hook.assert_awaited_once_with(hook)
     assert_that(ingest_strategy.hooks_saved_for_after_ingest, empty())
+
+
+@pytest.mark.asyncio
+async def test_finish(ingest_strategy, mocker):
+    ingest_strategy.executor.finish = mocker.AsyncMock()
+    await ingest_strategy.finish()
+    ingest_strategy.executor.finish.assert_awaited_once()

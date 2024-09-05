@@ -53,4 +53,5 @@ class QueryExecutor(ABC):
 
     @abstractmethod
     async def finish(self):
+        """Close connector by calling finish method from Step"""
         raise NotImplementedError
