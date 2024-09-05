@@ -50,3 +50,8 @@ class QueryExecutor(ABC):
     @abstractmethod
     async def execute_hook(self, hook: IngestionHook):
         raise NotImplementedError
+
+    @abstractmethod
+    async def finish(self):
+        """Close connector by calling finish method from Step"""
+        raise NotImplementedError

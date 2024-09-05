@@ -63,3 +63,10 @@ async def test_execute_hook_increments_counter_by_one(query_executor_with_statis
             "hook"
         )
         assert get_context().stats[HOOK_STAT] == 1
+
+
+@pytest.mark.asyncio
+async def test_finish(query_executor_with_statistics, mocker):
+    query_executor_with_statistics.inner.finish = mocker.AsyncMock()
+    await query_executor_with_statistics.finish()
+    query_executor_with_statistics.inner.finish.assert_awaited_once()

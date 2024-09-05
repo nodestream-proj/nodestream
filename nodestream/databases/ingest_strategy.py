@@ -64,3 +64,8 @@ class IngestionStrategy(ABC):
     async def flush(self):
         """Flush any pending operations to the database."""
         pass
+
+    @abstractmethod
+    async def finish(self):
+        """Close connector by calling finish method from Step"""
+        raise NotImplementedError

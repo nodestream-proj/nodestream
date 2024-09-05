@@ -43,3 +43,6 @@ class QueryExecutorWithStatistics(QueryExecutor):
     async def execute_hook(self, hook: IngestionHook):
         await self.inner.execute_hook(hook)
         get_context().increment_stat(HOOK_STAT)
+
+    async def finish(self):
+        await self.inner.finish()
