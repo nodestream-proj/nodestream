@@ -93,3 +93,4 @@ nodestream = 'nodestream.cli.application:run'
 
 [tool.ruff]
 ignore = ["E501"]
+target-version = "py310"
