@@ -27,6 +27,7 @@ class Normalizer(Pluggable, ABC):
     """
 
     entrypoint_name = "normalizers"
+    rejects_none_values = True
 
     @classmethod
     def setup(cls):
@@ -37,7 +38,7 @@ class Normalizer(Pluggable, ABC):
         if normalizer_args:
             for flag_name, enabled in normalizer_args.items():
                 if enabled:
-                    value = cls.by_flag_name(flag_name).normalize_value(value)
+                    value = cls.by_flag_name(flag_name).normalize(value)
 
         return value
 
@@ -58,6 +59,11 @@ class Normalizer(Pluggable, ABC):
             return cls.from_alias(flag_name[3:])
         except MissingFromRegistryError:
             raise InvalidFlagError(flag_name) from None
+
+    def normalize(self, value: Any) -> Any:
+        if value is None and self.rejects_none_values:
+            return None
+        return self.normalize_value(value)
 
     @abstractmethod
     def normalize_value(self, value: Any) -> Any:

@@ -17,4 +17,4 @@ from nodestream.pipeline.normalizers import RemoveTrailingDots
 )
 def test_lowercase_strings_normalization(input_value, expected_value):
     subject = RemoveTrailingDots()
-    assert_that(subject.normalize_value(input_value), equal_to(expected_value))
+    assert_that(subject.normalize(input_value), equal_to(expected_value))
