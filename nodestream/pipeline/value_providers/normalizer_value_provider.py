@@ -18,9 +18,7 @@ class NormalizerValueProvider(ValueProvider):
 
     def many_values(self, context: ProviderContext) -> Iterable[Any]:
         try:
-            yield from map(
-                self.normalizer.normalize_value, self.data.many_values(context)
-            )
+            yield from map(self.normalizer.normalize, self.data.many_values(context))
         except Exception as e:
             raise ValueProviderException(str(context.document), self) from e
 
