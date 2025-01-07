@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, Optional
 
 from boto3.dynamodb.types import TypeDeserializer
 
