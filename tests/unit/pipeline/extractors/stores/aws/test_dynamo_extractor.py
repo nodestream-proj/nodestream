@@ -3,101 +3,37 @@ from unittest.mock import patch
 import pytest
 
 from nodestream.pipeline.extractors.stores.aws.dynamodb_extractor import (
-    ATTRIBUTE_TYPE_DESCRIPTOR_HANDLERS,
-    DynamoData,
     DynamoDBExtractor,
     DynamoRecord,
-    convert_array,
-    convert_map,
-    convert_scalar,
-    format_boolean,
-    format_bytes,
-    format_nested_value,
-    format_null,
-    format_number,
-    leave_untouched,
 )
-
-
-class TestObject:
-    pass
-
-
-def test_leave_untouched():
-    assert leave_untouched(TestObject) == TestObject
-
-
-def test_format_number():
-    assert format_number("100") == 100
-    assert format_number("1.25") == 1.25
-
-
-def test_format_nested_value():
-    assert format_nested_value({"S": "SomeString"}) == "SomeString"
-
-
-def test_format_boolean():
-    assert format_boolean("True") is True
-    assert format_boolean("False") is False
-
-
-def test_format_null():
-    assert format_null("True") is None
-    assert format_null("False") == "False"
-
-
-def test_format_bytes():
-    assert format_bytes("100") == b"100"
-    assert format_bytes("a31n3c3") == b"a31n3c3"
-
-
-def test_convert_scalar():
-    assert convert_scalar(TestObject, leave_untouched) == TestObject
-
-
-def test_convert_array():
-    assert convert_array([TestObject, TestObject, TestObject], leave_untouched) == [
-        TestObject,
-        TestObject,
-        TestObject,
-    ]
-
-
-def test_convert_map():
-    assert convert_map({"key1": TestObject, "key2": TestObject}, leave_untouched) == {
-        "key1": TestObject,
-        "key2": TestObject,
-    }
-
 
 DESCRIPTOR_HANDLER_TESTS = [
     ({"S": "TestString"}, "TestString"),
     ({"N": "100"}, 100),
     ({"N": "1.25"}, 1.25),
-    ({"B": "a31n3c3"}, b"a31n3c3"),
-    ({"NULL": "True"}, None),
-    ({"NULL": "False"}, "False"),
-    ({"BOOL": "True"}, True),
-    ({"BOOL": "False"}, False),
-    ({"SS": ["StringA", "StringB"]}, ["StringA", "StringB"]),
-    ({"NS": ["100", "200", "1.0"]}, [100, 200, 1.0]),
-    ({"BS": ["abcdef", "xyz123"]}, [b"abcdef", b"xyz123"]),
+    ({"B": bytes(b"a31n3c3")}, b"a31n3c3"),
+    ({"NULL": True}, None),
+    ({"NULL": False}, None),
+    ({"BOOL": False}, False),
+    ({"BOOL": True}, True),
+    ({"SS": ["StringA", "StringB"]}, {"StringA", "StringB"}),
+    ({"NS": ["100", "200", "1.0"]}, {100, 200, 1.0}),
+    ({"BS": [bytes(b"abcdef"), bytes(b"xyz123")]}, {b"abcdef", b"xyz123"}),
     (
         {"M": {"key1": {"S": "TestString"}, "key2": {"NS": ["100", "1.0"]}}},
-        {"key1": "TestString", "key2": [100, 1.0]},
+        {"key1": "TestString", "key2": {100, 1.0}},
     ),
     (
-        {"L": [{"S": "TestString"}, {"BS": ["abcdef", "xyz123"]}]},
-        ["TestString", [b"abcdef", b"xyz123"]],
+        {"L": [{"S": "TestString"}, {"BS": [bytes(b"abcdef"), bytes(b"xyz123")]}]},
+        ["TestString", {b"abcdef", b"xyz123"}],
     ),
 ]
 
 
 @pytest.mark.parametrize("dynamo_data,result", DESCRIPTOR_HANDLER_TESTS)
-def test_descriptor_handler(dynamo_data, result):
-    data_type, raw_data_value = list(dynamo_data.items())[0]
-    result_handler, type_handler = ATTRIBUTE_TYPE_DESCRIPTOR_HANDLERS[data_type]
-    assert result_handler(raw_data_value, type_handler) == result
+def test_data_unmarshaller(dynamo_data, result):
+    dynamo_data = DynamoRecord.from_raw_dynamo_record({"key": dynamo_data})
+    assert dynamo_data.record_data == {"key": result}
 
 
 TEST_DYNAMO_OBJECT_A = {"N": "100"}
@@ -105,33 +41,14 @@ TEST_DYNAMO_OBJECT_B = {
     "M": {"key1": {"S": "TestString"}, "key2": {"NS": ["100", "1.0"]}}
 }
 
-
-def test_dynamo_data_class_initialization_from_raw_data():
-    dynamo_data_a = DynamoData.from_raw_dynamo_data(TEST_DYNAMO_OBJECT_A)
-    assert dynamo_data_a.data_type == "N"
-    assert dynamo_data_a.raw_data_value == "100"
-    assert dynamo_data_a.python_format == 100
-    dynamo_data_b = DynamoData.from_raw_dynamo_data(TEST_DYNAMO_OBJECT_B)
-    assert dynamo_data_b.data_type == "M"
-    assert dynamo_data_b.raw_data_value == {
-        "key1": {"S": "TestString"},
-        "key2": {"NS": ["100", "1.0"]},
-    }
-    assert dynamo_data_b.python_format == {"key1": "TestString", "key2": [100, 1.0]}
-
-
 TEST_DYNAMO_RECORD = {"number": TEST_DYNAMO_OBJECT_A, "metadata": TEST_DYNAMO_OBJECT_B}
 
 
 def test_dynamo_record_class_initialization_from_raw_data():
     dynamo_record = DynamoRecord.from_raw_dynamo_record(TEST_DYNAMO_RECORD)
     assert dynamo_record.record_data == {
-        "number": DynamoData.from_raw_dynamo_data(TEST_DYNAMO_OBJECT_A),
-        "metadata": DynamoData.from_raw_dynamo_data(TEST_DYNAMO_OBJECT_B),
-    }
-    assert dynamo_record.python_format == {
         "number": 100,
-        "metadata": {"key1": "TestString", "key2": [100, 1.0]},
+        "metadata": {"key1": "TestString", "key2": {100, 1.0}},
     }
 
 
