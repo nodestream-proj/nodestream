@@ -12,7 +12,7 @@ class CastValueProvider(ValueProvider):
         "int": int,
         "float": float,
         "decimal": Decimal,
-        "string": str,
+        "str": str,
         "bool": bool,
         "bytes": bytes,
     }
