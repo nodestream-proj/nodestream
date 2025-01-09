@@ -12,7 +12,7 @@
 [![codecov](https://codecov.io/gh/nodestream-proj/nodestream/branch/main/graph/badge.svg?token=HAPEVKQ6OQ)](https://codecov.io/gh/nodestream-proj/nodestream)
 [![ApacheV2 License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://opensource.org/license/apache-2-0/)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-11-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-12-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 **Nodestream allows you to work with graphs declaratively.** With nodestream, you unlock a bounty of features purpose built for working with graphs. 
@@ -98,6 +98,7 @@ Be sure to checkout or [Contributing Docs](https://nodestream-proj.github.io/doc
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/yasonk"><img src="https://avatars.githubusercontent.com/u/6750414?v=4?s=100" width="100px;" alt="yasonk"/><br /><sub><b>yasonk</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=yasonk" title="Code">💻</a> <a href="https://github.com/nodestream-proj/nodestream/pulls?q=is%3Apr+reviewed-by%3Ayasonk" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/stuartio"><img src="https://avatars.githubusercontent.com/u/22449467?v=4?s=100" width="100px;" alt="Stuart Macleod"/><br /><sub><b>Stuart Macleod</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=stuartio" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Cole-Greer"><img src="https://avatars.githubusercontent.com/u/112986082?v=4?s=100" width="100px;" alt="Cole Greer"/><br /><sub><b>Cole Greer</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=Cole-Greer" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Aclucas1"><img src="https://avatars.githubusercontent.com/u/21301692?v=4?s=100" width="100px;" alt="Austin Lucas"/><br /><sub><b>Austin Lucas</b></sub></a><br /><a href="https://github.com/nodestream-proj/nodestream/commits?author=Aclucas1" title="Code">💻</a></td>
     </tr>
   </tbody>
   <tfoot>
