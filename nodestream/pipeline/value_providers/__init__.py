@@ -1,3 +1,4 @@
+from .cast_value_provider import CastValueProvider
 from .context import ProviderContext
 from .jmespath_value_provider import JmespathValueProvider
 from .mapping_value_provider import MappingValueProvider
@@ -26,4 +27,5 @@ __all__ = (
     "VALUE_PROVIDER_REGISTRY",
     "StaticValueOrValueProvider",
     "RegexValueProvider",
+    "CastValueProvider",
 )
