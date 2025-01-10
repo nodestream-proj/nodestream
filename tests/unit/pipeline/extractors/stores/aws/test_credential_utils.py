@@ -1,6 +1,9 @@
 import datetime
+from unittest.mock import patch
 
 import pytest
+import pytz
+from freezegun import freeze_time
 from hamcrest import assert_that, equal_to, has_key, not_
 
 
@@ -67,6 +70,32 @@ def test_get_boto_session_with_refreshable_credentials(mocker, client_with_role)
     )
     session = client_with_role.get_boto_session_with_refreshable_credentials()
     assert_that(session._credentials.method, equal_to("sts-assume-role"))
+
+
+class MockCredentials:
+    def __init__(self, access_key, secret, token):
+        self.access_key = access_key
+        self.secret_key = secret
+        self.token = token
+
+
+# Testing against a different timezone to ensure the time is being converted to UTC
+@freeze_time(
+    datetime.datetime(1998, 3, 25, 12, 0, 1, tzinfo=pytz.timezone("Etc/GMT-8"))
+)
+def test_get_credentials_from_proider_chain(client_without_role):
+    mock_credentials = MockCredentials(
+        access_key="test_access_key",
+        secret="test_secret_key",
+        token="test_token",
+    )
+    with patch(
+        "botocore.credentials.Credentials.get_frozen_credentials",
+        autospec=True,
+        return_value=mock_credentials,
+    ):
+        credentials = client_without_role.get_credentials_from_provider_chain()
+        assert_that(credentials["expiry_time"], equal_to("1998-03-25T04:50:01+00:00"))
 
 
 def test_get_boto_session_with_refreshable_credentials_from_static(

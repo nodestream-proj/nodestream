@@ -53,9 +53,9 @@ class AwsClientFactory:
             "access_key": session_credentials.access_key,
             "secret_key": session_credentials.secret_key,
             "token": session_credentials.token,
-            "expiry_time": datetime.fromtimestamp(time() + self.session_ttl)
-            .replace(tzinfo=pytz.utc)
-            .isoformat(),
+            "expiry_time": datetime.fromtimestamp(
+                time() + self.session_ttl, tz=pytz.utc
+            ).isoformat(),
         }
 
     def get_boto_session_with_refreshable_credentials(self):
