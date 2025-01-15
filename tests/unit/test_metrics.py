@@ -2,7 +2,6 @@ import sys
 
 import pytest
 
-
 from nodestream.metrics import (
     AggregateHandler,
     ConsoleMetricHandler,
