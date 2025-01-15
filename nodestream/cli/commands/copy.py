@@ -2,11 +2,17 @@ from typing import List
 
 from cleo.helpers import option
 
+from ...metrics import Metrics
 from ...project import Project, Target
 from ...schema import GraphObjectSchema
-from ..operations import InitializeProject, RunCopy
+from ..operations import (
+    InitializeLogger,
+    InitializeMetricsHandler,
+    InitializeProject,
+    RunCopy,
+)
 from .nodestream_command import NodestreamCommand
-from .shared_options import JSON_OPTION, PROJECT_FILE_OPTION
+from .shared_options import JSON_OPTION, PROJECT_FILE_OPTION, PROMETHEUS_OPTIONS
 
 
 class UnknownTargetError(Exception):
@@ -34,30 +40,36 @@ class Copy(NodestreamCommand):
             flag=False,
             multiple=True,
         ),
+        *PROMETHEUS_OPTIONS,
     ]
 
     async def handle_async(self):
-        project = await self.run_operation(InitializeProject())
+        with Metrics.capture():
+            await self.run_operation(InitializeLogger())
+            await self.run_operation(InitializeMetricsHandler())
+            project = await self.run_operation(InitializeProject())
 
-        try:
-            from_target = self.get_taget_from_user(project, "from")
-            to_target = self.get_taget_from_user(project, "to")
-            schema = project.get_schema()
-            all_node_types = schema.nodes
-            all_rel_types = schema.relationships
-            node_types = self.get_type_selection_from_user(all_node_types, "node")
-            rel_types = self.get_type_selection_from_user(all_rel_types, "relationship")
-        except UnknownTargetError:
-            return
+            try:
+                from_target = self.get_taget_from_user(project, "from")
+                to_target = self.get_taget_from_user(project, "to")
+                schema = project.get_schema()
+                all_node_types = schema.nodes
+                all_rel_types = schema.relationships
+                node_types = self.get_type_selection_from_user(all_node_types, "node")
+                rel_types = self.get_type_selection_from_user(
+                    all_rel_types, "relationship"
+                )
+            except UnknownTargetError:
+                return
 
-        self.line("Starting to Copy:")
-        self.line(f"<info>From: {from_target.name}</info>")
-        self.line(f"<info>To: {to_target.name}</info>")
-        self.line(f"<info>Node Types: {', '.join(node_types)}</info>")
-        self.line(f"<info>Relationship Types: {', '.join(rel_types)}</info>")
-        await self.run_operation(
-            RunCopy(from_target, to_target, project, node_types, rel_types)
-        )
+            self.line("Starting to Copy:")
+            self.line(f"<info>From: {from_target.name}</info>")
+            self.line(f"<info>To: {to_target.name}</info>")
+            self.line(f"<info>Node Types: {', '.join(node_types)}</info>")
+            self.line(f"<info>Relationship Types: {', '.join(rel_types)}</info>")
+            await self.run_operation(
+                RunCopy(from_target, to_target, project, node_types, rel_types)
+            )
 
     def get_taget_from_user(self, project: Project, action: str) -> Target:
         # If the user has specified the target in the options, we don't need to prompt
