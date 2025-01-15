@@ -25,6 +25,7 @@ __all__ = (
     "GenerateSquashedMigration",
     "InitializeLogger",
     "InitializeProject",
+    "InitializeMetricsHandler",
     "Operation",
     "RemovePipelineFromProject",
     "RunPipeline",
