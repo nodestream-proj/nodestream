@@ -7,3 +7,4 @@ scopes:
 targets:
   db-one:
     database: "null"
+    collect_stats: true

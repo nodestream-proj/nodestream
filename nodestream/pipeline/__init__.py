@@ -7,7 +7,6 @@ from .filters import (
     ValuesMatchPossibilitiesFilter,
 )
 from .flush import Flush
-from .meta import UNKNOWN_PIPELINE_NAME
 from .pipeline import Pipeline
 from .pipeline_file_loader import PipelineFile, PipelineInitializationArguments
 from .progress_reporter import PipelineProgressReporter

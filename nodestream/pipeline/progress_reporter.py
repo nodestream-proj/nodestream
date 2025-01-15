@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 from psutil import Process
 
-from .meta import PipelineContext
+from ..metrics import Metrics
 
 
 def no_op(*_, **__):
@@ -35,7 +35,7 @@ class PipelineProgressReporter:
     logger: Logger = field(default_factory=getLogger)
     callback: Callable[[int, Any], None] = field(default=no_op)
     on_start_callback: Callable[[], None] = field(default=no_op)
-    on_finish_callback: Callable[[PipelineContext], None] = field(default=no_op)
+    on_finish_callback: Callable[[Metrics], None] = field(default=no_op)
     on_fatal_error_callback: Callable[[Exception], None] = field(default=no_op)
 
     @classmethod
