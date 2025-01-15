@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-from contextvars import ContextVar
 from contextlib import contextmanager
+from contextvars import ContextVar
 from enum import Enum, auto
-from typing import Union, Optional
 from logging import getLogger
+from typing import Optional, Union
 
 from cleo.commands.command import Command
-
 
 Number = Union[int, float]
 
@@ -83,7 +82,7 @@ BUFFERED_RECORDS_DESCRIPTION = "Number of records buffered between steps"
 
 try:
 
-    from prometheus_client import Gauge, start_http_server, REGISTRY
+    from prometheus_client import REGISTRY, Gauge, start_http_server
 
     class PrometheusMetricHandler(MetricHandler):
         """A metric handler that sends metrics to Prometheus."""

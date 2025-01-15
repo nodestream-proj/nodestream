@@ -2,7 +2,7 @@ import asyncio
 from asyncio import Queue, wait_for
 from typing import Optional, Tuple
 
-from ..metrics import Metrics, Metric
+from ..metrics import Metric, Metrics
 
 
 #  WARNING: DoneObject refernces should not exist beyond this module.

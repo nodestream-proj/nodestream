@@ -1,22 +1,21 @@
 from cleo.helpers import option
 
+from ...metrics import Metrics
 from ..operations import (
     ExecuteMigrations,
     InitializeLogger,
+    InitializeMetricsHandler,
     InitializeProject,
     RunPipeline,
-    InitializeMetricsHandler,
 )
 from .nodestream_command import NodestreamCommand
 from .shared_options import (
     JSON_OPTION,
     MANY_PIPELINES_ARGUMENT,
     PROJECT_FILE_OPTION,
-    TARGETS_OPTION,
     PROMETHEUS_OPTIONS,
+    TARGETS_OPTION,
 )
-
-from ...metrics import Metrics
 
 
 class Run(NodestreamCommand):

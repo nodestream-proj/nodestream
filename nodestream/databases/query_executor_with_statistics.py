@@ -1,13 +1,12 @@
 from typing import Iterable
 
+from ..metrics import Metric, Metrics
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
-from ..metrics import Metrics
 from .query_executor import (
     OperationOnNodeIdentity,
     OperationOnRelationshipIdentity,
     QueryExecutor,
 )
-from ..metrics import Metric
 
 
 class QueryExecutorWithStatistics(QueryExecutor):

@@ -2,8 +2,8 @@ from typing import Iterable, Optional
 
 from yaml import safe_dump
 
-from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
 from ...metrics import Metrics
+from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
 from ...project import Project, RunRequest
 from ...project.pipeline_definition import PipelineDefinition
 from ...utils import StringSuggester

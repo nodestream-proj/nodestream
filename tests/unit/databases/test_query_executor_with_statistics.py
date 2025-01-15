@@ -3,7 +3,7 @@ import pytest
 from nodestream.databases.query_executor_with_statistics import (
     QueryExecutorWithStatistics,
 )
-from nodestream.metrics import Metrics, Metric
+from nodestream.metrics import Metric, Metrics
 
 
 @pytest.fixture

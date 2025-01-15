@@ -1,23 +1,22 @@
 from typing import Any
 
+from ...metrics import (
+    AggregateHandler,
+    ConsoleMetricHandler,
+    JsonLogMetricHandler,
+    MetricHandler,
+    Metrics,
+    PrometheusMetricHandler,
+)
 from ..commands.nodestream_command import NodestreamCommand
 from ..commands.shared_options import (
-    PROMETHEUS_PORT_OPTION,
     PROMETHEUS_ADDRESS_OPTION,
     PROMETHEUS_CERTFILE_OPTION,
     PROMETHEUS_KEYFILE_OPTION,
     PROMETHEUS_OPTION,
+    PROMETHEUS_PORT_OPTION,
 )
 from .operation import Operation
-
-from ...metrics import (
-    Metrics,
-    MetricHandler,
-    PrometheusMetricHandler,
-    ConsoleMetricHandler,
-    JsonLogMetricHandler,
-    AggregateHandler,
-)
 
 
 class InitializeMetricsHandler(Operation):

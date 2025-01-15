@@ -1,13 +1,13 @@
 import pytest
-from nodestream.cli.operations.intitialize_metrics import InitializeMetricsHandler
-from nodestream.cli.commands.nodestream_command import NodestreamCommand
 
+from nodestream.cli.commands.nodestream_command import NodestreamCommand
+from nodestream.cli.operations.intitialize_metrics import InitializeMetricsHandler
 from nodestream.metrics import (
-    Metrics,
-    PrometheusMetricHandler,
+    AggregateHandler,
     ConsoleMetricHandler,
     JsonLogMetricHandler,
-    AggregateHandler,
+    Metrics,
+    PrometheusMetricHandler,
 )
 
 SET_PROMETHEUS_OPTIONS = {

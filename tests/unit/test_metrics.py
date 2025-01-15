@@ -1,11 +1,11 @@
 from nodestream.metrics import (
-    Metric,
-    NullMetricHandler,
-    PrometheusMetricHandler,
+    AggregateHandler,
     ConsoleMetricHandler,
     JsonLogMetricHandler,
-    AggregateHandler,
+    Metric,
     Metrics,
+    NullMetricHandler,
+    PrometheusMetricHandler,
 )
 
 
