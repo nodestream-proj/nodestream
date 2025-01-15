@@ -38,7 +38,7 @@ PROMETHEUS_PORT_OPTION = option(
     "prometheus-listen-port",
     description="The port to run the Prometheus metrics server on",
     flag=False,
-    default="8000",
+    default="9090",
 )
 
 PROMETHEUS_ADDRESS_OPTION = option(
