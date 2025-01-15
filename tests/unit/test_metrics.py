@@ -1,3 +1,8 @@
+import sys
+
+import pytest
+
+
 from nodestream.metrics import (
     AggregateHandler,
     ConsoleMetricHandler,
@@ -84,3 +89,22 @@ def test_metrics_contextualize():
     metrics.contextualize("new_scope", "new_pipeline")
     assert metrics.scope_name == "new_scope"
     assert metrics.pipeline_name == "new_pipeline"
+
+
+def test_prometheus_metric_handler_import_error(mocker):
+    # These are the hoops we must run through to test an ImportError
+    # for the case where the prometheus_client library is not installed
+    # and the PrometheusMetricHandler is instantiated. So patch the
+    # prometheus_client module to None and delete the metrics module
+    # from sys.modules to reload it.
+    mocker.patch.dict("sys.modules", {"prometheus_client": None})
+    del sys.modules["nodestream.metrics"]
+    from nodestream.metrics import PrometheusMetricHandler
+
+    with pytest.raises(ImportError) as excinfo:
+        PrometheusMetricHandler()
+
+    assert (
+        "The prometheus_client library is required to use the PrometheusMetricHandler."
+        in str(excinfo.value)
+    )
