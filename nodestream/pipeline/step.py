@@ -1,5 +1,6 @@
 from typing import AsyncGenerator, Optional
 
+from ..metrics import Metric, Metrics
 from .progress_reporter import PipelineProgressReporter
 
 
@@ -45,6 +46,8 @@ class StepContext:
         )
         if fatal:
             self.reporter.on_fatal_error_callback(exception)
+        else:
+            Metrics.get().increment(Metric.NON_FATAL_ERRORS)
 
     def debug(self, message: str, **extras):
         """Log a debug message.

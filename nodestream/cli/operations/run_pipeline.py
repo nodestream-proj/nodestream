@@ -2,8 +2,8 @@ from typing import Iterable, Optional
 
 from yaml import safe_dump
 
+from ...metrics import Metrics
 from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
-from ...pipeline.meta import PipelineContext
 from ...project import Project, RunRequest
 from ...project.pipeline_definition import PipelineDefinition
 from ...utils import StringSuggester
@@ -137,7 +137,7 @@ class ProgressIndicator:
     def progress_callback(self, _, __):
         pass
 
-    def on_finish(self, context: PipelineContext):
+    def on_finish(self, metrics: Metrics):
         pass
 
     def on_fatal_error(self, exception: Exception):
@@ -161,12 +161,8 @@ class SpinnerProgressIndicator(ProgressIndicator):
             f"Currently processing record at index: <info>{index}</info>"
         )
 
-    def on_finish(self, context: PipelineContext):
+    def on_finish(self, metrics: Metrics):
         self.progress.finish(f"Finished running pipeline: '{self.pipeline_name}'")
-
-        stats = ((k, str(v)) for k, v in context.stats.items())
-        table = self.command.table(STATS_TABLE_COLS, stats)
-        table.render()
 
         if self.exception:
             raise self.exception

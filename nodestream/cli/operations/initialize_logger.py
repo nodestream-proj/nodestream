@@ -4,7 +4,7 @@ from typing import Any
 
 from pythonjsonlogger.jsonlogger import JsonFormatter
 
-from ...pipeline.meta import get_context
+from ...metrics import Metrics
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
 
@@ -19,8 +19,9 @@ def configure_logging_with_json_defaults():
 
     def record_factory(*args, **kwargs):
         record = old_record_factory(*args, **kwargs)
-        record.pipeline_name = get_context().name
-        record.pipeline_scope = get_context().scope
+        metrics = Metrics.get()
+        record.pipeline_name = metrics.pipeline_name
+        record.pipeline_scope = metrics.scope_name
         return record
 
     logging.setLogRecordFactory(record_factory)

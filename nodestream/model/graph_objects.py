@@ -51,13 +51,13 @@ class PropertySet(dict):
 
     @classmethod
     def default_properties(cls) -> "PropertySet":
-        from ..pipeline.meta import get_context
+        from ..metrics import Metrics
 
         """Returns a default set of properties which set values.
 
         These default values indicate when the current pipeline touched the object the properties are for.
         """
-        pipeline_name = get_context().name
+        pipeline_name = Metrics.get().pipeline_name
         now = get_cached_timestamp()
         return cls(
             {

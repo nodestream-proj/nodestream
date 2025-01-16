@@ -7,7 +7,7 @@ from nodestream.cli.operations.initialize_logger import (
     InitializeLogger,
     configure_logging_with_json_defaults,
 )
-from nodestream.pipeline.meta import start_context
+from nodestream.metrics import Metrics
 
 
 @pytest.mark.asyncio
@@ -37,7 +37,8 @@ def test_logs_pipeline_name(capsys):
     logger = logging.getLogger("some")
     pipeline_name = "test_pipeline_name"
     scope_name = "test_scope_name"
-    with start_context(pipeline_name, scope_name):
+    with Metrics.capture() as metrics:
+        metrics.contextualize(scope_name, pipeline_name)
         logger.info("some message")
 
     captured_out = capsys.readouterr().err

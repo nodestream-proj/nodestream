@@ -7,7 +7,7 @@ from nodestream.cli.operations.run_pipeline import (
     RunPipeline,
     SpinnerProgressIndicator,
 )
-from nodestream.pipeline.meta import PipelineContext
+from nodestream.metrics import Metrics
 from nodestream.project import PipelineConfiguration, PipelineDefinition, Project
 
 
@@ -52,7 +52,7 @@ def test_spinner_on_start(mocker):
 def test_spinner_on_finish(mocker):
     spinner = SpinnerProgressIndicator(mocker.Mock(), "pipeline_name")
     spinner.on_start()
-    spinner.on_finish(PipelineContext())
+    spinner.on_finish(Metrics())
     spinner.progress.finish.assert_called_once()
 
 
@@ -70,7 +70,7 @@ def test_spinner_error_condition(mocker):
     spinner.progress.set_message.assert_called_once()
 
     with pytest.raises(Exception):
-        spinner.on_finish(PipelineContext())
+        spinner.on_finish(Metrics())
 
 
 @pytest.mark.parametrize(

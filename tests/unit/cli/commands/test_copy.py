@@ -95,14 +95,16 @@ async def test_handle_async_unknown_target_error(copy_command, mocker):
     copy_command.run_operation = mocker.AsyncMock()
     copy_command.get_taget_from_user = mocker.Mock(side_effect=UnknownTargetError)
     await copy_command.handle_async()
-    copy_command.run_operation.assert_called_once()  # Just loading the project
+    assert copy_command.run_operation.await_count == 3
 
 
 @pytest.mark.asyncio
 async def test_handle_async(copy_command, mocker, basic_schema, project):
     project.get_schema = mocker.Mock(return_value=basic_schema)
     copy_command.line = mocker.Mock()
-    copy_command.run_operation = mocker.AsyncMock(side_effect=[project, None])
+    copy_command.run_operation = mocker.AsyncMock(
+        side_effect=[None, None, project, None]
+    )
     copy_command.get_taget_from_user = mocker.Mock(
         side_effect=[project.targets_by_name["test"], project.targets_by_name["test2"]]
     )

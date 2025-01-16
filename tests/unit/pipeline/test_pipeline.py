@@ -134,5 +134,5 @@ async def test_pipeline_output_call_handling_errors(mocker):
         ),
     )
 
-    await output.call_handling_errors(output.reporter.on_start_callback)
+    output.call_handling_errors(output.reporter.on_start_callback)
     output.reporter.logger.exception.assert_called_once()

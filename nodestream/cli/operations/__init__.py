@@ -6,6 +6,7 @@ from .generate_pipeline_scaffold import GeneratePipelineScaffold
 from .generate_squashed_migration import GenerateSquashedMigration
 from .initialize_logger import InitializeLogger
 from .initialize_project import InitializeProject
+from .intitialize_metrics import InitializeMetricsHandler
 from .operation import Operation
 from .print_project_schema import PrintProjectSchema
 from .remove_pipeline_from_project import RemovePipelineFromProject
@@ -24,6 +25,7 @@ __all__ = (
     "GenerateSquashedMigration",
     "InitializeLogger",
     "InitializeProject",
+    "InitializeMetricsHandler",
     "Operation",
     "RemovePipelineFromProject",
     "RunPipeline",

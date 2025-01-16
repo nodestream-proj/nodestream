@@ -27,3 +27,44 @@ TARGETS_OPTION = option(
     multiple=True,
     flag=False,
 )
+
+PROMETHEUS_OPTION = option(
+    "prometheus",
+    description="Enable the Prometheus metrics server",
+    flag=True,
+)
+
+PROMETHEUS_PORT_OPTION = option(
+    "prometheus-listen-port",
+    description="The port to run the Prometheus metrics server on",
+    flag=False,
+    default="9090",
+)
+
+PROMETHEUS_ADDRESS_OPTION = option(
+    "prometheus-listen-address",
+    description="The address to run the Prometheus metrics server on",
+    flag=False,
+    default="0.0.0.0",
+)
+
+PROMETHEUS_CERTFILE_OPTION = option(
+    "prometheus-certfile",
+    description="The path to the certificate file for the Prometheus metrics server",
+    flag=False,
+)
+
+PROMETHEUS_KEYFILE_OPTION = option(
+    "prometheus-keyfile",
+    description="The path to the key file for the Prometheus metrics server",
+    flag=False,
+)
+
+
+PROMETHEUS_OPTIONS = [
+    PROMETHEUS_OPTION,
+    PROMETHEUS_PORT_OPTION,
+    PROMETHEUS_ADDRESS_OPTION,
+    PROMETHEUS_CERTFILE_OPTION,
+    PROMETHEUS_KEYFILE_OPTION,
+]

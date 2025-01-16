@@ -2,6 +2,8 @@ import asyncio
 from asyncio import Queue, wait_for
 from typing import Optional, Tuple
 
+from ..metrics import Metric, Metrics
+
 
 #  WARNING: DoneObject refernces should not exist beyond this module.
 class DoneObject:
@@ -35,11 +37,12 @@ class Channel:
     prevent one step from overwhelming another step with too many records.
     """
 
-    __slots__ = ("queue", "input_dropped")
+    __slots__ = ("queue", "input_dropped", "metrics")
 
     def __init__(self, size: int) -> None:
         self.queue = Queue(maxsize=size)
         self.input_dropped = False
+        self.metrics = Metrics.get()
 
     async def get(self):
         """Get an object from the channel.
@@ -51,7 +54,9 @@ class Channel:
         Returns:
             object: The object that was retrieved from the channel.
         """
-        return await self.queue.get()
+        object = await self.queue.get()
+        self.metrics.decrement(Metric.BUFFERED_RECORDS)
+        return object
 
     async def put(self, obj) -> bool:
         """Put an object in the channel.
@@ -66,6 +71,7 @@ class Channel:
         """
         try:
             await wait_for(self.queue.put(obj), timeout=CHANNEL_TIMEOUT)
+            self.metrics.increment(Metric.BUFFERED_RECORDS)
             return True
         except (TimeoutError, asyncio.TimeoutError):
             return False

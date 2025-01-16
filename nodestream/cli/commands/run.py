@@ -1,8 +1,10 @@
 from cleo.helpers import option
 
+from ...metrics import Metrics
 from ..operations import (
     ExecuteMigrations,
     InitializeLogger,
+    InitializeMetricsHandler,
     InitializeProject,
     RunPipeline,
 )
@@ -11,6 +13,7 @@ from .shared_options import (
     JSON_OPTION,
     MANY_PIPELINES_ARGUMENT,
     PROJECT_FILE_OPTION,
+    PROMETHEUS_OPTIONS,
     TARGETS_OPTION,
 )
 
@@ -49,6 +52,7 @@ class Run(NodestreamCommand):
             description="Ensure all specified targets are migrated before running specified pipelines",
             flag=True,
         ),
+        *PROMETHEUS_OPTIONS,
     ]
 
     async def auto_migrate_targets_if_needed(self, project):
@@ -62,7 +66,9 @@ class Run(NodestreamCommand):
             await self.run_operation(ExecuteMigrations(migrations, target))
 
     async def handle_async(self):
-        await self.run_operation(InitializeLogger())
-        project = await self.run_operation(InitializeProject())
-        await self.auto_migrate_targets_if_needed(project)
-        await self.run_operation(RunPipeline(project))
+        with Metrics.capture():
+            await self.run_operation(InitializeLogger())
+            await self.run_operation(InitializeMetricsHandler())
+            project = await self.run_operation(InitializeProject())
+            await self.auto_migrate_targets_if_needed(project)
+            await self.run_operation(RunPipeline(project))

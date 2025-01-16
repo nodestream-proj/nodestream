@@ -2,9 +2,9 @@ from asyncio import create_task, gather
 from logging import getLogger
 from typing import Iterable, List, Tuple
 
+from ..metrics import Metric, Metrics
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .channel import StepInput, StepOutput, channel
-from .meta import get_context
 from .progress_reporter import PipelineProgressReporter
 from .step import Step, StepContext
 
@@ -33,12 +33,14 @@ class StepExecutor:
 
     async def start_step(self):
         try:
+            Metrics.get().increment(Metric.STEPS_RUNNING)
             await self.step.start(self.context)
         except Exception as e:
             self.context.report_error("Error starting step", e)
 
     async def stop_step(self):
         try:
+            Metrics.get().decrement(Metric.STEPS_RUNNING)
             await self.step.finish(self.context)
         except Exception as e:
             self.context.report_error("Error stopping step", e)
@@ -91,7 +93,7 @@ class PipelineOutput:
         self.input = input
         self.reporter = reporter
 
-    async def call_handling_errors(self, f, *args):
+    def call_handling_errors(self, f, *args):
         try:
             f(*args)
         except Exception:
@@ -106,15 +108,16 @@ class PipelineOutput:
         block until all records have been consumed from the last step in the
         pipeline.
         """
-        await self.call_handling_errors(self.reporter.on_start_callback)
+        metrics = Metrics.get()
+        self.call_handling_errors(self.reporter.on_start_callback)
 
         index = 0
         while (obj := await self.input.get()) is not None:
-            if index % self.reporter.reporting_frequency == 0:
-                await self.call_handling_errors(self.reporter.callback, index, obj)
+            metrics.increment(Metric.RECORDS)
+            self.call_handling_errors(self.reporter.report, index, obj)
             index += 1
 
-        await self.call_handling_errors(self.reporter.on_finish_callback, get_context())
+        self.call_handling_errors(self.reporter.on_finish_callback, metrics)
 
 
 class Pipeline(ExpandsSchemaFromChildren):
