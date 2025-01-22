@@ -198,7 +198,7 @@ class ConsoleMetricHandler(MetricHandler):
         self.metrics[metric] -= value
 
     def stop(self):
-        stats = ((k, str(v)) for k, v in self.metrics.items())
+        stats = ((k.name, str(v)) for k, v in self.metrics.items() if v > 0)
         table = self.command.table(STATS_TABLE_COLS, stats)
         table.render()
 
