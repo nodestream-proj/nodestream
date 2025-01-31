@@ -60,10 +60,12 @@ class DynamoDBExtractor(Extractor):
         self.logger = getLogger(self.__class__.__name__)
         tentative_parameters = {
             "TableName": table_name,
-            "PageSize": limit,
             "ScanFilter": scan_filter,
             "ProjectionExpression": projection_expression,
             "FilterExpression": filter_expression,
+            "PaginationConfig": {
+                "PageSize": limit,
+            },
         }
 
         self.effective_parameters = {

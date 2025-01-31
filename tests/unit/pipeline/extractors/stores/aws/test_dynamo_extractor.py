@@ -61,7 +61,9 @@ def test_dynamo_extractor_initialization_without_args():
         )
         assert extractor.effective_parameters == {
             "TableName": "table_name",
-            "PageSize": 100,
+            "PaginationConfig": {
+                "PageSize": 100,
+            },
         }
         client_mock.assert_called_once_with("dynamodb")
 
@@ -72,7 +74,6 @@ def test_dynamo_extractor_initialization_with_args():
     ) as client_mock:
         extractor = DynamoDBExtractor.from_file_data(
             table_name="table_name",
-            limit=100,
             scan_filter={
                 "number": {
                     "AttributeValueList": [{"N": "90"}],
@@ -84,10 +85,10 @@ def test_dynamo_extractor_initialization_with_args():
             assume_role_arn="test_role",
             assume_role_external_id="test_arn",
             region_name="test_region",
+            limit=100,
         )
         assert extractor.effective_parameters == {
             "TableName": "table_name",
-            "PageSize": 100,
             "ScanFilter": {
                 "number": {
                     "AttributeValueList": [{"N": "90"}],
@@ -96,6 +97,9 @@ def test_dynamo_extractor_initialization_with_args():
             },
             "ProjectionExpression": "test_projection_expression",
             "FilterExpression": "test_filter_expression",
+            "PaginationConfig": {
+                "PageSize": 100,
+            },
         }
         client_mock.assert_called_once_with("dynamodb")
 
