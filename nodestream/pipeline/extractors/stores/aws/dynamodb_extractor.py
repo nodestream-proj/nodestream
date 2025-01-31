@@ -58,36 +58,25 @@ class DynamoDBExtractor(Extractor):
     ) -> None:
         self.client = client
         self.logger = getLogger(self.__class__.__name__)
-        self.tentative_parameters = {
+        tentative_parameters = {
             "TableName": table_name,
-            "Limit": limit,
             "ScanFilter": scan_filter,
             "ProjectionExpression": projection_expression,
             "FilterExpression": filter_expression,
+            "PaginationConfig": {
+                "PageSize": limit,
+            },
         }
 
-        self.effective_parameters = self.create_effective_parameters()
-
-    def create_effective_parameters(self):
-        effective_parameters = {}
-        for key, value in self.tentative_parameters.items():
-            if value:
-                effective_parameters[key] = value
-        return effective_parameters
+        self.effective_parameters = {
+            key: value for key, value in tentative_parameters.items() if value
+        }
 
     def scan_table(self):
-        should_continue = True
-        while should_continue:
-            response: dict = self.client.scan(**self.effective_parameters)
-            yield from response["Items"]
-            last_evaluated_key = response.get("LastEvaluatedKey", None)
-            if last_evaluated_key is not None:
-                should_continue = True
-                self.effective_parameters.update(
-                    {"ExclusiveStartKey": last_evaluated_key}
-                )
-            else:
-                should_continue = False
+        paginator = self.client.get_paginator("scan")
+        pages = paginator.paginate(**self.effective_parameters)
+        for page in pages:
+            yield from page["Items"]
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for record in self.scan_table():

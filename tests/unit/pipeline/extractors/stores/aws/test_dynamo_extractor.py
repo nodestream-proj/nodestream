@@ -61,7 +61,9 @@ def test_dynamo_extractor_initialization_without_args():
         )
         assert extractor.effective_parameters == {
             "TableName": "table_name",
-            "Limit": 100,
+            "PaginationConfig": {
+                "PageSize": 100,
+            },
         }
         client_mock.assert_called_once_with("dynamodb")
 
@@ -72,7 +74,6 @@ def test_dynamo_extractor_initialization_with_args():
     ) as client_mock:
         extractor = DynamoDBExtractor.from_file_data(
             table_name="table_name",
-            limit=100,
             scan_filter={
                 "number": {
                     "AttributeValueList": [{"N": "90"}],
@@ -84,10 +85,10 @@ def test_dynamo_extractor_initialization_with_args():
             assume_role_arn="test_role",
             assume_role_external_id="test_arn",
             region_name="test_region",
+            limit=100,
         )
         assert extractor.effective_parameters == {
             "TableName": "table_name",
-            "Limit": 100,
             "ScanFilter": {
                 "number": {
                     "AttributeValueList": [{"N": "90"}],
@@ -96,6 +97,9 @@ def test_dynamo_extractor_initialization_with_args():
             },
             "ProjectionExpression": "test_projection_expression",
             "FilterExpression": "test_filter_expression",
+            "PaginationConfig": {
+                "PageSize": 100,
+            },
         }
         client_mock.assert_called_once_with("dynamodb")
 
@@ -119,52 +123,47 @@ TEST_RESULTS = [
 ]
 
 
-class MockResponder:
-    def __init__(self, items):
-        self.items = items
-        self.times_called = 0
-
-    def scan(self, **parameters):
-        self.times_called += 1
-        index = 0
-        if "ExclusiveStartKey" in parameters:
-            index = parameters["ExclusiveStartKey"]
-        limit = parameters["Limit"]
-        return_index = index + limit
-
-        response = {}
-        if return_index < len(self.items):
-            response.update({"LastEvaluatedKey": return_index})
-
-        # If we have records remaining we provide the "LastEvaluatedKey"
-        response.update({"Items": self.items[index:return_index]})
-        return response
+@pytest.fixture
+def mock_dynamodb_client(mocker):
+    return mocker.MagicMock()
 
 
-def test_dynamo_extractor_table_scanner():
-    extractor = DynamoDBExtractor(
-        client=MockResponder(TEST_DATA),
-        table_name="table_name",
-        limit=2,
+@pytest.fixture
+def dynamodb_extractor(mock_dynamodb_client):
+    return DynamoDBExtractor(
+        client=mock_dynamodb_client,
+        table_name="test_table",
+        limit=100,
         scan_filter={},
         projection_expression=None,
         filter_expression=None,
     )
-    result = [item for item in extractor.scan_table()]
-    assert extractor.client.times_called == 3
-    assert result == TEST_DATA
+
+
+def test_dynamodb_extractor_scan_table(
+    mocker, dynamodb_extractor, mock_dynamodb_client
+):
+    mock_paginator = mocker.MagicMock()
+    mock_dynamodb_client.get_paginator.return_value = mock_paginator
+    mock_paginator.paginate.return_value = [
+        {"Items": [{"attribute1": {"S": "value1"}}]},
+        {"Items": [{"attribute2": {"N": "123"}}]},
+    ]
+
+    items = list(dynamodb_extractor.scan_table())
+    assert items == [{"attribute1": {"S": "value1"}}, {"attribute2": {"N": "123"}}]
 
 
 @pytest.mark.asyncio
-async def test_dynamo_extractor_extract_records():
-    extractor = DynamoDBExtractor(
-        client=MockResponder(TEST_DATA),
-        table_name="table_name",
-        limit=2,
-        scan_filter={},
-        projection_expression=None,
-        filter_expression=None,
-    )
-    result = [item async for item in extractor.extract_records()]
-    assert extractor.client.times_called == 3
-    assert result == TEST_RESULTS
+async def test_dynamodb_extractor_extract_records(
+    mocker, dynamodb_extractor, mock_dynamodb_client
+):
+    mock_paginator = mocker.MagicMock()
+    mock_dynamodb_client.get_paginator.return_value = mock_paginator
+    mock_paginator.paginate.return_value = [
+        {"Items": [{"attribute1": {"S": "value1"}}]},
+        {"Items": [{"attribute2": {"N": "123"}}]},
+    ]
+
+    records = [record async for record in dynamodb_extractor.extract_records()]
+    assert records == [{"attribute1": "value1"}, {"attribute2": 123}]
