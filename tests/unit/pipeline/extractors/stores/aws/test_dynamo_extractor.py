@@ -61,7 +61,7 @@ def test_dynamo_extractor_initialization_without_args():
         )
         assert extractor.effective_parameters == {
             "TableName": "table_name",
-            "Limit": 100,
+            "PageSize": 100,
         }
         client_mock.assert_called_once_with("dynamodb")
 
@@ -87,7 +87,7 @@ def test_dynamo_extractor_initialization_with_args():
         )
         assert extractor.effective_parameters == {
             "TableName": "table_name",
-            "Limit": 100,
+            "PageSize": 100,
             "ScanFilter": {
                 "number": {
                     "AttributeValueList": [{"N": "90"}],
