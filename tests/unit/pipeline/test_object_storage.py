@@ -93,6 +93,13 @@ def test_directory_object_store_delete(directory_object_store):
     assert_that(directory_object_store.get(SOME_KEY), is_(none()))
 
 
+def test_directory_object_store_get_pickled(directory_object_store):
+    data = {"data": SOME_DATA}
+    directory_object_store.put_picklable(SOME_KEY, data)
+    retrieved_data = directory_object_store.get_pickled(SOME_KEY)
+    assert_that(retrieved_data, equal_to(data))
+
+
 def test_directory_object_store_default_directory():
     store = DirectoryObjectStore.in_current_directory()
     assert_that(store.root, equal_to(Path.cwd() / ".nodestream" / "objects"))
