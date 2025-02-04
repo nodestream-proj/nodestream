@@ -2,16 +2,16 @@ import base64
 from pathlib import Path
 
 import pytest
-from hamcrest import assert_that, none, is_, equal_to, not_none
+from hamcrest import assert_that, equal_to, is_, none, not_none
 
 from nodestream.pipeline.object_storage import (
-    InvalidSignatureError,
-    SignedObject,
-    HmacSigner,
-    StaticNamespace,
     DirectoryObjectStore,
-    NullObjectStore,
+    HmacSigner,
+    InvalidSignatureError,
     MalformedSignedObjectError,
+    NullObjectStore,
+    SignedObject,
+    StaticNamespace,
 )
 
 SOME_KEY = "some_key"
@@ -86,10 +86,12 @@ def test_directory_object_store_missing_object(directory_object_store):
     retrieved_data = directory_object_store.get(SOME_KEY)
     assert_that(retrieved_data, is_(none()))
 
+
 def test_directory_object_store_delete(directory_object_store):
     directory_object_store.put(SOME_KEY, SOME_DATA)
     directory_object_store.delete(SOME_KEY)
     assert_that(directory_object_store.get(SOME_KEY), is_(none()))
+
 
 def test_directory_object_store_default_directory():
     store = DirectoryObjectStore.in_current_directory()
