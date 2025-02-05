@@ -4,6 +4,7 @@ from yaml import safe_dump
 
 from ...metrics import Metrics
 from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
+from ...pipeline.object_storage import ObjectStore
 from ...project import Project, RunRequest
 from ...project.pipeline_definition import PipelineDefinition
 from ...utils import StringSuggester
@@ -101,6 +102,7 @@ class RunPipeline(Operation):
                 extra_steps=list(
                     self.get_writer_steps_for_specified_targets(command, pipeline)
                 ),
+                object_store=ObjectStore.in_current_directory(),
             ),
             progress_reporter=self.create_progress_reporter(command, pipeline.name),
         )

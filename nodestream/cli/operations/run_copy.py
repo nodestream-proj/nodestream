@@ -2,6 +2,7 @@ from typing import List
 
 from ...databases import Copier, GraphDatabaseWriter
 from ...pipeline import Pipeline
+from ...pipeline.object_storage import ObjectStore
 from ...project import Project, Target
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
@@ -29,7 +30,9 @@ class RunCopy(Operation):
     def build_pipeline(self) -> Pipeline:
         copier = self.build_copier()
         writer = self.build_writer()
-        return Pipeline([copier, writer], step_outbox_size=10000)
+        return Pipeline(
+            [copier, writer], step_outbox_size=10000, object_store=ObjectStore.null()
+        )
 
     def build_copier(self) -> Copier:
         return Copier(

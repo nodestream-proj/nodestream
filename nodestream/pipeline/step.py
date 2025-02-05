@@ -1,6 +1,7 @@
 from typing import AsyncGenerator, Optional
 
 from ..metrics import Metric, Metrics
+from .object_storage import ObjectStore
 from .progress_reporter import PipelineProgressReporter
 
 
@@ -11,14 +12,19 @@ class StepContext:
     and report and perist information about the state of the pipeline.
     """
 
-    __slots__ = ("reporter", "index", "name")
+    __slots__ = ("reporter", "index", "name", "object_store")
 
     def __init__(
-        self, name: str, index: int, reporter: PipelineProgressReporter
+        self,
+        name: str,
+        index: int,
+        reporter: PipelineProgressReporter,
+        object_store: ObjectStore,
     ) -> None:
         self.name = name
         self.reporter = reporter
         self.index = index
+        self.object_store = object_store
 
     def report_error(
         self,
@@ -113,7 +119,7 @@ class Step:
         """
         yield record
 
-    async def emit_outstanding_records(self):
+    async def emit_outstanding_records(self, context: StepContext):
         """Emit any outstanding records.
 
         This method is called after all records have been processed. It is

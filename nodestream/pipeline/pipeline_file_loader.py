@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import hashlib
+from dataclasses import dataclass, field
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
@@ -12,6 +13,7 @@ from ..file_io import (
 from .argument_resolvers import set_config
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
+from .object_storage import ObjectStore
 from .pipeline import Pipeline
 from .scope_config import ScopeConfig
 from .step import Step
@@ -51,6 +53,7 @@ class PipelineInitializationArguments:
     on_effective_configuration_resolved: Optional[Callable[[List[Dict]], None]] = None
     extra_steps: Optional[List[Step]] = None
     effecitve_config_values: Optional[ScopeConfig] = None
+    object_store: ObjectStore = field(default_factory=ObjectStore.null)
 
     @classmethod
     def for_introspection(cls):
@@ -149,7 +152,11 @@ class PipelineFileContents(LoadsFromYamlFile):
                 if step_definition.should_be_loaded(init_args.annotations)
             ]
             steps = steps_defined_in_file + (init_args.extra_steps or [])
-        return Pipeline(steps, step_outbox_size=init_args.step_outbox_size)
+        return Pipeline(
+            steps,
+            step_outbox_size=init_args.step_outbox_size,
+            object_store=init_args.object_store,
+        )
 
 
 class PipelineFile:
@@ -157,11 +164,16 @@ class PipelineFile:
         self.file_path = file_path
         self.logger = getLogger(self.__class__.__name__)
 
+    def file_sha_256(self) -> str:
+        with self.file_path.open("rb", buffering=0) as file:
+            return hashlib.file_digest(file, hashlib.sha256).hexdigest()
+
     def load_pipeline(
         self, init_args: Optional[PipelineInitializationArguments] = None
     ) -> Pipeline:
         self.logger.info("Loading Pipeline")
         init_args = init_args or PipelineInitializationArguments()
+        init_args.object_store = init_args.object_store.namespaced(self.file_sha_256())
         contents = self.get_contents()
         return contents.initialize_with_arguments(init_args)
 

@@ -10,6 +10,7 @@ from nodestream.pipeline.object_storage import (
     InvalidSignatureError,
     MalformedSignedObjectError,
     NullObjectStore,
+    ObjectStore,
     SignedObject,
     StaticNamespace,
 )
@@ -106,7 +107,7 @@ def test_get_pickled_missing_object(directory_object_store):
 
 
 def test_directory_object_store_default_directory():
-    store = DirectoryObjectStore.in_current_directory()
+    store = ObjectStore.in_current_directory()
     assert_that(store.root, equal_to(Path.cwd() / ".nodestream" / "objects"))
 
 
