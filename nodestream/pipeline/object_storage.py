@@ -202,16 +202,20 @@ class ObjectStore(ABC, Pluggable):
         """
         return SignedObjectStore(self, signer)
 
+    @staticmethod
+    def null() -> "ObjectStore":
+        return NullObjectStore()
+
+    @staticmethod
+    def in_current_directory():
+        return DirectoryObjectStore(Path.cwd() / ".nodestream" / "objects")
+
 
 class DirectoryObjectStore(ObjectStore, alias="directory"):
     """An object store that stores objects in a directory on a file system."""
 
     def __init__(self, root: Path):
         self.root = root
-
-    @staticmethod
-    def in_current_directory():
-        return DirectoryObjectStore(Path.cwd() / ".nodestream" / "objects")
 
     def get(self, key: str) -> Optional[bytes]:
         path = self.root / key
