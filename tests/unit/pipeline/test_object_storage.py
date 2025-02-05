@@ -2,6 +2,7 @@ import base64
 from pathlib import Path
 
 import pytest
+from botocore.exceptions import ClientError
 from hamcrest import assert_that, equal_to, is_, none, not_none
 
 from nodestream.pipeline.object_storage import (
@@ -10,12 +11,14 @@ from nodestream.pipeline.object_storage import (
     InvalidSignatureError,
     MalformedSignedObjectError,
     NullObjectStore,
+    S3ObjectStore,
     SignedObject,
     StaticNamespace,
 )
 
 SOME_KEY = "some_key"
 SOME_DATA = b"some_data"
+BUCKET_NAME = "bucket_name"
 
 
 @pytest.fixture
@@ -170,3 +173,56 @@ def test_signed_object_store_delete(signed_object_store):
     signed_object_store.put(SOME_KEY, SOME_DATA)
     signed_object_store.delete(SOME_KEY)
     assert_that(signed_object_store.get(SOME_KEY), is_(none()))
+
+
+@pytest.fixture
+def s3_client(mocker):
+    return mocker.MagicMock()
+
+
+@pytest.fixture
+def s3_object_store(s3_client):
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(
+            "nodestream.pipeline.object_storage.AwsClientFactory.make_client",
+            lambda self, service: s3_client,
+        )
+        yield S3ObjectStore(BUCKET_NAME)
+
+
+def test_s3_object_store_get_found(s3_object_store, s3_client, mocker):
+    s3_client.get_object.return_value = {
+        "Body": mocker.MagicMock(read=lambda: SOME_DATA)
+    }
+    retrieved_data = s3_object_store.get(SOME_KEY)
+    assert_that(retrieved_data, equal_to(SOME_DATA))
+    s3_client.get_object.assert_called_once_with(Bucket=BUCKET_NAME, Key=SOME_KEY)
+
+
+def test_s3_object_store_get_not_found(s3_object_store, s3_client):
+    s3_client.get_object.side_effect = ClientError(
+        {"ResponseMetadata": {"HTTPStatusCode": 404}}, "get_object"
+    )
+    retrieved_data = s3_object_store.get(SOME_KEY)
+    assert_that(retrieved_data, is_(none()))
+    s3_client.get_object.assert_called_once_with(Bucket=BUCKET_NAME, Key=SOME_KEY)
+
+
+def test_s3_object_store_put(s3_object_store, s3_client):
+    s3_object_store.put(SOME_KEY, SOME_DATA)
+    s3_client.put_object.assert_called_once_with(
+        Bucket=BUCKET_NAME, Key=SOME_KEY, Body=SOME_DATA
+    )
+
+
+def test_s3_object_store_delete(s3_object_store, s3_client):
+    s3_object_store.delete(SOME_KEY)
+    s3_client.delete_object.assert_called_once_with(Bucket=BUCKET_NAME, Key=SOME_KEY)
+
+
+def test_s3_object_store_delete_not_found(s3_object_store, s3_client):
+    s3_client.get_object.side_effect = ClientError(
+        {"ResponseMetadata": {"HTTPStatusCode": 404}}, "delete_object"
+    )
+    s3_object_store.delete(SOME_KEY)
+    s3_client.delete_object.assert_called_once_with(Bucket=BUCKET_NAME, Key=SOME_KEY)
