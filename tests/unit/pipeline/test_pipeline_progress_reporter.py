@@ -6,7 +6,7 @@ from nodestream.pipeline import IterableExtractor, Pipeline, PipelineProgressRep
 
 @pytest.mark.asyncio
 async def test_pipeline_progress_reporter_calls_with_reporting_frequency(mocker):
-    pipeline = Pipeline([IterableExtractor(range(100))], 10)
+    pipeline = Pipeline([IterableExtractor(range(100))], 10, mocker.Mock())
     reporter = PipelineProgressReporter(reporting_frequency=10, callback=mocker.Mock())
     await pipeline.run(reporter)
     assert_that(reporter.callback.call_count, equal_to(10))

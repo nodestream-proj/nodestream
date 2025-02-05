@@ -5,6 +5,7 @@ from typing import Iterable, List, Tuple
 from ..metrics import Metric, Metrics
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .channel import StepInput, StepOutput, channel
+from .object_storage import ObjectStore
 from .progress_reporter import PipelineProgressReporter
 from .step import Step, StepContext
 
@@ -62,7 +63,7 @@ class StepExecutor:
                     if not await self.emit_record(record):
                         return
 
-            async for record in self.step.emit_outstanding_records():
+            async for record in self.step.emit_outstanding_records(self.context):
                 if not await self.emit_record(record):
                     return
 
@@ -129,12 +130,15 @@ class Pipeline(ExpandsSchemaFromChildren):
     and running the steps in the pipeline.
     """
 
-    __slots__ = ("steps", "step_outbox_size")
+    __slots__ = ("steps", "step_outbox_size", "logger", "object_store")
 
-    def __init__(self, steps: Tuple[Step, ...], step_outbox_size: int) -> None:
+    def __init__(
+        self, steps: Tuple[Step, ...], step_outbox_size: int, object_store: ObjectStore
+    ) -> None:
         self.steps = steps
         self.step_outbox_size = step_outbox_size
         self.logger = getLogger(self.__class__.__name__)
+        self.object_store = object_store
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return (s for s in self.steps if isinstance(s, ExpandsSchema))
@@ -175,7 +179,8 @@ class Pipeline(ExpandsSchemaFromChildren):
         # input of the next step.
         for reversed_index, step in reversed(list(enumerate(self.steps))):
             index = len(self.steps) - reversed_index - 1
-            context = StepContext(step.__class__.__name__, index, reporter)
+            storage = self.object_store.namespaced(str(index))
+            context = StepContext(step.__class__.__name__, index, reporter, storage)
             current_input, next_output = channel(self.step_outbox_size)
             exec = StepExecutor(step, current_input, current_output, context)
             current_output = next_output
