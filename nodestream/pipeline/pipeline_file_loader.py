@@ -165,8 +165,13 @@ class PipelineFile:
         self.logger = getLogger(self.__class__.__name__)
 
     def file_sha_256(self) -> str:
+        sha = hashlib.sha256()
+        b = bytearray(128 * 1024)
+        mv = memoryview(b)
         with self.file_path.open("rb", buffering=0) as file:
-            return hashlib.file_digest(file, hashlib.sha256).hexdigest()
+            while n := file.readinto(mv):
+                sha.update(mv[:n])
+        return sha.hexdigest()
 
     def load_pipeline(
         self, init_args: Optional[PipelineInitializationArguments] = None
