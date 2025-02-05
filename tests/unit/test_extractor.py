@@ -1,16 +1,14 @@
 import pytest
-
 from hamcrest import assert_that, is_, none
 
 from nodestream.pipeline import Extractor
-from nodestream.pipeline.step import StepContext
-from nodestream.pipeline.progress_reporter import PipelineProgressReporter
 from nodestream.pipeline.object_storage import ObjectStore
-
+from nodestream.pipeline.progress_reporter import PipelineProgressReporter
+from nodestream.pipeline.step import StepContext
 
 
 class DummyExtractor(Extractor):
-    def __init__(self, checkpoint = None):
+    def __init__(self, checkpoint=None):
         self.checkpoint = checkpoint
 
     async def extract_records(self):
@@ -23,13 +21,16 @@ class DummyExtractor(Extractor):
     async def resume_from_checkpoint(self, checkpoint_object):
         self.checkpoint = checkpoint_object
 
+
 @pytest.fixture
 def object_store(mocker):
     return mocker.Mock(spec=ObjectStore)
 
+
 @pytest.fixture
 def context(object_store):
-    return  StepContext("test", 1, PipelineProgressReporter(), object_store)
+    return StepContext("test", 1, PipelineProgressReporter(), object_store)
+
 
 @pytest.mark.asyncio
 async def test_extractor_commit_does_nothing(object_store, context):
@@ -42,7 +43,9 @@ async def test_extractor_commit_does_nothing(object_store, context):
 async def test_extractor_commit_does_something_with_checkpoint(object_store, context):
     extractor = DummyExtractor(checkpoint=1)
     await extractor.commit_checkpoint(context)
-    object_store.put_picklable.assert_called_once_with("extractor_progress_checkpoint", 1)
+    object_store.put_picklable.assert_called_once_with(
+        "extractor_progress_checkpoint", 1
+    )
 
 
 @pytest.mark.asyncio
