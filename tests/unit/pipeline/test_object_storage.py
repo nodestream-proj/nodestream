@@ -11,6 +11,7 @@ from nodestream.pipeline.object_storage import (
     InvalidSignatureError,
     MalformedSignedObjectError,
     NullObjectStore,
+    ObjectStore,
     S3ObjectStore,
     SignedObject,
     StaticNamespace,
