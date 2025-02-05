@@ -221,7 +221,7 @@ def test_s3_object_store_delete(s3_object_store, s3_client):
 
 
 def test_s3_object_store_delete_not_found(s3_object_store, s3_client):
-    s3_client.get_object.side_effect = ClientError(
+    s3_client.delete_object.side_effect = ClientError(
         {"ResponseMetadata": {"HTTPStatusCode": 404}}, "delete_object"
     )
     s3_object_store.delete(SOME_KEY)
