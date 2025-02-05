@@ -7,8 +7,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, TypeVar
 
+from botocore.exceptions import ClientError
+
 from ..pluggable import Pluggable
 from ..subclass_registry import SubclassRegistry
+from .extractors.credential_utils import AwsClientFactory
 
 OBJECT_STORE_REGISTRY = SubclassRegistry(ignore_overrides=True)
 T = TypeVar("T")
@@ -298,3 +301,34 @@ class SignedObjectStore(ObjectStore):
 
     def delete(self, key: str):
         self.store.delete(key)
+
+
+class S3ObjectStore(ObjectStore):
+    __slots__ = ("client", "bucket_name")
+
+    def __init__(self, bucket_name: str, **client_factory_args):
+        client_factory = AwsClientFactory(**client_factory_args)
+        self.client = client_factory.make_client("s3")
+        self.bucket_name = bucket_name
+
+    def get(self, key: str) -> Optional[bytes]:
+        try:
+            response = self.client.get_object(Bucket=self.bucket_name, Key=key)
+            return response["Body"].read()
+        except ClientError as e:
+            status = e.response["ResponseMetadata"]["HTTPStatusCode"]
+            if status == 404:
+                return None
+            raise e
+
+    def put(self, key: str, data: bytes):
+        self.client.put_object(Bucket=self.bucket_name, Key=key, Body=data)
+
+    def delete(self, key: str):
+        try:
+            self.client.delete_object(Bucket=self.bucket_name, Key=key)
+        except ClientError as e:
+            status = e.response["ResponseMetadata"]["HTTPStatusCode"]
+            if status == 404:
+                return
+            raise e
