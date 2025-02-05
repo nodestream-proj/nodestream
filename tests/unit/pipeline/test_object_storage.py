@@ -208,6 +208,14 @@ def test_s3_object_store_get_not_found(s3_object_store, s3_client):
     s3_client.get_object.assert_called_once_with(Bucket=BUCKET_NAME, Key=SOME_KEY)
 
 
+def test_s3_object_store_get_other_error(s3_object_store, s3_client):
+    s3_client.get_object.side_effect = ClientError(
+        {"ResponseMetadata": {"HTTPStatusCode": 400}}, "get_object"
+    )
+    with pytest.raises(ClientError):
+        s3_object_store.get(SOME_KEY)
+
+
 def test_s3_object_store_put(s3_object_store, s3_client):
     s3_object_store.put(SOME_KEY, SOME_DATA)
     s3_client.put_object.assert_called_once_with(
@@ -226,3 +234,11 @@ def test_s3_object_store_delete_not_found(s3_object_store, s3_client):
     )
     s3_object_store.delete(SOME_KEY)
     s3_client.delete_object.assert_called_once_with(Bucket=BUCKET_NAME, Key=SOME_KEY)
+
+
+def test_s3_object_store_delete_other_error(s3_object_store, s3_client):
+    s3_client.delete_object.side_effect = ClientError(
+        {"ResponseMetadata": {"HTTPStatusCode": 400}}, "delete_object"
+    )
+    with pytest.raises(ClientError):
+        s3_object_store.delete(SOME_KEY)
