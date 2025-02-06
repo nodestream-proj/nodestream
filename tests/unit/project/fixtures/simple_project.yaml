@@ -8,3 +8,10 @@ scopes:
         name: "just a random value"
         annotations:
           concurrency: 2
+
+storage:
+  stores:
+    - name: local
+      type: local
+      path: ./objects
+      hmac_key: Ol75IHrhU3VTgSvW/h9T2w==

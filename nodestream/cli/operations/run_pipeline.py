@@ -93,6 +93,11 @@ class RunPipeline(Operation):
                 command.line("<info>Effective configuration:</info>")
                 command.line(f"<info>{safe_dump(config)}</info>")
 
+        if storage_name := command.option("checkpoint-storage-backend"):
+            object_store = self.project.get_object_storage_by_name(storage_name)
+        else:
+            object_store = ObjectStore.null()
+
         return RunRequest(
             pipeline_name=pipeline.name,
             initialization_arguments=PipelineInitializationArguments(
@@ -102,7 +107,7 @@ class RunPipeline(Operation):
                 extra_steps=list(
                     self.get_writer_steps_for_specified_targets(command, pipeline)
                 ),
-                object_store=ObjectStore.in_current_directory(),
+                object_store=object_store,
             ),
             progress_reporter=self.create_progress_reporter(command, pipeline.name),
         )

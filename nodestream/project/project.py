@@ -11,12 +11,14 @@ from ..file_io import (
     SavesToYamlFile,
 )
 from ..pipeline import Step
+from ..pipeline.object_storage import ObjectStore
 from ..pluggable import Pluggable
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren, Schema
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .plugin import PluginConfiguration
 from .run_request import RunRequest
+from .storage import StorageConfiguration
 from .target import Target
 
 T = TypeVar("T", bound=Step)
@@ -35,6 +37,9 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
     scopes_by_name: Dict[str, PipelineScope] = field(default_factory=dict)
     plugins_by_name: Dict[str, PluginConfiguration] = field(default_factory=dict)
     targets_by_name: Dict[str, Target] = field(default_factory=dict)
+    storage_configuration: StorageConfiguration = field(
+        default_factory=StorageConfiguration
+    )
 
     @classmethod
     def read_from_file(cls, file_path: Path) -> LoadsFromYaml:
@@ -65,6 +70,7 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 Optional("targets"): {
                     str: {str: object},
                 },
+                Optional("storage"): StorageConfiguration.describe_yaml_schema(),
             }
         )
 
@@ -101,7 +107,9 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
             name: Target.from_file_data(name, data) for name, data in targets.items()
         }
 
-        project = cls(targets_by_name=target_cfgs)
+        storage = StorageConfiguration.from_file_data(data.pop("storage", {}))
+        project = cls(targets_by_name=target_cfgs, storage_configuration=storage)
+
         for plugin in plugins:
             project.add_plugin(plugin)
         for scope in scopes:
@@ -131,6 +139,7 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 name: target.to_file_data()
                 for name, target in self.targets_by_name.items()
             },
+            "storage": self.storage_configuration.to_file_data(),
         }
 
     def get_target_by_name(self, target_name: str) -> Target:
@@ -306,6 +315,10 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 for idx, step in enumerate(pipeline_steps):
                     if isinstance(step, step_type):
                         yield pipeline_definition, idx, step
+
+    def get_object_storage_by_name(self, name: str) -> ObjectStore:
+        """Returns a `ObjectStore` for the given name."""
+        return self.storage_configuration.initialize_by_name(name)
 
 
 class ProjectPlugin(Pluggable):
