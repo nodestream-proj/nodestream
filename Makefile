@@ -23,7 +23,7 @@ clean-test:
 clean: clean-pyc clean-test
 
 venv: poetry.lock
-	poetry install
+	poetry install --all-extras
 
 .PHONY: format
 format: venv
