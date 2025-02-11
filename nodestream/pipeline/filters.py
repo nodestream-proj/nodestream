@@ -150,33 +150,31 @@ class ValueMatchesRegexFilter(Filter):
         return self.regex_matcher.should_include(context_from_record)
 
 
-INFERRED_OBJECT_SCHEMA_KEY = "inferred_object_schema"
-
-
-class SchemaEnforcementMode:
-    def should_filter(self, record) -> bool:
-        return True  # pragma: no cover
-
-    def start(self, object_store: ObjectStore) -> "SchemaEnforcementMode":
-        return self  # pragma: no cover
-
-    def inform_mode_change(self) -> "SchemaEnforcementMode":
-        return self  # pragma: no cover
-
-    @staticmethod
-    def from_enforcement_policy(
-        enforcement_policy: str, schema: "Schema"
-    ) -> "SchemaEnforcementMode":
-        if enforcement_policy == "enforce":
-            return EnforceSchema(schema)
-        elif enforcement_policy == "warn":
-            return WarnSchema(schema)
-        raise ValueError(f"Invalid enforcement policy: {enforcement_policy}")
-
-
 try:
     import genson
     import jsonschema
+
+    INFERRED_OBJECT_SCHEMA_KEY = "inferred_object_schema"
+
+    class SchemaEnforcementMode:
+        def should_filter(self, record) -> bool:
+            return True  # pragma: no cover
+
+        def start(self, object_store: ObjectStore) -> "SchemaEnforcementMode":
+            return self  # pragma: no cover
+
+        def inform_mode_change(self) -> "SchemaEnforcementMode":
+            return self  # pragma: no cover
+
+        @staticmethod
+        def from_enforcement_policy(
+            enforcement_policy: str, schema: "Schema"
+        ) -> "SchemaEnforcementMode":
+            if enforcement_policy == "enforce":
+                return EnforceSchema(schema)
+            elif enforcement_policy == "warn":
+                return WarnSchema(schema)
+            raise ValueError(f"Invalid enforcement policy: {enforcement_policy}")
 
     class Schema:
         def __init__(self, schema_dict):
