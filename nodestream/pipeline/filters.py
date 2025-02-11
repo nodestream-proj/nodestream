@@ -1,15 +1,15 @@
 import re
 from abc import abstractmethod
-from typing import Any, AsyncGenerator, Dict, Iterable, Optional, List
 from logging import getLogger
+from typing import Any, AsyncGenerator, Dict, Iterable, List, Optional
 
 import genson
 import jsonschema
 
 from .flush import Flush
+from .object_storage import ObjectStore
 from .step import Step, StepContext
 from .value_providers import ProviderContext, StaticValueOrValueProvider, ValueProvider
-from .object_storage import ObjectStore
 
 
 class Filter(Step):

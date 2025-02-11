@@ -2,13 +2,13 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline.filters import (
+    EnforceSchema,
     ExcludeWhenValuesMatchPossibilities,
     Filter,
+    Schema,
+    SchemaEnforcer,
     ValueMatchesRegexFilter,
     ValuesMatchPossibilitiesFilter,
-    SchemaEnforcer,
-    Schema,
-    EnforceSchema,
     WarnSchema,
 )
 
