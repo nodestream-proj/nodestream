@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 from hamcrest import assert_that, equal_to, instance_of
 
@@ -213,3 +215,21 @@ async def test_warn_policy(mocker):
     await subject.start(context)
     assert_that(await subject.filter_record({}), equal_to(False))
     assert_that(subject.mode, instance_of(WarnSchema))
+
+
+def test_filter_import_error(mocker):
+    # These are the hoops we must run through to test an ImportError
+    # for the case where the genson or jsonschema libraries are not installed
+    # and the SchemaEnforcer is instantiated. So patch the modules to None
+    # and delete the filters module from sys.modules to reload it.
+    mocker.patch.dict("sys.modules", {"genson": None, "jsonschema": None})
+    del sys.modules["nodestream.pipeline.filters"]
+    from nodestream.pipeline.filters import SchemaEnforcer
+
+    with pytest.raises(ImportError) as excinfo:
+        SchemaEnforcer()
+
+    assert (
+        "SchemaEnforcer requires genson and jsonschema to be installed. Install the `validation` extra."
+        in str(excinfo.value)
+    )

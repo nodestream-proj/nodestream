@@ -5,7 +5,7 @@ from typing import Any, AsyncGenerator, Dict, Iterable, List, Optional
 
 from .flush import Flush
 from .object_storage import ObjectStore
-from .step import Step, StepContext
+from .step import PassStep, Step, StepContext
 from .value_providers import ProviderContext, StaticValueOrValueProvider, ValueProvider
 
 
@@ -329,5 +329,10 @@ try:
             return self.mode.should_filter(record)
 
 except ImportError:
-    pass  # pragma: no cover
-    # genson/jsonschema not installed
+
+    class SchemaEnforcer(PassStep):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            raise ImportError(
+                "SchemaEnforcer requires genson and jsonschema to be installed. Install the `validation` extra."
+            )
