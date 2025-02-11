@@ -1,5 +1,5 @@
 import pytest
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, equal_to, instance_of
 
 from nodestream.pipeline.filters import (
     EnforceSchema,
@@ -201,3 +201,15 @@ async def test_invalid_enforcement_policy(mocker, schema_dict):
 
     with pytest.raises(ValueError):
         await subject.start(context)
+
+
+@pytest.mark.asyncio
+async def test_warn_policy(mocker):
+    context = mocker.Mock()
+    context.object_store.get_pickled.return_value = None
+    subject = SchemaEnforcer.from_file_data(
+        inference_sample_size=0, enforcement_policy="warn"
+    )
+    await subject.start(context)
+    assert_that(await subject.filter_record({}), equal_to(False))
+    assert_that(subject.mode, instance_of(WarnSchema))
