@@ -6,6 +6,10 @@ from nodestream.pipeline.filters import (
     Filter,
     ValueMatchesRegexFilter,
     ValuesMatchPossibilitiesFilter,
+    SchemaEnforcer,
+    Schema,
+    EnforceSchema,
+    WarnSchema,
 )
 
 from ..stubs import StubbedValueProvider
@@ -95,3 +99,105 @@ async def test_match_regex():
         )
         result = await subject.filter_record({})
         assert_that(result, equal_to(test_case["expect"]))
+
+
+@pytest.fixture
+def schema_dict():
+    return {"type": "object", "properties": {"name": {"type": "string"}}}
+
+
+@pytest.mark.asyncio
+async def test_schema_enforcer_with_fetch_schema(mocker, schema_dict):
+    object_store = mocker.Mock()
+    object_store.get_pickled.return_value = schema_dict
+
+    context = mocker.Mock()
+    context.object_store = object_store
+
+    subject = SchemaEnforcer.from_file_data(
+        enforcement_policy="enforce", key="test_key"
+    )
+    await subject.start(context)
+
+    record = {"name": "test"}
+    result = await subject.filter_record(record)
+    assert_that(result, equal_to(False))
+
+    record = {"name": 123}
+    result = await subject.filter_record(record)
+    assert_that(result, equal_to(True))
+
+
+@pytest.mark.asyncio
+async def test_schema_enforcer_with_infer_schema(mocker):
+    object_store = mocker.Mock()
+    object_store.get_pickled.return_value = None
+
+    context = mocker.Mock()
+    context.object_store = object_store
+
+    subject = SchemaEnforcer.from_file_data(inference_sample_size=2)
+    await subject.start(context)
+
+    record = {"name": "test"}
+    result = await subject.filter_record(record)
+    assert_that(result, equal_to(False))
+
+    result = await subject.filter_record(record)
+    assert_that(result, equal_to(False))
+
+    record = {"name": 123}
+    result = await subject.filter_record(record)
+    assert_that(result, equal_to(True))
+
+
+@pytest.mark.asyncio
+async def test_schema_enforcement_modes(schema_dict):
+    schema = Schema(schema_dict)
+
+    enforce_mode = EnforceSchema(schema)
+    warn_mode = WarnSchema(schema)
+
+    record = {"name": "test"}
+    assert_that(enforce_mode.should_filter(record), equal_to(False))
+    assert_that(warn_mode.should_filter(record), equal_to(False))
+
+    record = {"name": 123}
+    assert_that(enforce_mode.should_filter(record), equal_to(True))
+    assert_that(warn_mode.should_filter(record), equal_to(False))
+
+
+@pytest.mark.asyncio
+async def test_infer_mode_schema_already_exists(mocker, schema_dict):
+    subject = SchemaEnforcer.from_file_data(inference_sample_size=2)
+
+    context = mocker.Mock()
+    context.object_store.get_pickled.return_value = schema_dict
+
+    await subject.start(context)
+
+    record = {"name": "test"}
+    assert_that(await subject.filter_record(record), equal_to(False))
+
+
+@pytest.mark.asyncio
+async def test_enforce_mode_schema_not_present(mocker):
+    subject = SchemaEnforcer.from_file_data(key="test_key")
+
+    context = mocker.Mock()
+    context.object_store.get_pickled.return_value = None
+
+    with pytest.raises(ValueError):
+        await subject.start(context)
+
+
+@pytest.mark.asyncio
+async def test_invalid_enforcement_policy(mocker, schema_dict):
+    context = mocker.Mock()
+    context.object_store.get_pickled.return_value = schema_dict
+    subject = SchemaEnforcer.from_file_data(
+        enforcement_policy="invalid", inference_sample_size=2
+    )
+
+    with pytest.raises(ValueError):
+        await subject.start(context)

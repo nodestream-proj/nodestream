@@ -1,10 +1,15 @@
 import re
 from abc import abstractmethod
-from typing import Any, AsyncGenerator, Dict, Iterable, Optional
+from typing import Any, AsyncGenerator, Dict, Iterable, Optional, List
+from logging import getLogger
+
+import genson
+import jsonschema
 
 from .flush import Flush
-from .step import Step
+from .step import Step, StepContext
 from .value_providers import ProviderContext, StaticValueOrValueProvider, ValueProvider
+from .object_storage import ObjectStore
 
 
 class Filter(Step):
@@ -146,3 +151,186 @@ class ValueMatchesRegexFilter(Filter):
     async def filter_record(self, item: Any):
         context_from_record = ProviderContext(item, None)
         return self.regex_matcher.should_include(context_from_record)
+
+
+INFERRED_OBJECT_SCHEMA_KEY = "inferred_object_schema"
+
+
+class SchemaEnforcementMode:
+    def should_filter(self, record) -> bool:
+        return True  # pragma: no cover
+
+    def start(self, object_store: ObjectStore) -> "SchemaEnforcementMode":
+        return self  # pragma: no cover
+
+    def inform_mode_change(self) -> "SchemaEnforcementMode":
+        return self  # pragma: no cover
+
+    @staticmethod
+    def from_enforcement_policy(
+        enforcement_policy: str, schema: "Schema"
+    ) -> "SchemaEnforcementMode":
+        if enforcement_policy == "enforce":
+            return EnforceSchema(schema)
+        elif enforcement_policy == "warn":
+            return WarnSchema(schema)
+        raise ValueError(f"Invalid enforcement policy: {enforcement_policy}")
+
+
+class Schema:
+    def __init__(self, schema_dict):
+        self.schema_dict = schema_dict
+        self.validator = jsonschema.Draft7Validator(schema_dict)
+
+    def validate(self, record) -> Optional[List[str]]:
+        errors = sorted(self.validator.iter_errors(record), key=lambda e: e.path)
+        return list(map(lambda e: e.message, errors))
+
+    def persist(self, object_store: ObjectStore, key: str):
+        object_store.put_picklable(key, self.schema_dict)
+
+    @staticmethod
+    def get_from_object_store(
+        object_store: ObjectStore, key: str
+    ) -> Optional["Schema"]:
+        if schema_dict := object_store.get_pickled(key):
+            return Schema(schema_dict)
+        return None
+
+
+class SchemaBuilder:
+    def __init__(self):
+        self._inner = genson.SchemaBuilder()
+        self.collected_samples = 0
+
+    def add_record(self, record):
+        self._inner.add_object(record)
+        self.collected_samples += 1
+
+    def build_schema(self) -> Schema:
+        return Schema(self._inner.to_schema())
+
+
+class FetchSchema(SchemaEnforcementMode):
+    def __init__(self, key: str, enforcement_policy: str):
+        self.key = key
+        self.enforcement_policy = enforcement_policy
+
+    def start(self, object_store: ObjectStore):
+        if schema := Schema.get_from_object_store(object_store, self.key):
+            return SchemaEnforcementMode.from_enforcement_policy(
+                self.enforcement_policy, schema
+            )
+
+        raise ValueError(f"Schema with key {self.key} not found in object store.")
+
+
+class InferSchema(SchemaEnforcementMode):
+    """Infers a schema from the first `sample_size` records.
+
+    If the schema is already present in the object store, it will switch to
+    out of inferring immediately. Otherwise, it will infer the schema from the
+    first `sample_size` records and then switch.
+
+    Whether or not the switch is to ENFORCE or WARN mode is determined by
+    the `warn` parameter.
+    """
+
+    def __init__(self, sample_size: int, enforcement_policy: str):
+        self.sample_size = sample_size
+        self.builder = SchemaBuilder()
+        self.enforcement_policy = enforcement_policy
+        self.logger = getLogger(self.__class__.__name__)
+        self.object_store = None
+
+    def start(self, object_store):
+        self.object_store = object_store
+        if schema := Schema.get_from_object_store(
+            object_store, INFERRED_OBJECT_SCHEMA_KEY
+        ):
+            return self.switch_out(schema)
+        return self
+
+    def should_filter(self, record):
+        self.builder.add_record(record)
+        self.logger.debug(
+            "In infer mode. Not filtering.",
+            extra={"samples": self.builder.collected_samples},
+        )
+        return False
+
+    def switch_out(self, schema: Schema) -> SchemaEnforcementMode:
+        self.logger.info("Switching out of infer mode.")
+        schema.persist(self.object_store, INFERRED_OBJECT_SCHEMA_KEY)
+        return SchemaEnforcementMode.from_enforcement_policy(
+            self.enforcement_policy, schema
+        )
+
+    def inform_mode_change(self):
+        if self.builder.collected_samples >= self.sample_size:
+            return self.switch_out(self.builder.build_schema())
+
+        return self
+
+
+class EnforceSchema(SchemaEnforcementMode):
+    """Filters records that do not match the schema.
+
+    Once in this mode, no transition is possible. The schema is enforced
+    until the end of the pipeline.
+    """
+
+    def __init__(self, schema: Schema):
+        self.schema = schema
+        self.logger = getLogger(self.__class__.__name__)
+
+    def should_filter(self, record):
+        if errors := self.schema.validate(record):
+            self.logger.error(
+                "Schema validation failed. Filtering due to ENFORCE mode.",
+                extra={"errors": errors},
+            )
+        return bool(errors)
+
+
+class WarnSchema(SchemaEnforcementMode):
+    """Permits (while warning about) records that do not match the schema.
+
+    Once in this mode, no transition is possible. The schema is warned about
+    until the end of the pipeline.
+    """
+
+    def __init__(self, schema: Schema):
+        self.schema = schema
+        self.logger = getLogger(self.__class__.__name__)
+
+    def should_filter(self, record):
+        if errors := self.schema.validate(record):
+            self.logger.warning(
+                "Schema validation failed. NOT filtering due to WARN mode.",
+                extra={"errors": errors},
+            )
+        return False
+
+
+class SchemaEnforcer(Filter):
+    @classmethod
+    def from_file_data(
+        cls,
+        enforcement_policy: str = "enforce",
+        key: str = None,
+        inference_sample_size: int = 1000,
+    ):
+        if key:
+            return cls(FetchSchema(key, enforcement_policy))
+        return cls(InferSchema(inference_sample_size, enforcement_policy))
+
+    def __init__(self, mode: SchemaEnforcementMode):
+        self.mode = mode
+
+    async def start(self, context: StepContext):
+        self.mode = self.mode.start(context.object_store)
+
+    async def filter_record(self, record):
+        self.mode = self.mode.inform_mode_change()
+        return self.mode.should_filter(record)

@@ -49,6 +49,8 @@ uvloop = [
 ]
 
 prometheus-client = {version = "^0.21.1", optional = true}
+genson = "^1.3.0"
+jsonschema = "^4.23.0"
 
 [tool.poetry.extras]
 prometheus = ["prometheus-client"]  
