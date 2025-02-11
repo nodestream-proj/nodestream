@@ -1,7 +1,7 @@
 import pytest
 from hamcrest import assert_that, contains, equal_to, instance_of
 
-from nodestream.pipeline.object_storage import SignedObjectStore
+from nodestream.pipeline.object_storage import SignedObjectStore, DirectoryObjectStore
 from nodestream.project.storage import StorageConfiguration, StoreConfiguration
 
 
@@ -31,6 +31,12 @@ def test_storage_configuration_initialize(tmp_path):
     store = store_config.initialize()
     assert_that(store, instance_of(SignedObjectStore))
     assert_that(store.store.root, equal_to(tmp_path))
+
+    store_config = StoreConfiguration(
+        name="bob", storage_type="local", arguments={"root": tmp_path}
+    )
+    store = store_config.initialize()
+    assert_that(store, instance_of(DirectoryObjectStore))
 
 
 def test_store_configuration_to_file_data(store_config, store_config_data):

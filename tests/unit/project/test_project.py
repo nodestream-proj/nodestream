@@ -26,6 +26,7 @@ from nodestream.project import (
     RunRequest,
     Target,
 )
+from nodestream.project.storage import StorageConfiguration
 from nodestream.project.pipeline_definition import PipelineConfiguration
 from nodestream.project.plugin import PluginConfiguration
 from nodestream.schema import Schema
@@ -367,3 +368,13 @@ def test_project_load_and_reload():
     project_data = project.to_file_data()
     reloaded = Project.validate_and_load(project_data)
     assert_that(reloaded, equal_to(project))
+
+
+def test_project_get_from_storage(project, mocker):
+    project.storage_configuration = mocker.Mock(spec=StorageConfiguration)
+    result = project.get_object_storage_by_name("t1")
+    project.storage_configuration.initialize_by_name.assert_called_once_with("t1")
+    assert_that(
+        result,
+        same_instance(project.storage_configuration.initialize_by_name.return_value),
+    )
