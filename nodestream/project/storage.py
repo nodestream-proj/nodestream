@@ -19,7 +19,12 @@ class StoreConfiguration:
             return store
 
     def to_file_data(self):
-        return dict(name=self.name, type=self.storage_type, **self.arguments)
+        return dict(
+            name=self.name,
+            type=self.storage_type,
+            hmac_key=self.hmac_key,
+            **self.arguments
+        )
 
     @staticmethod
     def from_file_data(data):
