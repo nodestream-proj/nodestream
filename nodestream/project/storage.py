@@ -51,6 +51,9 @@ class StorageConfiguration:
     )
 
     def initialize_by_name(self, name: str) -> ObjectStore:
+        if name not in self.storage_configuration_by_name:
+            return ObjectStore.null()
+
         return self.storage_configuration_by_name[name].initialize()
 
     @classmethod

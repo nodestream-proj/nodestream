@@ -1,7 +1,11 @@
 import pytest
 from hamcrest import assert_that, contains, equal_to, instance_of
 
-from nodestream.pipeline.object_storage import SignedObjectStore, DirectoryObjectStore
+from nodestream.pipeline.object_storage import (
+    DirectoryObjectStore,
+    NullObjectStore,
+    SignedObjectStore,
+)
 from nodestream.project.storage import StorageConfiguration, StoreConfiguration
 
 
@@ -59,6 +63,12 @@ def test_storage_configuration_initialize_by_name(mocker):
     )
     result = storage_config.initialize_by_name("test_store")
     assert_that(result, equal_to(config.initialize.return_value))
+
+
+def test_storage_configuration_initialize_by_name_not_found(mocker):
+    store_config = StorageConfiguration({})
+    result = store_config.initialize_by_name("test_store")
+    assert_that(result, instance_of(NullObjectStore))
 
 
 def test_storage_configuration_from_file_data(store_config_data):

@@ -26,9 +26,9 @@ from nodestream.project import (
     RunRequest,
     Target,
 )
-from nodestream.project.storage import StorageConfiguration
 from nodestream.project.pipeline_definition import PipelineConfiguration
 from nodestream.project.plugin import PluginConfiguration
+from nodestream.project.storage import StorageConfiguration
 from nodestream.schema import Schema
 
 

@@ -4,7 +4,6 @@ from yaml import safe_dump
 
 from ...metrics import Metrics
 from ...pipeline import PipelineInitializationArguments, PipelineProgressReporter
-from ...pipeline.object_storage import ObjectStore
 from ...project import Project, RunRequest
 from ...project.pipeline_definition import PipelineDefinition
 from ...utils import StringSuggester
@@ -93,10 +92,8 @@ class RunPipeline(Operation):
                 command.line("<info>Effective configuration:</info>")
                 command.line(f"<info>{safe_dump(config)}</info>")
 
-        if storage_name := command.option("checkpoint-storage-backend"):
-            object_store = self.project.get_object_storage_by_name(storage_name)
-        else:
-            object_store = ObjectStore.null()
+        storage_name = command.option("checkpoint-storage-backend")
+        object_store = self.project.get_object_storage_by_name(storage_name)
 
         return RunRequest(
             pipeline_name=pipeline.name,
