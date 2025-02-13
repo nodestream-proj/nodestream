@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from csv import DictReader
 from glob import glob
-from io import BufferedReader, IOBase, TextIOWrapper
+from io import BufferedReader, BytesIO, IOBase, TextIOWrapper
 from logging import getLogger
 from pathlib import Path
 from typing import (
@@ -18,6 +18,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Optional,
     Tuple,
 )
 
@@ -28,6 +29,7 @@ from yaml import safe_load
 from ...model import JsonLikeDocument
 from ...pluggable import Pluggable
 from ...subclass_registry import MissingFromRegistryError, SubclassRegistry
+from .credential_utils import AwsClientFactory
 from .extractor import Extractor
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
@@ -496,7 +498,123 @@ class RemoteFileSource(FileSource, alias="http"):
             return f"{len(self.urls)} remote files"
 
 
-class UnifiedFileExtractor(Extractor):
+class S3File(ReadableFile):
+    """A readable file that is stored in S3.
+
+    This class is used to read files from S3. The class takes a key, bucket,
+    and an S3 client. The class uses the S3 client to get the object from S3
+    and yield an instance of the file that can be read by the pipeline.
+
+    The class also has a method to archive the file after it has been read.
+
+    """
+
+    def __init__(
+        self,
+        key: str,
+        s3_client,
+        bucket: str,
+        archive_dir: str | None,
+        object_format: str | None,
+    ) -> None:
+        self.logger = getLogger(__name__)
+        self.key = key
+        self.s3_client = s3_client
+        self.bucket = bucket
+        self.archive_dir = archive_dir
+        self.object_format = object_format
+
+    def archive_if_required(self, key: str):
+        if not self.archive_dir:
+            return
+
+        self.logger.info("Archiving S3 Object", extra=dict(key=key))
+        filename = Path(key).name
+        self.s3_client.copy(
+            Bucket=self.bucket,
+            Key=f"{self.archive_dir}/{filename}",
+            CopySource={"Bucket": self.bucket, "Key": key},
+        )
+        self.s3_client.delete_object(Bucket=self.bucket, Key=key)
+
+    def path_like(self) -> Path:
+        path = Path(self.key)
+        return path.with_suffix(self.object_format or path.suffix)
+
+    @asynccontextmanager
+    async def as_reader(self, reader: IOBase):
+        streaming_body = self.s3_client.get_object(Bucket=self.bucket, Key=self.key)[
+            "Body"
+        ]
+        yield reader(BytesIO(streaming_body.read()))
+        self.archive_if_required(self.key)
+
+
+class S3FileSource(FileSource, alias="s3"):
+    """A class that represents a source of files stored in S3.
+
+    This class is used to read files from S3. The class takes a bucket, prefix,
+    and an S3 client. The class uses the S3 client to list the objects in the
+    bucket and yield instances of S3File that can be read by the pipeline.
+
+    The class also has a method to archive the file after it has been read.
+    """
+
+    @classmethod
+    def from_file_data(
+        cls,
+        bucket: str,
+        prefix: Optional[str] = None,
+        archive_dir: Optional[str] = None,
+        object_format: Optional[str] = None,
+        **aws_client_args,
+    ):
+        return cls(
+            bucket=bucket,
+            prefix=prefix,
+            archive_dir=archive_dir,
+            object_format=object_format,
+            s3_client=AwsClientFactory(**aws_client_args).make_client("s3"),
+        )
+
+    def __init__(
+        self,
+        bucket: str,
+        s3_client,
+        archive_dir: Optional[str] = None,
+        object_format: Optional[str] = None,
+        prefix: Optional[str] = None,
+    ):
+        self.bucket = bucket
+        self.s3_client = s3_client
+        self.archive_dir = archive_dir
+        self.object_format = object_format
+        self.prefix = prefix or ""
+
+    def object_is_in_archive(self, key: str) -> bool:
+        return key.startswith(self.archive_dir) if self.archive_dir else False
+
+    def find_keys_in_bucket(self) -> Iterable[str]:
+        # Returns all keys in the bucket that are not in the archive dir
+        # and have the prefix.
+        paginator = self.s3_client.get_paginator("list_objects_v2")
+        page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
+        for page in page_iterator:
+            keys = (obj["Key"] for obj in page.get("Contents", []))
+            yield from filter(lambda k: not self.object_is_in_archive(k), keys)
+
+    async def get_files(self):
+        for key in self.find_keys_in_bucket():
+            yield S3File(
+                key=key,
+                s3_client=self.s3_client,
+                bucket=self.bucket,
+                archive_dir=self.archive_dir,
+                object_format=self.object_format,
+            )
+
+
+class FileExtractor(Extractor):
     """A class that extracts records from files.
 
     This class is used to extract records from files. The class takes a list
@@ -507,7 +625,31 @@ class UnifiedFileExtractor(Extractor):
     """
 
     @classmethod
-    def from_file_data(cls, sources: List[Dict[str, Any]]) -> "UnifiedFileExtractor":
+    def local(cls, globs: Iterable[str]):
+        return FileExtractor.from_file_data([{"type": "local", "globs": globs}])
+
+    @classmethod
+    def s3(cls, **kwargs):
+        return cls([S3FileSource.from_file_data(**kwargs)])
+
+    @classmethod
+    def remote(
+        cls,
+        urls: Iterable[str],
+        memory_spooling_max_size_in_mb: int = 10,
+    ):
+        return FileExtractor.from_file_data(
+            [
+                {
+                    "type": "http",
+                    "urls": urls,
+                    "memory_spooling_max_size_in_mb": memory_spooling_max_size_in_mb,
+                }
+            ]
+        )
+
+    @classmethod
+    def from_file_data(cls, sources: List[Dict[str, Any]]) -> "FileExtractor":
         return cls(
             [FileSource.from_file_data_with_type_label(source) for source in sources]
         )
@@ -570,51 +712,3 @@ class UnifiedFileExtractor(Extractor):
                 self.logger.warning(
                     f"No files found for source: {file_source.describe()}"
                 )
-
-
-# DEPRECATED CODE BELOW ##
-#
-# The classes below are slated to be removed in the future.
-# Additionally, there are aliases from the old class names to the new class
-# names to ensure backwards compatibility. These aliases will be removed in
-# the future.
-
-
-class FileExtractor(UnifiedFileExtractor):
-    """A class that extracts records from local files.
-
-    This class is slated to be removed in the future. It is a subclass of
-    UnifiedFileExtractor that is used to extract records from local files
-    """
-
-    @classmethod
-    def from_file_data(cls, globs: Iterable[str]):
-        return UnifiedFileExtractor.from_file_data([{"type": "local", "globs": globs}])
-
-
-class RemoteFileExtractor(UnifiedFileExtractor):
-    """A class that extracts records from remote files.
-
-    This class is slated to be removed in the future. It is a subclass of
-    UnifiedFileExtractor that is used to extract records from remote files.
-    """
-
-    @classmethod
-    def from_file_data(
-        cls,
-        urls: Iterable[str],
-        memory_spooling_max_size_in_mb: int = 10,
-    ):
-        return UnifiedFileExtractor.from_file_data(
-            [
-                {
-                    "type": "http",
-                    "urls": urls,
-                    "memory_spooling_max_size_in_mb": memory_spooling_max_size_in_mb,
-                }
-            ]
-        )
-
-
-SupportedFileFormat = FileCodec
-SupportedCompressedFileFormat = CompressionCodec
