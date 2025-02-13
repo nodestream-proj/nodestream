@@ -72,7 +72,6 @@ class DesiredIngestion:
         creation_rule: NodeCreationRule,
         key_values: PropertySet,
         properties: PropertySet,
-        update_last_ingested: bool = False,
     ) -> Node:
         self.source.type = source_type
         self.source.additional_types = additional_types
@@ -80,8 +79,6 @@ class DesiredIngestion:
         self.source.key_values.merge(key_values)
         self.source.properties.merge(properties)
 
-        if not update_last_ingested:
-            self.source.properties.remove_last_ingested()
         # Because relationships can be added before the source node
         self.finalize_relationships()
         return self.source
