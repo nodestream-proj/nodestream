@@ -78,7 +78,6 @@ class DesiredIngestion:
         self.source_node_creation_rule = creation_rule
         self.source.key_values.merge(key_values)
         self.source.properties.merge(properties)
-
         # Because relationships can be added before the source node
         self.finalize_relationships()
         return self.source
