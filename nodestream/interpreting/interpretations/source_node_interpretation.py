@@ -141,7 +141,6 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         if not self.update_last_ingested:
             context.desired_ingest.source.properties.remove_last_ingested()
 
-
     def expand_source_node_schema(self, source_node_schema: GraphObjectSchema):
         source_node_schema.add_keys(self.key)
         source_node_schema.add_properties(self.properties)
