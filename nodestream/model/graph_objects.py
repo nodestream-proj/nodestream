@@ -86,10 +86,13 @@ class PropertySet(dict):
         for key, val in properties.items():
             self.set_property(key, val)
 
+    def remove_last_ingested(self):
+        self.pop("last_ingested_at", None)
+
 
 @dataclass(slots=True)
 class Node(DeduplicatableObject):
-    """A `Node` is a entity that has a distinct identity.
+    """A `Node` is an entity that has a distinct identity.
 
     Each `Node` represents an entity (a person, place, thing, category or other piece of data) that has a distinct
     identity. Nodestream assumes the underlying graph database layer is a Labeled Property Graph. The identity
