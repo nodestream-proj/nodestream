@@ -6,7 +6,6 @@ from ..step import Step, StepContext
 R = TypeVar("R")
 T = TypeVar("T")
 CHECKPOINT_OBJECT_KEY = "extractor_progress_checkpoint"
-CHECKPOINT_INTERVAL = 1000
 
 
 class Extractor(Step, Generic[R, T]):
@@ -16,6 +15,8 @@ class Extractor(Step, Generic[R, T]):
     stream and instead produce their own stream of records. For this reason
     they generally should only be set at the beginning of a pipeline.
     """
+
+    CHECKPOINT_INTERVAL = 1000
 
     async def start(self, context: StepContext):
         if checkpoint := context.object_store.get_pickled(CHECKPOINT_OBJECT_KEY):
@@ -43,7 +44,7 @@ class Extractor(Step, Generic[R, T]):
         async for record in self.extract_records():
             yield record
             items_generated += 1
-            if items_generated % CHECKPOINT_INTERVAL == 0:
+            if items_generated % self.CHECKPOINT_INTERVAL == 0:
                 await self.commit_checkpoint(context)
 
     @abstractmethod

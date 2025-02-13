@@ -161,3 +161,135 @@ async def test_extract_records(athena_extractor, mocker):
         {"col1": "7", "col2": "8"},
     ]
     assert_that(results, has_items(*expected_results))
+
+
+@pytest.mark.asyncio
+async def test_make_checkpoint(athena_extractor):
+    athena_extractor.query_execution_id = "some_query_execution_id"
+    athena_extractor.next_token = "some_next_token"
+    checkpoint = await athena_extractor.make_checkpoint()
+    assert_that(
+        checkpoint,
+        equal_to(
+            {
+                "query_execution_id": "some_query_execution_id",
+                "next_token": "some_next_token",
+            }
+        ),
+    )
+
+
+@pytest.mark.asyncio
+async def test_resume_from_checkpoint(athena_extractor, mocker):
+    checkpoint = {
+        "query_execution_id": "some_query_execution_id",
+        "next_token": "some_next_token",
+    }
+    athena_extractor.get_query_status = mocker.Mock(return_value="SUCCEEDED")
+    await athena_extractor.resume_from_checkpoint(checkpoint)
+    assert_that(
+        athena_extractor.query_execution_id, equal_to("some_query_execution_id")
+    )
+    assert_that(athena_extractor.next_token, equal_to("some_next_token"))
+
+
+def test_resume_from_checkpoint_bad_state(athena_extractor, mocker):
+    checkpoint = {
+        "query_execution_id": "some_query_execution_id",
+        "next_token": "some_next_token",
+    }
+    athena_extractor.get_query_status = mocker.Mock(return_value="FAILED")
+    athena_extractor.resume_from_checkpoint(checkpoint)
+    assert_that(athena_extractor.query_execution_id, equal_to(None))
+    assert_that(athena_extractor.next_token, equal_to(None))
+
+
+@pytest.mark.asyncio
+async def test_extract_records_with_checkpointing(athena_extractor, mocker):
+    athena_extractor.query_execution_id = "some_query_execution_id"
+    athena_extractor.execute_query = mocker.Mock()
+    athena_extractor.await_query_completion = mocker.Mock()
+    athena_extractor.client.get_paginator = mocker.Mock()
+    athena_extractor.client.get_query_execution.return_value = {
+        "QueryExecution": {
+            "Status": {
+                "State": "SUCCEEDED",
+            }
+        }
+    }
+
+    athena_extractor.client.get_paginator.return_value.paginate.return_value = [
+        {
+            "ResultSet": {
+                "ResultSetMetadata": {
+                    "ColumnInfo": [
+                        {"Name": "col1", "Type": "string"},
+                        {"Name": "col2", "Type": "string"},
+                    ]
+                },
+                "Rows": [
+                    {"Data": [{"VarCharValue": "col1"}, {"VarCharValue": "col2"}]},
+                    {"Data": [{"VarCharValue": "1"}, {"VarCharValue": "2"}]},
+                    {"Data": [{"VarCharValue": "3"}, {"VarCharValue": "4"}]},
+                ],
+            },
+            "NextToken": "some_next_token",
+        },
+        {
+            "ResultSet": {
+                "ResultSetMetadata": {
+                    "ColumnInfo": [
+                        {"Name": "col1", "Type": "string"},
+                        {"Name": "col2", "Type": "string"},
+                    ]
+                },
+                "Rows": [
+                    {"Data": [{"VarCharValue": "5"}, {"VarCharValue": "6"}]},
+                    {"Data": [{"VarCharValue": "7"}, {"VarCharValue": "8"}]},
+                ],
+            },
+        },
+    ]
+
+    # Extract first batch of records
+    records = athena_extractor.extract_records()
+
+    first_record = await anext(records)
+    assert_that(first_record, equal_to({"col1": "1", "col2": "2"}))
+
+    # Make a checkpoint
+    checkpoint = await athena_extractor.make_checkpoint()
+    assert_that(checkpoint["query_execution_id"], equal_to("some_query_execution_id"))
+    assert_that(checkpoint["next_token"], equal_to("some_next_token"))
+
+    # Resume from checkpoint
+    await athena_extractor.resume_from_checkpoint(checkpoint)
+
+    # Extract second batch of records
+    second_batch = [r async for r in records]
+    expected_second_batch = [
+        {"col1": "3", "col2": "4"},
+        {"col1": "5", "col2": "6"},
+        {"col1": "7", "col2": "8"},
+    ]
+    assert_that(second_batch, has_items(*expected_second_batch))
+
+
+@pytest.mark.asyncio
+async def test_extract_records_with_checkpointing_query_failed(athena_extractor):
+    athena_extractor.client.get_query_execution.return_value = {
+        "QueryExecution": {
+            "Status": {
+                "State": "FAILED",
+            }
+        }
+    }
+
+    faux_checkpoint = {
+        "query_execution_id": "some_query_execution_id",
+        "next_token": "some_next_token",
+    }
+
+    await athena_extractor.resume_from_checkpoint(faux_checkpoint)
+    assert_that(athena_extractor.query_execution_id, equal_to(None))
+    assert_that(athena_extractor.next_token, equal_to(None))
