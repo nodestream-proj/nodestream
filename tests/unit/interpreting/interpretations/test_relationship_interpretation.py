@@ -119,6 +119,7 @@ def test_relationship_interpretation_find_relationship_property_normalization(
         node_key={"hello": "world"},
         relationship_properties=supplied_properties,
         properties_normalization={"do_lowercase_strings": True},
+        update_last_ingested=False,
     ).interpret(blank_context)
     assert_that(
         blank_context.desired_ingest.relationships[0].relationship.properties,
