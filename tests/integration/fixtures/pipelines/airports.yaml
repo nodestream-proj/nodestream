@@ -1,4 +1,5 @@
 - implementation: nodestream.pipeline.extractors:FileExtractor
+  factory: local
   arguments:
     globs:
       - tests/data/airport-codes.csv
