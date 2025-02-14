@@ -8,3 +8,8 @@ targets:
   db-one:
     database: "null"
     collect_stats: true
+
+storage:
+  stores:
+    - type: local
+      name: local

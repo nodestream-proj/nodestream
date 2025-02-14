@@ -92,6 +92,8 @@ class AthenaExtractor(Extractor):
         self.poll_interval_seconds = poll_interval_seconds
         self.page_size = page_size
         self.logger = getLogger(self.__class__.__name__)
+        self.query_execution_id = None
+        self.next_token = None
 
     def execute_query(self):
         result = self.client.start_query_execution(
@@ -120,13 +122,17 @@ class AthenaExtractor(Extractor):
 
     def get_result_paginator(self):
         paginator = self.client.get_paginator("get_query_results")
-        return paginator.paginate(
-            QueryExecutionId=self.query_execution_id,
-            PaginationConfig={"PageSize": self.page_size},
-        )
+        params = {
+            "QueryExecutionId": self.query_execution_id,
+            "PaginationConfig": {"PageSize": self.page_size},
+        }
+        if self.next_token:
+            params["PaginationConfig"]["StartingToken"] = self.next_token
+        return paginator.paginate(**params)
 
     def page_results_and_get_rows_with_metadata(self):
         for page in self.get_result_paginator():
+            self.next_token = page.get("NextToken")
             column_meta = page["ResultSet"]["ResultSetMetadata"]["ColumnInfo"]
             for row in page["ResultSet"]["Rows"]:
                 yield row, column_meta
@@ -138,8 +144,23 @@ class AthenaExtractor(Extractor):
             yield converter.convert_row(row)
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
-        self.execute_query()
-        self.await_query_completion()
+        if not self.query_execution_id:
+            self.execute_query()
+            self.await_query_completion()
         rows_with_meta = self.page_results_and_get_rows_with_metadata()
         for result in self.convert_data_types_of_rows_based_on_headers(rows_with_meta):
             yield result
+
+    async def resume_from_checkpoint(self, checkpoint_object):
+        self.query_execution_id = checkpoint_object.get("query_execution_id")
+        if self.get_query_status() in BAD_ATEHNA_STATES:
+            self.logger.info("Athena query failed, restarting from scratch")
+            self.query_execution_id = None
+        else:
+            self.next_token = checkpoint_object.get("next_token")
+
+    async def make_checkpoint(self):
+        return {
+            "query_execution_id": self.query_execution_id,
+            "next_token": self.next_token,
+        }

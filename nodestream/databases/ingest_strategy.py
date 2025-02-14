@@ -24,7 +24,7 @@ class IngestionStrategy(ABC):
     How that data is committed and how it is stored internally is decoupled through the `IngestionStrategy` interface.
 
     Generally, your usage of nodestream is decoupled from `IngestionStrategy` unless you intend to provide an implementation
-    of your own database writer. The writer API will give you a `DesiredIngestion` or other `Ingestible` object that needs a
+    of your own database writer. The writer API will give you a `DesiredIngestion` or other `Ingestible` object that needs an
     instance of an `IngestionStrategy` to apply operations to.
     """
 

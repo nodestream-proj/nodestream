@@ -83,6 +83,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         "additional_types",
         "norm_args",
         "allow_create",
+        "update_last_ingested",
     )
 
     def __init__(
@@ -96,6 +97,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         properties_normalization: Optional[Dict[str, Any]] = None,
         key_normalization: Optional[Dict[str, Any]] = None,
         allow_create: bool = True,
+        update_last_ingested: bool = True,
     ):
         if normalization and (properties_normalization or key_normalization):
             raise ValueError(
@@ -118,6 +120,7 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
             self.creation_rule = NodeCreationRule.EAGER
         else:
             self.creation_rule = NodeCreationRule.MATCH_ONLY
+        self.update_last_ingested = update_last_ingested
 
     def interpret(self, context: ProviderContext):
         normalized_key: PropertySet = PropertySet()
@@ -134,6 +137,9 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
             normalized_key,
             normalized_properties,
         )
+
+        if not self.update_last_ingested:
+            context.desired_ingest.source.properties.remove_last_ingested()
 
     def expand_source_node_schema(self, source_node_schema: GraphObjectSchema):
         source_node_schema.add_keys(self.key)

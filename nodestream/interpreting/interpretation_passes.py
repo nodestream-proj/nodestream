@@ -63,7 +63,7 @@ class SingleSequenceInterpretationPass(InterpretationPass):
     def __init__(self, *interpretations: Interpretation):
         self.interpretations = interpretations
 
-    # Verifies that there is only one source node creator in all of the interpretations
+    # Verifies that there is only one source node creator in all the interpretations
     def verify_uniqueness(self):
         source_node_generator_count = 0
         for interpretation in self.interpretations:
