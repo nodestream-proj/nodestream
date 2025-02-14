@@ -70,8 +70,6 @@ class StorageConfiguration:
 
     @classmethod
     def from_file_data(cls, data):
-        print(data)
-
         storage_configuration_by_name = {
             store.name: store
             for store in (
@@ -79,8 +77,6 @@ class StorageConfiguration:
                 for store_data in data.get("stores", [])
             )
         }
-
-        print(storage_configuration_by_name)
 
         return StorageConfiguration(storage_configuration_by_name)
 
