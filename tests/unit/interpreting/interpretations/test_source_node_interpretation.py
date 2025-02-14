@@ -66,6 +66,7 @@ def test_source_node_interpretation_applies_dynamic_properties(blank_context):
         node_type=EXPECTED_NODE_TYPE,
         key={},
         properties={"first_name": dynamic_first_name, "last_name": "Probst"},
+        update_last_ingested=False,
     )
     subject.interpret(blank_context)
     actual_properties = blank_context.desired_ingest.source.properties
