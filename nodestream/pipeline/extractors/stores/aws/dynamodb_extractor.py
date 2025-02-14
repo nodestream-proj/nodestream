@@ -14,7 +14,6 @@ class DynamoRecord:
 
     @classmethod
     def from_raw_dynamo_record(cls, raw_dynamo_entry: Dict[str, Dict[str, Any]]):
-
         return DynamoRecord(
             {
                 attribute_name: TypeDeserializer().deserialize(attribute_value)
@@ -58,26 +57,41 @@ class DynamoDBExtractor(Extractor):
     ) -> None:
         self.client = client
         self.logger = getLogger(self.__class__.__name__)
+        self.table_name = table_name
+        self.limit = limit
+        self.scan_filter = scan_filter
+        self.projection_expression = projection_expression
+        self.filter_expression = filter_expression
+        self.last_evaluated_key = None
+
+    @property
+    def effective_parameters(self):
         tentative_parameters = {
-            "TableName": table_name,
-            "ScanFilter": scan_filter,
-            "ProjectionExpression": projection_expression,
-            "FilterExpression": filter_expression,
+            "TableName": self.table_name,
+            "ScanFilter": self.scan_filter,
+            "ProjectionExpression": self.projection_expression,
+            "FilterExpression": self.filter_expression,
+            "ExclusiveStartKey": self.last_evaluated_key,
             "PaginationConfig": {
-                "PageSize": limit,
+                "PageSize": self.limit,
             },
         }
 
-        self.effective_parameters = {
-            key: value for key, value in tentative_parameters.items() if value
-        }
+        return {key: value for key, value in tentative_parameters.items() if value}
 
     def scan_table(self):
         paginator = self.client.get_paginator("scan")
         pages = paginator.paginate(**self.effective_parameters)
         for page in pages:
+            self.last_evaluated_key = page.get("LastEvaluatedKey")
             yield from page["Items"]
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         for record in self.scan_table():
             yield DynamoRecord.from_raw_dynamo_record(record).record_data
+
+    async def resume_from_checkpoint(self, checkpoint_object):
+        self.last_evaluated_key = checkpoint_object.get("last_evaluated_key")
+
+    async def make_checkpoint(self):
+        return {"last_evaluated_key": self.last_evaluated_key}

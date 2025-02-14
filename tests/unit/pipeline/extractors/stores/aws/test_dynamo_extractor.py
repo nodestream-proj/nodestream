@@ -1,6 +1,9 @@
-from unittest.mock import patch
+import copy
 
+import boto3
 import pytest
+from hamcrest import assert_that, equal_to
+from moto import mock_aws
 
 from nodestream.pipeline.extractors.stores.aws.dynamodb_extractor import (
     DynamoDBExtractor,
@@ -52,56 +55,56 @@ def test_dynamo_record_class_initialization_from_raw_data():
     }
 
 
-def test_dynamo_extractor_initialization_without_args():
-    with patch(
+def test_dynamo_extractor_initialization_without_args(mocker):
+    client_mock = mocker.patch(
         "nodestream.pipeline.extractors.credential_utils.AwsClientFactory.make_client"
-    ) as client_mock:
-        extractor = DynamoDBExtractor.from_file_data(
-            "table_name",
-        )
-        assert extractor.effective_parameters == {
-            "TableName": "table_name",
-            "PaginationConfig": {
-                "PageSize": 100,
-            },
-        }
-        client_mock.assert_called_once_with("dynamodb")
+    )
+    extractor = DynamoDBExtractor.from_file_data(
+        "table_name",
+    )
+    assert extractor.effective_parameters == {
+        "TableName": "table_name",
+        "PaginationConfig": {
+            "PageSize": 100,
+        },
+    }
+    client_mock.assert_called_once_with("dynamodb")
 
 
-def test_dynamo_extractor_initialization_with_args():
-    with patch(
+def test_dynamo_extractor_initialization_with_args(mocker):
+    client_mock = mocker.patch(
         "nodestream.pipeline.extractors.credential_utils.AwsClientFactory.make_client"
-    ) as client_mock:
-        extractor = DynamoDBExtractor.from_file_data(
-            table_name="table_name",
-            scan_filter={
-                "number": {
-                    "AttributeValueList": [{"N": "90"}],
-                    "ComparisonOperator": "GE",
-                }
-            },
-            projection_expression="test_projection_expression",
-            filter_expression="test_filter_expression",
-            assume_role_arn="test_role",
-            assume_role_external_id="test_arn",
-            region_name="test_region",
-            limit=100,
-        )
-        assert extractor.effective_parameters == {
-            "TableName": "table_name",
-            "ScanFilter": {
-                "number": {
-                    "AttributeValueList": [{"N": "90"}],
-                    "ComparisonOperator": "GE",
-                }
-            },
-            "ProjectionExpression": "test_projection_expression",
-            "FilterExpression": "test_filter_expression",
-            "PaginationConfig": {
-                "PageSize": 100,
-            },
-        }
-        client_mock.assert_called_once_with("dynamodb")
+    )
+    extractor = DynamoDBExtractor.from_file_data(
+        table_name="table_name",
+        scan_filter={
+            "number": {
+                "AttributeValueList": [{"N": "90"}],
+                "ComparisonOperator": "GE",
+            }
+        },
+        projection_expression="test_projection_expression",
+        filter_expression="test_filter_expression",
+        assume_role_arn="test_role",
+        assume_role_external_id="test_arn",
+        region_name="test_region",
+        limit=100,
+    )
+    assert extractor.effective_parameters == {
+        "TableName": "table_name",
+        "ScanFilter": {
+            "number": {
+                "AttributeValueList": [{"N": "90"}],
+                "ComparisonOperator": "GE",
+            }
+        },
+        "ProjectionExpression": "test_projection_expression",
+        "FilterExpression": "test_filter_expression",
+        "PaginationConfig": {
+            "PageSize": 100,
+        },
+    }
+    client_mock.assert_called_once_with("dynamodb")
 
 
 TEST_DATA = [
@@ -167,3 +170,62 @@ async def test_dynamodb_extractor_extract_records(
 
     records = [record async for record in dynamodb_extractor.extract_records()]
     assert records == [{"attribute1": "value1"}, {"attribute2": 123}]
+
+
+TABLE_NAME = "test_table"
+LARGE_TEST_DATA = [{"number": {"N": str(i)}} for i in range(1, 201)]
+
+
+@pytest.fixture
+def dynamodb_client():
+    with mock_aws():
+        client = boto3.client("dynamodb", region_name="us-west-2")
+        client.create_table(
+            TableName=TABLE_NAME,
+            KeySchema=[
+                {"AttributeName": "number", "KeyType": "HASH"},
+            ],
+            AttributeDefinitions=[
+                {"AttributeName": "number", "AttributeType": "N"},
+            ],
+            ProvisionedThroughput={
+                "ReadCapacityUnits": 5,
+                "WriteCapacityUnits": 5,
+            },
+        )
+        for item in LARGE_TEST_DATA:
+            client.put_item(TableName=TABLE_NAME, Item=item)
+        yield client
+
+
+async def fetch_records(geneator, n=None):
+    records = []
+    async for record in geneator:
+        records.append(record)
+        if n and len(records) == n:
+            break
+    return records
+
+
+@pytest.mark.asyncio
+async def test_dynamodb_extractor_pagination_and_checkpoint(dynamodb_client):
+    extractor = DynamoDBExtractor(
+        client=dynamodb_client, table_name=TABLE_NAME, limit=25, scan_filter={}
+    )
+    copied_extractor = copy.copy(extractor)
+
+    # Extract first batch of records
+    first_batch = await fetch_records(extractor.extract_records(), 50)
+
+    # Make a checkpoint
+    checkpoint = await extractor.make_checkpoint()
+    assert checkpoint["last_evaluated_key"] is not None
+
+    # Resume from checkpoint
+    await copied_extractor.resume_from_checkpoint(checkpoint)
+
+    # Get the rest of the records
+    result = await fetch_records(copied_extractor.extract_records())
+    all_records = first_batch + result
+
+    assert_that(len(all_records), equal_to(200))
