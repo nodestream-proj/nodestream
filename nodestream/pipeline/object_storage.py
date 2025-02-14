@@ -59,6 +59,11 @@ class SignedObject:
 class Signer(ABC):
     """A signer is used to sign and verify objects in an object store."""
 
+    @staticmethod
+    def hmac(base_64_secret: str) -> "Signer":
+        """Create a HMAC signature from a base64 secret."""
+        return HmacSigner.from_base64(base_64_secret)
+
     @abstractmethod
     def sign(self, data: bytes) -> SignedObject:
         """Sign an object.
@@ -210,15 +215,16 @@ class ObjectStore(ABC, Pluggable):
         return NullObjectStore()
 
     @staticmethod
-    def in_current_directory():
-        return DirectoryObjectStore(Path.cwd() / ".nodestream" / "objects")
+    def from_file_arguments(type: str, **arguments) -> "ObjectStore":
+        object_store_type = OBJECT_STORE_REGISTRY.get(type)
+        return object_store_type(**arguments)
 
 
-class DirectoryObjectStore(ObjectStore, alias="directory"):
+class DirectoryObjectStore(ObjectStore, alias="local"):
     """An object store that stores objects in a directory on a file system."""
 
-    def __init__(self, root: Path):
-        self.root = root
+    def __init__(self, root: Optional[Path] = None) -> None:
+        self.root = root or (Path.cwd() / ".nodestream" / "objects")
 
     def get(self, key: str) -> Optional[bytes]:
         path = self.root / key
