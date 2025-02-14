@@ -94,6 +94,8 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         "properties_normalization",
         "key_search_algorithm",
         "node_additional_types",
+        "node_update_last_ingested",
+        "relationship_update_last_ingested",
     )
 
     @deprecated_arugment("match_strategy", "node_creation_rule")
@@ -113,6 +115,8 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         key_normalization: Optional[Dict[str, Any]] = None,
         properties_normalization: Optional[Dict[str, Any]] = None,
         node_additional_types: Optional[Iterable[str]] = None,
+        node_update_last_ingested: bool = True,
+        relationship_update_last_ingested: bool = True,
     ):
         self.can_find_many = find_many or iterate_on is not None
         self.cardinality = Cardinality(cardinality)
@@ -146,6 +150,8 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
             self.node_key, self.key_normalization
         )
         self.node_additional_types = tuple(node_additional_types or tuple())
+        self.node_update_last_ingested = node_update_last_ingested
+        self.relationship_update_last_ingested = relationship_update_last_ingested
 
     def interpret(self, context: ProviderContext):
         for sub_context in self.decomposer.decompose_record(context):
@@ -156,6 +162,10 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
 
     def find_relationship(self, context: ProviderContext) -> Relationship:
         rel = Relationship(type=self.relationship_type.single_value(context))
+
+        if not self.relationship_update_last_ingested:
+            rel.properties.remove_last_ingested()
+
         relationship_key_property_mapping = PropertyMappingFromDict(
             self.relationship_key
         )
@@ -174,6 +184,10 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
                 key_values=PropertySet(key_set),
                 additional_types=self.node_additional_types,
             )
+
+            if not self.node_update_last_ingested:
+                node.properties.remove_last_ingested()
+
             if node.has_valid_id:
                 self.node_properties.apply_to(
                     context, node.properties, self.properties_normalization
