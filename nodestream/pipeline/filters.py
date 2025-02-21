@@ -157,6 +157,8 @@ try:
     INFERRED_OBJECT_SCHEMA_KEY = "inferred_object_schema"
 
     class SchemaEnforcementMode:
+        """A mode of schema enforcement that can transition between different states."""
+
         def should_filter(self, record) -> bool:
             return True  # pragma: no cover
 
@@ -177,6 +179,8 @@ try:
             raise ValueError(f"Invalid enforcement policy: {enforcement_policy}")
 
     class Schema:
+        """A schema that can be enforced on records."""
+
         def __init__(self, schema_dict):
             self.schema_dict = schema_dict
             self.validator = jsonschema.Draft7Validator(schema_dict)
@@ -197,6 +201,8 @@ try:
             return None
 
     class SchemaBuilder:
+        """A helper class to build a schema from records."""
+
         def __init__(self):
             self._inner = genson.SchemaBuilder()
             self.collected_samples = 0
@@ -209,6 +215,8 @@ try:
             return Schema(self._inner.to_schema())
 
     class FetchSchema(SchemaEnforcementMode):
+        """Fetches a schema from the object store and enforces it."""
+
         def __init__(self, key: str, enforcement_policy: str):
             self.key = key
             self.enforcement_policy = enforcement_policy
@@ -307,6 +315,12 @@ try:
             return False
 
     class SchemaEnforcer(Filter):
+        """A filter that enforces a schema on records.
+
+        This effectively works as a state machine that transitions between
+        different modes of schema enforcement.
+        """
+
         @classmethod
         def from_file_data(
             cls,

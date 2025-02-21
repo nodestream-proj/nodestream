@@ -133,7 +133,10 @@ class Pipeline(ExpandsSchemaFromChildren):
     __slots__ = ("steps", "step_outbox_size", "logger", "object_store")
 
     def __init__(
-        self, steps: Tuple[Step, ...], step_outbox_size: int, object_store: ObjectStore
+        self,
+        steps: Tuple[Step, ...],
+        step_outbox_size: int,
+        object_store: ObjectStore,
     ) -> None:
         self.steps = steps
         self.step_outbox_size = step_outbox_size
