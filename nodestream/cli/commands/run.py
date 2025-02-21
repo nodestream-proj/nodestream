@@ -53,7 +53,7 @@ class Run(NodestreamCommand):
             flag=True,
         ),
         option(
-            "checkpoint-storage-backend",
+            "storage-backend",
             description="Storage backend to use for checkpointing",
             flag=False,
         ),

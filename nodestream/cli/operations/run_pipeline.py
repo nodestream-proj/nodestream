@@ -92,7 +92,7 @@ class RunPipeline(Operation):
                 command.line("<info>Effective configuration:</info>")
                 command.line(f"<info>{safe_dump(config)}</info>")
 
-        storage_name = command.option("checkpoint-storage-backend")
+        storage_name = command.option("storage-backend")
         object_store = self.project.get_object_storage_by_name(storage_name)
 
         return RunRequest(
