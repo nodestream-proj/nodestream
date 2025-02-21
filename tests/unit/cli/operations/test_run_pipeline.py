@@ -31,7 +31,7 @@ def test_make_run_request(run_pipeline_operation, mocker):
     targets = ["t1", "t2"]
     pipeline_name = "my_pipeline"
     command = mocker.Mock()
-    command.option.side_effect = [annotations, "10001", targets, "10000"]
+    command.option.side_effect = ["my-storage", annotations, "10001", targets, "10000"]
     command.argument.return_value = [pipeline_name]
     pipeline = mocker.patch("nodestream.project.PipelineDefinition")
     pipeline.name = pipeline_name

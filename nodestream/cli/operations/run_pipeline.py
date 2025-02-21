@@ -92,6 +92,9 @@ class RunPipeline(Operation):
                 command.line("<info>Effective configuration:</info>")
                 command.line(f"<info>{safe_dump(config)}</info>")
 
+        storage_name = command.option("storage-backend")
+        object_store = self.project.get_object_storage_by_name(storage_name)
+
         return RunRequest(
             pipeline_name=pipeline.name,
             initialization_arguments=PipelineInitializationArguments(
@@ -101,6 +104,7 @@ class RunPipeline(Operation):
                 extra_steps=list(
                     self.get_writer_steps_for_specified_targets(command, pipeline)
                 ),
+                object_store=object_store,
             ),
             progress_reporter=self.create_progress_reporter(command, pipeline.name),
         )

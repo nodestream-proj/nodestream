@@ -39,7 +39,9 @@ def test_extractor_with_flushes(mocker):
 
 
 @pytest.mark.asyncio
-async def test_flush_handling(writer, interpreter, test_extractor_with_flushes):
-    pipeline = Pipeline([test_extractor_with_flushes, interpreter, writer], 1000)
+async def test_flush_handling(writer, interpreter, test_extractor_with_flushes, mocker):
+    pipeline = Pipeline(
+        [test_extractor_with_flushes, interpreter, writer], 1000, mocker.Mock()
+    )
     await pipeline.run(PipelineProgressReporter())
     assert writer.ingest_strategy.flush.call_count == 5

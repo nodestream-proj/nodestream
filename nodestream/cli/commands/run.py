@@ -52,6 +52,11 @@ class Run(NodestreamCommand):
             description="Ensure all specified targets are migrated before running specified pipelines",
             flag=True,
         ),
+        option(
+            "storage-backend",
+            description="Storage backend to use for checkpointing",
+            flag=False,
+        ),
         *PROMETHEUS_OPTIONS,
     ]
 

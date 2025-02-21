@@ -1,4 +1,5 @@
 - implementation: nodestream.pipeline.extractors.files:FileExtractor
+  factory: local
   arguments:
     globs:
       - tests/data/fifa_2021_player_data.csv
