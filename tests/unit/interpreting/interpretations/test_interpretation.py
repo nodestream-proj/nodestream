@@ -1,9 +1,9 @@
 from hamcrest import assert_that, instance_of
 
 from nodestream.interpreting.interpretations import (
+    ConditionedInterpretation,
     Interpretation,
     SourceNodeInterpretation,
-    ConditionedInterpretation,
 )
 from nodestream.interpreting.interpretations.conditions import (
     AlwaysTrue,

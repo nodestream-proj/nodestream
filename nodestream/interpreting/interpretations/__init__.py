@@ -1,5 +1,5 @@
 from .extract_variables_interpretation import ExtractVariablesInterpretation
-from .interpretation import Interpretation, ConditionedInterpretation
+from .interpretation import ConditionedInterpretation, Interpretation
 from .properties_interpretation import PropertiesInterpretation
 from .relationship_interpretation import RelationshipInterpretation
 from .source_node_interpretation import SourceNodeInterpretation

@@ -1,23 +1,22 @@
 import pytest
-from hamcrest import assert_that, is_, instance_of, has_length
-
-from nodestream.pipeline.value_providers import (
-    ProviderContext,
-    ValueProvider,
-    JmespathValueProvider,
-)
+from hamcrest import assert_that, has_length, instance_of, is_
 
 from nodestream.interpreting.interpretations.conditions import (
     AlwaysTrue,
-    Or,
     And,
-    Not,
+    Comparator,
+    Condition,
+    ContainsOperator,
     EqualsOperator,
     GreaterThanOperator,
     LessThanOperator,
-    ContainsOperator,
-    Comparator,
-    Condition,
+    Not,
+    Or,
+)
+from nodestream.pipeline.value_providers import (
+    JmespathValueProvider,
+    ProviderContext,
+    ValueProvider,
 )
 
 
