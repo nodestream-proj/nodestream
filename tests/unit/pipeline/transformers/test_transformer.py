@@ -1,4 +1,5 @@
 import asyncio
+from unittest.mock import MagicMock
 
 import pytest
 from hamcrest import assert_that, contains_inanyorder, has_length
@@ -161,3 +162,20 @@ async def test_switch_transformer_without_default():
         async for r in switch_transformer.process_record(record, None)
     ]
     assert results == TEST_RESULTS_WITH_NO_DEFAULT
+
+
+class TestConcurrentTransformer(ConcurrentTransformer):
+    def __init__(self):
+        self.done = False
+        self.queue_size = 0
+        super().__init__()
+
+    async def transform_record(self, record):
+        return record
+
+
+@pytest.mark.asyncio
+async def test_emit_outstanding_records():
+    transformer = TestConcurrentTransformer()
+    context = MagicMock()
+    assert transformer.emit_outstanding_records(context)
