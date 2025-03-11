@@ -5,8 +5,11 @@ import pytest
 from hamcrest import assert_that, contains_inanyorder, has_length
 
 from nodestream.pipeline import Flush
-from nodestream.pipeline.transformers import (ConcurrentTransformer, SwitchTransformer,
-                                              Transformer, )
+from nodestream.pipeline.transformers import (
+    ConcurrentTransformer,
+    SwitchTransformer,
+    Transformer,
+)
 from nodestream.pipeline.value_providers import JmespathValueProvider
 
 

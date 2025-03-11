@@ -58,7 +58,7 @@ validation = ["genson", "jsonschema"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
-black = "^24.3.0"
+black = "^25.1.0"
 pyhamcrest = "^2.1.0"
 isort = "^5.12.0"
 pytest-cov = "^5.0.0"
