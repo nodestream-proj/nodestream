@@ -5,11 +5,8 @@ import pytest
 from hamcrest import assert_that, contains_inanyorder, has_length
 
 from nodestream.pipeline import Flush
-from nodestream.pipeline.transformers import (
-    ConcurrentTransformer,
-    SwitchTransformer,
-    Transformer,
-)
+from nodestream.pipeline.transformers import (ConcurrentTransformer, SwitchTransformer,
+                                              Transformer, )
 from nodestream.pipeline.value_providers import JmespathValueProvider
 
 
@@ -27,11 +24,12 @@ ITEM_COUNT = 100
 
 
 @pytest.mark.asyncio
-async def test_concurrent_transformer_alL_items_collect():
+async def test_concurrent_transformer_all_items_collect():
     items = list(range(100))
     add = AddOneConcurrently()
+    mock_context = MagicMock()
     result = [r for i in items async for r in add.process_record(i, None)]
-    result.extend([r async for r in add.emit_outstanding_records()])
+    result.extend([r async for r in add.emit_outstanding_records(mock_context)])
     assert_that(result, contains_inanyorder(*[i + 1 for i in items]))
     assert_that(result, has_length(len(items)))
 
@@ -80,23 +78,25 @@ async def test_normal_concurrent_transformer_passes_processor():
 async def test_concurrent_transformer_worker_cleanup(mocker):
     add = AddOneConcurrently()
     add.thread_pool = mocker.Mock()
-    await add.finish(None)
+    mock_context = MagicMock()
+    await add.finish(mock_context)
     add.thread_pool.shutdown.assert_called_once_with(True)
 
 
 @pytest.mark.asyncio
-async def test_concurrent_transformer_flush(mocker):
+async def test_concurrent_transformer_flush():
     add = AddOneConcurrently()
+    mock_context = MagicMock()
     result = [
         r for record in (1, Flush, 2) async for r in add.process_record(record, None)
     ]
-    result.extend([r async for r in add.emit_outstanding_records()])
+    result.extend([r async for r in add.emit_outstanding_records(mock_context)])
     assert_that(result, contains_inanyorder(2, 3, Flush))
 
 
-class addNTransformer(Transformer):
-    def __init__(self, N):
-        self.n = N
+class AddNTransformer(Transformer):
+    def __init__(self, n):
+        self.n = n
 
     async def transform_record(self, record):
         yield dict(type=record["type"], value=record["value"] + self.n)
@@ -105,17 +105,17 @@ class addNTransformer(Transformer):
 TEST_PROVIDER = JmespathValueProvider.from_string_expression("type")
 TEST_CASES = {
     "first": {
-        "implementation": "tests.unit.pipeline.transformers.test_transformer:addNTransformer",
-        "arguments": {"N": 1},
+        "implementation": "tests.unit.pipeline.transformers.test_transformer:AddNTransformer",
+        "arguments": {"n": 1},
     },
     "second": {
-        "implementation": "tests.unit.pipeline.transformers.test_transformer:addNTransformer",
-        "arguments": {"N": 2},
+        "implementation": "tests.unit.pipeline.transformers.test_transformer:AddNTransformer",
+        "arguments": {"n": 2},
     },
 }
 DEFAULT_CASE = {
-    "implementation": "tests.unit.pipeline.transformers.test_transformer:addNTransformer",
-    "arguments": {"N": 3},
+    "implementation": "tests.unit.pipeline.transformers.test_transformer:AddNTransformer",
+    "arguments": {"n": 3},
 }
 
 TEST_DATA = [
@@ -164,7 +164,7 @@ async def test_switch_transformer_without_default():
     assert results == TEST_RESULTS_WITH_NO_DEFAULT
 
 
-class TestConcurrentTransformer(ConcurrentTransformer):
+class MockConcurrentTransformer(ConcurrentTransformer):
     def __init__(self):
         self.done = False
         self.queue_size = 0
@@ -176,6 +176,6 @@ class TestConcurrentTransformer(ConcurrentTransformer):
 
 @pytest.mark.asyncio
 async def test_emit_outstanding_records():
-    transformer = TestConcurrentTransformer()
+    transformer = MockConcurrentTransformer()
     context = MagicMock()
     assert transformer.emit_outstanding_records(context)
