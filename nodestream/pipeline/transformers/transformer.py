@@ -1,5 +1,5 @@
 import asyncio
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from logging import getLogger
 from typing import Any, AsyncGenerator, Dict, Optional
@@ -34,7 +34,7 @@ class Transformer(Step):
         raise NotImplementedError
 
 
-class ConcurrentTransformer(Transformer):
+class ConcurrentTransformer(Transformer, ABC):
     """A `ConcurrentTransformer` can process multiple records concurrently.
 
     `ConcurrentTransformer`s are useful when the transformation work is IO
@@ -60,7 +60,7 @@ class ConcurrentTransformer(Transformer):
         self.pending_tasks = []
 
     def on_worker_thread_start(self):
-        pass
+        pass  # do nothing
 
     async def drain_completed_tasks(self):
         tasks_drained = 0
@@ -107,7 +107,7 @@ class ConcurrentTransformer(Transformer):
     async def yield_processor(self):
         await asyncio.sleep(0)
 
-    async def emit_outstanding_records(self):
+    async def emit_outstanding_records(self, context: StepContext):
         while self.pending_tasks:
             async for result in self.drain_completed_tasks():
                 yield result
