@@ -1,4 +1,3 @@
-import jmespath
 import pytest
 from hamcrest import assert_that, equal_to, has_length, none
 
