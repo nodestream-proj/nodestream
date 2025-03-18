@@ -8,7 +8,6 @@ from yaml import SafeDumper, SafeLoader
 from .context import ProviderContext
 from .value_provider import ValueProvider, ValueProviderException
 
-
 # `QueryStrategy` is here to provide the seam for different optimizations
 # for executing jmespath queries. We can either execute a "fully fledged"
 # jmespath query or we can implement some simple access patterns that
