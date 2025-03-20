@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from typing import Any, Iterable, Type
 
 import jmespath
@@ -74,29 +75,26 @@ class JmespathValueProvider(ValueProvider):
     def __init__(self, strategy: QueryStrategy) -> None:
         self.strategy = strategy
 
-    def search(self, context: ProviderContext):
-        raw_search = self.strategy.search(context)
-        if raw_search is None:
-            return
-        if isinstance(raw_search, list):
-            yield from raw_search
-        else:
-            yield raw_search
-
     def single_value(self, context: ProviderContext) -> Any:
         try:
-            result = list(self.search(context))
-            if not result:
-                return None
-            if len(result) == 1:
-                return result[0]
-            return list(result)
+            return self.strategy.search(context)
         except Exception as e:
             raise ValueProviderException(str(context.document), self) from e
 
     def many_values(self, context: ProviderContext) -> Iterable[Any]:
         try:
-            yield from self.search(context)
+            result = self.strategy.search(context)
+            if not result:
+                return
+
+            if isinstance(result, (bool, str, int, float)):
+                yield result
+            elif isinstance(result, Sequence):
+                yield from result
+            elif result:
+                yield result
+
+            return
         except Exception as e:
             raise ValueProviderException(str(context.document), self) from e
 
@@ -106,7 +104,5 @@ class JmespathValueProvider(ValueProvider):
 
 SafeDumper.add_representer(
     JmespathValueProvider,
-    lambda dumper, jmespath: dumper.represent_scalar(
-        "!jmespath", str(jmespath.strategy)
-    ),
+    lambda dumper, jp: dumper.represent_scalar("!jmespath", str(jp.strategy)),
 )
