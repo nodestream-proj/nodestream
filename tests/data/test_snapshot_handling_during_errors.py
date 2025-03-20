@@ -27,12 +27,6 @@ async def test_snapshot_handling_during_errors(mocker):
     storage.namespaced.return_value = storage
     pipeline = Pipeline((extractor, kaboom), 1000, storage)
 
-    def raise_fatal_error(e):
-        # raise e
-        pass
-
-    await pipeline.run(
-        PipelineProgressReporter(on_fatal_error_callback=raise_fatal_error)
-    )
+    await pipeline.run(PipelineProgressReporter())
     storage.delete.assert_not_called()
     assert storage.put_picklable.call_count == 6
