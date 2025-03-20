@@ -24,8 +24,11 @@ class Extractor(Step, Generic[R, T]):
             await self.resume_from_checkpoint(checkpoint)
 
     async def finish(self, context: StepContext):
-        context.debug("Clearing checkpoint for extractor since extractor is finished.")
-        context.object_store.delete(CHECKPOINT_OBJECT_KEY)
+        if not context.pipeline_encountered_fatal_error:
+            context.debug(
+                "Clearing checkpoint for extractor since extractor is finished."
+            )
+            context.object_store.delete(CHECKPOINT_OBJECT_KEY)
 
     async def make_checkpoint(self) -> T:
         return None

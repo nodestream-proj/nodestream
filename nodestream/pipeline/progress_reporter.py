@@ -37,6 +37,11 @@ class PipelineProgressReporter:
     on_start_callback: Callable[[], None] = field(default=no_op)
     on_finish_callback: Callable[[Metrics], None] = field(default=no_op)
     on_fatal_error_callback: Callable[[Exception], None] = field(default=no_op)
+    encountered_fatal_error: bool = field(default=False)
+
+    def on_fatal_error(self, exception: Exception):
+        self.encountered_fatal_error = True
+        self.on_fatal_error_callback(exception)
 
     @classmethod
     def for_testing(cls, results_list: list) -> "PipelineProgressReporter":
