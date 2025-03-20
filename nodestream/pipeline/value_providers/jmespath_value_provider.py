@@ -9,6 +9,7 @@ from yaml import SafeDumper, SafeLoader
 from .context import ProviderContext
 from .value_provider import ValueProvider, ValueProviderException
 
+
 # `QueryStrategy` is here to provide the seam for different optimizations
 # for executing jmespath queries. We can either execute a "fully fledged"
 # jmespath query or we can implement some simple access patterns that
@@ -63,8 +64,8 @@ class JmespathValueProvider(ValueProvider):
     def install_yaml_tag(cls, loader: Type[SafeLoader]):
         loader.add_constructor(
             "!jmespath",
-            lambda loader, node: cls.from_string_expression(
-                loader.construct_scalar(node)
+            lambda loader_param, node: cls.from_string_expression(
+                loader_param.construct_scalar(node)
             ),
         )
 

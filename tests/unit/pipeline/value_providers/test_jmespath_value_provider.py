@@ -58,7 +58,7 @@ def test_single_value_is_list(blank_context_with_document):
     assert result == ["graphdb", "python"]
 
 
-def test_multiple_values_missing(blank_context_with_document):
+def test_many_values_missing(blank_context_with_document):
     subject = JmespathValueProvider.from_string_expression("team.description")
     result = list(subject.many_values(blank_context_with_document))
     assert result == []
@@ -85,17 +85,17 @@ def test_many_values_single_level_array():
         {"toplevel": ["test1", "test2", "test3"]}, DesiredIngestion()
     )
     subject = JmespathValueProvider.from_string_expression("toplevel")
-    result = list(subject.single_value(context))
+    result = list(subject.many_values(context))
     assert result == ["test1", "test2", "test3"]
 
 
-def test_multiple_values_returns_one_value(blank_context_with_document):
+def test_many_values_returns_one_value(blank_context_with_document):
     subject = JmespathValueProvider.from_string_expression("team.name")
     result = list(subject.many_values(blank_context_with_document))
     assert result == ["nodestream"]
 
 
-def test_multiple_values_hit(blank_context_with_document):
+def test_many_values_hit(blank_context_with_document):
     subject = JmespathValueProvider.from_string_expression("project.tags")
     result = list(subject.many_values(blank_context_with_document))
     assert result == ["graphdb", "python"]
@@ -115,7 +115,7 @@ def test_single_value_error(blank_context_with_document):
     assert some_text_from_document in error_message
 
 
-def test_multiple_values_error(blank_context_with_document):
+def test_many_values_error(blank_context_with_document):
     # this will error because team2 does not exist causing the join to throw an error
     expression_with_error = "join('/', [team.name || '', team2.name])"
     subject = JmespathValueProvider.from_string_expression(expression_with_error)
