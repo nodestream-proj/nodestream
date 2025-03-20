@@ -1,5 +1,4 @@
 import pytest
-from hamcrest import assert_that, equal_to, has_length, none
 
 from nodestream.pipeline.value_providers import JmespathValueProvider
 from nodestream.pipeline.value_providers.value_provider import ValueProviderException
@@ -7,38 +6,44 @@ from nodestream.pipeline.value_providers.value_provider import ValueProviderExce
 
 def test_single_value_present(blank_context_with_document):
     subject = JmespathValueProvider.from_string_expression("team.name")
-    assert_that(
-        subject.single_value(blank_context_with_document), equal_to("nodestream")
-    )
+    assert subject.single_value(blank_context_with_document) == "nodestream"
+
+
+def test_single_value_present_complicated(blank_context_with_document):
+    subject = JmespathValueProvider.from_string_expression("*.name")
+    assert subject.single_value(blank_context_with_document) == [
+        "nodestream",
+        "project_name",
+    ]
 
 
 def test_single_value_missing(blank_context_with_document):
     subject = JmespathValueProvider.from_string_expression("team.description")
-    assert_that(subject.single_value(blank_context_with_document), none())
+    assert subject.single_value(blank_context_with_document) is None
 
 
 def test_single_value_is_list(blank_context_with_document):
     subject = JmespathValueProvider.from_string_expression("project.tags")
     result = subject.single_value(blank_context_with_document)
-    assert_that(result, equal_to("graphdb"))
+    assert result == ["graphdb", "python"]
 
 
 def test_multiple_values_missing(blank_context_with_document):
     subject = JmespathValueProvider.from_string_expression("team.description")
-    assert_that(list(subject.many_values(blank_context_with_document)), has_length(0))
+    result = list(subject.many_values(blank_context_with_document))
+    assert result == []
 
 
 def test_multiple_values_returns_one_value(blank_context_with_document):
     subject = JmespathValueProvider.from_string_expression("team.name")
     result = list(subject.many_values(blank_context_with_document))
-    assert_that(result, has_length(1))
-    assert_that(result[0], equal_to("nodestream"))
+    assert result == ["nodestream"]
 
 
 def test_multiple_values_hit(blank_context_with_document):
     subject = JmespathValueProvider.from_string_expression("project.tags")
-    result = subject.many_values(blank_context_with_document)
-    assert_that(list(result), equal_to(["graphdb", "python"]))
+    result = list(subject.many_values(blank_context_with_document))
+    assert result == ["graphdb", "python"]
 
 
 def test_single_value_error(blank_context_with_document):
@@ -60,9 +65,9 @@ def test_multiple_values_error(blank_context_with_document):
     expression_with_error = "join('/', [team.name || '', team2.name])"
     subject = JmespathValueProvider.from_string_expression(expression_with_error)
 
-    with pytest.raises(Exception) as e_info:
-        generator = subject.many_values(blank_context_with_document)
-        list(generator)
+    with pytest.raises(ValueProviderException) as e_info:
+        list(subject.many_values(blank_context_with_document))
+
     error_message = str(e_info.value)
 
     assert expression_with_error in error_message

@@ -85,7 +85,12 @@ class JmespathValueProvider(ValueProvider):
 
     def single_value(self, context: ProviderContext) -> Any:
         try:
-            return next(self.search(context), None)
+            result = list(self.search(context))
+            if not result:
+                return None
+            if len(result) == 1:
+                return result[0]
+            return list(result)
         except Exception as e:
             raise ValueProviderException(str(context.document), self) from e
 
