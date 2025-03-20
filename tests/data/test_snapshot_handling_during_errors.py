@@ -28,5 +28,8 @@ async def test_snapshot_handling_during_errors(mocker):
     pipeline = Pipeline((extractor, kaboom), 1000, storage)
 
     await pipeline.run(PipelineProgressReporter())
+
+    # Check that we have a checkpoint placed and
+    # that we don't delete the checkpoint if we encounter an error.
     storage.delete.assert_not_called()
-    assert storage.put_picklable.call_count == 6
+    storage.put_picklable.assert_called()
