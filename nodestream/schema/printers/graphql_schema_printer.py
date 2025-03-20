@@ -52,6 +52,11 @@ PROPERTY_TYPE_TO_GRAPQHL_TYPES = {
     PropertyType.INTEGER: "BigInt",
     PropertyType.BOOLEAN: "Boolean",
     PropertyType.FLOAT: "Float",
+    PropertyType.LIST_OF_BOOLEANS: "[Boolean]",
+    PropertyType.LIST_OF_STRINGS: "[String]",
+    PropertyType.LIST_OF_INTEGERS: "[BigInt]",
+    PropertyType.LIST_OF_FLOATS: "[Float]",
+    PropertyType.LIST_OF_DATETIMES: "[DateTime]",
 }
 
 

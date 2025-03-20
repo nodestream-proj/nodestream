@@ -32,6 +32,13 @@ class PropertyType(str, Enum):
     INTEGER = "INTEGER"
     FLOAT = "FLOAT"
 
+    # This is definitely not ideal to describe types this way but it works for now.
+    LIST_OF_STRINGS = "LIST_OF_STRINGS"
+    LIST_OF_BOOLEANS = "LIST_OF_BOOLEANS"
+    LIST_OF_DATETIMES = "LIST_OF_DATETIMES"
+    LIST_OF_INTEGERS = "LIST_OF_INTEGERS"
+    LIST_OF_FLOATS = "LIST_OF_FLOATS"
+
 
 @dataclass(slots=True)
 class PropertyMetadata(LoadsFromYaml, SavesToYaml):
