@@ -26,6 +26,11 @@ class StepContext:
         self.index = index
         self.object_store = object_store
 
+    @property
+    def pipeline_encountered_fatal_error(self) -> bool:
+        """Whether the pipeline has encountered a fatal error."""
+        return self.reporter.encountered_fatal_error
+
     def report_error(
         self,
         message: str,
@@ -51,7 +56,7 @@ class StepContext:
             stack_info=True,
         )
         if fatal:
-            self.reporter.on_fatal_error_callback(exception)
+            self.reporter.on_fatal_error(exception)
         else:
             Metrics.get().increment(Metric.NON_FATAL_ERRORS)
 

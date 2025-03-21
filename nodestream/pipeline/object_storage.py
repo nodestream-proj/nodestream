@@ -309,7 +309,7 @@ class SignedObjectStore(ObjectStore):
         self.store.delete(key)
 
 
-class S3ObjectStore(ObjectStore):
+class S3ObjectStore(ObjectStore, alias="s3"):
     __slots__ = ("client", "bucket_name")
 
     def __init__(self, bucket_name: str, **client_factory_args):
