@@ -6,6 +6,9 @@ import pytz
 from freezegun import freeze_time
 from hamcrest import assert_that, equal_to, has_key, not_
 
+from nodestream.file_io import LazyLoadedArgument
+from unittest.mock import Mock
+
 
 @pytest.fixture
 def client_with_role():
@@ -145,3 +148,37 @@ def test_make_client(mocker, client_without_role):
         return_value=session
     )
     client_without_role.make_client("s3")
+
+def create_mock_lazy_loaded_argument(value):
+    mock = Mock(spec=LazyLoadedArgument)
+    mock.get_value.return_value = value
+    return mock
+
+def test_init_with_lazy_loaded_role_arn():
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
+
+    lazy_role_arn = create_mock_lazy_loaded_argument("arn:aws:iam::123456789012:role/test")
+    client = AwsClientFactory(assume_role_arn=lazy_role_arn)
+
+    assert_that(client.assume_role_arn, equal_to("arn:aws:iam::123456789012:role/test"))
+
+def test_init_with_lazy_loaded_external_id():
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
+
+    lazy_external_id = create_mock_lazy_loaded_argument("test-external-id")
+    client = AwsClientFactory(assume_role_external_id=lazy_external_id)
+
+    assert_that(client.assume_role_external_id, equal_to("test-external-id"))
+
+def test_init_with_both_lazy_loaded_arguments():
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
+
+    lazy_role_arn = create_mock_lazy_loaded_argument("arn:aws:iam::123456789012:role/test")
+    lazy_external_id = create_mock_lazy_loaded_argument("test-external-id")
+    client = AwsClientFactory(
+        assume_role_arn=lazy_role_arn,
+        assume_role_external_id=lazy_external_id
+    )
+
+    assert_that(client.assume_role_arn, equal_to("arn:aws:iam::123456789012:role/test"))
+    assert_that(client.assume_role_external_id, equal_to("test-external-id"))

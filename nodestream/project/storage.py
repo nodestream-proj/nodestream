@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
-
+from typing import Any, Dict, Optional, Union
+from nodestream.file_io import LazyLoadedArgument
 from ..pipeline.object_storage import ObjectStore, Signer
 
 
@@ -9,14 +9,17 @@ class StoreConfiguration:
     name: str
     storage_type: str
     arguments: Dict[str, Any]
-    hmac_key: Optional[any] = None
+    hmac_key: Optional[Union[LazyLoadedArgument,str]] = None
 
     def initialize(self) -> ObjectStore:
         store = ObjectStore.from_file_arguments(self.storage_type, **self.arguments)
         if self.hmac_key:
-            return store.signed(Signer.hmac(self.hmac_key))
-        else:
-            return store
+            if isinstance(self.hmac_key, LazyLoadedArgument):
+                resolved_key = self.hmac_key.get_value()
+                return store.signed(Signer.hmac(resolved_key))
+            else:
+                return store.signed(Signer.hmac(self.hmac_key))
+        return store
 
     def to_file_data(self):
         return dict(
@@ -40,7 +43,7 @@ class StoreConfiguration:
         from schema import Optional, Schema
 
         return Schema(
-            {"name": str, "type": str, Optional("hmac_key"): str, Optional(str): object}
+            {"name": str, "type": str, Optional("hmac_key"): LazyLoadedArgument, Optional(str): object}
         )
 
 

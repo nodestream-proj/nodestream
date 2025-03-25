@@ -1,3 +1,5 @@
+import base64
+
 import pytest
 from hamcrest import assert_that, contains, equal_to, instance_of
 
@@ -7,6 +9,10 @@ from nodestream.pipeline.object_storage import (
     SignedObjectStore,
 )
 from nodestream.project.storage import StorageConfiguration, StoreConfiguration
+from unittest.mock import Mock
+from hamcrest import assert_that, instance_of
+from nodestream.file_io import LazyLoadedArgument
+from nodestream.pipeline.object_storage import SignedObjectStore, DirectoryObjectStore
 
 
 @pytest.fixture
@@ -88,3 +94,23 @@ def test_storage_configuration_to_file_data(store_config):
     file_data = storage_config.to_file_data()
     expected_data = {"stores": [("test_store", store_config)]}
     assert_that(file_data, equal_to(expected_data))
+
+
+def test_store_configuration_initialize_with_lazy_hmac(tmp_path):
+    expected_hmac = "dvHdCrVbRPp1HcmWX78Ryw=="
+    mock_lazy_hmac = Mock(spec=LazyLoadedArgument)
+    mock_lazy_hmac.get_value.return_value = expected_hmac
+
+    store_config = StoreConfiguration(
+        name="test-store",
+        storage_type="local",
+        arguments={"root": tmp_path},
+        hmac_key=mock_lazy_hmac
+    )
+
+    store = store_config.initialize()
+    assert_that(
+        base64.b64encode(store.signer.key).decode(),
+        equal_to(expected_hmac)
+    )
+    mock_lazy_hmac.get_value.assert_called_once()

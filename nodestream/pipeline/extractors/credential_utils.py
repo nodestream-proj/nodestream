@@ -1,24 +1,32 @@
 from datetime import datetime
 from time import time
-from typing import Optional
+from typing import Optional, Union
 from uuid import uuid4
 
 import boto3
 import pytz
 from botocore.credentials import RefreshableCredentials
 from botocore.session import Session
+from nodestream.file_io import LazyLoadedArgument
 
 
 class AwsClientFactory:
     def __init__(
         self,
-        assume_role_arn: Optional[str] = None,
-        assume_role_external_id: Optional[str] = None,
+        assume_role_arn: Optional[Union[LazyLoadedArgument,str]] = None,
+        assume_role_external_id: Optional[Union[LazyLoadedArgument,str]] = None,
         session_ttl: int = 3000,
         **boto_session_args
     ) -> None:
-        self.assume_role_arn = assume_role_arn
-        self.assume_role_external_id = assume_role_external_id
+        if isinstance(assume_role_arn, LazyLoadedArgument):
+            self.assume_role_arn = assume_role_arn.get_value()
+        else:
+            self.assume_role_arn = assume_role_arn
+        if isinstance(assume_role_external_id, LazyLoadedArgument):
+            self.assume_role_external_id = assume_role_external_id.get_value()
+        else:
+            self.assume_role_external_id = assume_role_external_id
+
         self.session_args = self._init_session_args(**boto_session_args)
         self.session_ttl = session_ttl
 
