@@ -1,6 +1,6 @@
 from datetime import datetime
 from time import time
-from typing import Optional, Union
+from typing import Optional
 from uuid import uuid4
 
 import boto3
@@ -17,7 +17,6 @@ class AwsClientFactory:
         session_ttl: int = 3000,
         **boto_session_args
     ) -> None:
-
         self.assume_role_arn = assume_role_arn
         self.assume_role_external_id = assume_role_external_id
         self.session_args = self._init_session_args(**boto_session_args)

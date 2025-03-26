@@ -7,7 +7,6 @@ from freezegun import freeze_time
 from hamcrest import assert_that, equal_to, has_key, not_
 
 
-
 @pytest.fixture
 def client_with_role():
     from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
