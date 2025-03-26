@@ -12,13 +12,11 @@ class StoreConfiguration:
     hmac_key: Optional[Union[LazyLoadedArgument,str]] = None
 
     def initialize(self) -> ObjectStore:
-        store = ObjectStore.from_file_arguments(self.storage_type, **self.arguments)
+        args = LazyLoadedArgument.resolve_if_needed(self.arguments)
+        store = ObjectStore.from_file_arguments(self.storage_type, **args)
         if self.hmac_key:
-            if isinstance(self.hmac_key, LazyLoadedArgument):
-                resolved_key = self.hmac_key.get_value()
-                return store.signed(Signer.hmac(resolved_key))
-            else:
-                return store.signed(Signer.hmac(self.hmac_key))
+            resolved_key = LazyLoadedArgument.resolve_if_needed(self.hmac_key)
+            return store.signed(Signer.hmac(resolved_key))
         return store
 
     def to_file_data(self):
@@ -40,10 +38,10 @@ class StoreConfiguration:
 
     @staticmethod
     def describe_yaml_schema():
-        from schema import Optional, Schema
+        from schema import Optional, Schema, Or
 
         return Schema(
-            {"name": str, "type": str, Optional("hmac_key"): LazyLoadedArgument, Optional(str): object}
+            {"name": str, "type": str, Optional("hmac_key"): Or(LazyLoadedArgument, str, only_one=True), Optional(str): object}
         )
 
 

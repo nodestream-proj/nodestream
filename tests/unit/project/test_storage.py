@@ -96,15 +96,18 @@ def test_storage_configuration_to_file_data(store_config):
     assert_that(file_data, equal_to(expected_data))
 
 
-def test_store_configuration_initialize_with_lazy_hmac(tmp_path):
+def test_store_configuration_initialize_with_lazy_hmac():
     expected_hmac = "dvHdCrVbRPp1HcmWX78Ryw=="
     mock_lazy_hmac = Mock(spec=LazyLoadedArgument)
     mock_lazy_hmac.get_value.return_value = expected_hmac
+    expected_arg = "testarglol"
+    mock_lazy_arg = Mock(spec=LazyLoadedArgument)
+    mock_lazy_arg.get_value.return_value = expected_arg
 
     store_config = StoreConfiguration(
         name="test-store",
         storage_type="local",
-        arguments={"root": tmp_path},
+        arguments={"root": mock_lazy_arg},
         hmac_key=mock_lazy_hmac
     )
 
@@ -113,4 +116,5 @@ def test_store_configuration_initialize_with_lazy_hmac(tmp_path):
         base64.b64encode(store.signer.key).decode(),
         equal_to(expected_hmac)
     )
+    assert_that(store.store.root, equal_to(expected_arg))
     mock_lazy_hmac.get_value.assert_called_once()
