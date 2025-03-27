@@ -12,8 +12,8 @@ class StoreConfiguration:
     hmac_key: Optional[Union[LazyLoadedArgument,str]] = None
 
     def initialize(self) -> ObjectStore:
-        args = LazyLoadedArgument.resolve_if_needed(self.arguments)
-        store = ObjectStore.from_file_arguments(self.storage_type, **args)
+        resolved_args = LazyLoadedArgument.resolve_if_needed(self.arguments)
+        store = ObjectStore.from_file_arguments(self.storage_type, **resolved_args)
         if self.hmac_key:
             resolved_key = LazyLoadedArgument.resolve_if_needed(self.hmac_key)
             return store.signed(Signer.hmac(resolved_key))
