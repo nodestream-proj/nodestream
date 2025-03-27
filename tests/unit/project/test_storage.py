@@ -10,10 +10,7 @@ from nodestream.pipeline.object_storage import (
 )
 from nodestream.project.storage import StorageConfiguration, StoreConfiguration
 from unittest.mock import Mock
-from hamcrest import assert_that, instance_of
 from nodestream.file_io import LazyLoadedArgument
-from nodestream.pipeline.object_storage import SignedObjectStore, DirectoryObjectStore
-
 
 @pytest.fixture
 def store_config_data():
