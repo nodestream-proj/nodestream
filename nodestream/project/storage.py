@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Union
+
 from nodestream.file_io import LazyLoadedArgument
+
 from ..pipeline.object_storage import ObjectStore, Signer
 
 
@@ -38,7 +40,7 @@ class StoreConfiguration:
 
     @staticmethod
     def describe_yaml_schema():
-        from schema import Optional, Schema, Or
+        from schema import Optional, Or, Schema
 
         return Schema(
             {"name": str, "type": str, Optional("hmac_key"): Or(LazyLoadedArgument, str, only_one=True), Optional(str): object}

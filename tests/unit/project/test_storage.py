@@ -1,16 +1,17 @@
 import base64
+from unittest.mock import Mock
 
 import pytest
 from hamcrest import assert_that, contains, equal_to, instance_of
 
+from nodestream.file_io import LazyLoadedArgument
 from nodestream.pipeline.object_storage import (
     DirectoryObjectStore,
     NullObjectStore,
     SignedObjectStore,
 )
 from nodestream.project.storage import StorageConfiguration, StoreConfiguration
-from unittest.mock import Mock
-from nodestream.file_io import LazyLoadedArgument
+
 
 @pytest.fixture
 def store_config_data():
