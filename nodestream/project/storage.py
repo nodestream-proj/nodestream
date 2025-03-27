@@ -11,7 +11,7 @@ class StoreConfiguration:
     name: str
     storage_type: str
     arguments: Dict[str, Any]
-    hmac_key: Optional[Union[LazyLoadedArgument,str]] = None
+    hmac_key: Optional[Union[LazyLoadedArgument, str]] = None
 
     def initialize(self) -> ObjectStore:
         resolved_args = LazyLoadedArgument.resolve_if_needed(self.arguments)
@@ -43,7 +43,12 @@ class StoreConfiguration:
         from schema import Optional, Or, Schema
 
         return Schema(
-            {"name": str, "type": str, Optional("hmac_key"): Or(LazyLoadedArgument, str, only_one=True), Optional(str): object}
+            {
+                "name": str,
+                "type": str,
+                Optional("hmac_key"): Or(LazyLoadedArgument, str, only_one=True),
+                Optional(str): object,
+            }
         )
 
 

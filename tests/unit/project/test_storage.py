@@ -106,13 +106,10 @@ def test_store_configuration_initialize_with_lazy_hmac():
         name="test-store",
         storage_type="local",
         arguments={"root": mock_lazy_arg},
-        hmac_key=mock_lazy_hmac
+        hmac_key=mock_lazy_hmac,
     )
 
     store = store_config.initialize()
-    assert_that(
-        base64.b64encode(store.signer.key).decode(),
-        equal_to(expected_hmac)
-    )
+    assert_that(base64.b64encode(store.signer.key).decode(), equal_to(expected_hmac))
     assert_that(store.store.root, equal_to(expected_arg))
     mock_lazy_hmac.get_value.assert_called_once()
