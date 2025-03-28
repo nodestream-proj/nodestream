@@ -1,4 +1,3 @@
-import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Union
 
@@ -61,8 +60,6 @@ class StorageConfiguration:
 
     def initialize_by_name(self, name: str) -> ObjectStore:
         if name not in self.storage_configuration_by_name:
-            logger = logging.getLogger(__name__)
-            logger.info(f"Store configuration '{name}' not found.")
             return ObjectStore.null()
 
         return self.storage_configuration_by_name[name].initialize()

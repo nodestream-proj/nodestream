@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import logging
 import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -12,6 +13,9 @@ from botocore.exceptions import ClientError
 from ..pluggable import Pluggable
 from ..subclass_registry import SubclassRegistry
 from .extractors.credential_utils import AwsClientFactory
+
+logger = logging.getLogger(__name__)
+
 
 OBJECT_STORE_REGISTRY = SubclassRegistry(ignore_overrides=True)
 T = TypeVar("T")
@@ -247,6 +251,9 @@ class DirectoryObjectStore(ObjectStore, alias="local"):
 
 class NullObjectStore(ObjectStore, alias="null"):
     """An object store that does not store any objects."""
+
+    def __init__(self):
+        logger.error("Using null ObjectStore. No persistence is configured.")
 
     def get(self, _: str) -> Optional[bytes]:
         return None
