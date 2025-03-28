@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Union
 
@@ -26,7 +27,7 @@ class StoreConfiguration:
             name=self.name,
             type=self.storage_type,
             hmac_key=self.hmac_key,
-            **self.arguments
+            **self.arguments,
         )
 
     @staticmethod
@@ -46,7 +47,7 @@ class StoreConfiguration:
             {
                 "name": str,
                 "type": str,
-                Optional("hmac_key"): Or(LazyLoadedArgument, str, only_one=True),
+                Optional("hmac_key"): Or(LazyLoadedArgument, str),
                 Optional(str): object,
             }
         )
@@ -60,6 +61,8 @@ class StorageConfiguration:
 
     def initialize_by_name(self, name: str) -> ObjectStore:
         if name not in self.storage_configuration_by_name:
+            logger = logging.getLogger(__name__)
+            logger.info(f"Store configuration '{name}' not found.")
             return ObjectStore.null()
 
         return self.storage_configuration_by_name[name].initialize()
