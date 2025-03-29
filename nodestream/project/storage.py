@@ -26,7 +26,7 @@ class StoreConfiguration:
             name=self.name,
             type=self.storage_type,
             hmac_key=self.hmac_key,
-            **self.arguments
+            **self.arguments,
         )
 
     @staticmethod
@@ -46,7 +46,7 @@ class StoreConfiguration:
             {
                 "name": str,
                 "type": str,
-                Optional("hmac_key"): Or(LazyLoadedArgument, str, only_one=True),
+                Optional("hmac_key"): Or(LazyLoadedArgument, str),
                 Optional(str): object,
             }
         )
