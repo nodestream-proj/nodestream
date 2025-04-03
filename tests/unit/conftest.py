@@ -27,7 +27,7 @@ DECENT_DOCUMENT = {
         {"first_name": "Zach", "last_name": "Probst"},
         {"first_name": "Chad", "last_name": "Cloes"},
     ],
-    "project": {"tags": ["graphdb", "python"]},
+    "project": {"tags": ["graphdb", "python"], "name": "project_name"},
 }
 
 
