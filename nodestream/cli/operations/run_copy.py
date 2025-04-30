@@ -3,6 +3,7 @@ from typing import List
 from ...databases import Copier, GraphDatabaseWriter
 from ...pipeline import Pipeline
 from ...pipeline.object_storage import ObjectStore
+from ...pipeline.progress_reporter import PipelineProgressReporter
 from ...project import Project, Target
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
@@ -20,12 +21,13 @@ class RunCopy(Operation):
         self.from_target = from_target
         self.to_target = to_target
         self.project = project
+        self.schema = self.project.get_schema()
         self.node_types = node_types
         self.relationship_types = relationship_types
 
     async def perform(self, command: NodestreamCommand):
         pipeline = self.build_pipeline()
-        await pipeline.run()
+        await pipeline.run(reporter=PipelineProgressReporter())
 
     def build_pipeline(self) -> Pipeline:
         copier = self.build_copier()
@@ -37,7 +39,7 @@ class RunCopy(Operation):
     def build_copier(self) -> Copier:
         return Copier(
             self.from_target.make_type_retriever(),
-            self.project,
+            self.schema,
             self.node_types,
             self.relationship_types,
         )
