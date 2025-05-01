@@ -1,8 +1,8 @@
 import pytest
 from hamcrest import assert_that, equal_to
-from nodestream.pipeline import PipelineProgressReporter
 
 from nodestream.cli.operations import RunCopy
+from nodestream.pipeline import PipelineProgressReporter
 
 
 @pytest.fixture
