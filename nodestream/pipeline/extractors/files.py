@@ -209,7 +209,6 @@ class FileCodec(Pluggable, ABC):
 
     reader = None
     entrypoint_name = "file_formats"
-    logger = getLogger(__name__)
 
     @abstractmethod
     def read_file_from_handle(self, reader: IOBase) -> Iterable[JsonLikeDocument]:

@@ -79,6 +79,7 @@ def jsonl_file(fixture_directory):
         temp_file.seek(0)
     yield Path(name)
 
+
 @pytest.fixture
 def csv_file(fixture_directory):
     with NamedTemporaryFile(
@@ -116,18 +117,6 @@ def yaml_file(fixture_directory):
 
 
 @pytest.fixture
-def incorrect_yaml_file(fixture_directory):
-    with NamedTemporaryFile(
-        "wb", suffix=".yaml", dir=fixture_directory, delete=False
-    ) as temp_file:
-        json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
-        with gzip.GzipFile(fileobj=temp_file, mode="wb") as gzip_file:
-            gzip_file.write(json_data)
-        name = temp_file.name
-    yield Path(name)
-
-
-@pytest.fixture
 def parquet_file(fixture_directory):
     with NamedTemporaryFile(
         "w+", suffix=".parquet", dir=fixture_directory, delete=False
@@ -137,6 +126,7 @@ def parquet_file(fixture_directory):
         df.to_parquet(temp_file.name)
         temp_file.seek(0)
     yield Path(name)
+
 
 @pytest.fixture
 def gzip_file(fixture_directory):
@@ -243,6 +233,7 @@ async def test_jsonl_formatting(jsonl_file):
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
 
+
 @pytest.mark.asyncio
 async def test_jsonl_formatting_unified(jsonl_file):
     subject = FileExtractor.from_file_data(
@@ -257,6 +248,7 @@ async def test_yaml_formatting(yaml_file):
     subject = FileExtractor([LocalFileSource([yaml_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
+
 
 @pytest.mark.asyncio
 async def test_yaml_formatting_unified(yaml_file):
