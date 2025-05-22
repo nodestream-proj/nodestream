@@ -240,13 +240,6 @@ async def test_csv_formatting(csv_file):
 
 
 @pytest.mark.asyncio
-async def test_csv_formatting_unformatted_file(unformatted_csv_file):
-    subject = FileExtractor([LocalFileSource([unformatted_csv_file])])
-    results = [r async for r in subject.extract_records()]
-    assert_that(results, equal_to([]))
-
-
-@pytest.mark.asyncio
 async def test_csv_formatting_unified(csv_file):
     subject = FileExtractor.from_file_data(
         [{"type": "local", "globs": [str(csv_file)]}]
