@@ -56,6 +56,7 @@ def json_file(fixture_directory):
         temp_file.seek(0)
     yield Path(name)
 
+
 @pytest.fixture
 def empty_json_file(fixture_directory):
     with NamedTemporaryFile(
@@ -77,6 +78,7 @@ def jsonl_file(fixture_directory):
         json.dump(SIMPLE_RECORD, temp_file)
         temp_file.seek(0)
     yield Path(name)
+
 
 @pytest.fixture
 def unformatted_jsonl_file(fixture_directory):
@@ -126,6 +128,7 @@ def yaml_file(fixture_directory):
         temp_file.seek(0)
     yield Path(name)
 
+
 @pytest.fixture
 def incorrect_yaml_file(fixture_directory):
     with NamedTemporaryFile(
@@ -148,6 +151,7 @@ def parquet_file(fixture_directory):
         df.to_parquet(temp_file.name)
         temp_file.seek(0)
     yield Path(name)
+
 
 @pytest.fixture
 def incorrect_parquet_file(fixture_directory):
@@ -218,6 +222,7 @@ async def test_json_formatting_empty_file(empty_json_file):
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([]))
 
+
 @pytest.mark.asyncio
 async def test_json_formatting_unified(json_file):
     subject = FileExtractor.from_file_data(
@@ -232,6 +237,7 @@ async def test_csv_formatting(csv_file):
     subject = FileExtractor([LocalFileSource([csv_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
+
 
 @pytest.mark.asyncio
 async def test_csv_formatting_unformatted_file(unformatted_csv_file):
@@ -270,6 +276,7 @@ async def test_jsonl_formatting(jsonl_file):
     subject = FileExtractor([LocalFileSource([jsonl_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
+
 
 @pytest.mark.asyncio
 async def test_jsonl_formatting_unformatted_file(unformatted_jsonl_file):
