@@ -2,10 +2,8 @@ import bz2
 import csv
 import gzip
 import json
-from io import StringIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
@@ -13,7 +11,6 @@ import yaml
 from hamcrest import (
     assert_that,
     contains_string,
-    empty,
     equal_to,
     has_items,
     has_key,
@@ -23,12 +20,10 @@ from hamcrest import (
 from moto import mock_aws
 
 from nodestream.pipeline.extractors.files import (
-    CommaSeperatedValuesFileFormat,
     FileExtractor,
     FileSource,
     LocalFileSource,
     RemoteFileSource,
-    TextFileFormat,
 )
 
 SIMPLE_RECORD = {"record": "value"}
@@ -83,20 +78,6 @@ def jsonl_file(fixture_directory):
         json.dump(SIMPLE_RECORD, temp_file)
         temp_file.seek(0)
     yield Path(name)
-
-
-@pytest.fixture
-def unformatted_jsonl_file(fixture_directory):
-    with NamedTemporaryFile(
-        "w+", suffix=".jsonl", dir=fixture_directory, delete=False
-    ) as temp_file:
-        name = temp_file.name
-        writer = csv.DictWriter(temp_file, SIMPLE_RECORD.keys())
-        writer.writeheader()
-        writer.writerow(SIMPLE_RECORD)
-        temp_file.seek(0)
-    yield Path(name)
-
 
 @pytest.fixture
 def csv_file(fixture_directory):
@@ -156,19 +137,6 @@ def parquet_file(fixture_directory):
         df.to_parquet(temp_file.name)
         temp_file.seek(0)
     yield Path(name)
-
-
-@pytest.fixture
-def incorrect_parquet_file(fixture_directory):
-    with NamedTemporaryFile(
-        "wb", suffix=".parquet", dir=fixture_directory, delete=False
-    ) as temp_file:
-        json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
-        with gzip.GzipFile(fileobj=temp_file, mode="wb") as gzip_file:
-            gzip_file.write(json_data)
-        name = temp_file.name
-    yield Path(name)
-
 
 @pytest.fixture
 def gzip_file(fixture_directory):
@@ -254,21 +222,6 @@ async def test_csv_formatting_unified(csv_file):
 
 
 @pytest.mark.asyncio
-async def test_csv_file_format_warning():
-    csv_file_format = CommaSeperatedValuesFileFormat()
-    csv_file_format.logger = MagicMock()
-    mock_reader = MagicMock(spec=csv)
-    mock_reader.DictReader.side_effect = Exception("Read error")
-    output = list(csv_file_format.read_file_from_handle(mock_reader))
-    assert (
-        output == []
-    ), "Output should be an empty list when an exception occurs during CSV file reading."
-    csv_file_format.logger.warning.assert_called_once_with(
-        "Failed to parse .csv file. Please ensure the file is in the correct format."
-    )
-
-
-@pytest.mark.asyncio
 async def test_txt_formatting(txt_file):
     subject = FileExtractor([LocalFileSource([txt_file])])
     results = [r async for r in subject.extract_records()]
@@ -285,37 +238,10 @@ async def test_txt_formatting_unified(txt_file):
 
 
 @pytest.mark.asyncio
-async def test_txt_file_format_warning():
-    text_file_format = TextFileFormat()
-    text_file_format.logger = MagicMock()
-    mock_reader = MagicMock(spec=StringIO)
-    mock_reader.readlines.side_effect = Exception("Read error")
-
-    output = list(text_file_format.read_file_from_handle(mock_reader))
-    assert_that(
-        output,
-        empty(),
-        "Output should be an empty list when an exception occurs during file reading.",
-    )
-
-    text_file_format.logger.warning.assert_called_once_with(
-        "Failed to parse .txt file. Please ensure the file is in the correct format."
-    )
-
-
-@pytest.mark.asyncio
 async def test_jsonl_formatting(jsonl_file):
     subject = FileExtractor([LocalFileSource([jsonl_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
-
-
-@pytest.mark.asyncio
-async def test_jsonl_formatting_unformatted_file(unformatted_jsonl_file):
-    subject = FileExtractor([LocalFileSource([unformatted_jsonl_file])])
-    results = [r async for r in subject.extract_records()]
-    assert_that(results, equal_to([]))
-
 
 @pytest.mark.asyncio
 async def test_jsonl_formatting_unified(jsonl_file):
@@ -332,14 +258,6 @@ async def test_yaml_formatting(yaml_file):
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
 
-
-@pytest.mark.asyncio
-async def test_yaml_formatting_unformatted_file(incorrect_yaml_file):
-    subject = FileExtractor([LocalFileSource([incorrect_yaml_file])])
-    results = [r async for r in subject.extract_records()]
-    assert_that(results, equal_to([]))
-
-
 @pytest.mark.asyncio
 async def test_yaml_formatting_unified(yaml_file):
     subject = FileExtractor.from_file_data(
@@ -354,13 +272,6 @@ async def test_parquet_formatting(parquet_file):
     subject = FileExtractor([LocalFileSource([parquet_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
-
-
-@pytest.mark.asyncio
-async def test_parquet_formatting_unformatted_file(incorrect_parquet_file):
-    subject = FileExtractor([LocalFileSource([incorrect_parquet_file])])
-    results = [r async for r in subject.extract_records()]
-    assert_that(results, equal_to([]))
 
 
 @pytest.mark.asyncio

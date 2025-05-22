@@ -278,13 +278,7 @@ class JsonFileFormat(FileCodec, alias=".json"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        try:
-            return [json.load(reader)]
-        except Exception:
-            self.logger.warning(
-                "Failed to parse .json file. Please ensure the file is in the correct format."
-            )
-            return []
+        return [json.load(reader)]
 
 
 class LineSeperatedJsonFileFormat(FileCodec, alias=".jsonl"):
@@ -306,16 +300,7 @@ class LineSeperatedJsonFileFormat(FileCodec, alias=".jsonl"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        try:
-            parsed_lines = []
-            for line in reader.readlines():
-                parsed_lines.append(json.loads(line.strip()))
-            return parsed_lines
-        except Exception:
-            self.logger.warning(
-                "Failed to parse .jsonl file. Please ensure the file is in the correct format."
-            )
-            return []
+        return (json.loads(line.strip()) for line in reader.readlines())
 
 
 class ParquetFileFormat(FileCodec, alias=".parquet"):
@@ -334,14 +319,8 @@ class ParquetFileFormat(FileCodec, alias=".parquet"):
     """
 
     def read_file_from_handle(self, fp: IOBase) -> Iterable[JsonLikeDocument]:
-        try:
-            df = pd.read_parquet(fp, engine="pyarrow")
-            return (row[1].to_dict() for row in df.iterrows())
-        except Exception:
-            self.logger.warning(
-                "Failed to parse .parquet file. Please ensure the file is in the correct format."
-            )
-            return []
+        df = pd.read_parquet(fp, engine="pyarrow")
+        return (row[1].to_dict() for row in df.iterrows())
 
 
 class TextFileFormat(FileCodec, alias=".txt"):
@@ -364,13 +343,7 @@ class TextFileFormat(FileCodec, alias=".txt"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        try:
-            return ({"line": line.strip()} for line in reader.readlines())
-        except Exception:
-            self.logger.warning(
-                "Failed to parse .txt file. Please ensure the file is in the correct format."
-            )
-            return []
+        return ({"line": line.strip()} for line in reader.readlines())
 
 
 class CommaSeperatedValuesFileFormat(FileCodec, alias=".csv"):
@@ -393,13 +366,7 @@ class CommaSeperatedValuesFileFormat(FileCodec, alias=".csv"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        try:
-            return DictReader(reader)
-        except Exception:
-            self.logger.warning(
-                "Failed to parse .csv file. Please ensure the file is in the correct format."
-            )
-            return []
+        return DictReader(reader)
 
 
 class YamlFileFormat(FileCodec, alias=".yaml"):
@@ -422,13 +389,7 @@ class YamlFileFormat(FileCodec, alias=".yaml"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        try:
-            return [safe_load(reader)]
-        except Exception:
-            self.logger.warning(
-                "Failed to parse .yaml file. Please ensure the file is in the correct format."
-            )
-            return []
+        return [safe_load(reader)]
 
 
 class GzipFileFormat(CompressionCodec, alias=".gz"):
@@ -732,6 +693,12 @@ class FileExtractor(Extractor):
             except MissingFromRegistryError:
                 # If we didn't find a file format codec, break out of the loop
                 # and yield no records.
+                pass
+            except Exception as e:
+                self.logger.warning(
+                    f"Failed to parse {file.path_like()} file. Please ensure the file is in the correct format.",
+                    extra={"exception": str(e)},
+                )
                 pass
 
             # Regardless of whether we found a codec or not, break out of the
