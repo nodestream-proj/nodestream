@@ -430,6 +430,7 @@ class YamlFileFormat(FileCodec, alias=".yaml"):
             )
             return []
 
+
 class GzipFileFormat(CompressionCodec, alias=".gz"):
     """Compression codec for Gzip files.
 
