@@ -209,6 +209,7 @@ class FileCodec(Pluggable, ABC):
 
     reader = None
     entrypoint_name = "file_formats"
+    logger = getLogger(__name__)
 
     @abstractmethod
     def read_file_from_handle(self, reader: IOBase) -> Iterable[JsonLikeDocument]:
@@ -277,7 +278,13 @@ class JsonFileFormat(FileCodec, alias=".json"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        return [json.load(reader)]
+        try:
+            return [json.load(reader)]
+        except Exception:
+            self.logger.warning(
+                "Failed to parse .json file. Please ensure the file is in the correct format."
+            )
+            return []
 
 
 class LineSeperatedJsonFileFormat(FileCodec, alias=".jsonl"):
@@ -299,7 +306,16 @@ class LineSeperatedJsonFileFormat(FileCodec, alias=".jsonl"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        return (json.loads(line.strip()) for line in reader.readlines())
+        try:
+            parsed_lines = []
+            for line in reader.readlines():
+                parsed_lines.append(json.loads(line.strip()))
+            return parsed_lines
+        except Exception:
+            self.logger.warning(
+                "Failed to parse .jsonl file. Please ensure the file is in the correct format."
+            )
+            return []
 
 
 class ParquetFileFormat(FileCodec, alias=".parquet"):
@@ -318,8 +334,14 @@ class ParquetFileFormat(FileCodec, alias=".parquet"):
     """
 
     def read_file_from_handle(self, fp: IOBase) -> Iterable[JsonLikeDocument]:
-        df = pd.read_parquet(fp, engine="pyarrow")
-        return (row[1].to_dict() for row in df.iterrows())
+        try:
+            df = pd.read_parquet(fp, engine="pyarrow")
+            return (row[1].to_dict() for row in df.iterrows())
+        except Exception:
+            self.logger.warning(
+                "Failed to parse .parquet file. Please ensure the file is in the correct format."
+            )
+            return []
 
 
 class TextFileFormat(FileCodec, alias=".txt"):
@@ -342,7 +364,13 @@ class TextFileFormat(FileCodec, alias=".txt"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        return ({"line": line.strip()} for line in reader.readlines())
+        try:
+            return ({"line": line.strip()} for line in reader.readlines())
+        except Exception:
+            self.logger.warning(
+                "Failed to parse .txt file. Please ensure the file is in the correct format."
+            )
+            return []
 
 
 class CommaSeperatedValuesFileFormat(FileCodec, alias=".csv"):
@@ -365,7 +393,13 @@ class CommaSeperatedValuesFileFormat(FileCodec, alias=".csv"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        return DictReader(reader)
+        try:
+            return DictReader(reader)
+        except Exception:
+            self.logger.warning(
+                "Failed to parse .csv file. Please ensure the file is in the correct format."
+            )
+            return []
 
 
 class YamlFileFormat(FileCodec, alias=".yaml"):
@@ -388,8 +422,13 @@ class YamlFileFormat(FileCodec, alias=".yaml"):
     def read_file_from_handle(
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
-        return [safe_load(reader)]
-
+        try:
+            return [safe_load(reader)]
+        except Exception:
+            self.logger.warning(
+                "Failed to parse .yaml file. Please ensure the file is in the correct format."
+            )
+            return []
 
 class GzipFileFormat(CompressionCodec, alias=".gz"):
     """Compression codec for Gzip files.
@@ -691,7 +730,7 @@ class FileExtractor(Extractor):
                 pass
 
             # Regardless of whether we found a codec or not, break out of the
-            # loop and yield no more records becaause either (a) we found a
+            # loop and yield no more records because either (a) we found a
             # codec and read the file or (b) we didn't find a codec and
             # couldn't read the file. Trying again would be futile.
             break
