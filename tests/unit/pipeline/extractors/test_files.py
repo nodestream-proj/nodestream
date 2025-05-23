@@ -58,6 +58,16 @@ def json_file(fixture_directory):
 
 
 @pytest.fixture
+def empty_json_file(fixture_directory):
+    with NamedTemporaryFile(
+        "w+", suffix=".json", dir=fixture_directory, delete=False
+    ) as temp_file:
+        name = temp_file.name
+        temp_file.seek(0)
+    yield Path(name)
+
+
+@pytest.fixture
 def jsonl_file(fixture_directory):
     with NamedTemporaryFile(
         "w+", suffix=".jsonl", dir=fixture_directory, delete=False
@@ -167,6 +177,13 @@ async def test_json_formatting(json_file):
     subject = FileExtractor([LocalFileSource([json_file])])
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD]))
+
+
+@pytest.mark.asyncio
+async def test_json_formatting_empty_file(empty_json_file):
+    subject = FileExtractor([LocalFileSource([empty_json_file])])
+    results = [r async for r in subject.extract_records()]
+    assert_that(results, equal_to([]))
 
 
 @pytest.mark.asyncio
@@ -433,7 +450,7 @@ def subject_with_populated_objects_and_no_extension(subject, s3_client):
     for i in range(NUM_OBJECTS):
         s3_client.put_object(
             Bucket=BUCKET_NAME,
-            Key=f"{PREFIX}/foo/{i}",
+            Key=f"{PREFIX}/foo/{i}.json",
             Body=json.dumps({"hello": i}),
         )
     return subject

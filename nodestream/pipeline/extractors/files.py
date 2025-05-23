@@ -595,13 +595,17 @@ class S3FileSource(FileSource, alias="s3"):
         return key.startswith(self.archive_dir) if self.archive_dir else False
 
     def find_keys_in_bucket(self) -> Iterable[str]:
-        # Returns all keys in the bucket that are not in the archive dir
-        # and have the prefix.
+        # Returns all keys in the bucket that are not in the archive dir,
+        # have the object_format suffix and have the prefix.
         paginator = self.s3_client.get_paginator("list_objects_v2")
         page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
         for page in page_iterator:
             keys = (obj["Key"] for obj in page.get("Contents", []))
-            yield from filter(lambda k: not self.object_is_in_archive(k), keys)
+            yield from filter(
+                lambda k: not self.object_is_in_archive(k)
+                and k.endswith(self.object_format if self.object_format else ""),
+                keys,
+            )
 
     async def get_files(self):
         for key in self.find_keys_in_bucket():
@@ -689,9 +693,15 @@ class FileExtractor(Extractor):
                 # If we didn't find a file format codec, break out of the loop
                 # and yield no records.
                 pass
+            except Exception as e:
+                self.logger.warning(
+                    f"Failed to parse {file.path_like()} file. Please ensure the file is in the correct format.",
+                    extra={"exception": str(e)},
+                )
+                pass
 
             # Regardless of whether we found a codec or not, break out of the
-            # loop and yield no more records becaause either (a) we found a
+            # loop and yield no more records because either (a) we found a
             # codec and read the file or (b) we didn't find a codec and
             # couldn't read the file. Trying again would be futile.
             break
