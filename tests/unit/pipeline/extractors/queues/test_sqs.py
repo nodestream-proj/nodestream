@@ -76,7 +76,7 @@ async def test_from_file_data_poll(MockAwsClientFactory, sqs_queue, mock_client)
         max_batch_size=max_batch_size,
         delete_after_read=delete_after_read,
         max_batches=max_batches,
-        **aws_client_args
+        **aws_client_args,
     )
 
     # Verify that the properties are correctly assigned

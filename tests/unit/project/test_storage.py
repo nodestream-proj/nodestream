@@ -2,7 +2,7 @@ import base64
 from unittest.mock import Mock
 
 import pytest
-from hamcrest import assert_that, contains, equal_to, instance_of
+from hamcrest import assert_that, contains, equal_to, instance_of, contains_exactly
 
 from nodestream.file_io import LazyLoadedArgument
 from nodestream.pipeline.object_storage import (
@@ -78,7 +78,9 @@ def test_storage_configuration_initialize_by_name_not_found(mocker):
 def test_storage_configuration_from_file_data(store_config_data):
     data = {"stores": [store_config_data]}
     storage_config = StorageConfiguration.from_file_data(data)
-    assert_that(storage_config.storage_configuration_by_name, contains("test_store"))
+    assert_that(
+        storage_config.storage_configuration_by_name, contains_exactly("test_store")
+    )
     assert_that(
         storage_config.storage_configuration_by_name["test_store"],
         instance_of(StoreConfiguration),

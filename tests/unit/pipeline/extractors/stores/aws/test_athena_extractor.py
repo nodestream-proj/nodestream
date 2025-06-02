@@ -193,13 +193,14 @@ async def test_resume_from_checkpoint(athena_extractor, mocker):
     assert_that(athena_extractor.next_token, equal_to("some_next_token"))
 
 
-def test_resume_from_checkpoint_bad_state(athena_extractor, mocker):
+@pytest.mark.asyncio
+async def test_resume_from_checkpoint_bad_state(athena_extractor, mocker):
     checkpoint = {
         "query_execution_id": "some_query_execution_id",
         "next_token": "some_next_token",
     }
     athena_extractor.get_query_status = mocker.Mock(return_value="FAILED")
-    athena_extractor.resume_from_checkpoint(checkpoint)
+    await athena_extractor.resume_from_checkpoint(checkpoint)
     assert_that(athena_extractor.query_execution_id, equal_to(None))
     assert_that(athena_extractor.next_token, equal_to(None))
 
