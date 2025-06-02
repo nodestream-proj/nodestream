@@ -668,7 +668,9 @@ class FileExtractor(Extractor):
         self.file_sources = file_sources
         self.logger = getLogger(__name__)
 
-    async def read_file(self, file: ReadableFile) -> AsyncGenerator[JsonLikeDocument]:
+    async def read_file(
+        self, file: ReadableFile
+    ) -> AsyncGenerator[JsonLikeDocument, None]:
         intermediaries: list[AsyncContextManager[ReadableFile]] = []
 
         while True:
