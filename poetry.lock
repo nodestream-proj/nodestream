@@ -2293,4 +2293,4 @@ validation = ["genson", "jsonschema"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "8887c14f8e0c0fbae983f848484ee0aed98448fe2affe5c656ee33838a1aca7c"
+content-hash = "0841f3899ea9f089fdbada3b7dd199315165a1cd9c92c10dc0622c98f535bb33"

@@ -2,7 +2,7 @@ import base64
 from unittest.mock import Mock
 
 import pytest
-from hamcrest import assert_that, contains, equal_to, instance_of, contains_exactly
+from hamcrest import assert_that, equal_to, instance_of, contains_exactly
 
 from nodestream.file_io import LazyLoadedArgument
 from nodestream.pipeline.object_storage import (
