@@ -2,8 +2,11 @@ import bz2
 import csv
 import gzip
 import json
+import typing
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from typing import AsyncIterator
+from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
@@ -23,7 +26,9 @@ from nodestream.pipeline.extractors.files import (
     FileExtractor,
     FileSource,
     LocalFileSource,
+    ReadableFile,
     RemoteFileSource,
+    S3FileSource,
 )
 
 SIMPLE_RECORD = {"record": "value"}
@@ -36,39 +41,39 @@ def fixture_directory():
 
 
 @pytest.fixture
-def unsupported_file(fixture_directory):
+def unsupported_file(fixture_directory: str) -> Path:
     with NamedTemporaryFile(
         "w+", suffix=".unsupported", dir=fixture_directory, delete=False
     ) as temp_file:
         name = temp_file.name
         temp_file.write("hello world")
         temp_file.seek(0)
-    yield Path(name)
+    return Path(name)
 
 
 @pytest.fixture
-def json_file(fixture_directory):
+def json_file(fixture_directory: str):
     with NamedTemporaryFile(
         "w+", suffix=".json", dir=fixture_directory, delete=False
     ) as temp_file:
         name = temp_file.name
         json.dump(SIMPLE_RECORD, temp_file)
         temp_file.seek(0)
-    yield Path(name)
+    return Path(name)
 
 
 @pytest.fixture
-def empty_json_file(fixture_directory):
+def empty_json_file(fixture_directory: str):
     with NamedTemporaryFile(
         "w+", suffix=".json", dir=fixture_directory, delete=False
     ) as temp_file:
         name = temp_file.name
         temp_file.seek(0)
-    yield Path(name)
+    return Path(name)
 
 
 @pytest.fixture
-def jsonl_file(fixture_directory):
+def jsonl_file(fixture_directory: str):
     with NamedTemporaryFile(
         "w+", suffix=".jsonl", dir=fixture_directory, delete=False
     ) as temp_file:
@@ -77,11 +82,11 @@ def jsonl_file(fixture_directory):
         temp_file.write("\n")
         json.dump(SIMPLE_RECORD, temp_file)
         temp_file.seek(0)
-    yield Path(name)
+    return Path(name)
 
 
 @pytest.fixture
-def csv_file(fixture_directory):
+def csv_file(fixture_directory: str):
     with NamedTemporaryFile(
         "w+", suffix=".csv", dir=fixture_directory, delete=False
     ) as temp_file:
@@ -90,34 +95,35 @@ def csv_file(fixture_directory):
         writer.writeheader()
         writer.writerow(SIMPLE_RECORD)
         temp_file.seek(0)
-    yield Path(name)
+    return Path(name)
 
 
 @pytest.fixture
-def txt_file(fixture_directory):
+def txt_file(fixture_directory: str):
     with NamedTemporaryFile(
         "w+", suffix=".txt", dir=fixture_directory, delete=False
     ) as temp_file:
         name = temp_file.name
         temp_file.write("hello world")
         temp_file.seek(0)
+    # noinspection PyRedundantParentheses
     yield (path := Path(name))
     path.unlink(missing_ok=True)
 
 
 @pytest.fixture
-def yaml_file(fixture_directory):
+def yaml_file(fixture_directory: str):
     with NamedTemporaryFile(
         "w+", suffix=".yaml", dir=fixture_directory, delete=False
     ) as temp_file:
         name = temp_file.name
         yaml.dump(SIMPLE_RECORD, temp_file)
         temp_file.seek(0)
-    yield Path(name)
+    return Path(name)
 
 
 @pytest.fixture
-def parquet_file(fixture_directory):
+def parquet_file(fixture_directory: str):
     with NamedTemporaryFile(
         "w+", suffix=".parquet", dir=fixture_directory, delete=False
     ) as temp_file:
@@ -125,11 +131,11 @@ def parquet_file(fixture_directory):
         df = pd.DataFrame(data=SIMPLE_RECORD, index=[0])
         df.to_parquet(temp_file.name)
         temp_file.seek(0)
-    yield Path(name)
+    return Path(name)
 
 
 @pytest.fixture
-def gzip_file(fixture_directory):
+def gzip_file(fixture_directory: str):
     with NamedTemporaryFile(
         "wb", suffix=".json.gz", dir=fixture_directory, delete=False
     ) as temp_file:
@@ -138,12 +144,12 @@ def gzip_file(fixture_directory):
             gzip_file.write(json_data)
         name = temp_file.name
         if not temp_file.name.endswith(".json.gz"):
-            raise Exception("not a json gzip file")
-    yield Path(name)
+            raise ValueError("not a json gzip file")
+    return Path(name)
 
 
 @pytest.fixture
-def bz2_file(fixture_directory):
+def bz2_file(fixture_directory: str):
     with NamedTemporaryFile(
         "wb", suffix=".json.bz2", dir=fixture_directory, delete=False
     ) as temp_file:
@@ -152,8 +158,8 @@ def bz2_file(fixture_directory):
         with bz2.BZ2File(name, mode="wb") as bz2_file:
             bz2_file.write(json_data)
         if not temp_file.name.endswith(".json.bz2"):
-            raise Exception("not a json bz2 file")
-    yield Path(name)
+            raise ValueError("not a json bz2 file")
+    return Path(name)
 
 
 @pytest.mark.asyncio
@@ -311,7 +317,17 @@ def test_declarative_init(
     fixture_directory, csv_file, json_file, txt_file, jsonl_file, yaml_file
 ):
     subject = FileExtractor.local(globs=[f"{fixture_directory}/**"])
-    assert_that(list(subject.file_sources[0].paths), has_length(5))
+    assert isinstance(subject.file_sources[0], LocalFileSource)
+    local_source: LocalFileSource = typing.cast(
+        LocalFileSource, subject.file_sources[0]
+    )
+    assert set(local_source.paths) == {
+        csv_file,
+        json_file,
+        txt_file,
+        jsonl_file,
+        yaml_file,
+    }
 
 
 @pytest.mark.asyncio
@@ -335,7 +351,8 @@ async def test_no_files_found_from_local_source(mocker):
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([]))
     subject.logger.warning.assert_called_once_with(
-        "No files found for source: 0 local files"
+        "No files found for source: %s",
+        "0 local files",
     )
 
 
@@ -346,7 +363,8 @@ async def test_no_files_found_from_remote_source(mocker):
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([]))
     subject.logger.warning.assert_called_once_with(
-        "No files found for source: 0 remote files"
+        "No files found for source: %s",
+        "0 remote files",
     )
 
 
@@ -362,13 +380,13 @@ def test_remote_file_source_multiple_file_description():
     assert_that(subject.describe(), equal_to("2 remote files"))
 
 
-def test_local_file_source_single_file_description(fixture_directory):
+def test_local_file_source_single_file_description(fixture_directory: str):
     path = Path(f"{fixture_directory}/file.json")
     subject = LocalFileSource([path])
     assert_that(subject.describe(), equal_to(str(path)))
 
 
-def test_local_file_source_multiple_file_description(fixture_directory):
+def test_local_file_source_multiple_file_description(fixture_directory: str):
     paths = [
         Path(f"{fixture_directory}/file.json"),
         Path(f"{fixture_directory}/file2.json"),
@@ -379,8 +397,11 @@ def test_local_file_source_multiple_file_description(fixture_directory):
 
 def test_file_source_default_description():
     class SomeFileSource(FileSource):
-        def get_files(self):
-            pass
+        def get_files(self) -> AsyncIterator[ReadableFile]:
+            pass  # not implemented for this test
+
+        def describe(self) -> str:
+            return "SomeFileSource(test)"
 
     subject = SomeFileSource()
     assert_that(subject.describe(), contains_string("SomeFileSource"))
@@ -426,20 +447,6 @@ def subject(mocker):
 
     mocker.patch.object(AwsClientFactory, "make_client")
     return FileExtractor.s3(bucket="bucket", prefix=PREFIX)
-
-
-@pytest.fixture
-def subject_with_populated_objects(subject, s3_client):
-    subject.file_sources[0].s3_client = s3_client
-    s3_client.create_bucket(Bucket=BUCKET_NAME)
-    s3_client.put_object(Bucket=BUCKET_NAME, Key="notprefixed", Body="hello".encode())
-    for i in range(NUM_OBJECTS):
-        s3_client.put_object(
-            Bucket=BUCKET_NAME,
-            Key=f"{PREFIX}/foo/{i}.json",
-            Body=json.dumps({"hello": i}),
-        )
-    return subject
 
 
 @pytest.fixture
@@ -602,16 +609,20 @@ async def test_s3_extractor_properly_loads_text_files(
 
 
 @pytest.fixture
-def subject_with_archiving_enabled(subject_with_populated_objects):
-    subject_with_populated_objects.file_sources[0].archive_dir = "archive"
-    return subject_with_populated_objects
+def subject_with_archiving_enabled(subject_with_populated_objects_and_no_extension):
+    source = subject_with_populated_objects_and_no_extension.file_sources[0]
+    source.archive_dir = "archive"
+    return subject_with_populated_objects_and_no_extension
 
 
 @pytest.mark.asyncio
-async def test_s3_extractor_pages_and_reads_all_files(subject_with_populated_objects):
+async def test_s3_extractor_pages_and_reads_all_files(
+    subject_with_populated_objects_and_no_extension,
+):
     expected_results = [{"hello": i} for i in range(NUM_OBJECTS)]
     results = [
-        result async for result in subject_with_populated_objects.extract_records()
+        result
+        async for result in subject_with_populated_objects_and_no_extension.extract_records()
     ]
     assert_that(results, has_length(NUM_OBJECTS))
     assert_that(results, has_items(*expected_results))
@@ -621,9 +632,8 @@ async def test_s3_extractor_pages_and_reads_all_files(subject_with_populated_obj
 async def test_s3_extractor_pages_and_reads_all_files_with_object_format(
     subject_with_populated_objects_and_no_extension,
 ):
-    subject_with_populated_objects_and_no_extension.file_sources[0].object_format = (
-        ".json"
-    )
+    source = subject_with_populated_objects_and_no_extension.file_sources[0]
+    source.object_format = ".json"
     expected_results = [{"hello": i} for i in range(NUM_OBJECTS)]
     results = [
         result
@@ -674,6 +684,8 @@ async def test_s3_extractor_pages_and_reads_double_compressed_files(
 
 @pytest.mark.asyncio
 async def test_s3_extractor_archives_objects(subject_with_archiving_enabled, s3_client):
+    # noinspection PyStatementEffect
+    # Ensures work is done.
     [result async for result in subject_with_archiving_enabled.extract_records()]
     assert_that(
         s3_client.list_objects(Bucket=BUCKET_NAME, Prefix="archive", MaxKeys=1000)[
@@ -685,10 +697,29 @@ async def test_s3_extractor_archives_objects(subject_with_archiving_enabled, s3_
 
 @pytest.mark.asyncio
 async def test_s3_extractor_does_not_archive_objects_when_archive_dir_is_none(
-    subject_with_populated_objects, s3_client
+    subject_with_populated_objects_and_no_extension, s3_client
 ):
-    [result async for result in subject_with_populated_objects.extract_records()]
+    # noinspection PyStatementEffect
+    # Ensures work is done.
+    [
+        result
+        async for result in subject_with_populated_objects_and_no_extension.extract_records()
+    ]
     assert_that(
         s3_client.list_objects(Bucket=BUCKET_NAME, Prefix="archive", MaxKeys=1000),
         not_(has_key("Contents")),
+    )
+
+
+def test_s3_filesource_describe():
+    assert (
+        S3FileSource(
+            bucket="test-bucket",
+            prefix="test-prefix",
+            object_format=".json",
+            archive_dir="archive",
+            s3_client=MagicMock(),
+        ).describe()
+        == "S3FileSource{bucket: test-bucket, prefix: test-prefix, "
+        "archive_dir: archive, object_format: .json}"
     )

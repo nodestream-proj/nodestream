@@ -14,50 +14,50 @@ def mock_client():
         yield boto3.client("sqs", region_name="us-east-1")
 
 
-@mock_aws
 @pytest.fixture
 def sqs_queue(mock_client):
-    response = mock_client.create_queue(QueueName="queue1")
-    url = response["QueueUrl"]
-    mock_client.send_message(QueueUrl=url, MessageBody="test-message-1")
-    mock_client.send_message(QueueUrl=url, MessageBody="test-message-2")
-    yield url
+    with mock_aws():
+        response = mock_client.create_queue(QueueName="queue1")
+        url = response["QueueUrl"]
+        mock_client.send_message(QueueUrl=url, MessageBody="test-message-1")
+        mock_client.send_message(QueueUrl=url, MessageBody="test-message-2")
+    return url
 
 
-@mock_aws
 @pytest.fixture
 def sqs_queue_no_messages(mock_client):
-    response = mock_client.create_queue(QueueName="queue1")
+    with mock_aws():
+        response = mock_client.create_queue(QueueName="queue1")
     url = response["QueueUrl"]
-    yield url
+    return url
 
 
-@mock_aws
 @pytest.fixture
 def subject(sqs_queue, mock_client):
-    return SQSQueueConnector(
-        queue_url=sqs_queue,
-        max_batch_size=10,
-        max_batches=10,
-        sqs_client=mock_client,
-    )
+    with mock_aws():
+        yield SQSQueueConnector(
+            queue_url=sqs_queue,
+            max_batch_size=10,
+            max_batches=10,
+            sqs_client=mock_client,
+        )
 
 
-@mock_aws
 @pytest.fixture
 def subject_no_messages(sqs_queue_no_messages, mock_client):
-    return SQSQueueConnector(
-        queue_url=sqs_queue_no_messages,
-        max_batch_size=10,
-        max_batches=10,
-        sqs_client=mock_client,
-    )
+    with mock_aws():
+        yield SQSQueueConnector(
+            queue_url=sqs_queue_no_messages,
+            max_batch_size=10,
+            max_batches=10,
+            sqs_client=mock_client,
+        )
 
 
 @pytest.mark.asyncio
 @patch("nodestream.pipeline.extractors.queues.sqs.AwsClientFactory")
-async def test_from_file_data_poll(MockAwsClientFactory, sqs_queue, mock_client):
-    mock_aws_client_factory_instance = MockAwsClientFactory.return_value
+async def test_from_file_data_poll(mock_aws_client_factory, sqs_queue, mock_client):
+    mock_aws_client_factory_instance = mock_aws_client_factory.return_value
     mock_aws_client_factory_instance.make_client.return_value = mock_client
 
     queue_url = sqs_queue
@@ -76,7 +76,7 @@ async def test_from_file_data_poll(MockAwsClientFactory, sqs_queue, mock_client)
         max_batch_size=max_batch_size,
         delete_after_read=delete_after_read,
         max_batches=max_batches,
-        **aws_client_args
+        **aws_client_args,
     )
 
     # Verify that the properties are correctly assigned
@@ -89,7 +89,7 @@ async def test_from_file_data_poll(MockAwsClientFactory, sqs_queue, mock_client)
     assert sqs_connector.delete_after_read == delete_after_read
     assert sqs_connector.max_batches == max_batches
 
-    MockAwsClientFactory.assert_called_once_with(**aws_client_args)
+    mock_aws_client_factory.assert_called_once_with(**aws_client_args)
     mock_aws_client_factory_instance.make_client.assert_called_once_with("sqs")
 
     # Verify that the client works as expected for poll.
