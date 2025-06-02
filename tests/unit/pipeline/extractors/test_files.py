@@ -2,7 +2,6 @@ import bz2
 import csv
 import gzip
 import json
-import logging
 import typing
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -27,14 +26,12 @@ from nodestream.pipeline.extractors.files import (
     FileExtractor,
     FileSource,
     LocalFileSource,
+    ReadableFile,
     RemoteFileSource,
     S3FileSource,
-    ReadableFile,
 )
 
 SIMPLE_RECORD = {"record": "value"}
-
-log = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -143,7 +140,6 @@ def gzip_file(fixture_directory: str):
         "wb", suffix=".json.gz", dir=fixture_directory, delete=False
     ) as temp_file:
         json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
-        log.info("Writing JSON data to gzip file: %s -- %s", temp_file.name, json_data)
         with gzip.GzipFile(fileobj=temp_file, mode="wb") as gzip_file:
             gzip_file.write(json_data)
         name = temp_file.name
