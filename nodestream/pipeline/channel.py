@@ -37,12 +37,15 @@ class Channel:
     prevent one step from overwhelming another step with too many records.
     """
 
-    __slots__ = ("queue", "input_dropped", "metrics")
+    __slots__ = ("queue", "input_dropped", "metric")
 
-    def __init__(self, size: int) -> None:
+    def __init__(self, size: int, input_name: str, output_name: str) -> None:
         self.queue = Queue(maxsize=size)
         self.input_dropped = False
-        self.metrics = Metrics.get()
+        self.metric = Metric(
+            f"buffered_{input_name}_to_{output_name}",
+            f"Records buffered: {input_name} → {output_name}"
+        )
 
     async def get(self):
         """Get an object from the channel.
@@ -55,7 +58,6 @@ class Channel:
             object: The object that was retrieved from the channel.
         """
         object = await self.queue.get()
-        self.metrics.decrement(Metric.BUFFERED_RECORDS)
         return object
 
     async def put(self, obj) -> bool:
@@ -71,7 +73,7 @@ class Channel:
         """
         try:
             await wait_for(self.queue.put(obj), timeout=CHANNEL_TIMEOUT)
-            self.metrics.increment(Metric.BUFFERED_RECORDS)
+            Metrics.get().increment(self.metric)
             return True
         except (TimeoutError, asyncio.TimeoutError):
             return False
@@ -159,11 +161,13 @@ class StepInput:
         self.channel.input_dropped = True
 
 
-def channel(size: int) -> Tuple[StepInput, StepOutput]:
+def channel(size: int, input_name: str, output_name: str) -> Tuple[StepInput, StepOutput]:
     """Create a new input and output channel.
 
     Args:
         size: The size of the channel.
+        input_name: The name of the input step.
+        output_name: The name of the output step.
     """
-    channel = Channel(size)
+    channel = Channel(size, input_name, output_name)
     return StepInput(channel), StepOutput(channel)

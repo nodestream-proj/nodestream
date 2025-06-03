@@ -3,22 +3,30 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from enum import Enum, auto
 from logging import getLogger
-from typing import Optional, Union
+from typing import Optional, Union, Dict
+from dataclasses import dataclass
 
 from cleo.commands.command import Command
 
 Number = Union[int, float]
 
 
-class Metric(Enum):
-    RECORDS = auto()
-    NODES_UPSERTED = auto()
-    RELATIONSHIPS_UPSERTED = auto()
-    TIME_TO_LIVE_OPERATIONS = auto()
-    INGEST_HOOKS_EXECUTED = auto()
-    NON_FATAL_ERRORS = auto()
-    STEPS_RUNNING = auto()
-    BUFFERED_RECORDS = auto()
+@dataclass(frozen=True)
+class Metric:
+    name: str
+    description: Optional[str] = None
+
+    def increment_on(self, handler: "MetricHandler", value: Number = 1):
+        """Increment this metric on the given handler."""
+        handler.increment(self, value)
+
+    def decrement_on(self, handler: "MetricHandler", value: Number = 1):
+        """Decrement this metric on the given handler."""
+        handler.decrement(self, value)
+
+    def register(self):
+        Metrics().get().increment(self, 0)
+        return self
 
 
 class MetricHandler(ABC):
@@ -49,6 +57,9 @@ class MetricHandler(ABC):
     @abstractmethod
     def decrement(self, metric: Metric, value: Number): ...
 
+    @abstractmethod
+    def tick(self): ...
+
 
 class NullMetricHandler(MetricHandler):
     """A metric handler that does nothing."""
@@ -58,26 +69,55 @@ class NullMetricHandler(MetricHandler):
 
     def decrement(self, _: Metric, __: Number):
         pass
+    
+    def tick(self):
+        pass
 
 
-RECORDS_COUNTER_NAME = "records"
-NON_FATAL_ERRORS_COUNTER_NAME = "non_fatal_errors"
-NODES_UPSERTED_COUNTER_NAME = "nodes_upserted"
-RELS_UPSERTED_COUNTER_NAME = "relationships_upserted"
-TTL_OPERATIONS_COUNTER_NAME = "time_to_live_operations"
-INGEST_HOOKS_EXECUTED_COUNTER_NAME = "ingest_hooks_executed"
-BUFFERED_RECORDS_COUNTER_NAME = "buffered_records"
+class MetricRegistry:
+    """A registry of metrics that collects metrics from class variables in subclasses.
+    
+    This class provides a way to collect metrics defined as class attributes in subclasses.
+    Metrics can be declared as class attributes in subclasses. For example:
+    
+    class MyMetricRegistry(MetricRegistry):
+        MY_METRIC = Metric("my_metric", "Description of my metric")
+        ANOTHER_METRIC = Metric("another_metric", "Description of another metric")
+    """
+    _subclasses: list[type["MetricRegistry"]] = []
 
-RECORDS_COUNTER_DESCRIPTION = "Number of records processed"
-NON_FATAL_ERRORS_COUNTER_DESCRIPTION = "Number of non-fatal errors"
-NODES_UPSERTED_COUNTER_DESCRIPTION = "Number of nodes upserted to the graph"
-RELS_UPSERTED_COUNTER_DESCRIPTION = "Number of relationships upserted to the graph"
-TTL_OPERATIONS_COUNTER_DESCRIPTION = "Number of time-to-live operations executed"
-INGEST_HOOKS_EXECUTED_COUNTER_DESCRIPTION = (
-    "Number of ingest hooks executed to the graph"
-)
-STEPS_RUNNING_COUNTER_DESCRIPTION = "Number of steps currently running in the pipeline"
-BUFFERED_RECORDS_DESCRIPTION = "Number of records buffered between steps"
+    def __init_subclass__(cls, **kwargs):
+        """Register subclasses for metric collection."""
+        super().__init_subclass__(**kwargs)
+        MetricRegistry._subclasses.append(cls)
+
+    @classmethod
+    def get_all_metrics(cls) -> dict[str, Metric]:
+        """Get all metrics from all subclasses.
+        
+        Returns a dictionary mapping metric names to their Metric instances,
+        collected from all MetricRegistry subclasses.
+        """
+        all_metrics = {}
+        for subclass in cls._subclasses:
+            # Collect metrics from class variables
+            for attr_name, attr_value in subclass.__dict__.items():
+                if isinstance(attr_value, Metric):
+                    all_metrics[attr_name] = attr_value
+        return all_metrics
+
+
+class NodestreamMetricRegistry(MetricRegistry):
+    """A registry of metrics for the Nodestream project."""
+    # Core metrics
+    RECORDS = Metric("records", "Number of records processed")
+    NON_FATAL_ERRORS = Metric("non_fatal_errors", "Number of non-fatal errors")
+    NODES_UPSERTED = Metric("nodes_upserted", "Number of nodes upserted to the graph")
+    RELATIONSHIPS_UPSERTED = Metric("relationships_upserted", "Number of relationships upserted to the graph")
+    TIME_TO_LIVE_OPERATIONS = Metric("time_to_live_operations", "Number of time-to-live operations executed")
+    INGEST_HOOKS_EXECUTED = Metric("ingest_hooks_executed", "Number of ingest hooks executed to the graph")
+    BUFFERED_RECORDS = Metric("buffered_records", "Number of records buffered between steps")
+    STEPS_RUNNING = Metric("steps_running", "Number of steps currently running in the pipeline")
 
 
 try:
@@ -95,41 +135,7 @@ try:
             keyfile: Optional[str] = None,
         ):
             self.logger = getLogger(__name__)
-            self.instruments_by_metric = {
-                Metric.RECORDS: Gauge(
-                    name=RECORDS_COUNTER_NAME,
-                    documentation=RECORDS_COUNTER_DESCRIPTION,
-                ),
-                Metric.NON_FATAL_ERRORS: Gauge(
-                    name=NON_FATAL_ERRORS_COUNTER_NAME,
-                    documentation=NON_FATAL_ERRORS_COUNTER_DESCRIPTION,
-                ),
-                Metric.NODES_UPSERTED: Gauge(
-                    name=NODES_UPSERTED_COUNTER_NAME,
-                    documentation=NODES_UPSERTED_COUNTER_DESCRIPTION,
-                ),
-                Metric.RELATIONSHIPS_UPSERTED: Gauge(
-                    name=RELS_UPSERTED_COUNTER_NAME,
-                    documentation=RELS_UPSERTED_COUNTER_DESCRIPTION,
-                ),
-                Metric.TIME_TO_LIVE_OPERATIONS: Gauge(
-                    name=TTL_OPERATIONS_COUNTER_NAME,
-                    documentation=TTL_OPERATIONS_COUNTER_DESCRIPTION,
-                ),
-                Metric.INGEST_HOOKS_EXECUTED: Gauge(
-                    name=INGEST_HOOKS_EXECUTED_COUNTER_NAME,
-                    documentation=INGEST_HOOKS_EXECUTED_COUNTER_DESCRIPTION,
-                ),
-                Metric.STEPS_RUNNING: Gauge(
-                    name="steps_running",
-                    documentation=STEPS_RUNNING_COUNTER_DESCRIPTION,
-                ),
-                Metric.BUFFERED_RECORDS: Gauge(
-                    name=BUFFERED_RECORDS_COUNTER_NAME,
-                    documentation=BUFFERED_RECORDS_DESCRIPTION,
-                ),
-            }
-
+            self.instruments_by_metric: Dict[Metric, Gauge] = {}
             self.port = port
             self.listen_address = listen_address
             self.certfile = certfile
@@ -157,11 +163,24 @@ try:
             self.thread.join()
             self.logger.info("Prometheus metrics server shut down successfully")
 
+        def get_guage(self, metric: Metric) -> Gauge:
+            """Get the Gauge for the given metric, creating it if it doesn't exist."""
+            if metric not in self.instruments_by_metric:
+                self.instruments_by_metric[metric] = Gauge(
+                    metric.name,
+                    metric.description or "",
+                    registry=REGISTRY,
+                )
+            return self.instruments_by_metric[metric]
+
         def increment(self, metric: Metric, value: Number):
-            self.instruments_by_metric[metric].inc(value)
+            self.get_guage(metric).inc(value)
 
         def decrement(self, metric: Metric, value: Number):
-            self.instruments_by_metric[metric].dec(value)
+            self.get_guage(metric).dec(value)
+
+        def tick(self):
+            pass
 
 except ImportError:
 
@@ -180,6 +199,9 @@ except ImportError:
         def decrement(self, metric: Metric, value: Number):
             pass
 
+        def tick(self):
+            pass
+
 
 STATS_TABLE_COLS = ["Statistic", "Value"]
 
@@ -188,38 +210,51 @@ class ConsoleMetricHandler(MetricHandler):
     """A metric handler that prints metrics to the console."""
 
     def __init__(self, command: Command):
-        self.metrics = {x: 0 for x in Metric}
+        self.metrics: dict[Metric, Number] = { metric: 0 for metric in MetricRegistry.get_all_metrics().values() }
         self.command = command
 
     def increment(self, metric: Metric, value: Number):
-        self.metrics[metric] += value
+        self.metrics[metric] = self.metrics.get(metric, 0) + value
 
     def decrement(self, metric: Metric, value: Number):
-        self.metrics[metric] -= value
+        self.metrics[metric] = self.metrics.get(metric, 0) - value
 
-    def stop(self):
+    def render(self):
         stats = ((k.name, str(v)) for k, v in self.metrics.items() if v > 0)
         table = self.command.table(STATS_TABLE_COLS, stats)
         table.render()
+
+    def tick(self):
+        self.render()
+
+    def stop(self):
+        self.render()
+
 
 
 class JsonLogMetricHandler(MetricHandler):
     """A metric handler that logs metrics in JSON format."""
 
     def __init__(self):
-        self.metrics = {x: 0 for x in Metric}
+        self.metrics: dict[Metric, Number] = { metric: 0 for metric in MetricRegistry.get_all_metrics().values() }
         self.logger = getLogger(__name__)
 
     def increment(self, metric: Metric, value: Number):
-        self.metrics[metric] += value
+        self.metrics[metric] = self.metrics.get(metric, 0) + value
 
     def decrement(self, metric: Metric, value: Number):
-        self.metrics[metric] -= value
+        self.metrics[metric] = self.metrics.get(metric, 0) - value
 
-    def stop(self):
+    def render(self):
         self.logger.info(
             "Metrics Report", extra={k.name: v for k, v in self.metrics.items()}
         )
+
+    def stop(self):
+        self.render()
+    
+    def tick(self):
+        self.render()
 
 
 class AggregateHandler(MetricHandler):
@@ -244,6 +279,10 @@ class AggregateHandler(MetricHandler):
         for handler in self.handlers:
             handler.decrement(metric, value)
 
+    def tick(self):
+        for handler in self.handlers:
+            handler.tick()
+
 
 UNKNOWN_PIPELINE_NAME = "unknown"
 UNKNOWN_PIPELINE_SCOPE = "unknown"
@@ -262,10 +301,13 @@ class Metrics:
         self.pipeline_name = pipeline_name or UNKNOWN_PIPELINE_NAME
 
     def increment(self, metric: Metric, value: Number = 1):
-        self.handler.increment(metric, value)
+        metric.increment_on(self.handler, value)
 
     def decrement(self, metric: Metric, value: Number = 1):
-        self.handler.decrement(metric, value)
+        metric.decrement_on(self.handler, value)
+    
+    def tick(self):
+        self.handler.tick()
 
     def start(self):
         self.handler.start()

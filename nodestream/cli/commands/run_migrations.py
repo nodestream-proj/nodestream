@@ -1,8 +1,9 @@
 from cleo.helpers import option
 
-from ..operations import ExecuteMigrations
+from ..operations import ExecuteMigrations, InitializeMetricsHandler
 from .nodestream_command import NodestreamCommand
-from .shared_options import PROJECT_FILE_OPTION, TARGETS_OPTION
+from .shared_options import PROJECT_FILE_OPTION, TARGETS_OPTION, PROMETHEUS_OPTIONS
+from ...metrics import Metrics
 
 
 class RunMigrations(NodestreamCommand):
@@ -12,21 +13,24 @@ class RunMigrations(NodestreamCommand):
         PROJECT_FILE_OPTION,
         TARGETS_OPTION,
         option("all-targets", "a", "Run migrations on all targets", flag=True),
+        *PROMETHEUS_OPTIONS,
     ]
 
     async def handle_async(self):
-        project = self.get_project()
-        migrations = self.get_migrations()
+        with Metrics.capture():
+            await self.run_operation(InitializeMetricsHandler())
+            project = self.get_project()
+            migrations = self.get_migrations()
 
-        if self.option("all-targets"):
-            targets = [target for target in project.targets_by_name]
-        else:
-            targets = self.option(TARGETS_OPTION.name)
+            if self.option("all-targets"):
+                targets = [target for target in project.targets_by_name]
+            else:
+                targets = self.option(TARGETS_OPTION.name)
 
-        if len(targets) == 0:
-            self.info("No targets specified, nothing to do.")
-            return
+            if len(targets) == 0:
+                self.info("No targets specified, nothing to do.")
+                return
 
-        for target_name in targets:
-            target = project.get_target_by_name(target_name)
-            await self.run_operation(ExecuteMigrations(migrations, target))
+            for target_name in targets:
+                target = project.get_target_by_name(target_name)
+                await self.run_operation(ExecuteMigrations(migrations, target))

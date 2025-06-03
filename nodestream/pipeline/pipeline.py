@@ -2,7 +2,7 @@ from asyncio import create_task, gather
 from logging import getLogger
 from typing import Iterable, List, Tuple
 
-from ..metrics import Metric, Metrics
+from ..metrics import Metrics, NodestreamMetricRegistry
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .channel import StepInput, StepOutput, channel
 from .object_storage import ObjectStore
@@ -34,14 +34,14 @@ class StepExecutor:
 
     async def start_step(self):
         try:
-            Metrics.get().increment(Metric.STEPS_RUNNING)
+            Metrics.get().increment(NodestreamMetricRegistry.STEPS_RUNNING)
             await self.step.start(self.context)
         except Exception as e:
             self.context.report_error("Error starting step", e)
 
     async def stop_step(self):
         try:
-            Metrics.get().decrement(Metric.STEPS_RUNNING)
+            Metrics.get().decrement(NodestreamMetricRegistry.STEPS_RUNNING)
             await self.step.finish(self.context)
         except Exception as e:
             self.context.report_error("Error stopping step", e)
@@ -114,7 +114,7 @@ class PipelineOutput:
 
         index = 0
         while (obj := await self.input.get()) is not None:
-            metrics.increment(Metric.RECORDS)
+            metrics.increment(NodestreamMetricRegistry.RECORDS)
             self.call_handling_errors(self.reporter.report, index, obj)
             index += 1
 
@@ -173,8 +173,13 @@ class Pipeline(ExpandsSchemaFromChildren):
         # the steps in the pipeline. The channels have a fixed size to control
         # the flow of records between the steps.
         executors: List[StepExecutor] = []
-        current_input, current_output = channel(self.step_outbox_size)
+        current_input, current_output = channel(self.step_outbox_size, 
+            input_name=self.steps[-1].__class__.__name__ + f"_{len(self.steps) - 1}",
+            output_name="Void",
+        )
         pipeline_output = PipelineOutput(current_input, reporter)
+
+        print([step.__class__.__name__ for step in self.steps])
 
         # Create the executors for the steps in the pipeline. The executors
         # will be used to run the steps concurrently. The steps are created in
@@ -184,7 +189,13 @@ class Pipeline(ExpandsSchemaFromChildren):
             index = len(self.steps) - reversed_index - 1
             storage = self.object_store.namespaced(str(index))
             context = StepContext(step.__class__.__name__, index, reporter, storage)
-            current_input, next_output = channel(self.step_outbox_size)
+
+            previous_step = self.steps[reversed_index - 1] if reversed_index > 0 else None
+
+            current_input, next_output = channel(self.step_outbox_size, 
+                input_name=previous_step.__class__.__name__ + f"_{reversed_index - 1}" if previous_step else "Void",
+                output_name=step.__class__.__name__ + f"_{reversed_index}"
+            )
             exec = StepExecutor(step, current_input, current_output, context)
             current_output = next_output
             executors.append(exec)
