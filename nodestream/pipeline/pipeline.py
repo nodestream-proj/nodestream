@@ -58,6 +58,7 @@ class StepExecutor:
     async def drive_step(self):
         try:
             while (next_record := await self.input.get()) is not None:
+                print(f"Driving step with record {next_record}")
                 results = self.step.process_record(next_record, self.context)
                 async for record in results:
                     if not await self.emit_record(record):
@@ -172,6 +173,7 @@ class Pipeline(ExpandsSchemaFromChildren):
         # the flow of records between the steps.
         executors: List[StepExecutor] = []
         current_input, current_output = channel(self.step_outbox_size)
+        print(current_input, current_output)
         pipeline_output = PipelineOutput(current_input, reporter)
 
         # Create the executors for the steps in the pipeline. The executors

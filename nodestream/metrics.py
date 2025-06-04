@@ -23,8 +23,8 @@ class Metric:
         """Decrement this metric on the given handler."""
         handler.decrement(self, value)
 
-    def register(self):
-        Metrics().get().increment(self, 0)
+    def register(self, handler: "MetricHandler"):
+        handler.increment(self, 0)
         return self
 
 
@@ -175,7 +175,7 @@ try:
             self.thread.join()
             self.logger.info("Prometheus metrics server shut down successfully")
 
-        def get_guage(self, metric: Metric) -> Gauge:
+        def get_gauge(self, metric: Metric) -> Gauge:
             """Get the Gauge for the given metric, creating it if it doesn't exist."""
             if metric not in self.instruments_by_metric:
                 self.instruments_by_metric[metric] = Gauge(
@@ -186,10 +186,11 @@ try:
             return self.instruments_by_metric[metric]
 
         def increment(self, metric: Metric, value: Number):
-            self.get_guage(metric).inc(value)
+            print(f"Incrementing {metric.name} by {value}")
+            self.get_gauge(metric).inc(value)
 
         def decrement(self, metric: Metric, value: Number):
-            self.get_guage(metric).dec(value)
+            self.get_gauge(metric).dec(value)
 
         def tick(self):
             pass

@@ -6,6 +6,7 @@ from nodestream.cli.operations.run_pipeline import (
     ProgressIndicator,
     RunPipeline,
     SpinnerProgressIndicator,
+    JsonProgressIndicator,
 )
 from nodestream.metrics import Metrics
 from nodestream.project import PipelineConfiguration, PipelineDefinition, Project
@@ -59,8 +60,10 @@ def test_spinner_on_finish(mocker):
 def test_spinner_progress_callback(mocker):
     spinner = SpinnerProgressIndicator(mocker.Mock(), "pipeline_name")
     spinner.on_start()
-    spinner.progress_callback(1000, None)
+    mock_metrics = mocker.Mock()
+    spinner.progress_callback(1000, mock_metrics)
     spinner.progress.set_message.assert_called_once()
+    mock_metrics.tick.assert_called_once()
 
 
 def test_spinner_error_condition(mocker):
@@ -68,9 +71,10 @@ def test_spinner_error_condition(mocker):
     spinner.on_start()
     spinner.on_fatal_error(Exception())
     spinner.progress.set_message.assert_called_once()
-
+    mock_metrics = mocker.Mock()
     with pytest.raises(Exception):
-        spinner.on_finish(Metrics())
+        spinner.on_finish(mock_metrics)
+    mock_metrics.tick.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -126,3 +130,14 @@ def test_progress_indicator_error(mocker):
     indicator = ProgressIndicator(mocker.Mock(), "pipeline_name")
     indicator.on_fatal_error(Exception("Boom"))
     indicator.command.line.assert_called_with("<error>Boom</error>")
+
+
+def test_json_progress_indicator(mocker):
+    indicator = JsonProgressIndicator(mocker.Mock(), "pipeline_name")
+    indicator.logger.info = mocker.Mock()
+    indicator.on_start()
+    indicator.on_finish(Metrics())
+    assert indicator.logger.info.call_args_list == [
+        mocker.call("Starting Pipeline"),
+        mocker.call("Pipeline Completed"),
+    ]
