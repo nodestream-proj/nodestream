@@ -43,7 +43,7 @@ class QueryExecutorWithStatistics(QueryExecutor):
         self, operation: OperationOnNodeIdentity, nodes: Iterable[Node]
     ):
         await self.inner.upsert_nodes_in_bulk_with_same_operation(operation, nodes)
-        
+
         # Tally node types
         node_type_counts: dict[str, int] = {}
         total_nodes = 0
@@ -66,18 +66,22 @@ class QueryExecutorWithStatistics(QueryExecutor):
         await self.inner.upsert_relationships_in_bulk_of_same_operation(
             shape, relationships
         )
-        
+
         # Tally relationship types
         relationship_type_counts: dict[str, int] = {}
         total_relationships = 0
         for relationship in relationships:
             rel_type = relationship.relationship.type
-            relationship_type_counts[rel_type] = relationship_type_counts.get(rel_type, 0) + 1
+            relationship_type_counts[rel_type] = (
+                relationship_type_counts.get(rel_type, 0) + 1
+            )
             total_relationships += 1
 
         # Increment metrics in bulk
         metrics = Metrics.get()
-        metrics.increment(NodestreamMetricRegistry.RELATIONSHIPS_UPSERTED, total_relationships)
+        metrics.increment(
+            NodestreamMetricRegistry.RELATIONSHIPS_UPSERTED, total_relationships
+        )
         for rel_type, count in relationship_type_counts.items():
             metric = self._get_or_create_relationship_metric(rel_type)
             metrics.increment(metric, count)

@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from contextvars import ContextVar
-from enum import Enum, auto
 from logging import getLogger
 from typing import Optional, Union, Dict
 from dataclasses import dataclass
@@ -69,21 +68,22 @@ class NullMetricHandler(MetricHandler):
 
     def decrement(self, _: Metric, __: Number):
         pass
-    
+
     def tick(self):
         pass
 
 
 class MetricRegistry:
     """A registry of metrics that collects metrics from class variables in subclasses.
-    
+
     This class provides a way to collect metrics defined as class attributes in subclasses.
     Metrics can be declared as class attributes in subclasses. For example:
-    
+
     class MyMetricRegistry(MetricRegistry):
         MY_METRIC = Metric("my_metric", "Description of my metric")
         ANOTHER_METRIC = Metric("another_metric", "Description of another metric")
     """
+
     _subclasses: list[type["MetricRegistry"]] = []
 
     def __init_subclass__(cls, **kwargs):
@@ -94,7 +94,7 @@ class MetricRegistry:
     @classmethod
     def get_all_metrics(cls) -> dict[str, Metric]:
         """Get all metrics from all subclasses.
-        
+
         Returns a dictionary mapping metric names to their Metric instances,
         collected from all MetricRegistry subclasses.
         """
@@ -109,15 +109,26 @@ class MetricRegistry:
 
 class NodestreamMetricRegistry(MetricRegistry):
     """A registry of metrics for the Nodestream project."""
+
     # Core metrics
     RECORDS = Metric("records", "Number of records processed")
     NON_FATAL_ERRORS = Metric("non_fatal_errors", "Number of non-fatal errors")
     NODES_UPSERTED = Metric("nodes_upserted", "Number of nodes upserted to the graph")
-    RELATIONSHIPS_UPSERTED = Metric("relationships_upserted", "Number of relationships upserted to the graph")
-    TIME_TO_LIVE_OPERATIONS = Metric("time_to_live_operations", "Number of time-to-live operations executed")
-    INGEST_HOOKS_EXECUTED = Metric("ingest_hooks_executed", "Number of ingest hooks executed to the graph")
-    BUFFERED_RECORDS = Metric("buffered_records", "Number of records buffered between steps")
-    STEPS_RUNNING = Metric("steps_running", "Number of steps currently running in the pipeline")
+    RELATIONSHIPS_UPSERTED = Metric(
+        "relationships_upserted", "Number of relationships upserted to the graph"
+    )
+    TIME_TO_LIVE_OPERATIONS = Metric(
+        "time_to_live_operations", "Number of time-to-live operations executed"
+    )
+    INGEST_HOOKS_EXECUTED = Metric(
+        "ingest_hooks_executed", "Number of ingest hooks executed to the graph"
+    )
+    BUFFERED_RECORDS = Metric(
+        "buffered_records", "Number of records buffered between steps"
+    )
+    STEPS_RUNNING = Metric(
+        "steps_running", "Number of steps currently running in the pipeline"
+    )
 
 
 try:
@@ -210,7 +221,9 @@ class ConsoleMetricHandler(MetricHandler):
     """A metric handler that prints metrics to the console."""
 
     def __init__(self, command: Command):
-        self.metrics: dict[Metric, Number] = { metric: 0 for metric in MetricRegistry.get_all_metrics().values() }
+        self.metrics: dict[Metric, Number] = {
+            metric: 0 for metric in MetricRegistry.get_all_metrics().values()
+        }
         self.command = command
 
     def increment(self, metric: Metric, value: Number):
@@ -231,12 +244,13 @@ class ConsoleMetricHandler(MetricHandler):
         self.render()
 
 
-
 class JsonLogMetricHandler(MetricHandler):
     """A metric handler that logs metrics in JSON format."""
 
     def __init__(self):
-        self.metrics: dict[Metric, Number] = { metric: 0 for metric in MetricRegistry.get_all_metrics().values() }
+        self.metrics: dict[Metric, Number] = {
+            metric: 0 for metric in MetricRegistry.get_all_metrics().values()
+        }
         self.logger = getLogger(__name__)
 
     def increment(self, metric: Metric, value: Number):
@@ -252,7 +266,7 @@ class JsonLogMetricHandler(MetricHandler):
 
     def stop(self):
         self.render()
-    
+
     def tick(self):
         self.render()
 
@@ -305,7 +319,7 @@ class Metrics:
 
     def decrement(self, metric: Metric, value: Number = 1):
         metric.decrement_on(self.handler, value)
-    
+
     def tick(self):
         self.handler.tick()
 

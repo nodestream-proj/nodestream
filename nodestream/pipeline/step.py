@@ -1,6 +1,6 @@
 from typing import AsyncGenerator, Optional
 
-from ..metrics import Metric, Metrics, NodestreamMetricRegistry
+from ..metrics import Metrics, NodestreamMetricRegistry
 from .object_storage import ObjectStore
 from .progress_reporter import PipelineProgressReporter
 

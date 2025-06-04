@@ -173,7 +173,8 @@ class Pipeline(ExpandsSchemaFromChildren):
         # the steps in the pipeline. The channels have a fixed size to control
         # the flow of records between the steps.
         executors: List[StepExecutor] = []
-        current_input, current_output = channel(self.step_outbox_size, 
+        current_input, current_output = channel(
+            self.step_outbox_size,
             input_name=self.steps[-1].__class__.__name__ + f"_{len(self.steps) - 1}",
             output_name="Void",
         )
@@ -190,11 +191,18 @@ class Pipeline(ExpandsSchemaFromChildren):
             storage = self.object_store.namespaced(str(index))
             context = StepContext(step.__class__.__name__, index, reporter, storage)
 
-            previous_step = self.steps[reversed_index - 1] if reversed_index > 0 else None
+            previous_step = (
+                self.steps[reversed_index - 1] if reversed_index > 0 else None
+            )
 
-            current_input, next_output = channel(self.step_outbox_size, 
-                input_name=previous_step.__class__.__name__ + f"_{reversed_index - 1}" if previous_step else "Void",
-                output_name=step.__class__.__name__ + f"_{reversed_index}"
+            current_input, next_output = channel(
+                self.step_outbox_size,
+                input_name=(
+                    previous_step.__class__.__name__ + f"_{reversed_index - 1}"
+                    if previous_step
+                    else "Void"
+                ),
+                output_name=step.__class__.__name__ + f"_{reversed_index}",
             )
             exec = StepExecutor(step, current_input, current_output, context)
             current_output = next_output

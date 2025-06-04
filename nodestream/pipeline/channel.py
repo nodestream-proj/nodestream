@@ -44,7 +44,7 @@ class Channel:
         self.input_dropped = False
         self.metric = Metric(
             f"buffered_{input_name}_to_{output_name}",
-            f"Records buffered: {input_name} → {output_name}"
+            f"Records buffered: {input_name} → {output_name}",
         )
 
     async def get(self):
@@ -161,7 +161,9 @@ class StepInput:
         self.channel.input_dropped = True
 
 
-def channel(size: int, input_name: str, output_name: str) -> Tuple[StepInput, StepOutput]:
+def channel(
+    size: int, input_name: str, output_name: str
+) -> Tuple[StepInput, StepOutput]:
     """Create a new input and output channel.
 
     Args:
