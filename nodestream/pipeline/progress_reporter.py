@@ -67,5 +67,5 @@ class PipelineProgressReporter:
         )
 
     def report(self, index, metrics: Metrics):
-        if index % 10000 == 0:
+        if index % self.reporting_frequency == 0:
             self.callback(index, metrics)
