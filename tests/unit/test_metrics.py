@@ -136,3 +136,12 @@ def test_prometheus_metric_handler_import_error(mocker):
         "The prometheus_client library is required to use the PrometheusMetricHandler."
         in str(excinfo.value)
     )
+
+
+def test_aggregate_handler_tick_calls_all_handlers(mocker):
+    mock_handler1 = mocker.Mock()
+    mock_handler2 = mocker.Mock()
+    handler = AggregateHandler([mock_handler1, mock_handler2])
+    handler.tick()
+    mock_handler1.tick.assert_called_once()
+    mock_handler2.tick.assert_called_once()
