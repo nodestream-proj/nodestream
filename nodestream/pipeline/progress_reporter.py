@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass, field
 from logging import Logger, getLogger
-from typing import Any, Callable
+from typing import Callable
 
 from psutil import Process
 
@@ -33,7 +33,7 @@ class PipelineProgressReporter:
 
     reporting_frequency: int = 10000
     logger: Logger = field(default_factory=getLogger)
-    callback: Callable[[int, Any], None] = field(default=no_op)
+    callback: Callable[[int, Metrics], None] = field(default=no_op)
     on_start_callback: Callable[[], None] = field(default=no_op)
     on_finish_callback: Callable[[Metrics], None] = field(default=no_op)
     on_fatal_error_callback: Callable[[Exception], None] = field(default=no_op)
@@ -66,11 +66,6 @@ class PipelineProgressReporter:
             on_fatal_error_callback=raise_exception,
         )
 
-    def report(self, index, record):
+    def report(self, index, metrics: Metrics):
         if index % 10000 == 0:
-            # self.logger.info(
-            #     "Records Processed",
-            #     extra={"index": index, "max_memory": get_max_mem_mb()},
-            # )
-            # self.callback(index, record)
-            Metrics.get().tick()
+            self.callback(index, metrics)

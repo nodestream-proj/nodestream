@@ -37,15 +37,32 @@ class Channel:
     prevent one step from overwhelming another step with too many records.
     """
 
-    __slots__ = ("queue", "input_dropped", "metric")
+    __slots__ = ("queue", "input_dropped", "_metric", "input_name", "output_name")
 
-    def __init__(self, size: int, input_name: str, output_name: str) -> None:
+    def __init__(self, size: int) -> None:
         self.queue = Queue(maxsize=size)
         self.input_dropped = False
-        self.metric = Metric(
-            f"buffered_{input_name}_to_{output_name}",
-            f"Records buffered: {input_name} → {output_name}",
-        )
+        self.input_name = "Void"
+        self.output_name = "Void"
+        self._metric = None
+
+    @property
+    def metric(self) -> Metric:
+        """Get the metric for the channel."""
+        if self._metric is None:
+            self._metric = Metric(
+                f"buffered_{self.output_name}_to_{self.input_name}",
+                f"Records buffered: {self.output_name} → {self.input_name}",
+            )
+        return self._metric
+
+    def register_input(self, name: str) -> None:
+        """Register the name of the step that will consume from this channel."""
+        self.input_name = name
+
+    def register_output(self, name: str) -> None:
+        """Register the name of the step that will produce to this channel."""
+        self.output_name = name
 
     async def get(self):
         """Get an object from the channel.
@@ -58,6 +75,7 @@ class Channel:
             object: The object that was retrieved from the channel.
         """
         object = await self.queue.get()
+        Metrics.get().decrement(self.metric)
         return object
 
     async def put(self, obj) -> bool:
@@ -91,6 +109,10 @@ class StepOutput:
 
     def __init__(self, channel: Channel) -> None:
         self.channel = channel
+
+    def register(self, name: str) -> None:
+        """Register the name of the step that will produce to this channel."""
+        self.channel.register_output(name)
 
     async def done(self):
         """Mark the output channel as done.
@@ -138,6 +160,10 @@ class StepInput:
     def __init__(self, channel: Channel) -> None:
         self.channel = channel
 
+    def register(self, name: str) -> None:
+        """Register the name of the step that will consume from this channel."""
+        self.channel.register_input(name)
+
     async def get(self) -> Optional[object]:
         """Get an object from the input channel.
 
@@ -161,9 +187,7 @@ class StepInput:
         self.channel.input_dropped = True
 
 
-def channel(
-    size: int, input_name: str, output_name: str
-) -> Tuple[StepInput, StepOutput]:
+def channel(size: int) -> Tuple[StepInput, StepOutput]:
     """Create a new input and output channel.
 
     Args:
@@ -171,5 +195,5 @@ def channel(
         input_name: The name of the input step.
         output_name: The name of the output step.
     """
-    channel = Channel(size, input_name, output_name)
+    channel = Channel(size)
     return StepInput(channel), StepOutput(channel)

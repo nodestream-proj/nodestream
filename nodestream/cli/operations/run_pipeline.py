@@ -9,6 +9,7 @@ from ...project.pipeline_definition import PipelineDefinition
 from ...utils import StringSuggester
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
+from logging import getLogger
 
 STATS_TABLE_COLS = ["Statistic", "Value"]
 
@@ -113,7 +114,7 @@ class RunPipeline(Operation):
         self, command: NodestreamCommand, pipeline_name: str
     ) -> "ProgressIndicator":
         if command.has_json_logging_set:
-            return ProgressIndicator(command, pipeline_name)
+            return JsonProgressIndicator(command, pipeline_name)
 
         return SpinnerProgressIndicator(command, pipeline_name)
 
@@ -122,6 +123,7 @@ class RunPipeline(Operation):
     ) -> PipelineProgressReporter:
         indicator = self.get_progress_indicator(command, pipeline_name)
         return PipelineProgressReporter(
+            logger=indicator.logger,
             reporting_frequency=int(command.option("reporting-frequency")),
             callback=indicator.progress_callback,
             on_start_callback=indicator.on_start,
@@ -134,6 +136,7 @@ class ProgressIndicator:
     def __init__(self, command: NodestreamCommand, pipeline_name: str) -> None:
         self.command = command
         self.pipeline_name = pipeline_name
+        self.logger = getLogger()
 
     def on_start(self):
         pass
@@ -160,14 +163,15 @@ class SpinnerProgressIndicator(ProgressIndicator):
         self.progress = self.command.progress_indicator()
         self.progress.start(f"Running pipeline: '{self.pipeline_name}'")
 
-    def progress_callback(self, index, _):
+    def progress_callback(self, index, metrics: Metrics):
         self.progress.set_message(
             f"Currently processing record at index: <info>{index}</info>"
         )
+        metrics.tick()
 
     def on_finish(self, metrics: Metrics):
         self.progress.finish(f"Finished running pipeline: '{self.pipeline_name}'")
-
+        metrics.tick()
         if self.exception:
             raise self.exception
 
@@ -175,4 +179,27 @@ class SpinnerProgressIndicator(ProgressIndicator):
         self.progress.set_message(
             "<error>Encountered a fatal error while running pipeline</error>"
         )
+        self.exception = exception
+
+
+class JsonProgressIndicator(ProgressIndicator):
+    def __init__(self, command: NodestreamCommand, pipeline_name: str) -> None:
+        super().__init__(command, pipeline_name)
+        self.exception = None
+
+    def on_start(self):
+        self.logger.info("Starting Pipeline")
+
+    def progress_callback(self, index, metrics: Metrics):
+        self.logger.info("Processing Record", extra={"index": index})
+        metrics.tick()
+
+    def on_finish(self, metrics: Metrics):
+        self.logger.info("Pipeline Completed")
+        metrics.tick()
+        if self.exception:
+            raise self.exception
+
+    def on_fatal_error(self, exception: Exception):
+        self.logger.error("Pipeline Failed", exc_info=exception)
         self.exception = exception

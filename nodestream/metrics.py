@@ -113,6 +113,7 @@ class NodestreamMetricRegistry(MetricRegistry):
     # Core metrics
     RECORDS = Metric("records", "Number of records processed")
     NON_FATAL_ERRORS = Metric("non_fatal_errors", "Number of non-fatal errors")
+    FATAL_ERRORS = Metric("fatal_errors", "Number of fatal errors")
     NODES_UPSERTED = Metric("nodes_upserted", "Number of nodes upserted to the graph")
     RELATIONSHIPS_UPSERTED = Metric(
         "relationships_upserted", "Number of relationships upserted to the graph"
@@ -241,7 +242,7 @@ class ConsoleMetricHandler(MetricHandler):
         self.render()
 
     def stop(self):
-        self.render()
+        pass
 
 
 class JsonLogMetricHandler(MetricHandler):
@@ -265,7 +266,7 @@ class JsonLogMetricHandler(MetricHandler):
         )
 
     def stop(self):
-        self.render()
+        pass
 
     def tick(self):
         self.render()

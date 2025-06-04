@@ -113,9 +113,9 @@ class PipelineOutput:
         self.call_handling_errors(self.reporter.on_start_callback)
 
         index = 0
-        while (obj := await self.input.get()) is not None:
+        while (await self.input.get()) is not None:
             metrics.increment(NodestreamMetricRegistry.RECORDS)
-            self.call_handling_errors(self.reporter.report, index, obj)
+            self.call_handling_errors(self.reporter.report, index, metrics)
             index += 1
 
         self.call_handling_errors(self.reporter.on_finish_callback, metrics)
@@ -161,8 +161,6 @@ class Pipeline(ExpandsSchemaFromChildren):
         `PipelineProgressReporter`.
 
         Args:
-            channel_size: The size of the channels used to pass records between
-                steps in the pipeline.
             reporter: The `PipelineProgressReporter` used to report on the
                 progress of the pipeline.
         """
@@ -173,14 +171,8 @@ class Pipeline(ExpandsSchemaFromChildren):
         # the steps in the pipeline. The channels have a fixed size to control
         # the flow of records between the steps.
         executors: List[StepExecutor] = []
-        current_input, current_output = channel(
-            self.step_outbox_size,
-            input_name=self.steps[-1].__class__.__name__ + f"_{len(self.steps) - 1}",
-            output_name="Void",
-        )
+        current_input, current_output = channel(self.step_outbox_size)
         pipeline_output = PipelineOutput(current_input, reporter)
-
-        print([step.__class__.__name__ for step in self.steps])
 
         # Create the executors for the steps in the pipeline. The executors
         # will be used to run the steps concurrently. The steps are created in
@@ -190,20 +182,9 @@ class Pipeline(ExpandsSchemaFromChildren):
             index = len(self.steps) - reversed_index - 1
             storage = self.object_store.namespaced(str(index))
             context = StepContext(step.__class__.__name__, index, reporter, storage)
-
-            previous_step = (
-                self.steps[reversed_index - 1] if reversed_index > 0 else None
-            )
-
-            current_input, next_output = channel(
-                self.step_outbox_size,
-                input_name=(
-                    previous_step.__class__.__name__ + f"_{reversed_index - 1}"
-                    if previous_step
-                    else "Void"
-                ),
-                output_name=step.__class__.__name__ + f"_{reversed_index}",
-            )
+            current_input, next_output = channel(self.step_outbox_size)
+            current_input.register(step.__class__.__name__)
+            current_output.register(step.__class__.__name__)
             exec = StepExecutor(step, current_input, current_output, context)
             current_output = next_output
             executors.append(exec)
@@ -218,6 +199,4 @@ class Pipeline(ExpandsSchemaFromChildren):
         # concurrently. This will block until all steps are finished.
         running_steps = (create_task(executor.run()) for executor in executors)
 
-        self.logger.info("Starting Pipeline")
         await gather(*running_steps, create_task(pipeline_output.run()))
-        self.logger.info("Pipeline Completed")

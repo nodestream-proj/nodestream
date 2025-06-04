@@ -57,6 +57,7 @@ class StepContext:
         )
         if fatal:
             self.reporter.on_fatal_error(exception)
+            Metrics.get().increment(NodestreamMetricRegistry.FATAL_ERRORS)
         else:
             Metrics.get().increment(NodestreamMetricRegistry.NON_FATAL_ERRORS)
 
