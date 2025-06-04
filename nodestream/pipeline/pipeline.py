@@ -6,7 +6,7 @@ from ..metrics import Metrics, NodestreamMetricRegistry
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .channel import StepInput, StepOutput, channel
 from .object_storage import ObjectStore
-from .progress_reporter import PipelineProgressReporter
+from .progress_reporter import PipelineProgressReporter, no_op
 from .step import Step, StepContext
 
 
@@ -89,11 +89,12 @@ class PipelineOutput:
     pipeline and report the progress of the pipeline.
     """
 
-    __slots__ = ("input", "reporter")
+    __slots__ = ("input", "reporter", "observe_results")
 
     def __init__(self, input: StepInput, reporter: PipelineProgressReporter):
         self.input = input
         self.reporter = reporter
+        self.observe_results = reporter.observability_callback is not no_op
 
     def call_handling_errors(self, f, *args):
         try:
@@ -114,9 +115,11 @@ class PipelineOutput:
         self.call_handling_errors(self.reporter.on_start_callback)
 
         index = 0
-        while (await self.input.get()) is not None:
+        while (record := await self.input.get()) is not None:
             metrics.increment(NodestreamMetricRegistry.RECORDS)
             self.call_handling_errors(self.reporter.report, index, metrics)
+            if self.observe_results:
+                self.call_handling_errors(self.reporter.observe, record)
             index += 1
 
         self.call_handling_errors(self.reporter.on_finish_callback, metrics)

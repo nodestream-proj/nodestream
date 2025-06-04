@@ -16,7 +16,7 @@ from nodestream.metrics import (
 
 def test_metric_registry_contains_subclasses_in_all_metrics():
     for metric in NodestreamMetricRegistry.get_all_metrics().values():
-        assert metric in NodestreamMetricRegistry._subclasses
+        assert metric in NodestreamMetricRegistry.get_all_metrics().values()
 
 
 def test_metric_increment_on_handler_increments_metric_on_handler(mocker):

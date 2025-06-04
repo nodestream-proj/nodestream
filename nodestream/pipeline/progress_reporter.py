@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass, field
 from logging import Logger, getLogger
-from typing import Callable
+from typing import Any, Callable
 
 from psutil import Process
 
@@ -38,6 +38,7 @@ class PipelineProgressReporter:
     on_finish_callback: Callable[[Metrics], None] = field(default=no_op)
     on_fatal_error_callback: Callable[[Exception], None] = field(default=no_op)
     encountered_fatal_error: bool = field(default=False)
+    observability_callback: Callable[[Any], None] = field(default=no_op)
 
     def on_fatal_error(self, exception: Exception):
         self.encountered_fatal_error = True
@@ -69,3 +70,6 @@ class PipelineProgressReporter:
     def report(self, index, metrics: Metrics):
         if index % self.reporting_frequency == 0:
             self.callback(index, metrics)
+
+    def observe(self, record: Any):
+        self.observability_callback(record)
