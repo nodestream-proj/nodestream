@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from contextvars import ContextVar
-from logging import getLogger
-from typing import Optional, Union, Dict
 from dataclasses import dataclass
+from logging import getLogger
+from typing import Dict, Optional, Union
 
 from cleo.commands.command import Command
 

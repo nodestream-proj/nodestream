@@ -3,10 +3,10 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations.run_pipeline import (
     WARNING_NO_TARGETS_PROVIDED,
+    JsonProgressIndicator,
     ProgressIndicator,
     RunPipeline,
     SpinnerProgressIndicator,
-    JsonProgressIndicator,
 )
 from nodestream.metrics import Metrics
 from nodestream.project import PipelineConfiguration, PipelineDefinition, Project

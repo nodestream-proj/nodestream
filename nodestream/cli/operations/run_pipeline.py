@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Iterable, Optional
 
 from yaml import safe_dump
@@ -9,7 +10,6 @@ from ...project.pipeline_definition import PipelineDefinition
 from ...utils import StringSuggester
 from ..commands.nodestream_command import NodestreamCommand
 from .operation import Operation
-from logging import getLogger
 
 STATS_TABLE_COLS = ["Statistic", "Value"]
 

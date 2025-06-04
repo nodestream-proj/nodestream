@@ -1,11 +1,12 @@
-import pytest
 from unittest.mock import call
+
+import pytest
 
 from nodestream.databases.query_executor_with_statistics import (
     QueryExecutorWithStatistics,
 )
 from nodestream.metrics import Metrics, NodestreamMetricRegistry
-from nodestream.model import Node, RelationshipWithNodes, Relationship
+from nodestream.model import Node, Relationship, RelationshipWithNodes
 
 
 @pytest.fixture

@@ -7,8 +7,8 @@ from nodestream.metrics import (
     ConsoleMetricHandler,
     JsonLogMetricHandler,
     Metric,
-    NodestreamMetricRegistry,
     Metrics,
+    NodestreamMetricRegistry,
     NullMetricHandler,
     PrometheusMetricHandler,
 )

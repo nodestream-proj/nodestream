@@ -1,9 +1,9 @@
 from typing import Iterable
 
 from ..metrics import (
+    Metric,
     Metrics,
     NodestreamMetricRegistry,
-    Metric,
 )
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from .query_executor import (

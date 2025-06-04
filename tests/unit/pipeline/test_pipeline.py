@@ -1,6 +1,7 @@
 import pytest
 
 from nodestream.pipeline import Extractor
+from nodestream.pipeline.channel import Channel
 from nodestream.pipeline.object_storage import NullObjectStore
 from nodestream.pipeline.pipeline import (
     Pipeline,
@@ -12,7 +13,6 @@ from nodestream.pipeline.pipeline import (
     StepInput,
     StepOutput,
 )
-from nodestream.pipeline.channel import Channel
 
 
 @pytest.fixture
