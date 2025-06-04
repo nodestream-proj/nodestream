@@ -123,7 +123,6 @@ class RunPipeline(Operation):
     ) -> PipelineProgressReporter:
         indicator = self.get_progress_indicator(command, pipeline_name)
         return PipelineProgressReporter(
-            logger=indicator.logger,
             reporting_frequency=int(command.option("reporting-frequency")),
             callback=indicator.progress_callback,
             on_start_callback=indicator.on_start,
@@ -136,7 +135,6 @@ class ProgressIndicator:
     def __init__(self, command: NodestreamCommand, pipeline_name: str) -> None:
         self.command = command
         self.pipeline_name = pipeline_name
-        self.logger = getLogger()
 
     def on_start(self):
         pass
@@ -185,6 +183,7 @@ class SpinnerProgressIndicator(ProgressIndicator):
 class JsonProgressIndicator(ProgressIndicator):
     def __init__(self, command: NodestreamCommand, pipeline_name: str) -> None:
         super().__init__(command, pipeline_name)
+        self.logger = getLogger()
         self.exception = None
 
     def on_start(self):
