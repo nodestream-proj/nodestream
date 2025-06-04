@@ -84,7 +84,7 @@ async def test_base_filter_filters_correctly():
     assert_that(results, equal_to([]))
 
 
-REGEX = ".*[\[\]\{\}\(\)\\\/~,]+"
+REGEX = r".*[\[\]\{\}\(\)\\\/~,]+"
 REGEX_TEST_CASES = [
     {"value": "[test]", "include": True, "expect": False},
     {"value": "test", "include": True, "expect": True},

@@ -19,7 +19,7 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Tuple,
+    Sequence,
 )
 
 import pandas as pd
@@ -74,7 +74,7 @@ class ReadableFile:
     @asynccontextmanager
     async def popped_suffix_tempfile(
         self,
-    ) -> AsyncContextManager[Tuple[Path, tempfile.NamedTemporaryFile]]:
+    ) -> AsyncContextManager[tuple[Path, tempfile.NamedTemporaryFile]]:
         """Create a temporary file with the same suffixes sans the last one.
 
         This method creates a temporary file with the same suffixes as the
@@ -179,6 +179,7 @@ class FileSource(Pluggable, ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def describe(self) -> str:
         """Return a human-readable description of the file source.
 
@@ -187,7 +188,6 @@ class FileSource(Pluggable, ABC):
         way that is understandable to the user. The description should be
         concise and informative.
         """
-        return str(self)
 
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
@@ -481,7 +481,7 @@ class RemoteFileSource(FileSource, alias="http"):
     """
 
     def __init__(
-        self, urls: Iterable[str], memory_spooling_max_size_in_mb: int = 10
+        self, urls: Sequence[str], memory_spooling_max_size_in_mb: int = 10
     ) -> None:
         self.urls = urls
         self.memory_spooling_max_size = memory_spooling_max_size_in_mb * 1024 * 1024
@@ -528,7 +528,7 @@ class S3File(ReadableFile):
         if not self.archive_dir:
             return
 
-        self.logger.info("Archiving S3 Object", extra=dict(key=key))
+        self.logger.info("Archiving S3 Object", extra={"key": key})
         filename = Path(key).name
         self.s3_client.copy(
             Bucket=self.bucket,
@@ -617,6 +617,12 @@ class S3FileSource(FileSource, alias="s3"):
                 object_format=self.object_format,
             )
 
+    def describe(self) -> str:
+        return (
+            f"S3FileSource{{bucket: {self.bucket}, prefix: {self.prefix}, "
+            f"archive_dir: {self.archive_dir}, object_format: {self.object_format}}}"
+        )
+
 
 class FileExtractor(Extractor):
     """A class that extracts records from files.
@@ -629,11 +635,11 @@ class FileExtractor(Extractor):
     """
 
     @classmethod
-    def local(cls, globs: Iterable[str]):
+    def local(cls, globs: Iterable[str]) -> "FileExtractor":
         return FileExtractor.from_file_data([{"type": "local", "globs": globs}])
 
     @classmethod
-    def s3(cls, **kwargs):
+    def s3(cls, **kwargs) -> "FileExtractor":
         return cls([S3FileSource.from_file_data(**kwargs)])
 
     @classmethod
@@ -641,7 +647,7 @@ class FileExtractor(Extractor):
         cls,
         urls: Iterable[str],
         memory_spooling_max_size_in_mb: int = 10,
-    ):
+    ) -> "FileExtractor":
         return FileExtractor.from_file_data(
             [
                 {
@@ -653,17 +659,19 @@ class FileExtractor(Extractor):
         )
 
     @classmethod
-    def from_file_data(cls, sources: List[Dict[str, Any]]) -> "FileExtractor":
+    def from_file_data(cls, sources: list[dict[str, Any]]) -> "FileExtractor":
         return cls(
             [FileSource.from_file_data_with_type_label(source) for source in sources]
         )
 
-    def __init__(self, file_sources: Iterable[FileSource]) -> None:
+    def __init__(self, file_sources: Sequence[FileSource]) -> None:
         self.file_sources = file_sources
         self.logger = getLogger(__name__)
 
-    async def read_file(self, file: ReadableFile) -> Iterable[JsonLikeDocument]:
-        intermediaries: List[AsyncContextManager[ReadableFile]] = []
+    async def read_file(
+        self, file: ReadableFile
+    ) -> AsyncGenerator[JsonLikeDocument, None]:
+        intermediaries: list[AsyncContextManager[ReadableFile]] = []
 
         while True:
             suffix = file.path_like().suffix
@@ -695,10 +703,10 @@ class FileExtractor(Extractor):
                 pass
             except Exception as e:
                 self.logger.warning(
-                    f"Failed to parse {file.path_like()} file. Please ensure the file is in the correct format.",
+                    "Failed to parse %s file. Please ensure the file is in the correct format.",
+                    file.path_like(),
                     extra={"exception": str(e)},
                 )
-                pass
 
             # Regardless of whether we found a codec or not, break out of the
             # loop and yield no more records because either (a) we found a
@@ -720,5 +728,6 @@ class FileExtractor(Extractor):
 
             if total_files_from_source == 0:
                 self.logger.warning(
-                    f"No files found for source: {file_source.describe()}"
+                    "No files found for source: %s",
+                    file_source.describe(),
                 )
