@@ -100,10 +100,6 @@ class StepOutput:
     def __init__(self, channel: Channel) -> None:
         self.channel = channel
 
-    def register(self, name: str) -> None:
-        """Register the name of the step that will produce to this channel."""
-        self.channel.register_output(name)
-
     async def done(self):
         """Mark the output channel as done.
 
