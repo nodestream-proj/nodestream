@@ -149,7 +149,6 @@ try:
             return self.instruments_by_metric[metric]
 
         def increment(self, metric: Metric, value: Number):
-            print(f"Incrementing {metric.name} by {value}")
             self.get_gauge(metric).inc(value)
 
         def decrement(self, metric: Metric, value: Number):

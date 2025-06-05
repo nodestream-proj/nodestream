@@ -3,16 +3,12 @@ import sys
 import pytest
 
 from nodestream.metrics import (
+    RECORDS,
     AggregateHandler,
     ConsoleMetricHandler,
     JsonLogMetricHandler,
     Metric,
     Metrics,
-    RECORDS,
-    NODES_UPSERTED,
-    RELATIONSHIPS_UPSERTED,
-    TIME_TO_LIVE_OPERATIONS,
-    INGEST_HOOKS_EXECUTED,
     NullMetricHandler,
     PrometheusMetricHandler,
 )

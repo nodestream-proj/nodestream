@@ -1,9 +1,9 @@
 from typing import AsyncGenerator, Optional
 
 from ..metrics import (
-    Metrics,
     FATAL_ERRORS,
     NON_FATAL_ERRORS,
+    Metrics,
 )
 from .object_storage import ObjectStore
 from .progress_reporter import PipelineProgressReporter

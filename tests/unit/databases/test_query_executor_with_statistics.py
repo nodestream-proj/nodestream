@@ -6,11 +6,11 @@ from nodestream.databases.query_executor_with_statistics import (
     QueryExecutorWithStatistics,
 )
 from nodestream.metrics import (
-    Metrics,
+    INGEST_HOOKS_EXECUTED,
     NODES_UPSERTED,
     RELATIONSHIPS_UPSERTED,
     TIME_TO_LIVE_OPERATIONS,
-    INGEST_HOOKS_EXECUTED,
+    Metrics,
 )
 from nodestream.model import Node, Relationship, RelationshipWithNodes
 
@@ -24,15 +24,19 @@ def query_executor_with_statistics(mocker):
 async def test_upsert_nodes_in_bulk_with_same_operation_increments_counter_by_size_of_list(
     query_executor_with_statistics, mocker
 ):
+    nodes = [
+        Node("node_type", "node1", "id1"),
+        Node("node_type", "node2", "id2"),
+    ]
     with Metrics.capture() as metrics:
         metrics.increment = mocker.Mock()
         await query_executor_with_statistics.upsert_nodes_in_bulk_with_same_operation(
             "operation",
-            [Node("node_type", "node1", "id1"), Node("node_type", "node2", "id2")],
+            nodes,
         )
         query_executor_with_statistics.inner.upsert_nodes_in_bulk_with_same_operation.assert_awaited_once_with(
             "operation",
-            [Node("node_type", "node1", "id1"), Node("node_type", "node2", "id2")],
+            nodes,
         )
 
         assert "node_type" in query_executor_with_statistics.node_metric_by_type
@@ -40,28 +44,22 @@ async def test_upsert_nodes_in_bulk_with_same_operation_increments_counter_by_si
             call(query_executor_with_statistics.node_metric_by_type["node_type"], 2)
             in metrics.increment.call_args_list
         )
-        assert (
-            call(NODES_UPSERTED, 2)
-            in metrics.increment.call_args_list
-        )
+        assert call(NODES_UPSERTED, 2) in metrics.increment.call_args_list
 
 
 @pytest.mark.asyncio
 async def test_upsert_relationships_in_bulk_of_same_operation_increments_counter_by_size_of_list(
     query_executor_with_statistics, mocker
 ):
+    relationships = [
+        RelationshipWithNodes("node1", "node2", Relationship("relationship_type")),
+        RelationshipWithNodes("node3", "node4", Relationship("relationship_type")),
+    ]
     with Metrics.capture() as metrics:
         metrics.increment = mocker.Mock()
         await query_executor_with_statistics.upsert_relationships_in_bulk_of_same_operation(
             "operation",
-            [
-                RelationshipWithNodes(
-                    "node1", "node2", Relationship("relationship_type")
-                ),
-                RelationshipWithNodes(
-                    "node3", "node4", Relationship("relationship_type")
-                ),
-            ],
+            relationships,
         )
         query_executor_with_statistics.inner.upsert_relationships_in_bulk_of_same_operation.assert_awaited_once_with(
             "operation",
@@ -87,10 +85,7 @@ async def test_upsert_relationships_in_bulk_of_same_operation_increments_counter
             )
             in metrics.increment.call_args_list
         )
-        assert (
-            call(RELATIONSHIPS_UPSERTED, 2)
-            in metrics.increment.call_args_list
-        )
+        assert call(RELATIONSHIPS_UPSERTED, 2) in metrics.increment.call_args_list
 
 
 @pytest.mark.asyncio
@@ -103,9 +98,7 @@ async def test_perform_ttl_op_increments_counter_by_one(
         query_executor_with_statistics.inner.perform_ttl_op.assert_awaited_once_with(
             "config"
         )
-        metrics.increment.assert_called_once_with(
-            TIME_TO_LIVE_OPERATIONS
-        )
+        metrics.increment.assert_called_once_with(TIME_TO_LIVE_OPERATIONS)
 
 
 @pytest.mark.asyncio
@@ -118,9 +111,7 @@ async def test_execute_hook_increments_counter_by_one(
         query_executor_with_statistics.inner.execute_hook.assert_awaited_once_with(
             "hook"
         )
-        metrics.increment.assert_called_once_with(
-            INGEST_HOOKS_EXECUTED
-        )
+        metrics.increment.assert_called_once_with(INGEST_HOOKS_EXECUTED)
 
 
 @pytest.mark.asyncio

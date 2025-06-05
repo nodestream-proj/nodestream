@@ -37,32 +37,22 @@ class Channel:
     prevent one step from overwhelming another step with too many records.
     """
 
-    __slots__ = ("queue", "input_dropped", "_metric", "input_name", "output_name")
+    __slots__ = ("queue", "input_dropped", "metric")
 
-    def __init__(self, size: int) -> None:
+    def __init__(self, size: int, metric: Metric) -> None:
         self.queue = Queue(maxsize=size)
         self.input_dropped = False
-        self.input_name = "Void"
-        self.output_name = "Void"
-        self._metric = None
+        self.metric = metric
 
-    @property
-    def metric(self) -> Metric:
-        """Get the metric for the channel."""
-        if self._metric is None:
-            self._metric = Metric(
-                f"buffered_{self.output_name}_to_{self.input_name}",
-                f"Records buffered: {self.output_name} → {self.input_name}",
-            )
-        return self._metric
-
-    def register_input(self, name: str) -> None:
-        """Register the name of the step that will consume from this channel."""
-        self.input_name = name
-
-    def register_output(self, name: str) -> None:
-        """Register the name of the step that will produce to this channel."""
-        self.output_name = name
+    @classmethod
+    def create_with_naming(
+        cls, size: int, input_name: str = "Void", output_name: str = "Void"
+    ) -> "Channel":
+        metric = Metric(
+            f"buffered_{input_name}_to_{output_name}",
+            f"Records buffered: {input_name} → {output_name}",
+        )
+        return cls(size, metric)
 
     async def get(self):
         """Get an object from the channel.
@@ -160,10 +150,6 @@ class StepInput:
     def __init__(self, channel: Channel) -> None:
         self.channel = channel
 
-    def register(self, name: str) -> None:
-        """Register the name of the step that will consume from this channel."""
-        self.channel.register_input(name)
-
     async def get(self) -> Optional[object]:
         """Get an object from the input channel.
 
@@ -187,7 +173,9 @@ class StepInput:
         self.channel.input_dropped = True
 
 
-def channel(size: int) -> Tuple[StepInput, StepOutput]:
+def channel(
+    size: int, input_name: str | None = None, output_name: str | None = None
+) -> Tuple[StepInput, StepOutput]:
     """Create a new input and output channel.
 
     Args:
@@ -195,5 +183,5 @@ def channel(size: int) -> Tuple[StepInput, StepOutput]:
         input_name: The name of the input step.
         output_name: The name of the output step.
     """
-    channel = Channel(size)
+    channel = Channel.create_with_naming(size, input_name, output_name)
     return StepInput(channel), StepOutput(channel)

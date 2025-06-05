@@ -3,9 +3,9 @@ from logging import getLogger
 from typing import Iterable, List, Tuple
 
 from ..metrics import (
-    Metrics,
     RECORDS,
     STEPS_RUNNING,
+    Metrics,
 )
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .channel import StepInput, StepOutput, channel
@@ -62,7 +62,6 @@ class StepExecutor:
     async def drive_step(self):
         try:
             while (next_record := await self.input.get()) is not None:
-                print(f"Driving step with record {next_record}")
                 results = self.step.process_record(next_record, self.context)
                 async for record in results:
                     if not await self.emit_record(record):
@@ -179,8 +178,12 @@ class Pipeline(ExpandsSchemaFromChildren):
         # the steps in the pipeline. The channels have a fixed size to control
         # the flow of records between the steps.
         executors: List[StepExecutor] = []
-        current_input, current_output = channel(self.step_outbox_size)
-        print(current_input, current_output)
+        current_input_name = None
+        current_output_name = self.steps[-1].__class__.__name__ + f"_{len(self.steps)}"
+
+        current_input, current_output = channel(
+            self.step_outbox_size, current_output_name, current_input_name
+        )
         pipeline_output = PipelineOutput(current_input, reporter)
 
         # Create the executors for the steps in the pipeline. The executors
@@ -191,9 +194,16 @@ class Pipeline(ExpandsSchemaFromChildren):
             index = len(self.steps) - reversed_index - 1
             storage = self.object_store.namespaced(str(index))
             context = StepContext(step.__class__.__name__, index, reporter, storage)
-            current_input, next_output = channel(self.step_outbox_size)
-            current_input.register(step.__class__.__name__)
-            current_output.register(step.__class__.__name__)
+            current_output_name = (
+                self.steps[reversed_index - 1].__class__.__name__
+                + f"_{reversed_index - 1}"
+                if reversed_index - 1 >= 0
+                else None
+            )
+            current_input_name = step.__class__.__name__ + f"_{reversed_index}"
+            current_input, next_output = channel(
+                self.step_outbox_size, current_output_name, current_input_name
+            )
             exec = StepExecutor(step, current_input, current_output, context)
             current_output = next_output
             executors.append(exec)

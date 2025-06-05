@@ -1,12 +1,12 @@
 from typing import Iterable
 
 from ..metrics import (
-    Metric,
-    Metrics,
+    INGEST_HOOKS_EXECUTED,
     NODES_UPSERTED,
     RELATIONSHIPS_UPSERTED,
     TIME_TO_LIVE_OPERATIONS,
-    INGEST_HOOKS_EXECUTED,
+    Metric,
+    Metrics,
 )
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from .query_executor import (
@@ -82,9 +82,7 @@ class QueryExecutorWithStatistics(QueryExecutor):
 
         # Increment metrics in bulk
         metrics = Metrics.get()
-        metrics.increment(
-            RELATIONSHIPS_UPSERTED, total_relationships
-        )
+        metrics.increment(RELATIONSHIPS_UPSERTED, total_relationships)
         for rel_type, count in relationship_type_counts.items():
             metric = self._get_or_create_relationship_metric(rel_type)
             metrics.increment(metric, count)
