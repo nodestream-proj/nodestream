@@ -5,7 +5,13 @@ import pytest
 from nodestream.databases.query_executor_with_statistics import (
     QueryExecutorWithStatistics,
 )
-from nodestream.metrics import Metrics, NodestreamMetricRegistry
+from nodestream.metrics import (
+    Metrics,
+    NODES_UPSERTED,
+    RELATIONSHIPS_UPSERTED,
+    TIME_TO_LIVE_OPERATIONS,
+    INGEST_HOOKS_EXECUTED,
+)
 from nodestream.model import Node, Relationship, RelationshipWithNodes
 
 
@@ -35,7 +41,7 @@ async def test_upsert_nodes_in_bulk_with_same_operation_increments_counter_by_si
             in metrics.increment.call_args_list
         )
         assert (
-            call(NodestreamMetricRegistry.NODES_UPSERTED, 2)
+            call(NODES_UPSERTED, 2)
             in metrics.increment.call_args_list
         )
 
@@ -82,7 +88,7 @@ async def test_upsert_relationships_in_bulk_of_same_operation_increments_counter
             in metrics.increment.call_args_list
         )
         assert (
-            call(NodestreamMetricRegistry.RELATIONSHIPS_UPSERTED, 2)
+            call(RELATIONSHIPS_UPSERTED, 2)
             in metrics.increment.call_args_list
         )
 
@@ -98,7 +104,7 @@ async def test_perform_ttl_op_increments_counter_by_one(
             "config"
         )
         metrics.increment.assert_called_once_with(
-            NodestreamMetricRegistry.TIME_TO_LIVE_OPERATIONS
+            TIME_TO_LIVE_OPERATIONS
         )
 
 
@@ -113,7 +119,7 @@ async def test_execute_hook_increments_counter_by_one(
             "hook"
         )
         metrics.increment.assert_called_once_with(
-            NodestreamMetricRegistry.INGEST_HOOKS_EXECUTED
+            INGEST_HOOKS_EXECUTED
         )
 
 

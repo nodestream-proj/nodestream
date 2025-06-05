@@ -2,7 +2,11 @@ from asyncio import create_task, gather
 from logging import getLogger
 from typing import Iterable, List, Tuple
 
-from ..metrics import Metrics, NodestreamMetricRegistry
+from ..metrics import (
+    Metrics,
+    RECORDS,
+    STEPS_RUNNING,
+)
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .channel import StepInput, StepOutput, channel
 from .object_storage import ObjectStore
@@ -34,14 +38,14 @@ class StepExecutor:
 
     async def start_step(self):
         try:
-            Metrics.get().increment(NodestreamMetricRegistry.STEPS_RUNNING)
+            Metrics.get().increment(STEPS_RUNNING)
             await self.step.start(self.context)
         except Exception as e:
             self.context.report_error("Error starting step", e)
 
     async def stop_step(self):
         try:
-            Metrics.get().decrement(NodestreamMetricRegistry.STEPS_RUNNING)
+            Metrics.get().decrement(STEPS_RUNNING)
             await self.step.finish(self.context)
         except Exception as e:
             self.context.report_error("Error stopping step", e)
@@ -116,7 +120,7 @@ class PipelineOutput:
 
         index = 0
         while (record := await self.input.get()) is not None:
-            metrics.increment(NodestreamMetricRegistry.RECORDS)
+            metrics.increment(RECORDS)
             self.call_handling_errors(self.reporter.report, index, metrics)
             if self.observe_results:
                 self.call_handling_errors(self.reporter.observe, record)

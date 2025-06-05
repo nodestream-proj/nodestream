@@ -1,6 +1,10 @@
 from typing import AsyncGenerator, Optional
 
-from ..metrics import Metrics, NodestreamMetricRegistry
+from ..metrics import (
+    Metrics,
+    FATAL_ERRORS,
+    NON_FATAL_ERRORS,
+)
 from .object_storage import ObjectStore
 from .progress_reporter import PipelineProgressReporter
 
@@ -57,9 +61,9 @@ class StepContext:
         )
         if fatal:
             self.reporter.on_fatal_error(exception)
-            Metrics.get().increment(NodestreamMetricRegistry.FATAL_ERRORS)
+            Metrics.get().increment(FATAL_ERRORS)
         else:
-            Metrics.get().increment(NodestreamMetricRegistry.NON_FATAL_ERRORS)
+            Metrics.get().increment(NON_FATAL_ERRORS)
 
     def debug(self, message: str, **extras):
         """Log a debug message.

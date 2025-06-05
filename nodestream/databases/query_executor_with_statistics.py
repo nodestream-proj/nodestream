@@ -3,7 +3,10 @@ from typing import Iterable
 from ..metrics import (
     Metric,
     Metrics,
-    NodestreamMetricRegistry,
+    NODES_UPSERTED,
+    RELATIONSHIPS_UPSERTED,
+    TIME_TO_LIVE_OPERATIONS,
+    INGEST_HOOKS_EXECUTED,
 )
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from .query_executor import (
@@ -53,7 +56,7 @@ class QueryExecutorWithStatistics(QueryExecutor):
 
         # Increment metrics in bulk
         metrics = Metrics.get()
-        metrics.increment(NodestreamMetricRegistry.NODES_UPSERTED, total_nodes)
+        metrics.increment(NODES_UPSERTED, total_nodes)
         for node_type, count in node_type_counts.items():
             metric = self._get_or_create_node_metric(node_type)
             metrics.increment(metric, count)
@@ -80,7 +83,7 @@ class QueryExecutorWithStatistics(QueryExecutor):
         # Increment metrics in bulk
         metrics = Metrics.get()
         metrics.increment(
-            NodestreamMetricRegistry.RELATIONSHIPS_UPSERTED, total_relationships
+            RELATIONSHIPS_UPSERTED, total_relationships
         )
         for rel_type, count in relationship_type_counts.items():
             metric = self._get_or_create_relationship_metric(rel_type)
@@ -88,11 +91,11 @@ class QueryExecutorWithStatistics(QueryExecutor):
 
     async def perform_ttl_op(self, config: TimeToLiveConfiguration):
         await self.inner.perform_ttl_op(config)
-        Metrics.get().increment(NodestreamMetricRegistry.TIME_TO_LIVE_OPERATIONS)
+        Metrics.get().increment(TIME_TO_LIVE_OPERATIONS)
 
     async def execute_hook(self, hook: IngestionHook):
         await self.inner.execute_hook(hook)
-        Metrics.get().increment(NodestreamMetricRegistry.INGEST_HOOKS_EXECUTED)
+        Metrics.get().increment(INGEST_HOOKS_EXECUTED)
 
     async def finish(self):
         await self.inner.finish()
