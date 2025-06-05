@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Iterable, Optional
 
 from yaml import safe_dump
@@ -113,7 +114,7 @@ class RunPipeline(Operation):
         self, command: NodestreamCommand, pipeline_name: str
     ) -> "ProgressIndicator":
         if command.has_json_logging_set:
-            return ProgressIndicator(command, pipeline_name)
+            return JsonProgressIndicator(command, pipeline_name)
 
         return SpinnerProgressIndicator(command, pipeline_name)
 
@@ -160,14 +161,15 @@ class SpinnerProgressIndicator(ProgressIndicator):
         self.progress = self.command.progress_indicator()
         self.progress.start(f"Running pipeline: '{self.pipeline_name}'")
 
-    def progress_callback(self, index, _):
+    def progress_callback(self, index, metrics: Metrics):
         self.progress.set_message(
             f"Currently processing record at index: <info>{index}</info>"
         )
+        metrics.tick()
 
     def on_finish(self, metrics: Metrics):
         self.progress.finish(f"Finished running pipeline: '{self.pipeline_name}'")
-
+        metrics.tick()
         if self.exception:
             raise self.exception
 
@@ -175,4 +177,28 @@ class SpinnerProgressIndicator(ProgressIndicator):
         self.progress.set_message(
             "<error>Encountered a fatal error while running pipeline</error>"
         )
+        self.exception = exception
+
+
+class JsonProgressIndicator(ProgressIndicator):
+    def __init__(self, command: NodestreamCommand, pipeline_name: str) -> None:
+        super().__init__(command, pipeline_name)
+        self.logger = getLogger()
+        self.exception = None
+
+    def on_start(self):
+        self.logger.info("Starting Pipeline")
+
+    def progress_callback(self, index, metrics: Metrics):
+        self.logger.info("Processing Record", extra={"index": index})
+        metrics.tick()
+
+    def on_finish(self, metrics: Metrics):
+        self.logger.info("Pipeline Completed")
+        metrics.tick()
+        if self.exception:
+            raise self.exception
+
+    def on_fatal_error(self, exception: Exception):
+        self.logger.error("Pipeline Failed", exc_info=exception)
         self.exception = exception
