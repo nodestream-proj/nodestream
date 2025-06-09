@@ -320,6 +320,12 @@ async def test_s3_should_treat_all_files_as_object_type(
         Key=f"{PREFIX}/bar/5.json{compress_extension}",
         Body=jsonl_file(4),
     )
+    # no extension, matching data
+    s3_client.put_object(
+        Bucket=BUCKET_NAME,
+        Key=f"{PREFIX}/bar/6",
+        Body=compression_fn(jsonl_file(5)),
+    )
     subject = FileExtractor.s3(
         bucket=BUCKET_NAME, prefix=PREFIX, object_format=f".jsonl{compress_extension}"
     )
@@ -338,4 +344,6 @@ async def test_s3_should_treat_all_files_as_object_type(
         {"test": "test1"},
         {"test": "test2"},
         {"test": "test3"},
+        {"test": "test10"},
+        {"test": "test11"},
     ]
