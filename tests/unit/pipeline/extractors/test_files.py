@@ -100,10 +100,7 @@ def parquet_file(base_dir: str):
 def gzip_file(base_dir: str):
     with NamedTemporaryFile("wb", suffix=".json.gz", dir=base_dir) as temp_file:
         json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
-        with gzip.GzipFile(temp_file.name, mode="wb") as gzip_file:
-            gzip_file.write(json_data)
-        if not temp_file.name.endswith(".json.gz"):
-            raise ValueError("not a json gzip file")
+        temp_file.write(gzip.compress(json_data))
         temp_file.seek(0)
         yield temp_file
 
@@ -112,10 +109,7 @@ def gzip_file(base_dir: str):
 def bz2_file(base_dir: str):
     with NamedTemporaryFile("wb", suffix=".json.bz2", dir=base_dir) as temp_file:
         json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
-        with bz2.BZ2File(temp_file.name, mode="wb") as bz2_file:
-            bz2_file.write(json_data)
-        if not temp_file.name.endswith(".json.bz2"):
-            raise ValueError("not a json bz2 file")
+        temp_file.write(bz2.compress(json_data))
         temp_file.seek(0)
         yield temp_file
 
