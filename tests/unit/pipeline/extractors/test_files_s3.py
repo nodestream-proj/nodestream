@@ -5,7 +5,7 @@ import logging
 from unittest.mock import MagicMock
 
 import pytest
-from hamcrest import assert_that, not_, has_key
+from hamcrest import assert_that, has_key, not_
 from moto import mock_aws
 
 from nodestream.pipeline.extractors import FileExtractor

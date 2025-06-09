@@ -1,14 +1,12 @@
 import bz2
 import gzip
 import json
-import logging
 import sys
 import tempfile
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from csv import DictReader
 from glob import glob
-from gzip import BadGzipFile
 from io import BufferedReader, BytesIO, IOBase, TextIOWrapper
 from logging import getLogger
 from pathlib import Path
@@ -28,11 +26,11 @@ import pandas as pd
 from httpx import AsyncClient
 from yaml import safe_load
 
-from .credential_utils import AwsClientFactory
-from .extractor import Extractor
 from ...model import JsonLikeDocument
 from ...pluggable import Pluggable
 from ...subclass_registry import MissingFromRegistryError, SubclassRegistry
+from .credential_utils import AwsClientFactory
+from .extractor import Extractor
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
@@ -571,9 +569,6 @@ class S3File(ReadableFile):
     def __repr__(self) -> str:
         return f"s3://{self.bucket}/{self.key}"
 
-    def __str__(self) -> str:
-        return f"s3://{self.bucket}/{self.key}"
-
 
 class S3FileSource(FileSource, alias="s3"):
     """A class that represents a source of files stored in S3.
@@ -737,14 +732,6 @@ class FileExtractor(Extractor):
                 continue
             except MissingFromRegistryError:
                 pass
-            except BadGzipFile as e:
-                self.logger.warning(
-                    "Failed to decompress %s file. "
-                    "Please ensure the file is in the correct format.",
-                    file,
-                    extra={"exception": str(e)},
-                )
-                break
             except OSError as e:
                 self.logger.warning(
                     "Failed to decompress %s file. "
