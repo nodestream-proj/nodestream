@@ -642,20 +642,6 @@ class S3FileSource(FileSource, alias="s3"):
             f"archive_dir: {self.archive_dir}, object_format: {self.object_format}}}"
         )
 
-    def __repr__(self) -> str:
-        attr_list = []
-        if self.bucket:
-            attr_list.append(f"bucket={self.bucket}")
-        if self.s3_client:
-            attr_list.append(f"s3_client={self.s3_client}")
-        if self.archive_dir:
-            attr_list.append(f"archive_dir={self.archive_dir}")
-        if self.object_format:
-            attr_list.append(f"object_format={self.object_format}")
-        if self.prefix:
-            attr_list.append(f"prefix={self.prefix}")
-        return f"S3FileSource({','.join(sorted(attr_list))})"
-
     def __eq__(self, other: Any) -> bool:
         return (
             isinstance(other, S3FileSource)
