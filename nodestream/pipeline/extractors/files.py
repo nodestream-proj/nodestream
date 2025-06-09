@@ -1,12 +1,14 @@
 import bz2
 import gzip
 import json
+import logging
 import sys
 import tempfile
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from csv import DictReader
 from glob import glob
+from gzip import BadGzipFile
 from io import BufferedReader, BytesIO, IOBase, TextIOWrapper
 from logging import getLogger
 from pathlib import Path
@@ -26,11 +28,11 @@ import pandas as pd
 from httpx import AsyncClient
 from yaml import safe_load
 
+from .credential_utils import AwsClientFactory
+from .extractor import Extractor
 from ...model import JsonLikeDocument
 from ...pluggable import Pluggable
 from ...subclass_registry import MissingFromRegistryError, SubclassRegistry
-from .credential_utils import AwsClientFactory
-from .extractor import Extractor
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
@@ -42,8 +44,8 @@ class Utf8TextIOWrapper(TextIOWrapper):
         super().__init__(*args, **kwargs, encoding="utf-8")
 
 
-@abstractmethod
-class ReadableFile:
+class ReadableFile(ABC):
+    @abstractmethod
     def as_reader(self, cls: type[IOBase]) -> AsyncContextManager[IOBase]:
         """Return a reader for the file.
 
@@ -56,8 +58,8 @@ class ReadableFile:
         operations in the context manager on exit
         (i.e after the yield statement).
         """
-        raise NotImplementedError
 
+    @abstractmethod
     def path_like(self) -> Path:
         """Return a Path object that represents the path to the file.
 
@@ -69,7 +71,6 @@ class ReadableFile:
         This will be called to sniff the file format and compression format of
         the file from the suffixes of the path.
         """
-        raise NotImplementedError
 
     @asynccontextmanager
     async def popped_suffix_tempfile(
@@ -90,6 +91,9 @@ class ReadableFile:
         new = self.path_like().with_suffix("")
         with tempfile.NamedTemporaryFile(suffix="".join(new.suffixes)) as fp:
             yield Path(fp.name), fp
+
+    def __repr__(self) -> str:
+        return str(self.path_like())
 
 
 class LocalFile(ReadableFile):
@@ -391,6 +395,21 @@ class YamlFileFormat(FileCodec, alias=".yaml"):
         return [safe_load(reader)]
 
 
+class TempFile(LocalFile):
+    def __init__(self, path: Path, pointer=None, original_path: str = ""):
+        super().__init__(path, pointer)
+        self.original_path = original_path or self.path.name
+
+    def as_reader(self, cls: type[IOBase]) -> AsyncContextManager[IOBase]:
+        return super().as_reader(cls)
+
+    def path_like(self) -> Path:
+        return super().path_like()
+
+    def __repr__(self):
+        return self.original_path if self.original_path else super().__repr__()
+
+
 class GzipFileFormat(CompressionCodec, alias=".gz"):
     """Compression codec for Gzip files.
 
@@ -405,13 +424,13 @@ class GzipFileFormat(CompressionCodec, alias=".gz"):
     """
 
     @asynccontextmanager
-    async def decompress_file(self) -> ReadableFile:
+    async def decompress_file(self) -> AsyncIterator[ReadableFile]:
         async with self.file.popped_suffix_tempfile() as (new_path, temp_file):
             async with self.file.as_reader(BufferedReader) as reader:
                 with gzip.GzipFile(fileobj=reader) as decompressor:
                     temp_file.write(decompressor.read())
             temp_file.seek(0)
-            yield LocalFile(new_path, temp_file)
+            yield TempFile(new_path, temp_file, str(self.file))
 
 
 class Bz2FileFormat(CompressionCodec, alias=".bz2"):
@@ -428,14 +447,14 @@ class Bz2FileFormat(CompressionCodec, alias=".bz2"):
     """
 
     @asynccontextmanager
-    async def decompress_file(self) -> ReadableFile:
+    async def decompress_file(self) -> AsyncIterator[ReadableFile]:
         async with self.file.popped_suffix_tempfile() as (new_path, temp_file):
             async with self.file.as_reader(BufferedReader) as reader:
                 decompressor = bz2.BZ2Decompressor()
                 for chunk in iter(lambda: reader.read(1024 * 1024), b""):
                     temp_file.write(decompressor.decompress(chunk))
             temp_file.seek(0)
-            yield LocalFile(new_path, temp_file)
+            yield TempFile(new_path, temp_file, str(self.file))
 
 
 class LocalFileSource(FileSource, alias="local"):
@@ -549,6 +568,12 @@ class S3File(ReadableFile):
         yield reader(BytesIO(streaming_body.read()))
         self.archive_if_required(self.key)
 
+    def __repr__(self) -> str:
+        return f"s3://{self.bucket}/{self.key}"
+
+    def __str__(self) -> str:
+        return f"s3://{self.bucket}/{self.key}"
+
 
 class S3FileSource(FileSource, alias="s3"):
     """A class that represents a source of files stored in S3.
@@ -602,8 +627,7 @@ class S3FileSource(FileSource, alias="s3"):
         for page in page_iterator:
             keys = (obj["Key"] for obj in page.get("Contents", []))
             yield from filter(
-                lambda k: not self.object_is_in_archive(k)
-                and k.endswith(self.object_format if self.object_format else ""),
+                lambda k: not self.object_is_in_archive(k),
                 keys,
             )
 
@@ -621,6 +645,30 @@ class S3FileSource(FileSource, alias="s3"):
         return (
             f"S3FileSource{{bucket: {self.bucket}, prefix: {self.prefix}, "
             f"archive_dir: {self.archive_dir}, object_format: {self.object_format}}}"
+        )
+
+    def __repr__(self) -> str:
+        attr_list = []
+        if self.bucket:
+            attr_list.append(f"bucket={self.bucket}")
+        if self.s3_client:
+            attr_list.append(f"s3_client={self.s3_client}")
+        if self.archive_dir:
+            attr_list.append(f"archive_dir={self.archive_dir}")
+        if self.object_format:
+            attr_list.append(f"object_format={self.object_format}")
+        if self.prefix:
+            attr_list.append(f"prefix={self.prefix}")
+        return f"S3FileSource({','.join(sorted(attr_list))})"
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, S3FileSource)
+            and self.s3_client == other.s3_client
+            and self.bucket == other.bucket
+            and self.prefix == other.prefix
+            and self.archive_dir == other.archive_dir
+            and self.object_format == other.object_format
         )
 
 
@@ -669,7 +717,8 @@ class FileExtractor(Extractor):
         self.logger = getLogger(__name__)
 
     async def read_file(
-        self, file: ReadableFile
+        self,
+        file: ReadableFile,
     ) -> AsyncGenerator[JsonLikeDocument, None]:
         intermediaries: list[AsyncContextManager[ReadableFile]] = []
 
@@ -688,6 +737,22 @@ class FileExtractor(Extractor):
                 continue
             except MissingFromRegistryError:
                 pass
+            except BadGzipFile as e:
+                self.logger.warning(
+                    "Failed to decompress %s file. "
+                    "Please ensure the file is in the correct format.",
+                    file,
+                    extra={"exception": str(e)},
+                )
+                break
+            except OSError as e:
+                self.logger.warning(
+                    "Failed to decompress %s file. "
+                    "Please ensure the file is in the correct format.",
+                    file,
+                    extra={"exception": str(e)},
+                )
+                break
 
             # If we didn't find a compression codec, try to find a file format
             # codec that can read the file. If a file format codec is found,
@@ -703,7 +768,9 @@ class FileExtractor(Extractor):
                 pass
             except Exception as e:
                 self.logger.warning(
-                    "Failed to parse %s file. Please ensure the file is in the correct format.",
+                    "Failed to parse %s file (at path %s). "
+                    "Please ensure the file is in the correct format.",
+                    file,
                     file.path_like(),
                     extra={"exception": str(e)},
                 )
