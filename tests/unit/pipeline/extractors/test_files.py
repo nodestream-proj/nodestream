@@ -89,9 +89,9 @@ def yaml_file(base_dir: str):
 
 @pytest.fixture(autouse=True)
 def parquet_file(base_dir: str):
-    with NamedTemporaryFile("w+", suffix=".parquet", dir=base_dir) as temp_file:
+    with NamedTemporaryFile("wb", suffix=".parquet", dir=base_dir) as temp_file:
         df = pd.DataFrame(data=SIMPLE_RECORD, index=[0])
-        df.to_parquet(temp_file.name)
+        temp_file.write(df.to_parquet())
         temp_file.seek(0)
         yield temp_file
 
