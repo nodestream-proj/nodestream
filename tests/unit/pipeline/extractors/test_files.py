@@ -31,7 +31,12 @@ def base_dir():
 
 @pytest.fixture(autouse=True)
 def unsupported_file(base_dir: str):
-    with NamedTemporaryFile("w+", suffix=".unsupported", dir=base_dir) as temp_file:
+    with NamedTemporaryFile(
+        "w+",
+        suffix=".unsupported",
+        dir=base_dir,
+        delete=False,
+    ) as temp_file:
         temp_file.write("hello world")
         temp_file.seek(0)
         yield temp_file
@@ -39,7 +44,12 @@ def unsupported_file(base_dir: str):
 
 @pytest.fixture(autouse=True)
 def json_file(base_dir: str):
-    with NamedTemporaryFile("w+", suffix=".json", dir=base_dir) as temp_file:
+    with NamedTemporaryFile(
+        "w+",
+        suffix=".json",
+        dir=base_dir,
+        delete=False,
+    ) as temp_file:
         json.dump(SIMPLE_RECORD, temp_file)
         temp_file.seek(0)
         yield temp_file
@@ -47,13 +57,23 @@ def json_file(base_dir: str):
 
 @pytest.fixture
 def empty_json_file(base_dir: str):
-    with NamedTemporaryFile("w+", suffix=".json", dir=base_dir) as temp_file:
+    with NamedTemporaryFile(
+        "w+",
+        suffix=".json",
+        dir=base_dir,
+        delete=False,
+    ) as temp_file:
         yield temp_file
 
 
 @pytest.fixture(autouse=True)
 def jsonl_file(base_dir: str):
-    with NamedTemporaryFile("w+", suffix=".jsonl", dir=base_dir) as temp_file:
+    with NamedTemporaryFile(
+        "w+",
+        suffix=".jsonl",
+        dir=base_dir,
+        delete=False,
+    ) as temp_file:
         json.dump(SIMPLE_RECORD, temp_file)
         temp_file.write("\n")
         json.dump(SIMPLE_RECORD, temp_file)
@@ -63,7 +83,12 @@ def jsonl_file(base_dir: str):
 
 @pytest.fixture(autouse=True)
 def csv_file(base_dir: str):
-    with NamedTemporaryFile("w+", suffix=".csv", dir=base_dir) as temp_file:
+    with NamedTemporaryFile(
+        "w+",
+        suffix=".csv",
+        dir=base_dir,
+        delete=False,
+    ) as temp_file:
         writer = csv.DictWriter(temp_file, SIMPLE_RECORD.keys())
         writer.writeheader()
         writer.writerow(SIMPLE_RECORD)
@@ -73,7 +98,12 @@ def csv_file(base_dir: str):
 
 @pytest.fixture(autouse=True)
 def txt_file(base_dir: str):
-    with NamedTemporaryFile("w+", suffix=".txt", dir=base_dir) as temp_file:
+    with NamedTemporaryFile(
+        "w+",
+        suffix=".txt",
+        dir=base_dir,
+        delete=False,
+    ) as temp_file:
         temp_file.write("hello world")
         temp_file.seek(0)
         yield temp_file
@@ -81,7 +111,12 @@ def txt_file(base_dir: str):
 
 @pytest.fixture(autouse=True)
 def yaml_file(base_dir: str):
-    with NamedTemporaryFile("w+", suffix=".yaml", dir=base_dir) as temp_file:
+    with NamedTemporaryFile(
+        "w+",
+        suffix=".yaml",
+        dir=base_dir,
+        delete=False,
+    ) as temp_file:
         yaml.dump(SIMPLE_RECORD, temp_file)
         temp_file.seek(0)
         yield temp_file
@@ -89,7 +124,12 @@ def yaml_file(base_dir: str):
 
 @pytest.fixture(autouse=True)
 def parquet_file(base_dir: str):
-    with NamedTemporaryFile("wb", suffix=".parquet", dir=base_dir) as temp_file:
+    with NamedTemporaryFile(
+        "wb",
+        suffix=".parquet",
+        dir=base_dir,
+        delete=False,
+    ) as temp_file:
         df = pd.DataFrame(data=SIMPLE_RECORD, index=[0])
         temp_file.write(df.to_parquet())
         temp_file.seek(0)
@@ -98,7 +138,12 @@ def parquet_file(base_dir: str):
 
 @pytest.fixture(autouse=True)
 def gzip_file(base_dir: str):
-    with NamedTemporaryFile("wb", suffix=".json.gz", dir=base_dir) as temp_file:
+    with NamedTemporaryFile(
+        "wb",
+        suffix=".json.gz",
+        dir=base_dir,
+        delete=False,
+    ) as temp_file:
         json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
         temp_file.write(gzip.compress(json_data))
         temp_file.seek(0)
@@ -107,7 +152,12 @@ def gzip_file(base_dir: str):
 
 @pytest.fixture(autouse=True)
 def bz2_file(base_dir: str):
-    with NamedTemporaryFile("wb", suffix=".json.bz2", dir=base_dir) as temp_file:
+    with NamedTemporaryFile(
+        "wb",
+        suffix=".json.bz2",
+        dir=base_dir,
+        delete=False,
+    ) as temp_file:
         json_data = json.dumps(SIMPLE_RECORD).encode("utf-8")
         temp_file.write(bz2.compress(json_data))
         temp_file.seek(0)
