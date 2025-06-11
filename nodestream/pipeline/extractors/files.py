@@ -1,6 +1,7 @@
 import bz2
 import gzip
 import json
+import logging
 import sys
 import tempfile
 from abc import ABC, abstractmethod
@@ -35,6 +36,8 @@ from .extractor import Extractor
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_FILE_SOURCES_REGISTRY = SubclassRegistry()
+
+log = logging.getLogger(__name__)
 
 
 class Utf8TextIOWrapper(TextIOWrapper):
@@ -398,12 +401,6 @@ class TempFile(LocalFile):
         super().__init__(path, pointer)
         self.original_path = original_path or self.path.name
 
-    def as_reader(self, cls: type[IOBase]) -> AsyncContextManager[IOBase]:
-        return super().as_reader(cls)
-
-    def path_like(self) -> Path:
-        return super().path_like()
-
     def __repr__(self):
         return self.original_path if self.original_path else super().__repr__()
 
@@ -570,6 +567,10 @@ class S3File(ReadableFile):
         return f"s3://{self.bucket}/{self.key}"
 
 
+def _is_not_archived(archive_dir: Optional[str]):
+    return lambda key: key.startswith(archive_dir) if archive_dir else True
+
+
 class S3FileSource(FileSource, alias="s3"):
     """A class that represents a source of files stored in S3.
 
@@ -585,6 +586,7 @@ class S3FileSource(FileSource, alias="s3"):
         cls,
         bucket: str,
         prefix: Optional[str] = None,
+        suffix: Optional[str] = None,
         archive_dir: Optional[str] = None,
         object_format: Optional[str] = None,
         **aws_client_args,
@@ -592,6 +594,7 @@ class S3FileSource(FileSource, alias="s3"):
         return cls(
             bucket=bucket,
             prefix=prefix,
+            suffix=suffix,
             archive_dir=archive_dir,
             object_format=object_format,
             s3_client=AwsClientFactory(**aws_client_args).make_client("s3"),
@@ -599,20 +602,35 @@ class S3FileSource(FileSource, alias="s3"):
 
     def __init__(
         self,
+        *,
         bucket: str,
         s3_client,
         archive_dir: Optional[str] = None,
         object_format: Optional[str] = None,
         prefix: Optional[str] = None,
+        suffix: Optional[str] = None,
     ):
         self.bucket = bucket
         self.s3_client = s3_client
         self.archive_dir = archive_dir
         self.object_format = object_format
         self.prefix = prefix or ""
+        self.suffix = suffix or ""
 
-    def object_is_in_archive(self, key: str) -> bool:
-        return key.startswith(self.archive_dir) if self.archive_dir else False
+    def object_is_not_in_archive(self, key: str) -> bool:
+        output = not key.startswith(self.archive_dir) if self.archive_dir else True
+        log.info("rejecting key %s: archived", key)
+        return output
+
+    def matches_suffix(self, key: str) -> bool:
+
+        if self.suffix:
+            return key.endswith(self.suffix)
+
+        if self.object_format and not self.suffix:
+            return key.endswith(self.object_format)
+
+        return True
 
     def find_keys_in_bucket(self) -> Iterable[str]:
         # Returns all keys in the bucket that are not in the archive dir,
@@ -621,9 +639,14 @@ class S3FileSource(FileSource, alias="s3"):
         page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
         for page in page_iterator:
             keys = (obj["Key"] for obj in page.get("Contents", []))
-            yield from filter(
-                lambda k: not self.object_is_in_archive(k),
-                keys,
+            yield from (
+                filter(
+                    self.matches_suffix,
+                    filter(
+                        self.object_is_not_in_archive,
+                        keys,
+                    ),
+                )
             )
 
     async def get_files(self):
@@ -633,14 +656,24 @@ class S3FileSource(FileSource, alias="s3"):
                 s3_client=self.s3_client,
                 bucket=self.bucket,
                 archive_dir=self.archive_dir,
-                object_format=self.object_format,
+                object_format=(
+                    self.object_format if self.object_format and self.suffix else None
+                ),
             )
 
     def describe(self) -> str:
-        return (
-            f"S3FileSource{{bucket: {self.bucket}, prefix: {self.prefix}, "
-            f"archive_dir: {self.archive_dir}, object_format: {self.object_format}}}"
-        )
+        data = {
+            k: v
+            for k, v in {
+                "bucket": self.bucket,
+                "archive_dir": self.archive_dir,
+                "object_format": self.object_format,
+                "prefix": self.prefix,
+                "suffix": self.suffix,
+            }.items()
+            if v
+        }
+        return f"S3FileSource{data}"
 
     def __eq__(self, other: Any) -> bool:
         return (
