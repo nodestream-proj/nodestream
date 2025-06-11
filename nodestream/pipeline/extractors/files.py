@@ -1,7 +1,6 @@
 import bz2
 import gzip
 import json
-import logging
 import sys
 import tempfile
 from abc import ABC, abstractmethod
@@ -36,8 +35,6 @@ from .extractor import Extractor
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_FILE_SOURCES_REGISTRY = SubclassRegistry()
-
-log = logging.getLogger(__name__)
 
 
 class Utf8TextIOWrapper(TextIOWrapper):
@@ -618,11 +615,9 @@ class S3FileSource(FileSource, alias="s3"):
         self.suffix = suffix or ""
 
     def object_is_not_in_archive(self, key: str) -> bool:
-        output = not key.startswith(self.archive_dir) if self.archive_dir else True
-        log.info("rejecting key %s: archived", key)
-        return output
+        return not key.startswith(self.archive_dir) if self.archive_dir else True
 
-    def matches_suffix(self, key: str) -> bool:
+    def key_matches_suffix(self, key: str) -> bool:
 
         if self.suffix:
             return key.endswith(self.suffix)
@@ -641,7 +636,7 @@ class S3FileSource(FileSource, alias="s3"):
             keys = (obj["Key"] for obj in page.get("Contents", []))
             yield from (
                 filter(
-                    self.matches_suffix,
+                    self.key_matches_suffix,
                     filter(
                         self.object_is_not_in_archive,
                         keys,

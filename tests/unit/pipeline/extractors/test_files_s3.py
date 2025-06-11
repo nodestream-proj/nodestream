@@ -339,67 +339,74 @@ def test_s3_filesource_describe(args, expected):
     assert S3FileSource(s3_client=MagicMock(), **args).describe() == expected
 
 
+FILTER_TEST_DATA = [
+    pytest.param(
+        ".jsonl",
+        _jsonl_file(0),
+        [{"test": "test0"}, {"test": "test1"}],
+        ["s3://bucket/prefix/bar/filename.jsonl"],
+        id="jsonl_extension_jsonl_contents",
+    ),
+    pytest.param(
+        ".jsonl",
+        _json_file(1),
+        [],
+        ["s3://bucket/prefix/bar/filename.jsonl"],
+        id="jsonl_extension_json_contents",
+    ),
+    pytest.param(
+        ".jsonl.gz",
+        gzip.compress(_json_file(2)),
+        [],
+        [],
+        id="unexpected_gzipped",
+    ),
+    pytest.param(
+        ".jsonl.bz2",
+        bz2.compress(_json_file(3)),
+        [],
+        [],
+        id="unexpected_bz2",
+    ),
+    pytest.param(".txt", _text_file(4, 1), [], [], id="wrong_extension_txt"),
+    pytest.param(
+        ".csv",
+        _jsonl_file(5, 1),
+        [],
+        [],
+        id="wrong_extension_csv",
+    ),
+    pytest.param(
+        "",
+        _jsonl_file(6),
+        [],
+        [],
+        id="no_extension",
+    ),
+]
+
+
 @pytest.mark.parametrize(
     "file_extension, contents, expected, expected_s3_files",
-    [
-        pytest.param(
-            ".jsonl",
-            _jsonl_file(0),
-            [{"test": "test0"}, {"test": "test1"}],
-            ["s3://bucket/prefix/bar/filename.jsonl"],
-            id="jsonl_extension_jsonl_contents",
-        ),
-        pytest.param(
-            ".jsonl",
-            _json_file(1),
-            [],
-            ["s3://bucket/prefix/bar/filename.jsonl"],
-            id="jsonl_extension_json_contents",
-        ),
-        pytest.param(
-            ".jsonl.gz",
-            gzip.compress(_json_file(2)),
-            [],
-            [],
-            id="unexpected_gzipped",
-        ),
-        pytest.param(
-            ".jsonl.bz2",
-            bz2.compress(_json_file(3)),
-            [],
-            [],
-            id="unexpected_bz2",
-        ),
-        pytest.param(".txt", _text_file(4, 1), [], [], id="wrong_extension_txt"),
-        pytest.param(
-            ".csv",
-            _jsonl_file(5, 1),
-            [],
-            [],
-            id="wrong_extension_csv",
-        ),
-        pytest.param(
-            "",
-            _jsonl_file(6),
-            [],
-            [],
-            id="no_extension",
-        ),
-    ],
+    FILTER_TEST_DATA,
 )
+@pytest.mark.parametrize(
+    "filter_arg",
+    [{"object_format": ".jsonl"}, {"suffix": ".jsonl"}],
+    ids=lambda d: next(k for k in d),
+)  # suffix and object_format on their own should act in an identical way
 @pytest.mark.asyncio
-async def test_s3_should_filter_by_object_type_if_no_suffix(
+async def test_s3_should_filter_by_suffix_if_no_object_format(
     s3_client,
     file_extension,
     contents,
     expected,
     expected_s3_files,
+    filter_arg,
 ):
     key = f"{PREFIX}/bar/filename{file_extension}"
     s3_client.put_object(Bucket=BUCKET_NAME, Key=key, Body=contents)
-    subject = FileExtractor.s3(
-        bucket=BUCKET_NAME, prefix=PREFIX, object_format=".jsonl"
-    )
+    subject = FileExtractor.s3(bucket=BUCKET_NAME, prefix=PREFIX, **filter_arg)
 
     sources = subject.file_sources
     assert sources == [
@@ -407,12 +414,11 @@ async def test_s3_should_filter_by_object_type_if_no_suffix(
             s3_client=s3_client,
             bucket=BUCKET_NAME,
             prefix=PREFIX,
-            object_format=".jsonl",
+            **filter_arg,
         )
     ]
 
     assert [str(f) async for f in sources[0].get_files()] == expected_s3_files
-
     assert [result async for result in subject.extract_records()] == expected
 
 
@@ -450,7 +456,7 @@ async def test_s3_should_filter_by_object_type_if_no_suffix(
     ],
 )
 @pytest.mark.asyncio
-async def test_s3_should_filter_by_suffix_and_process_by_object_type(
+async def test_s3_should_filter_by_suffix_and_process_by_object_format(
     s3_client,
     file_extension,
     contents,
@@ -477,6 +483,54 @@ async def test_s3_should_filter_by_suffix_and_process_by_object_type(
     assert [str(f) async for f in sources[0].get_files()] == expected_s3_files
 
     assert [result async for result in subject.extract_records()] == expected
+
+
+@pytest.mark.asyncio
+async def test_s3_recursive_after_suffix_filter(s3_client):
+    files = [
+        (".json", _json_file),
+        (".jsonl", _jsonl_file),
+        (".csv", _csv_file),
+        (
+            ".txt.bz2.gz",
+            lambda n: gzip.compress(bz2.compress(_text_file(n))),
+        ),
+    ]
+    for i, f in enumerate(files):
+        ext, content_fn = f
+        log.info("cf:%s", type(content_fn))
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=f"{PREFIX}/foo/{i}{ext}.gz",
+            Body=gzip.compress(content_fn(i)),
+        )
+
+    subject = FileExtractor.s3(bucket=BUCKET_NAME, prefix=PREFIX, suffix=".gz")
+    sources = subject.file_sources
+    assert sources == [
+        S3FileSource(
+            s3_client=s3_client,
+            bucket=BUCKET_NAME,
+            prefix=PREFIX,
+            suffix=".gz",
+        )
+    ]
+
+    assert [str(f) async for f in sources[0].get_files()] == [
+        "s3://bucket/prefix/foo/0.json.gz",
+        "s3://bucket/prefix/foo/1.jsonl.gz",
+        "s3://bucket/prefix/foo/2.csv.gz",
+        "s3://bucket/prefix/foo/3.txt.bz2.gz.gz",
+    ]
+
+    assert [result async for result in subject.extract_records()] == [
+        {"hello": 0},
+        {"test": "test2"},
+        {"test": "test3"},
+        {"column1": "value2", "column2": "value12"},
+        {"line": "test6"},
+        {"line": "test7"},
+    ]
 
 
 @pytest.mark.parametrize(
@@ -563,7 +617,7 @@ async def test_s3_should_filter_by_suffix_and_process_by_object_type(
     ],
 )
 @pytest.mark.asyncio
-async def test_s3_no_object_type_no_suffix_process_by_extension(
+async def test_s3_no_object_format_no_suffix_process_by_extension(
     s3_client,
     file_extension,
     contents,
