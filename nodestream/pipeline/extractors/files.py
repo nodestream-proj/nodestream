@@ -564,10 +564,6 @@ class S3File(ReadableFile):
         return f"s3://{self.bucket}/{self.key}"
 
 
-def _is_not_archived(archive_dir: Optional[str]):
-    return lambda key: key.startswith(archive_dir) if archive_dir else True
-
-
 class S3FileSource(FileSource, alias="s3"):
     """A class that represents a source of files stored in S3.
 
