@@ -49,7 +49,8 @@ def _csv_file(i: int) -> bytes:
 
 
 def _json_file(i: int):
-    return json.dumps({"hello": i}).encode("utf-8")
+    # indent=2 makes the JSON multiline, which breaks jsonl parsing
+    return json.dumps({"hello": i}, indent=2).encode("utf-8")
 
 
 def _jsonl_file(file_id: int, line_count: int = 2) -> bytes:
@@ -281,20 +282,58 @@ def test_s3_filesource_describe():
 
 
 @pytest.mark.parametrize(
-    "compress_extension,compression_fn",
-    [(".gz", gzip.compress), (".bz2", bz2.compress)],
+    "file_extension, contents, expected",
+    [
+        pytest.param(
+            ".jsonl",
+            _jsonl_file(0),
+            [{"test": "test0"}, {"test": "test1"}],
+            id="jsonl_pass",
+        ),
+        pytest.param(
+            ".jsonl",
+            _json_file(1),
+            [],
+            id="jsonl_extension_json_contents",
+        ),
+        pytest.param(
+            ".jsonl.gz",
+            gzip.compress(_json_file(2)),
+            [],
+            id="unexpected_gzipped",
+        ),
+        pytest.param(
+            ".jsonl.bz2",
+            bz2.compress(_json_file(3)),
+            [],
+            id="unexpected_bz2",
+        ),
+        pytest.param(".txt", _text_file(4, 1), [], id="wrong_extension_txt"),
+        pytest.param(
+            ".csv",
+            _jsonl_file(5, 1),
+            [{"test": "test5"}],
+            id="csv_extension_jsonl_contents",
+        ),
+        pytest.param(
+            "",
+            _jsonl_file(6),
+            [{"test": "test12"}, {"test": "test13"}],
+            id="no_extension_jsonl_contents",
+        ),
+    ],
 )
 @pytest.mark.asyncio
 async def test_s3_should_treat_all_files_as_object_type(
     s3_client,
-    compress_extension,
-    compression_fn,
+    file_extension,
+    contents,
+    expected,
 ):
-
-    await _object_type_bucket_setup(s3_client, compress_extension, compression_fn)
-
+    key = f"{PREFIX}/bar/filename{file_extension}"
+    s3_client.put_object(Bucket=BUCKET_NAME, Key=key, Body=contents)
     subject = FileExtractor.s3(
-        bucket=BUCKET_NAME, prefix=PREFIX, object_format=f".jsonl{compress_extension}"
+        bucket=BUCKET_NAME, prefix=PREFIX, object_format=".jsonl"
     )
 
     assert subject.file_sources == [
@@ -302,40 +341,87 @@ async def test_s3_should_treat_all_files_as_object_type(
             s3_client=s3_client,
             bucket=BUCKET_NAME,
             prefix=PREFIX,
-            object_format=f".jsonl{compress_extension}",
+            object_format=".jsonl",
         )
     ]
 
     assert [str(f) async for f in subject.file_sources[0].get_files()] == [
-        f"s3://bucket/prefix/bar/1.jsonl{compress_extension}",
-        f"s3://bucket/prefix/bar/2.json{compress_extension}",
-        "s3://bucket/prefix/bar/3.txt",
-        f"s3://bucket/prefix/bar/4.csv{compress_extension}",
-        f"s3://bucket/prefix/bar/5.json{compress_extension}",
-        "s3://bucket/prefix/bar/6",
+        f"s3://{BUCKET_NAME}/{key}",
     ]
 
-    assert [result async for result in subject.extract_records()] == [
-        {"test": "test0"},
-        {"test": "test1"},
-        {"test": "test2"},
-        {"test": "test3"},
-        {"test": "test10"},
-        {"test": "test11"},
-    ]
+    assert [result async for result in subject.extract_records()] == expected
 
 
 @pytest.mark.parametrize(
-    "compress_extension,compression_fn",
-    [(".gz", gzip.compress), (".bz2", bz2.compress)],
+    "file_extension, contents, expected",
+    [
+        pytest.param(
+            ".jsonl",
+            _jsonl_file(0),
+            [{"test": "test0"}, {"test": "test1"}],
+            id="jsonl",
+        ),
+        pytest.param(
+            ".jsonl.gz",
+            gzip.compress(_jsonl_file(1)),
+            [{"test": "test2"}, {"test": "test3"}],
+            id="jsonl_gz",
+        ),
+        pytest.param(
+            ".json.bz2",
+            bz2.compress(_json_file(2)),
+            [{"hello": 2}],
+            id="json_bz2",
+        ),
+        pytest.param(
+            ".jsonl.bz.gz",
+            gzip.compress(bz2.compress(_jsonl_file(3))),
+            [],
+            id="jsonl_bz2_gz",
+        ),
+        pytest.param(
+            ".txt.gz.bz",
+            bz2.compress(gzip.compress(_text_file(4))),
+            [],
+            id="txt_gz_bz",
+        ),
+        pytest.param(".txt", _text_file(5, 1), [{"line": "test5"}], id="txt"),
+        pytest.param(
+            ".csv.gz",
+            gzip.compress(_csv_file(6)),
+            [{"column1": "value6", "column2": "value16"}],
+            id="csv_gz",
+        ),
+        pytest.param(
+            ".csv.bz2",
+            bz2.compress(_csv_file(7)),
+            [{"column1": "value7", "column2": "value17"}],
+            id="csv_bz2",
+        ),
+        pytest.param(
+            ".json.gz",
+            gzip.compress(_json_file(8)),
+            [{"hello": 8}],
+            id="json_gz",
+        ),
+        pytest.param(
+            ".json.bz2",
+            bz2.compress(_json_file(9)),
+            [{"hello": 9}],
+            id="json_bz2",
+        ),
+        pytest.param("", _json_file(10), [], id="no_extension"),
+    ],
 )
 @pytest.mark.asyncio
 async def test_s3_should_handle_no_object_type(
     s3_client,
-    compress_extension,
-    compression_fn,
+    file_extension,
+    contents,
+    expected,
 ):
-    await _object_type_bucket_setup(s3_client, compress_extension, compression_fn)
+    key = f"{PREFIX}/bar/filename{file_extension}"
+    s3_client.put_object(Bucket=BUCKET_NAME, Key=key, Body=contents)
     subject = FileExtractor.s3(bucket=BUCKET_NAME, prefix=PREFIX)
 
     assert subject.file_sources == [
@@ -347,55 +433,7 @@ async def test_s3_should_handle_no_object_type(
     ]
 
     assert [str(f) async for f in subject.file_sources[0].get_files()] == [
-        f"s3://bucket/prefix/bar/1.jsonl{compress_extension}",
-        f"s3://bucket/prefix/bar/2.json{compress_extension}",
-        "s3://bucket/prefix/bar/3.txt",
-        f"s3://bucket/prefix/bar/4.csv{compress_extension}",
-        f"s3://bucket/prefix/bar/5.json{compress_extension}",
-        "s3://bucket/prefix/bar/6",
+        f"s3://{BUCKET_NAME}/{key}",
     ]
 
-    assert [result async for result in subject.extract_records()] == [
-        {"test": "test0"},
-        {"test": "test1"},
-        {"column1": "value3", "column2": "value13"},
-    ]
-
-
-async def _object_type_bucket_setup(s3_client, compress_extension, compression_fn):
-    # matching extension, matching data
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/1.jsonl{compress_extension}",
-        Body=compression_fn(_jsonl_file(0)),
-    )
-    # mismatched extension, matching data
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/2.json{compress_extension}",
-        Body=compression_fn(_jsonl_file(1)),
-    )
-    # mismatched extension, mismatched data
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/3.txt",
-        Body=compression_fn(_text_file(2)),
-    )
-    # mismatched extension, mismatched data
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/4.csv{compress_extension}",
-        Body=compression_fn(_csv_file(3)),
-    )
-    # mismatched extension, matching data (uncompressed)
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/5.json{compress_extension}",
-        Body=_jsonl_file(4),
-    )
-    # no extension, matching data
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/6",
-        Body=compression_fn(_jsonl_file(5)),
-    )
+    assert [result async for result in subject.extract_records()] == expected
