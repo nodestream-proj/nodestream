@@ -44,15 +44,15 @@ def s3_client():
         yield s3
 
 
-def csv_file(i: int) -> bytes:
+def _csv_file(i: int) -> bytes:
     return f"column1,column2\nvalue{i},value{i+10}".encode("utf-8")
 
 
-def json_file(i: int):
+def _json_file(i: int):
     return json.dumps({"hello": i}).encode("utf-8")
 
 
-def jsonl_file(file_id: int, line_count: int = 2) -> bytes:
+def _jsonl_file(file_id: int, line_count: int = 2) -> bytes:
     lines = [
         json.dumps({"test": f"test{file_id * line_count + j}"})
         for j in range(line_count)
@@ -60,7 +60,7 @@ def jsonl_file(file_id: int, line_count: int = 2) -> bytes:
     return "\n".join(lines).encode("utf-8")
 
 
-def text_file(file_id: int, line_count: int = 2) -> bytes:
+def _text_file(file_id: int, line_count: int = 2) -> bytes:
     lines = [
         f"test{file_id * line_count + j}"  # Simple text lines
         for j in range(line_count)
@@ -71,14 +71,14 @@ def text_file(file_id: int, line_count: int = 2) -> bytes:
 def add_csv_objects(s3_client, count: int = NUM_OBJECTS):
     for i in range(count):
         key = f"{PREFIX}/foo/{i}.csv"
-        body = csv_file(i)
+        body = _csv_file(i)
         s3_client.put_object(Bucket=BUCKET_NAME, Key=key, Body=body)
 
 
 def add_json_objects(s3_client, count: int = NUM_OBJECTS):
     for i in range(count):
         key = f"{PREFIX}/foo/{i}.json"
-        body = json_file(i)
+        body = _json_file(i)
         s3_client.put_object(Bucket=BUCKET_NAME, Key=key, Body=body)
 
 
@@ -87,14 +87,14 @@ def add_jsonl_objects(s3_client, count: int = NUM_OBJECTS):
         s3_client.put_object(
             Bucket=BUCKET_NAME,
             Key=f"{PREFIX}/foo/{i}.jsonl",
-            Body=jsonl_file(i),
+            Body=_jsonl_file(i),
         )
 
 
 def add_text_objects(s3_client, count: int = NUM_OBJECTS, lines: int = 2):
     for i in range(count):
         s3_client.put_object(
-            Bucket=BUCKET_NAME, Key=f"{PREFIX}/bar/{i}.txt", Body=text_file(i, lines)
+            Bucket=BUCKET_NAME, Key=f"{PREFIX}/bar/{i}.txt", Body=_text_file(i, lines)
         )
 
 
@@ -103,13 +103,13 @@ def add_archived_objects(s3_client, count: int = NUM_OBJECTS):
         s3_client.put_object(
             Bucket=BUCKET_NAME,
             Key=f"archive/{i}.json",
-            Body=json_file(i),
+            Body=_json_file(i),
         )
 
 
 def add_gzipped_json_objects(s3_client, count: int = NUM_OBJECTS):
     for i in range(count):
-        body_data = json_file(i)
+        body_data = _json_file(i)
         gzipped_body = gzip.compress(body_data)
 
         s3_client.put_object(
@@ -121,7 +121,7 @@ def add_gzipped_json_objects(s3_client, count: int = NUM_OBJECTS):
 
 def add_bz2_compressed_json_objects(s3_client, count: int = NUM_OBJECTS):
     for i in range(count):
-        body_data = json_file(i)
+        body_data = _json_file(i)
         bz2_body = bz2.compress(body_data)
 
         s3_client.put_object(
@@ -138,7 +138,7 @@ def add_double_compressed_json_objects(
     count: int = NUM_OBJECTS,
 ):
     for i in range(count):
-        body_data = json_file(i)
+        body_data = _json_file(i)
         gzipped_body = gzip.compress(body_data)
         double_zipped_body = bz2.compress(gzipped_body)
 
@@ -290,42 +290,9 @@ async def test_s3_should_treat_all_files_as_object_type(
     compress_extension,
     compression_fn,
 ):
-    # matching extension, matching data
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/1.jsonl{compress_extension}",
-        Body=compression_fn(jsonl_file(0)),
-    )
-    # mismatched extension, matching data
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/2.json{compress_extension}",
-        Body=compression_fn(jsonl_file(1)),
-    )
-    # mismatched extension, mismatched data
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/3.txt",
-        Body=compression_fn(text_file(2)),
-    )
-    # mismatched extension, mismatched data
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/4.csv{compress_extension}",
-        Body=compression_fn(csv_file(3)),
-    )
-    # mismatched extension, matching data (uncompressed)
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/5.json{compress_extension}",
-        Body=jsonl_file(4),
-    )
-    # no extension, matching data
-    s3_client.put_object(
-        Bucket=BUCKET_NAME,
-        Key=f"{PREFIX}/bar/6",
-        Body=compression_fn(jsonl_file(5)),
-    )
+
+    await _object_type_bucket_setup(s3_client, compress_extension, compression_fn)
+
     subject = FileExtractor.s3(
         bucket=BUCKET_NAME, prefix=PREFIX, object_format=f".jsonl{compress_extension}"
     )
@@ -339,6 +306,15 @@ async def test_s3_should_treat_all_files_as_object_type(
         )
     ]
 
+    assert [str(f) async for f in subject.file_sources[0].get_files()] == [
+        f"s3://bucket/prefix/bar/1.jsonl{compress_extension}",
+        f"s3://bucket/prefix/bar/2.json{compress_extension}",
+        "s3://bucket/prefix/bar/3.txt",
+        f"s3://bucket/prefix/bar/4.csv{compress_extension}",
+        f"s3://bucket/prefix/bar/5.json{compress_extension}",
+        "s3://bucket/prefix/bar/6",
+    ]
+
     assert [result async for result in subject.extract_records()] == [
         {"test": "test0"},
         {"test": "test1"},
@@ -347,3 +323,79 @@ async def test_s3_should_treat_all_files_as_object_type(
         {"test": "test10"},
         {"test": "test11"},
     ]
+
+
+@pytest.mark.parametrize(
+    "compress_extension,compression_fn",
+    [(".gz", gzip.compress), (".bz2", bz2.compress)],
+)
+@pytest.mark.asyncio
+async def test_s3_should_handle_no_object_type(
+    s3_client,
+    compress_extension,
+    compression_fn,
+):
+    await _object_type_bucket_setup(s3_client, compress_extension, compression_fn)
+    subject = FileExtractor.s3(bucket=BUCKET_NAME, prefix=PREFIX)
+
+    assert subject.file_sources == [
+        S3FileSource(
+            s3_client=s3_client,
+            bucket=BUCKET_NAME,
+            prefix=PREFIX,
+        )
+    ]
+
+    assert [str(f) async for f in subject.file_sources[0].get_files()] == [
+        f"s3://bucket/prefix/bar/1.jsonl{compress_extension}",
+        f"s3://bucket/prefix/bar/2.json{compress_extension}",
+        "s3://bucket/prefix/bar/3.txt",
+        f"s3://bucket/prefix/bar/4.csv{compress_extension}",
+        f"s3://bucket/prefix/bar/5.json{compress_extension}",
+        "s3://bucket/prefix/bar/6",
+    ]
+
+    assert [result async for result in subject.extract_records()] == [
+        {"test": "test0"},
+        {"test": "test1"},
+        {"column1": "value3", "column2": "value13"},
+    ]
+
+
+async def _object_type_bucket_setup(s3_client, compress_extension, compression_fn):
+    # matching extension, matching data
+    s3_client.put_object(
+        Bucket=BUCKET_NAME,
+        Key=f"{PREFIX}/bar/1.jsonl{compress_extension}",
+        Body=compression_fn(_jsonl_file(0)),
+    )
+    # mismatched extension, matching data
+    s3_client.put_object(
+        Bucket=BUCKET_NAME,
+        Key=f"{PREFIX}/bar/2.json{compress_extension}",
+        Body=compression_fn(_jsonl_file(1)),
+    )
+    # mismatched extension, mismatched data
+    s3_client.put_object(
+        Bucket=BUCKET_NAME,
+        Key=f"{PREFIX}/bar/3.txt",
+        Body=compression_fn(_text_file(2)),
+    )
+    # mismatched extension, mismatched data
+    s3_client.put_object(
+        Bucket=BUCKET_NAME,
+        Key=f"{PREFIX}/bar/4.csv{compress_extension}",
+        Body=compression_fn(_csv_file(3)),
+    )
+    # mismatched extension, matching data (uncompressed)
+    s3_client.put_object(
+        Bucket=BUCKET_NAME,
+        Key=f"{PREFIX}/bar/5.json{compress_extension}",
+        Body=_jsonl_file(4),
+    )
+    # no extension, matching data
+    s3_client.put_object(
+        Bucket=BUCKET_NAME,
+        Key=f"{PREFIX}/bar/6",
+        Body=compression_fn(_jsonl_file(5)),
+    )
