@@ -411,6 +411,18 @@ async def test_s3_should_treat_all_files_as_object_type(
             id="json_bz2",
         ),
         pytest.param("", _json_file(10), [], id="no_extension"),
+        pytest.param(
+            ".json.bz2",
+            gzip.compress(_json_file(10)),
+            [],
+            id="wrong_compression_bz2",
+        ),
+        pytest.param(
+            ".json.gz",
+            bz2.compress(_json_file(11)),
+            [],
+            id="wrong_compression_gz",
+        ),
     ],
 )
 @pytest.mark.asyncio
