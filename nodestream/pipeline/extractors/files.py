@@ -550,7 +550,10 @@ class S3File(ReadableFile):
 
     def path_like(self) -> Path:
         path = Path(self.key)
-        return path.with_suffix(self.object_format or path.suffix)
+        if self.object_format:
+            return path.with_suffix(self.object_format)
+
+        return path
 
     @asynccontextmanager
     async def as_reader(self, reader: IOBase):
@@ -572,6 +575,13 @@ class S3FileSource(FileSource, alias="s3"):
     bucket and yield instances of S3File that can be read by the pipeline.
 
     The class also has a method to archive the file after it has been read.
+
+    The class can also filter the objects returned by the prefix scan in the
+    following ways:
+    - Specifying object_format OR suffix will filter the objects via endswith
+    - Providing strings to object_format AND suffix will:
+        - Filter the objects via endswith with suffix (a blank string will match all)
+        - Process each object as if it ended with the contents of object_format
     """
 
     @classmethod
@@ -647,8 +657,13 @@ class S3FileSource(FileSource, alias="s3"):
                 s3_client=self.s3_client,
                 bucket=self.bucket,
                 archive_dir=self.archive_dir,
+                # for backwards compatibility:
+                # -- Only override object_format if suffix is provided.
+                # -- To treat ALL files as object_format, set suffix to "".
                 object_format=(
-                    self.object_format if self.object_format and self.suffix else None
+                    self.object_format
+                    if self.object_format and self.suffix is not None
+                    else None
                 ),
             )
 

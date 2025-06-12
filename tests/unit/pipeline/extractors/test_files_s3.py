@@ -2,6 +2,7 @@ import bz2
 import gzip
 import json
 import logging
+from typing import Callable
 from unittest.mock import MagicMock
 
 import pytest
@@ -16,6 +17,16 @@ PREFIX = "prefix"
 NUM_OBJECTS = 10
 
 log = logging.getLogger(__name__)
+
+
+def _put_all(s3_client, data: list[tuple[str, Callable[[int], bytes]]]):
+    for i, item in enumerate(data):
+        ext, content_fn = item
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=f"{PREFIX}/foo/{i}{ext}",
+            Body=content_fn(i),
+        )
 
 
 @pytest.fixture(autouse=True)
@@ -453,6 +464,13 @@ async def test_s3_should_filter_by_suffix_if_no_object_format(
             ["s3://bucket/prefix/bar/filename.json.gz"],
             id="unexpected_bz2",
         ),
+        pytest.param(
+            ".json",
+            bz2.compress(_json_file(3)),
+            [],
+            [],
+            id="no_match",
+        ),
     ],
 )
 @pytest.mark.asyncio
@@ -487,23 +505,21 @@ async def test_s3_should_filter_by_suffix_and_process_by_object_format(
 
 @pytest.mark.asyncio
 async def test_s3_recursive_after_suffix_filter(s3_client):
-    files = [
-        (".json", _json_file),
-        (".jsonl", _jsonl_file),
-        (".csv", _csv_file),
-        (
-            ".txt.bz2.gz",
-            lambda n: gzip.compress(bz2.compress(_text_file(n))),
-        ),
-    ]
-    for i, f in enumerate(files):
-        ext, content_fn = f
-        log.info("cf:%s", type(content_fn))
-        s3_client.put_object(
-            Bucket=BUCKET_NAME,
-            Key=f"{PREFIX}/foo/{i}{ext}.gz",
-            Body=gzip.compress(content_fn(i)),
-        )
+    def gz_compress(fn: Callable[[int], bytes]) -> Callable[[int], bytes]:
+        return lambda x: gzip.compress(fn(x))
+
+    def bz2_compress(fn: Callable[[int], bytes]) -> Callable[[int], bytes]:
+        return lambda x: bz2.compress(fn(x))
+
+    _put_all(
+        s3_client,
+        [
+            (".json.gz", gz_compress(_json_file)),
+            (".jsonl.gz", gz_compress(_jsonl_file)),
+            (".csv.gz", gz_compress(_csv_file)),
+            (".txt.bz2.gz.gz", gz_compress(gz_compress(bz2_compress(_text_file)))),
+        ],
+    )
 
     subject = FileExtractor.s3(bucket=BUCKET_NAME, prefix=PREFIX, suffix=".gz")
     sources = subject.file_sources
@@ -640,3 +656,43 @@ async def test_s3_no_object_format_no_suffix_process_by_extension(
     ]
 
     assert [result async for result in subject.extract_records()] == expected
+
+
+@pytest.mark.asyncio
+async def test_s3_get_all_via_blank_suffix_process_with_object_format(s3_client):
+    _put_all(
+        s3_client,
+        [
+            (".json", _json_file),
+            (".jsonl", _jsonl_file),
+            (".txt", _text_file),
+            (".json", _json_file),
+        ],
+    )
+
+    subject = FileExtractor.s3(bucket=BUCKET_NAME, prefix=PREFIX, suffix="")
+    sources = subject.file_sources
+    assert sources == [
+        S3FileSource(
+            s3_client=s3_client,
+            bucket=BUCKET_NAME,
+            prefix=PREFIX,
+            suffix="",
+        )
+    ]
+
+    assert [str(f) async for f in sources[0].get_files()] == [
+        "s3://bucket/prefix/foo/0.json",
+        "s3://bucket/prefix/foo/1.jsonl",
+        "s3://bucket/prefix/foo/2.txt",
+        "s3://bucket/prefix/foo/3.json",
+    ]
+
+    assert [result async for result in subject.extract_records()] == [
+        {"hello": 0},
+        {"test": "test2"},
+        {"test": "test3"},
+        {"line": "test4"},
+        {"line": "test5"},
+        {"hello": 3},
+    ]
