@@ -670,7 +670,12 @@ async def test_s3_get_all_via_blank_suffix_process_with_object_format(s3_client)
         ],
     )
 
-    subject = FileExtractor.s3(bucket=BUCKET_NAME, prefix=PREFIX, suffix="")
+    subject = FileExtractor.s3(
+        bucket=BUCKET_NAME,
+        prefix=PREFIX,
+        suffix="",
+        object_format=".json",
+    )
     sources = subject.file_sources
     assert sources == [
         S3FileSource(
@@ -678,21 +683,16 @@ async def test_s3_get_all_via_blank_suffix_process_with_object_format(s3_client)
             bucket=BUCKET_NAME,
             prefix=PREFIX,
             suffix="",
+            object_format=".json",
         )
     ]
 
     assert [str(f) async for f in sources[0].get_files()] == [
         "s3://bucket/prefix/foo/0.json",
-        "s3://bucket/prefix/foo/1.jsonl",
-        "s3://bucket/prefix/foo/2.txt",
         "s3://bucket/prefix/foo/3.json",
     ]
 
     assert [result async for result in subject.extract_records()] == [
         {"hello": 0},
-        {"test": "test2"},
-        {"test": "test3"},
-        {"line": "test4"},
-        {"line": "test5"},
         {"hello": 3},
     ]
