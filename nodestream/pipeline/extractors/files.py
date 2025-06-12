@@ -618,17 +618,16 @@ class S3FileSource(FileSource, alias="s3"):
         self.archive_dir = archive_dir
         self.object_format = object_format
         self.prefix = prefix or ""
-        self.suffix = suffix or ""
+        self.suffix = suffix
 
     def object_is_not_in_archive(self, key: str) -> bool:
         return not key.startswith(self.archive_dir) if self.archive_dir else True
 
     def key_matches_suffix(self, key: str) -> bool:
-
-        if self.suffix:
+        if self.suffix is not None:
             return key.endswith(self.suffix)
 
-        if self.object_format and not self.suffix:
+        if self.object_format:
             return key.endswith(self.object_format)
 
         return True

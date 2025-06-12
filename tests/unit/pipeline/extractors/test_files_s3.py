@@ -407,7 +407,7 @@ FILTER_TEST_DATA = [
     ids=lambda d: next(k for k in d),
 )  # suffix and object_format on their own should act in an identical way
 @pytest.mark.asyncio
-async def test_s3_should_filter_by_suffix_if_no_object_format(
+async def test_s3_should_filter(
     s3_client,
     file_extension,
     contents,
@@ -664,7 +664,7 @@ async def test_s3_get_all_via_blank_suffix_process_with_object_format(s3_client)
         s3_client,
         [
             (".json", _json_file),
-            (".jsonl", _jsonl_file),
+            (".jsonl", _json_file),
             (".txt", _text_file),
             (".json", _json_file),
         ],
@@ -689,10 +689,13 @@ async def test_s3_get_all_via_blank_suffix_process_with_object_format(s3_client)
 
     assert [str(f) async for f in sources[0].get_files()] == [
         "s3://bucket/prefix/foo/0.json",
+        "s3://bucket/prefix/foo/1.jsonl",
+        "s3://bucket/prefix/foo/2.txt",
         "s3://bucket/prefix/foo/3.json",
     ]
 
     assert [result async for result in subject.extract_records()] == [
         {"hello": 0},
+        {"hello": 1},
         {"hello": 3},
     ]
