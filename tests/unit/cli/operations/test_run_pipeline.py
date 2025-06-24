@@ -3,6 +3,7 @@ from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations.run_pipeline import (
     WARNING_NO_TARGETS_PROVIDED,
+    JsonProgressIndicator,
     ProgressIndicator,
     RunPipeline,
     SpinnerProgressIndicator,
@@ -59,8 +60,10 @@ def test_spinner_on_finish(mocker):
 def test_spinner_progress_callback(mocker):
     spinner = SpinnerProgressIndicator(mocker.Mock(), "pipeline_name")
     spinner.on_start()
-    spinner.progress_callback(1000, None)
+    mock_metrics = mocker.Mock()
+    spinner.progress_callback(1000, mock_metrics)
     spinner.progress.set_message.assert_called_once()
+    mock_metrics.tick.assert_called_once()
 
 
 def test_spinner_error_condition(mocker):
@@ -68,9 +71,10 @@ def test_spinner_error_condition(mocker):
     spinner.on_start()
     spinner.on_fatal_error(Exception())
     spinner.progress.set_message.assert_called_once()
-
+    mock_metrics = mocker.Mock()
     with pytest.raises(Exception):
-        spinner.on_finish(Metrics())
+        spinner.on_finish(mock_metrics)
+    mock_metrics.tick.assert_called_once()
 
 
 @pytest.mark.parametrize(
@@ -126,3 +130,48 @@ def test_progress_indicator_error(mocker):
     indicator = ProgressIndicator(mocker.Mock(), "pipeline_name")
     indicator.on_fatal_error(Exception("Boom"))
     indicator.command.line.assert_called_with("<error>Boom</error>")
+
+
+def test_json_progress_indicator(mocker):
+    indicator = JsonProgressIndicator(mocker.Mock(), "pipeline_name")
+    indicator.logger.info = mocker.Mock()
+    indicator.on_start()
+    indicator.on_finish(Metrics())
+    assert indicator.logger.info.call_args_list == [
+        mocker.call("Starting Pipeline"),
+        mocker.call("Pipeline Completed"),
+    ]
+
+
+def test_json_progress_indicator_on_fatal_error(mocker):
+    indicator = JsonProgressIndicator(mocker.Mock(), "pipeline_name")
+    indicator.logger.error = mocker.Mock()
+    exception = Exception("Boom")
+    indicator.on_fatal_error(exception)
+    indicator.logger.error.assert_called_once_with(
+        "Pipeline Failed", exc_info=exception
+    )
+
+
+def test_json_progress_indicator_on_progress(mocker):
+    indicator = JsonProgressIndicator(mocker.Mock(), "pipeline_name")
+    indicator.logger.info = mocker.Mock()
+    indicator.progress_callback(1000, Metrics())
+    indicator.logger.info.assert_called_once_with(
+        "Processing Record", extra={"index": 1000}
+    )
+
+
+def test_json_progress_indicator_on_finish_with_exception(mocker):
+    indicator = JsonProgressIndicator(mocker.Mock(), "pipeline_name")
+    indicator.logger.info = mocker.Mock()
+    indicator.logger.error = mocker.Mock()
+    exception = Exception("Boom")
+    indicator.on_fatal_error(exception)
+    with pytest.raises(Exception):
+        indicator.on_finish(Metrics())
+    indicator.logger.error.assert_called_once_with(
+        "Pipeline Failed", exc_info=exception
+    )
+    indicator.logger.info.assert_called_once_with("Pipeline Completed")
+    assert indicator.exception is exception

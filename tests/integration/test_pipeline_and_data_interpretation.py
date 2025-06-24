@@ -33,7 +33,8 @@ def drive_definition_to_completion():
         init_args = PipelineInitializationArguments(**init_kwargs)
         pipeline = definition.initialize(init_args)
         reporter = PipelineProgressReporter(
-            reporting_frequency=1, callback=lambda _, record: results.append(record)
+            reporting_frequency=1,
+            observability_callback=lambda record: results.append(record),
         )
         await pipeline.run(reporter)
         return [r for r in results if isinstance(r, DesiredIngestion)]

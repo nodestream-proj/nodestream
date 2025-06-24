@@ -2,11 +2,15 @@ from asyncio import create_task, gather
 from logging import getLogger
 from typing import Iterable, List, Tuple
 
-from ..metrics import Metric, Metrics
+from ..metrics import (
+    RECORDS,
+    STEPS_RUNNING,
+    Metrics,
+)
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .channel import StepInput, StepOutput, channel
 from .object_storage import ObjectStore
-from .progress_reporter import PipelineProgressReporter
+from .progress_reporter import PipelineProgressReporter, no_op
 from .step import Step, StepContext
 
 
@@ -34,14 +38,14 @@ class StepExecutor:
 
     async def start_step(self):
         try:
-            Metrics.get().increment(Metric.STEPS_RUNNING)
+            Metrics.get().increment(STEPS_RUNNING)
             await self.step.start(self.context)
         except Exception as e:
             self.context.report_error("Error starting step", e)
 
     async def stop_step(self):
         try:
-            Metrics.get().decrement(Metric.STEPS_RUNNING)
+            Metrics.get().decrement(STEPS_RUNNING)
             await self.step.finish(self.context)
         except Exception as e:
             self.context.report_error("Error stopping step", e)
@@ -88,11 +92,12 @@ class PipelineOutput:
     pipeline and report the progress of the pipeline.
     """
 
-    __slots__ = ("input", "reporter")
+    __slots__ = ("input", "reporter", "observe_results")
 
     def __init__(self, input: StepInput, reporter: PipelineProgressReporter):
         self.input = input
         self.reporter = reporter
+        self.observe_results = reporter.observability_callback is not no_op
 
     def call_handling_errors(self, f, *args):
         try:
@@ -113,9 +118,11 @@ class PipelineOutput:
         self.call_handling_errors(self.reporter.on_start_callback)
 
         index = 0
-        while (obj := await self.input.get()) is not None:
-            metrics.increment(Metric.RECORDS)
-            self.call_handling_errors(self.reporter.report, index, obj)
+        while (record := await self.input.get()) is not None:
+            metrics.increment(RECORDS)
+            self.call_handling_errors(self.reporter.report, index, metrics)
+            if self.observe_results:
+                self.call_handling_errors(self.reporter.observe, record)
             index += 1
 
         self.call_handling_errors(self.reporter.on_finish_callback, metrics)
@@ -161,8 +168,6 @@ class Pipeline(ExpandsSchemaFromChildren):
         `PipelineProgressReporter`.
 
         Args:
-            channel_size: The size of the channels used to pass records between
-                steps in the pipeline.
             reporter: The `PipelineProgressReporter` used to report on the
                 progress of the pipeline.
         """
@@ -173,7 +178,12 @@ class Pipeline(ExpandsSchemaFromChildren):
         # the steps in the pipeline. The channels have a fixed size to control
         # the flow of records between the steps.
         executors: List[StepExecutor] = []
-        current_input, current_output = channel(self.step_outbox_size)
+        current_input_name = None
+        current_output_name = self.steps[-1].__class__.__name__ + f"_{len(self.steps)}"
+
+        current_input, current_output = channel(
+            self.step_outbox_size, current_output_name, current_input_name
+        )
         pipeline_output = PipelineOutput(current_input, reporter)
 
         # Create the executors for the steps in the pipeline. The executors
@@ -184,7 +194,16 @@ class Pipeline(ExpandsSchemaFromChildren):
             index = len(self.steps) - reversed_index - 1
             storage = self.object_store.namespaced(str(index))
             context = StepContext(step.__class__.__name__, index, reporter, storage)
-            current_input, next_output = channel(self.step_outbox_size)
+            current_output_name = (
+                self.steps[reversed_index - 1].__class__.__name__
+                + f"_{reversed_index - 1}"
+                if reversed_index - 1 >= 0
+                else None
+            )
+            current_input_name = step.__class__.__name__ + f"_{reversed_index}"
+            current_input, next_output = channel(
+                self.step_outbox_size, current_output_name, current_input_name
+            )
             exec = StepExecutor(step, current_input, current_output, context)
             current_output = next_output
             executors.append(exec)
@@ -199,6 +218,4 @@ class Pipeline(ExpandsSchemaFromChildren):
         # concurrently. This will block until all steps are finished.
         running_steps = (create_task(executor.run()) for executor in executors)
 
-        self.logger.info("Starting Pipeline")
         await gather(*running_steps, create_task(pipeline_output.run()))
-        self.logger.info("Pipeline Completed")
