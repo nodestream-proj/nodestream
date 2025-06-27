@@ -1,4 +1,5 @@
 from .argument_resolver import ARGUMENT_RESOLVER_REGISTRY, ArgumentResolver
+from .aws_secret_resolver import AWSSecretResolver
 from .configuration_argument_resolver import (
     ConfigurationArgumentResolver,
     get_config,
@@ -6,7 +7,6 @@ from .configuration_argument_resolver import (
 )
 from .environment_variable_resolver import EnvironmentResolver
 from .include_file_resolver import IncludeFileResolver
-from .aws_secret_resolver import AWSSecretResolver
 
 __all__ = (
     "ARGUMENT_RESOLVER_REGISTRY",

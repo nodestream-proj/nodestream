@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, Optional, TypeVar, cast
 
 import boto3
 from botocore.exceptions import ClientError
+
 from nodestream.pipeline.argument_resolvers import ArgumentResolver
 
 # Type variables for decorators
@@ -188,9 +189,11 @@ class AWSSecretResolver(ArgumentResolver, alias="aws-secret"):  # type: ignore[c
         _client: AWS Secrets Manager client
     """
 
-    _instance: Optional[SecretResolver] = None
+    _instance: Optional[AWSSecretResolver] = None
 
-    def __new__(cls, config: Optional[SecretResolverConfig] = None) -> SecretResolver:
+    def __new__(
+        cls, config: Optional[SecretResolverConfig] = None
+    ) -> AWSSecretResolver:
         """Ensure singleton instance.
 
         Args:
