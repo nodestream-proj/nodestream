@@ -137,18 +137,14 @@ def test_splunk_extractor_normalized_query_adds_search_prefix():
         base_url="https://splunk.example.com:8089",
         query="index=main | head 10",
     )
-    assert_that(
-        extractor2._normalized_query, equal_to("search index=main | head 10")
-    )
+    assert_that(extractor2._normalized_query, equal_to("search index=main | head 10"))
 
 
 def test_splunk_extractor_endpoint_urls(splunk_extractor):
     jobs_endpoint = splunk_extractor.get_jobs_endpoint()
     assert_that(
         jobs_endpoint,
-        equal_to(
-            "https://splunk.example.com:8089/servicesNS/admin/search/search/jobs"
-        ),
+        equal_to("https://splunk.example.com:8089/servicesNS/admin/search/search/jobs"),
     )
 
     results_endpoint = splunk_extractor.get_results_endpoint("test123")
@@ -161,7 +157,9 @@ def test_splunk_extractor_endpoint_urls(splunk_extractor):
 
 
 @pytest.mark.asyncio
-async def test_splunk_extractor_create_search_job_json_response(splunk_extractor, mocker):
+async def test_splunk_extractor_create_search_job_json_response(
+    splunk_extractor, mocker
+):
     """Test job creation with JSON response (preferred format)."""
     mock_response = mocker.MagicMock()
     mock_response.status_code = 201
@@ -198,7 +196,9 @@ async def test_splunk_extractor_create_search_job_xml_fallback(
 
 
 @pytest.mark.asyncio
-async def test_splunk_extractor_create_search_job_malformed_xml(splunk_extractor, mocker):
+async def test_splunk_extractor_create_search_job_malformed_xml(
+    splunk_extractor, mocker
+):
     """Test job creation with malformed XML response."""
     mock_response = mocker.MagicMock()
     mock_response.status_code = 201
@@ -213,7 +213,9 @@ async def test_splunk_extractor_create_search_job_malformed_xml(splunk_extractor
 
 
 @pytest.mark.asyncio
-async def test_splunk_extractor_wait_for_job_completion_json_response(splunk_extractor, mocker):
+async def test_splunk_extractor_wait_for_job_completion_json_response(
+    splunk_extractor, mocker
+):
     """Test job status checking with JSON response (expected format)."""
     mock_response_running = mocker.MagicMock()
     mock_response_running.status_code = 200
@@ -228,9 +230,7 @@ async def test_splunk_extractor_wait_for_job_completion_json_response(splunk_ext
     }
 
     mock_client = mocker.MagicMock()
-    mock_client.get = AsyncMock(
-        side_effect=[mock_response_running, mock_response_done]
-    )
+    mock_client.get = AsyncMock(side_effect=[mock_response_running, mock_response_done])
 
     await splunk_extractor._wait_for_job_completion(
         mock_client, "test123", max_wait_seconds=10
@@ -242,7 +242,9 @@ async def test_splunk_extractor_wait_for_job_completion_json_response(splunk_ext
 
 
 @pytest.mark.asyncio
-async def test_splunk_extractor_wait_for_job_completion_xml_fallback(splunk_extractor, mocker):
+async def test_splunk_extractor_wait_for_job_completion_xml_fallback(
+    splunk_extractor, mocker
+):
     """Test job status checking with XML response (fallback)."""
     xml_response = """<?xml version="1.0" encoding="UTF-8"?>
     <response>
@@ -268,7 +270,9 @@ async def test_splunk_extractor_wait_for_job_completion_xml_fallback(splunk_extr
 
 
 @pytest.mark.asyncio
-async def test_splunk_extractor_wait_for_job_completion_failure(splunk_extractor, mocker):
+async def test_splunk_extractor_wait_for_job_completion_failure(
+    splunk_extractor, mocker
+):
     mock_response = mocker.MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
@@ -312,7 +316,9 @@ async def test_splunk_extractor_get_job_results_single_chunk(
 
 
 @pytest.mark.asyncio
-async def test_splunk_extractor_get_job_results_json_parse_error(splunk_extractor, mocker):
+async def test_splunk_extractor_get_job_results_json_parse_error(
+    splunk_extractor, mocker
+):
     """Test results retrieval when JSON parsing fails."""
     mock_response = mocker.MagicMock()
     mock_response.status_code = 200
