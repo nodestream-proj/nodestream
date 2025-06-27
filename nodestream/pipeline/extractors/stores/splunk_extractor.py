@@ -118,11 +118,6 @@ class SplunkExtractor(Extractor):
 
     def get_jobs_endpoint(self) -> str:
         """Get the Splunk jobs endpoint."""
-        print(self.base_url, self.user, self.app, "base_url, user, app")
-        print(
-            f"{self.base_url}/servicesNS/{self.user}/{self.app}/search/jobs",
-            "jobs_endpoint",
-        )
         return f"{self.base_url}/servicesNS/{self.user}/{self.app}/search/jobs"
 
     def get_results_endpoint(self, search_id: str) -> str:
