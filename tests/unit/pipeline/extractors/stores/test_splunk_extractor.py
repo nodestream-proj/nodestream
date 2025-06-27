@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from hamcrest import assert_that, equal_to, has_entries, has_length
-from httpx import HTTPStatusError
 
 from nodestream.pipeline.extractors.stores.splunk_extractor import SplunkExtractor
 
