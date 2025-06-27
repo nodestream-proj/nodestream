@@ -23,41 +23,6 @@ class SplunkRecord:
 
 
 class SplunkExtractor(Extractor):
-    """Execute a Splunk search and stream the resulting events.
-
-    This extractor creates a search job using Splunk's REST API and yields
-    back each event (row) returned by the search. It follows the official
-    Splunk REST API pattern: create job -> wait for completion -> get results.
-
-    Parameters
-    ----------
-    base_url:
-        The splunk management (REST) URL, e.g. ``https://splunk.my-corp.com:8089``.
-    query:
-        The SPL search to execute. For example: ``index=my_index | head 1000``.
-    auth_token:
-        A Splunk authentication token (the preferred method for Splunk Cloud).
-        If supplied, the extractor will send an ``Authorization: Splunk <token>``
-        header. Mutually exclusive with *username*/*password*.
-    username / password:
-        Basic-auth credentials for Splunk Endpoints.
-    earliest_time / latest_time:
-        Optional SPL time boundaries (see Splunk docs). Forwarded verbatim to the
-        REST API. Default is "-24h" to "now".
-    verify_ssl:
-        Whether to verify TLS certificates (default ``True``).
-    request_timeout_seconds:
-        Timeout to apply to the outbound HTTP request (default 300 seconds).
-    max_count:
-        Maximum number of results to return. Default 10000. Set higher for large datasets.
-    app:
-        Splunk app context (default "search").
-    user:
-        Splunk user context (default "admin" or username if provided).
-    chunk_size:
-        Number of results to retrieve per pagination request (default 1000).
-    """
-
     @classmethod
     def from_file_data(
         cls,
@@ -147,14 +112,17 @@ class SplunkExtractor(Extractor):
     def _normalized_query(self) -> str:
         """Ensure query starts with 'search' keyword."""
         query = self.query.strip()
-        if not query.lower().startswith('search '):
+        if not query.lower().startswith("search "):
             return f"search {query}"
         return query
 
     def get_jobs_endpoint(self) -> str:
         """Get the Splunk jobs endpoint."""
         print(self.base_url, self.user, self.app, "base_url, user, app")
-        print(f"{self.base_url}/servicesNS/{self.user}/{self.app}/search/jobs", "jobs_endpoint")
+        print(
+            f"{self.base_url}/servicesNS/{self.user}/{self.app}/search/jobs",
+            "jobs_endpoint",
+        )
         return f"{self.base_url}/servicesNS/{self.user}/{self.app}/search/jobs"
 
     def get_results_endpoint(self, search_id: str) -> str:
@@ -170,66 +138,78 @@ class SplunkExtractor(Extractor):
             "max_count": str(self.max_count),
             "output_mode": "json",  # Request JSON format explicitly
         }
-        
-        self.logger.info("Creating Splunk search job", extra={
-            "query": self._normalized_query,
-            "earliest_time": self.earliest_time,
-            "latest_time": self.latest_time,
-            "max_count": self.max_count
-        })
-        
+
+        self.logger.info(
+            "Creating Splunk search job",
+            extra={
+                "query": self._normalized_query,
+                "earliest_time": self.earliest_time,
+                "latest_time": self.latest_time,
+                "max_count": self.max_count,
+            },
+        )
+
         response = await client.post(
             self.get_jobs_endpoint(),
             data=job_data,
             headers={
                 **self._headers,
-                "Content-Type": "application/x-www-form-urlencoded"
+                "Content-Type": "application/x-www-form-urlencoded",
             },
             auth=self._auth,
         )
-        
+
         if response.status_code != 201:
             raise HTTPStatusError(
                 f"Failed to create search job: {response.status_code}",
                 request=response.request,
-                response=response
+                response=response,
             )
-        
+
         # Extract SID from response - try JSON first since we requested it
         search_id = None
-        
+
         try:
             result = response.json()
             search_id = result.get("sid")
             if search_id:
-                self.logger.info("Created search job successfully", extra={"search_id": search_id})
+                self.logger.info(
+                    "Created search job successfully", extra={"search_id": search_id}
+                )
                 return search_id
         except json.JSONDecodeError:
             self.logger.debug("Job creation response not JSON, trying XML parsing")
-        
+
         # Fallback to XML parsing
         import xml.etree.ElementTree as ET
+
         try:
             root = ET.fromstring(response.text)
             sid_elem = root.find(".//sid")
             if sid_elem is not None:
                 search_id = sid_elem.text
         except Exception as e:
-            self.logger.error("Failed to parse job creation response", extra={
-                "error": str(e),
-                "response": response.text[:500]
-            })
-        
+            self.logger.error(
+                "Failed to parse job creation response",
+                extra={"error": str(e), "response": response.text[:500]},
+            )
+
         if not search_id:
-            raise RuntimeError(f"Failed to extract search ID from response: {response.text[:500]}")
-            
-        self.logger.info("Created search job successfully", extra={"search_id": search_id})
+            raise RuntimeError(
+                f"Failed to extract search ID from response: {response.text[:500]}"
+            )
+
+        self.logger.info(
+            "Created search job successfully", extra={"search_id": search_id}
+        )
         return search_id
 
-    async def _wait_for_job_completion(self, client: AsyncClient, search_id: str, max_wait_seconds: int = 300):
+    async def _wait_for_job_completion(
+        self, client: AsyncClient, search_id: str, max_wait_seconds: int = 300
+    ):
         """Wait for a search job to complete."""
         wait_count = 0
-        
+
         while wait_count < max_wait_seconds:
             response = await client.get(
                 f"{self.get_jobs_endpoint()}/{search_id}",
@@ -237,52 +217,67 @@ class SplunkExtractor(Extractor):
                 headers=self._headers,
                 auth=self._auth,
             )
-            
+
             if response.status_code != 200:
                 raise HTTPStatusError(
                     f"Failed to check job status: {response.status_code}",
                     request=response.request,
-                    response=response
+                    response=response,
                 )
-            
+
             dispatch_state = "UNKNOWN"
-            
+
             try:
                 job_status = response.json()
-                dispatch_state = job_status.get("entry", [{}])[0].get("content", {}).get("dispatchState")
+                dispatch_state = (
+                    job_status.get("entry", [{}])[0]
+                    .get("content", {})
+                    .get("dispatchState")
+                )
             except (json.JSONDecodeError, KeyError, IndexError):
                 # Try XML parsing
                 import xml.etree.ElementTree as ET
+
                 try:
                     root = ET.fromstring(response.text)
                     for elem in root.iter():
-                        if 'dispatchState' in elem.tag or elem.get('name') == 'dispatchState':
+                        if (
+                            "dispatchState" in elem.tag
+                            or elem.get("name") == "dispatchState"
+                        ):
                             dispatch_state = elem.text
                             break
                 except Exception as e:
-                    self.logger.warning("Failed to parse job status", extra={
-                        "error": str(e),
-                        "search_id": search_id
-                    })
-            
-            self.logger.debug("Job status check", extra={
-                "search_id": search_id,
-                "dispatch_state": dispatch_state,
-                "wait_time": wait_count
-            })
-            
+                    self.logger.warning(
+                        "Failed to parse job status",
+                        extra={"error": str(e), "search_id": search_id},
+                    )
+
+            self.logger.debug(
+                "Job status check",
+                extra={
+                    "search_id": search_id,
+                    "dispatch_state": dispatch_state,
+                    "wait_time": wait_count,
+                },
+            )
+
             if dispatch_state == "DONE":
                 self.logger.info("Search job completed", extra={"search_id": search_id})
                 return
             elif dispatch_state == "FAILED":
                 raise RuntimeError(f"Search job failed: {search_id}")
-            
+
             await asyncio.sleep(2)  # Wait 2 seconds before checking again
             wait_count += 2
-        
-        raise RuntimeError(f"Search job timed out after {max_wait_seconds} seconds: {search_id}")
 
-    async def _get_job_results(self, client: AsyncClient, search_id: str) -> AsyncGenerator[Dict[str, Any], None]:
+        raise RuntimeError(
+            f"Search job timed out after {max_wait_seconds} seconds: {search_id}"
+        )
+
+    async def _get_job_results(
+        self, client: AsyncClient, search_id: str
+    ) -> AsyncGenerator[Dict[str, Any], None]:
         """Get results from a completed search job with pagination."""
         while not self.is_done:
             params = {
@@ -290,77 +285,86 @@ class SplunkExtractor(Extractor):
                 "count": str(self.chunk_size),
                 "offset": str(self.offset),
             }
-            
+
             response = await client.get(
                 self.get_results_endpoint(search_id),
                 params=params,
                 headers=self._headers,
                 auth=self._auth,
             )
-            
+
             if response.status_code != 200:
                 raise HTTPStatusError(
                     f"Failed to get job results: {response.status_code}",
                     request=response.request,
-                    response=response
+                    response=response,
                 )
-            
+
             try:
                 results = response.json()
                 results_list = results.get("results", [])
             except json.JSONDecodeError:
-                self.logger.error("Failed to parse results as JSON", extra={
-                    "search_id": search_id,
-                    "response": response.text[:500]
-                })
+                self.logger.error(
+                    "Failed to parse results as JSON",
+                    extra={"search_id": search_id, "response": response.text[:500]},
+                )
                 results_list = []
-            
+
             if not results_list:
                 self.is_done = True
                 break
-                
-            self.logger.debug("Retrieved results chunk", extra={
-                "search_id": search_id,
-                "chunk_size": len(results_list),
-                "offset": self.offset,
-                "total_offset": self.offset + len(results_list)
-            })
-                
+
+            self.logger.debug(
+                "Retrieved results chunk",
+                extra={
+                    "search_id": search_id,
+                    "chunk_size": len(results_list),
+                    "offset": self.offset,
+                    "total_offset": self.offset + len(results_list),
+                },
+            )
+
             for result in results_list:
                 yield result
-                
+
             self.offset += len(results_list)
-            
+
             if len(results_list) < self.chunk_size:
                 self.is_done = True
 
     async def extract_records(self) -> AsyncGenerator[Any, Any]:
         """Extract records using the official Splunk REST API job-based approach."""
-        async with AsyncClient(verify=self.verify_ssl, timeout=self.request_timeout_seconds) as client:
+        async with AsyncClient(
+            verify=self.verify_ssl, timeout=self.request_timeout_seconds
+        ) as client:
             try:
                 # Step 1: Create search job if we don't have one
                 if not self.search_id:
                     self.search_id = await self._create_search_job(client)
                     await self._wait_for_job_completion(client, self.search_id)
-                
+
                 record_count = 0
                 async for result in self._get_job_results(client, self.search_id):
                     record_count += 1
                     yield SplunkRecord.from_raw_splunk_result(result).record_data
-                
-                self.logger.info("Extraction completed", extra={
-                    "search_id": self.search_id,
-                    "total_records": record_count
-                })
-                        
+
+                self.logger.info(
+                    "Extraction completed",
+                    extra={"search_id": self.search_id, "total_records": record_count},
+                )
+
             except HTTPStatusError as exc:
                 self.logger.error(
                     "Splunk request failed",
                     extra={
-                        "status_code": exc.response.status_code, 
-                        "content": exc.response.text[:500] if hasattr(exc.response, 'text') else str(exc.response),
+                        "status_code": exc.response.status_code,
+                        "content": (
+                            exc.response.text[:500]
+                            if hasattr(exc.response, "text")
+                            else str(exc.response)
+                        ),
                         "url": str(exc.request.url),
-                        "query": self._normalized_query
+                        "query": self._normalized_query,
                     },
                 )
                 raise
@@ -371,7 +375,7 @@ class SplunkExtractor(Extractor):
                         "error": str(exc),
                         "error_type": type(exc).__name__,
                         "query": self._normalized_query,
-                        "search_id": self.search_id
+                        "search_id": self.search_id,
                     },
                 )
                 raise
@@ -390,12 +394,12 @@ class SplunkExtractor(Extractor):
             self.search_id = checkpoint_object.get("search_id")
             self.offset = checkpoint_object.get("offset", 0)
             self.is_done = checkpoint_object.get("is_done", False)
-            
+
             self.logger.info(
                 "Resuming from checkpoint",
                 extra={
                     "search_id": self.search_id,
                     "offset": self.offset,
-                    "is_done": self.is_done
-                }
-            ) 
+                    "is_done": self.is_done,
+                },
+            )
