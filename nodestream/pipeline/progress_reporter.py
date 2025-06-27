@@ -31,13 +31,14 @@ def get_max_mem_mb():
 class PipelineProgressReporter:
     """A `PipelineProgressReporter` is a utility that can be used to report on the progress of a pipeline."""
 
-    reporting_frequency: int = 1000
+    reporting_frequency: int = 10000
     logger: Logger = field(default_factory=getLogger)
-    callback: Callable[[int, Any], None] = field(default=no_op)
+    callback: Callable[[int, Metrics], None] = field(default=no_op)
     on_start_callback: Callable[[], None] = field(default=no_op)
     on_finish_callback: Callable[[Metrics], None] = field(default=no_op)
     on_fatal_error_callback: Callable[[Exception], None] = field(default=no_op)
     encountered_fatal_error: bool = field(default=False)
+    observability_callback: Callable[[Any], None] = field(default=no_op)
 
     def on_fatal_error(self, exception: Exception):
         self.encountered_fatal_error = True
@@ -66,10 +67,9 @@ class PipelineProgressReporter:
             on_fatal_error_callback=raise_exception,
         )
 
-    def report(self, index, record):
+    def report(self, index, metrics: Metrics):
         if index % self.reporting_frequency == 0:
-            self.logger.info(
-                "Records Processed",
-                extra={"index": index, "max_memory": get_max_mem_mb()},
-            )
-            self.callback(index, record)
+            self.callback(index, metrics)
+
+    def observe(self, record: Any):
+        self.observability_callback(record)

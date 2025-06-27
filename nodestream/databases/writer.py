@@ -14,7 +14,7 @@ class GraphDatabaseWriter(Writer):
         ),
         collect_stats: bool = True,
         batch_size: int = 1000,
-        **database_args
+        **database_args,
     ):
         connector = DatabaseConnector.from_database_args(
             database=database, **database_args

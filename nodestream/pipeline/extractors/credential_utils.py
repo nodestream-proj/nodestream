@@ -15,7 +15,7 @@ class AwsClientFactory:
         assume_role_arn: Optional[str] = None,
         assume_role_external_id: Optional[str] = None,
         session_ttl: int = 3000,
-        **boto_session_args
+        **boto_session_args,
     ) -> None:
         self.assume_role_arn = assume_role_arn
         self.assume_role_external_id = assume_role_external_id

@@ -29,11 +29,13 @@ venv: poetry.lock
 format: venv
 	poetry run black nodestream tests
 	poetry run isort nodestream tests
+	poetry run ruff check nodestream tests --fix
 
 .PHONY: lint
 lint: venv
 	poetry run black nodestream tests --check
 	poetry run ruff check nodestream tests
+	poetry run isort nodestream tests --check-only
 
 .PHONY: test-unit
 test-unit: venv

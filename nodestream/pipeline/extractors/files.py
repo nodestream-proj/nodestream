@@ -19,7 +19,7 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Tuple,
+    Sequence,
 )
 
 import pandas as pd
@@ -42,8 +42,8 @@ class Utf8TextIOWrapper(TextIOWrapper):
         super().__init__(*args, **kwargs, encoding="utf-8")
 
 
-@abstractmethod
-class ReadableFile:
+class ReadableFile(ABC):
+    @abstractmethod
     def as_reader(self, cls: type[IOBase]) -> AsyncContextManager[IOBase]:
         """Return a reader for the file.
 
@@ -56,8 +56,8 @@ class ReadableFile:
         operations in the context manager on exit
         (i.e after the yield statement).
         """
-        raise NotImplementedError
 
+    @abstractmethod
     def path_like(self) -> Path:
         """Return a Path object that represents the path to the file.
 
@@ -69,12 +69,11 @@ class ReadableFile:
         This will be called to sniff the file format and compression format of
         the file from the suffixes of the path.
         """
-        raise NotImplementedError
 
     @asynccontextmanager
     async def popped_suffix_tempfile(
         self,
-    ) -> AsyncContextManager[Tuple[Path, tempfile.NamedTemporaryFile]]:
+    ) -> AsyncContextManager[tuple[Path, tempfile.NamedTemporaryFile]]:
         """Create a temporary file with the same suffixes sans the last one.
 
         This method creates a temporary file with the same suffixes as the
@@ -90,6 +89,9 @@ class ReadableFile:
         new = self.path_like().with_suffix("")
         with tempfile.NamedTemporaryFile(suffix="".join(new.suffixes)) as fp:
             yield Path(fp.name), fp
+
+    def __repr__(self) -> str:
+        return str(self.path_like())
 
 
 class LocalFile(ReadableFile):
@@ -179,6 +181,7 @@ class FileSource(Pluggable, ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def describe(self) -> str:
         """Return a human-readable description of the file source.
 
@@ -187,7 +190,6 @@ class FileSource(Pluggable, ABC):
         way that is understandable to the user. The description should be
         concise and informative.
         """
-        return str(self)
 
 
 @SUPPORTED_FILE_FORMAT_REGISTRY.connect_baseclass
@@ -391,6 +393,15 @@ class YamlFileFormat(FileCodec, alias=".yaml"):
         return [safe_load(reader)]
 
 
+class TempFile(LocalFile):
+    def __init__(self, path: Path, pointer=None, original_path: str = ""):
+        super().__init__(path, pointer)
+        self.original_path = original_path or self.path.name
+
+    def __repr__(self):
+        return self.original_path if self.original_path else super().__repr__()
+
+
 class GzipFileFormat(CompressionCodec, alias=".gz"):
     """Compression codec for Gzip files.
 
@@ -405,13 +416,13 @@ class GzipFileFormat(CompressionCodec, alias=".gz"):
     """
 
     @asynccontextmanager
-    async def decompress_file(self) -> ReadableFile:
+    async def decompress_file(self) -> AsyncIterator[ReadableFile]:
         async with self.file.popped_suffix_tempfile() as (new_path, temp_file):
             async with self.file.as_reader(BufferedReader) as reader:
                 with gzip.GzipFile(fileobj=reader) as decompressor:
                     temp_file.write(decompressor.read())
             temp_file.seek(0)
-            yield LocalFile(new_path, temp_file)
+            yield TempFile(new_path, temp_file, str(self.file))
 
 
 class Bz2FileFormat(CompressionCodec, alias=".bz2"):
@@ -428,14 +439,14 @@ class Bz2FileFormat(CompressionCodec, alias=".bz2"):
     """
 
     @asynccontextmanager
-    async def decompress_file(self) -> ReadableFile:
+    async def decompress_file(self) -> AsyncIterator[ReadableFile]:
         async with self.file.popped_suffix_tempfile() as (new_path, temp_file):
             async with self.file.as_reader(BufferedReader) as reader:
                 decompressor = bz2.BZ2Decompressor()
                 for chunk in iter(lambda: reader.read(1024 * 1024), b""):
                     temp_file.write(decompressor.decompress(chunk))
             temp_file.seek(0)
-            yield LocalFile(new_path, temp_file)
+            yield TempFile(new_path, temp_file, str(self.file))
 
 
 class LocalFileSource(FileSource, alias="local"):
@@ -481,7 +492,7 @@ class RemoteFileSource(FileSource, alias="http"):
     """
 
     def __init__(
-        self, urls: Iterable[str], memory_spooling_max_size_in_mb: int = 10
+        self, urls: Sequence[str], memory_spooling_max_size_in_mb: int = 10
     ) -> None:
         self.urls = urls
         self.memory_spooling_max_size = memory_spooling_max_size_in_mb * 1024 * 1024
@@ -528,7 +539,7 @@ class S3File(ReadableFile):
         if not self.archive_dir:
             return
 
-        self.logger.info("Archiving S3 Object", extra=dict(key=key))
+        self.logger.info("Archiving S3 Object", extra={"key": key})
         filename = Path(key).name
         self.s3_client.copy(
             Bucket=self.bucket,
@@ -539,7 +550,10 @@ class S3File(ReadableFile):
 
     def path_like(self) -> Path:
         path = Path(self.key)
-        return path.with_suffix(self.object_format or path.suffix)
+        if self.object_format:
+            return path.with_suffix(self.object_format)
+
+        return path
 
     @asynccontextmanager
     async def as_reader(self, reader: IOBase):
@@ -548,6 +562,9 @@ class S3File(ReadableFile):
         ]
         yield reader(BytesIO(streaming_body.read()))
         self.archive_if_required(self.key)
+
+    def __repr__(self) -> str:
+        return f"s3://{self.bucket}/{self.key}"
 
 
 class S3FileSource(FileSource, alias="s3"):
@@ -558,6 +575,13 @@ class S3FileSource(FileSource, alias="s3"):
     bucket and yield instances of S3File that can be read by the pipeline.
 
     The class also has a method to archive the file after it has been read.
+
+    The class can also filter the objects returned by the prefix scan in the
+    following ways:
+    - Specifying object_format OR suffix will filter the objects via endswith
+    - Providing strings to object_format AND suffix will:
+        - Filter the objects via endswith with suffix (a blank string will match all)
+        - Process each object as if it ended with the contents of object_format
     """
 
     @classmethod
@@ -565,6 +589,7 @@ class S3FileSource(FileSource, alias="s3"):
         cls,
         bucket: str,
         prefix: Optional[str] = None,
+        suffix: Optional[str] = None,
         archive_dir: Optional[str] = None,
         object_format: Optional[str] = None,
         **aws_client_args,
@@ -572,6 +597,7 @@ class S3FileSource(FileSource, alias="s3"):
         return cls(
             bucket=bucket,
             prefix=prefix,
+            suffix=suffix,
             archive_dir=archive_dir,
             object_format=object_format,
             s3_client=AwsClientFactory(**aws_client_args).make_client("s3"),
@@ -579,29 +605,49 @@ class S3FileSource(FileSource, alias="s3"):
 
     def __init__(
         self,
+        *,
         bucket: str,
         s3_client,
         archive_dir: Optional[str] = None,
         object_format: Optional[str] = None,
         prefix: Optional[str] = None,
+        suffix: Optional[str] = None,
     ):
         self.bucket = bucket
         self.s3_client = s3_client
         self.archive_dir = archive_dir
         self.object_format = object_format
         self.prefix = prefix or ""
+        self.suffix = suffix
 
-    def object_is_in_archive(self, key: str) -> bool:
-        return key.startswith(self.archive_dir) if self.archive_dir else False
+    def object_is_not_in_archive(self, key: str) -> bool:
+        return not key.startswith(self.archive_dir) if self.archive_dir else True
+
+    def key_matches_suffix(self, key: str) -> bool:
+        if self.suffix is not None:
+            return key.endswith(self.suffix)
+
+        if self.object_format:
+            return key.endswith(self.object_format)
+
+        return True
 
     def find_keys_in_bucket(self) -> Iterable[str]:
-        # Returns all keys in the bucket that are not in the archive dir
-        # and have the prefix.
+        # Returns all keys in the bucket that are not in the archive dir,
+        # have the object_format suffix and have the prefix.
         paginator = self.s3_client.get_paginator("list_objects_v2")
         page_iterator = paginator.paginate(Bucket=self.bucket, Prefix=self.prefix)
         for page in page_iterator:
             keys = (obj["Key"] for obj in page.get("Contents", []))
-            yield from filter(lambda k: not self.object_is_in_archive(k), keys)
+            yield from (
+                filter(
+                    self.key_matches_suffix,
+                    filter(
+                        self.object_is_not_in_archive,
+                        keys,
+                    ),
+                )
+            )
 
     async def get_files(self):
         for key in self.find_keys_in_bucket():
@@ -610,8 +656,39 @@ class S3FileSource(FileSource, alias="s3"):
                 s3_client=self.s3_client,
                 bucket=self.bucket,
                 archive_dir=self.archive_dir,
-                object_format=self.object_format,
+                # for backwards compatibility:
+                # -- Only override object_format if suffix is provided.
+                # -- To treat ALL files as object_format, set suffix to "".
+                object_format=(
+                    self.object_format
+                    if self.object_format and self.suffix is not None
+                    else None
+                ),
             )
+
+    def describe(self) -> str:
+        data = {
+            k: v
+            for k, v in {
+                "bucket": self.bucket,
+                "archive_dir": self.archive_dir,
+                "object_format": self.object_format,
+                "prefix": self.prefix,
+                "suffix": self.suffix,
+            }.items()
+            if v
+        }
+        return f"S3FileSource{data}"
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, S3FileSource)
+            and self.s3_client == other.s3_client
+            and self.bucket == other.bucket
+            and self.prefix == other.prefix
+            and self.archive_dir == other.archive_dir
+            and self.object_format == other.object_format
+        )
 
 
 class FileExtractor(Extractor):
@@ -625,11 +702,11 @@ class FileExtractor(Extractor):
     """
 
     @classmethod
-    def local(cls, globs: Iterable[str]):
+    def local(cls, globs: Iterable[str]) -> "FileExtractor":
         return FileExtractor.from_file_data([{"type": "local", "globs": globs}])
 
     @classmethod
-    def s3(cls, **kwargs):
+    def s3(cls, **kwargs) -> "FileExtractor":
         return cls([S3FileSource.from_file_data(**kwargs)])
 
     @classmethod
@@ -637,7 +714,7 @@ class FileExtractor(Extractor):
         cls,
         urls: Iterable[str],
         memory_spooling_max_size_in_mb: int = 10,
-    ):
+    ) -> "FileExtractor":
         return FileExtractor.from_file_data(
             [
                 {
@@ -649,17 +726,20 @@ class FileExtractor(Extractor):
         )
 
     @classmethod
-    def from_file_data(cls, sources: List[Dict[str, Any]]) -> "FileExtractor":
+    def from_file_data(cls, sources: list[dict[str, Any]]) -> "FileExtractor":
         return cls(
             [FileSource.from_file_data_with_type_label(source) for source in sources]
         )
 
-    def __init__(self, file_sources: Iterable[FileSource]) -> None:
+    def __init__(self, file_sources: Sequence[FileSource]) -> None:
         self.file_sources = file_sources
         self.logger = getLogger(__name__)
 
-    async def read_file(self, file: ReadableFile) -> Iterable[JsonLikeDocument]:
-        intermediaries: List[AsyncContextManager[ReadableFile]] = []
+    async def read_file(
+        self,
+        file: ReadableFile,
+    ) -> AsyncGenerator[JsonLikeDocument, None]:
+        intermediaries: list[AsyncContextManager[ReadableFile]] = []
 
         while True:
             suffix = file.path_like().suffix
@@ -676,6 +756,14 @@ class FileExtractor(Extractor):
                 continue
             except MissingFromRegistryError:
                 pass
+            except OSError as e:
+                self.logger.warning(
+                    "Failed to decompress %s file. "
+                    "Please ensure the file is in the correct format.",
+                    file,
+                    extra={"exception": str(e)},
+                )
+                break
 
             # If we didn't find a compression codec, try to find a file format
             # codec that can read the file. If a file format codec is found,
@@ -689,9 +777,17 @@ class FileExtractor(Extractor):
                 # If we didn't find a file format codec, break out of the loop
                 # and yield no records.
                 pass
+            except Exception as e:
+                self.logger.warning(
+                    "Failed to parse %s file (at path %s). "
+                    "Please ensure the file is in the correct format.",
+                    file,
+                    file.path_like(),
+                    extra={"exception": str(e)},
+                )
 
             # Regardless of whether we found a codec or not, break out of the
-            # loop and yield no more records becaause either (a) we found a
+            # loop and yield no more records because either (a) we found a
             # codec and read the file or (b) we didn't find a codec and
             # couldn't read the file. Trying again would be futile.
             break
@@ -710,5 +806,6 @@ class FileExtractor(Extractor):
 
             if total_files_from_source == 0:
                 self.logger.warning(
-                    f"No files found for source: {file_source.describe()}"
+                    "No files found for source: %s",
+                    file_source.describe(),
                 )

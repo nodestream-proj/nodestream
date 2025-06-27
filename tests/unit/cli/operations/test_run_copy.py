@@ -2,6 +2,7 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations import RunCopy
+from nodestream.pipeline import PipelineProgressReporter
 
 
 @pytest.fixture
@@ -48,4 +49,6 @@ async def test_perform(subject, mocker):
     pipeline = mocker.AsyncMock()
     subject.build_pipeline = mocker.Mock(return_value=pipeline)
     await subject.perform(mocker.Mock())
-    pipeline.run.assert_awaited_once_with()
+    assert pipeline.run.await_count == 1
+    assert len(pipeline.run.await_args[1]) == 1
+    assert isinstance(pipeline.run.await_args[1]["reporter"], PipelineProgressReporter)
