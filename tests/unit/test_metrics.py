@@ -140,3 +140,65 @@ def test_aggregate_handler_tick_calls_all_handlers(mocker):
     handler.tick()
     mock_handler1.tick.assert_called_once()
     mock_handler2.tick.assert_called_once()
+
+
+def test_metric_equality_and_hash():
+    """Test Metric equality and hash methods"""
+    metric1 = Metric("test_metric", "Test description")
+    metric2 = Metric("test_metric", "Different description")
+    metric3 = Metric("different_metric", "Test description")
+
+    # Test __eq__ and __ne__
+    assert metric1 == metric2  # Same name
+    assert metric1 != metric3  # Different name
+
+    # Test __str__
+    assert str(metric1) == "test_metric"
+    assert str(metric2) == "test_metric"
+    assert str(metric3) == "different_metric"
+
+    # Test __hash__
+    assert hash(metric1) == hash(metric2)  # Same name should have same hash
+
+
+def test_console_metric_handler_discharge_with_accumulate(mocker):
+    """Test that ConsoleMetricHandler discharge resets accumulating metrics"""
+    mock_command = mocker.Mock()
+    handler = ConsoleMetricHandler(mock_command)
+
+    accumulating_metric = Metric("test_accumulate", accumulate=True)
+    non_accumulating_metric = Metric("test_no_accumulate", accumulate=False)
+
+    handler.increment(accumulating_metric, 5)
+    handler.increment(non_accumulating_metric, 3)
+
+    result = handler.discharge()
+
+    # Should return metric names as keys
+    assert result["test_accumulate"] == 5
+    assert result["test_no_accumulate"] == 3
+
+    # Accumulating metric should be reset to 0, non-accumulating should remain
+    assert handler.metrics[accumulating_metric] == 0
+    assert handler.metrics[non_accumulating_metric] == 3
+
+
+def test_json_log_metric_handler_discharge_with_accumulate(mocker):
+    """Test that JsonLogMetricHandler discharge resets accumulating metrics"""
+    handler = JsonLogMetricHandler()
+
+    accumulating_metric = Metric("test_accumulate", accumulate=True)
+    non_accumulating_metric = Metric("test_no_accumulate", accumulate=False)
+
+    handler.increment(accumulating_metric, 10)
+    handler.increment(non_accumulating_metric, 7)
+
+    result = handler.discharge()
+
+    # Should return metric names as keys
+    assert result["test_accumulate"] == 10
+    assert result["test_no_accumulate"] == 7
+
+    # Accumulating metric should be reset to 0, non-accumulating should remain
+    assert handler.metrics[accumulating_metric] == 0
+    assert handler.metrics[non_accumulating_metric] == 7
