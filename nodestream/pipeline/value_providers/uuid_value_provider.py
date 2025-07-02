@@ -13,7 +13,7 @@ from .value_provider import ValueProvider
 logger = logging.getLogger(__name__)
 
 # Default namespace for our application
-DEFAULT_NAMESPACE = "nebula"
+DEFAULT_NAMESPACE = "nodestream"
 
 
 class UuidValueProvider(ValueProvider):
@@ -34,7 +34,7 @@ class UuidValueProvider(ValueProvider):
           variable_name: "finding"
           namespace: "my-custom-namespace"
 
-        # Only variable_name (uses default namespace "nebula")
+        # Only variable_name (uses default namespace "nodestream")
         id: !uuid
           variable_name: "exposure_finding"
 
@@ -93,7 +93,7 @@ class UuidValueProvider(ValueProvider):
             variable_name: If provided, generates a deterministic UUID v5
                           based on this name. If empty, generates a random UUID v4.
             namespace: The namespace to use for deterministic UUID generation.
-                      Defaults to "nebula.graph-builder".
+                      Defaults to "nodestream".
         """
         self.variable_name = variable_name.strip() if variable_name else ""
         self.namespace = namespace.strip() if namespace else DEFAULT_NAMESPACE
