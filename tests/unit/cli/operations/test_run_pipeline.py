@@ -1,5 +1,6 @@
 import pytest
 from hamcrest import assert_that, equal_to
+from unittest.mock import Mock
 
 from nodestream.cli.operations.run_pipeline import (
     WARNING_NO_TARGETS_PROVIDED,
@@ -32,7 +33,18 @@ def test_make_run_request(run_pipeline_operation, mocker):
     targets = ["t1", "t2"]
     pipeline_name = "my_pipeline"
     command = mocker.Mock()
-    command.option.side_effect = ["my-storage", annotations, "10001", targets, "10000"]
+    # Updated to handle all the option calls including time-interval-seconds
+    option_responses = {
+        "storage-backend": "my-storage",
+        "annotations": annotations,
+        "step-outbox-size": "10001",
+        "target": targets,
+        "time-interval-seconds": None,  # No time interval provided
+        "reporting-frequency": "10000"
+    }
+    command.option.side_effect = lambda opt: option_responses.get(opt)
+    command.has_json_logging_set = False  # Required for create_progress_reporter
+    command.is_very_verbose = False  # Required for make_run_request
     command.argument.return_value = [pipeline_name]
     pipeline = mocker.patch("nodestream.project.PipelineDefinition")
     pipeline.name = pipeline_name
@@ -41,6 +53,115 @@ def test_make_run_request(run_pipeline_operation, mocker):
     assert_that(result.initialization_arguments.annotations, equal_to(annotations))
     assert_that(result.initialization_arguments.step_outbox_size, equal_to(10001))
     assert_that(result.progress_reporter.reporting_frequency, equal_to(10000))
+
+
+def test_create_progress_reporter_with_time_interval_seconds(run_pipeline_operation, mocker):
+    """Test that time_interval_seconds gets properly converted to float and passed to PipelineProgressReporter"""
+    command = mocker.Mock()
+    command.option.side_effect = lambda opt: {
+        "time-interval-seconds": "30.5",
+        "reporting-frequency": "1000"
+    }.get(opt)
+    command.has_json_logging_set = False
+    
+    # Mock PipelineProgressReporter to capture arguments
+    mock_progress_reporter = mocker.patch("nodestream.cli.operations.run_pipeline.PipelineProgressReporter")
+    
+    result = run_pipeline_operation.create_progress_reporter(command, "test_pipeline")
+    
+    # Verify PipelineProgressReporter was called with correct time_interval_seconds
+    mock_progress_reporter.assert_called_once()
+    call_args = mock_progress_reporter.call_args
+    assert_that(call_args.kwargs["time_interval_seconds"], equal_to(30.5))
+    assert_that(call_args.kwargs["reporting_frequency"], equal_to(1000))
+
+
+def test_create_progress_reporter_without_time_interval_seconds(run_pipeline_operation, mocker):
+    """Test that time_interval_seconds is None when not provided"""
+    command = mocker.Mock()
+    command.option.side_effect = lambda opt: {
+        "time-interval-seconds": None,
+        "reporting-frequency": "2000"
+    }.get(opt)
+    command.has_json_logging_set = False
+    
+    # Mock PipelineProgressReporter to capture arguments
+    mock_progress_reporter = mocker.patch("nodestream.cli.operations.run_pipeline.PipelineProgressReporter")
+    
+    result = run_pipeline_operation.create_progress_reporter(command, "test_pipeline")
+    
+    # Verify PipelineProgressReporter was called with None for time_interval_seconds
+    mock_progress_reporter.assert_called_once()
+    call_args = mock_progress_reporter.call_args
+    assert_that(call_args.kwargs["time_interval_seconds"], equal_to(None))
+    assert_that(call_args.kwargs["reporting_frequency"], equal_to(2000))
+
+
+def test_create_progress_reporter_with_json_indicator(run_pipeline_operation, mocker):
+    """Test that create_progress_reporter works correctly with JSON progress indicator"""
+    command = mocker.Mock()
+    command.option.side_effect = lambda opt: {
+        "time-interval-seconds": "15.0",
+        "reporting-frequency": "500"
+    }.get(opt)
+    command.has_json_logging_set = True
+    
+    # Mock PipelineProgressReporter to capture arguments
+    mock_progress_reporter = mocker.patch("nodestream.cli.operations.run_pipeline.PipelineProgressReporter")
+    
+    result = run_pipeline_operation.create_progress_reporter(command, "test_pipeline")
+    
+    # Verify PipelineProgressReporter was called with correct arguments
+    mock_progress_reporter.assert_called_once()
+    call_args = mock_progress_reporter.call_args
+    assert_that(call_args.kwargs["time_interval_seconds"], equal_to(15.0))
+    assert_that(call_args.kwargs["reporting_frequency"], equal_to(500))
+
+
+def test_make_run_request_with_time_interval_seconds_integration(run_pipeline_operation, mocker):
+    """Integration test to ensure make_run_request properly handles time_interval_seconds through create_progress_reporter"""
+    annotations = ["annotation1"]
+    targets = ["t1"]
+    pipeline_name = "my_pipeline"
+    command = mocker.Mock()
+    
+    # Setup command.option to handle all the different option calls made by make_run_request
+    option_responses = {
+        "storage-backend": "my-storage",
+        "annotations": annotations,
+        "step-outbox-size": "10001",
+        "target": targets,
+        "time-interval-seconds": "45.0",
+        "reporting-frequency": "5000"
+    }
+    command.option.side_effect = lambda opt: option_responses.get(opt)
+    command.has_json_logging_set = False
+    command.is_very_verbose = False
+    command.argument.return_value = [pipeline_name]
+    
+    pipeline = mocker.Mock()
+    pipeline.name = pipeline_name
+    pipeline.configuration = PipelineConfiguration()
+    
+    # Mock the project's get_object_storage_by_name method
+    run_pipeline_operation.project.get_object_storage_by_name.return_value = None
+    run_pipeline_operation.project.get_target_by_name.return_value = None
+    
+    # Mock PipelineProgressReporter to capture its arguments
+    mock_progress_reporter = mocker.patch("nodestream.cli.operations.run_pipeline.PipelineProgressReporter")
+    
+    result = run_pipeline_operation.make_run_request(command, pipeline)
+    
+    # Verify the progress reporter was created with correct time_interval_seconds
+    mock_progress_reporter.assert_called_once()
+    call_args = mock_progress_reporter.call_args
+    assert_that(call_args.kwargs["time_interval_seconds"], equal_to(45.0))
+    assert_that(call_args.kwargs["reporting_frequency"], equal_to(5000))
+    
+    # Verify other parts of the request are still correct
+    assert_that(result.pipeline_name, equal_to(pipeline_name))
+    assert_that(result.initialization_arguments.annotations, equal_to(annotations))
+    assert_that(result.initialization_arguments.step_outbox_size, equal_to(10001))
 
 
 def test_spinner_on_start(mocker):

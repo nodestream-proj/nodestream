@@ -14,6 +14,7 @@ Number = Union[int, float]
 class Metric:
     name: str
     description: Optional[str] = None
+    accumulate: bool = False
 
     def increment_on(self, handler: "MetricHandler", value: Number = 1):
         """Increment this metric on the given handler."""
@@ -26,6 +27,18 @@ class Metric:
     def register(self, handler: "MetricHandler"):
         handler.increment(self, 0)
         return self
+    
+    def __str__(self):
+        return f"{self.name}: {self.value}"
+    
+    def __hash__(self):
+        return hash(self.name)
+    
+    def __eq__(self, other):
+        return self.name == other.name
+    
+    def __ne__(self, other):
+        return self.name != other.name
 
 
 class MetricHandler(ABC):
@@ -74,21 +87,18 @@ class NullMetricHandler(MetricHandler):
 
 
 # Core metrics
-RECORDS = Metric("records", "Number of records processed")
-NON_FATAL_ERRORS = Metric("non_fatal_errors", "Number of non-fatal errors")
-FATAL_ERRORS = Metric("fatal_errors", "Number of fatal errors")
-NODES_UPSERTED = Metric("nodes_upserted", "Number of nodes upserted to the graph")
+RECORDS = Metric("records", "Number of records processed", accumulate=True)
+NON_FATAL_ERRORS = Metric("non_fatal_errors", "Number of non-fatal errors", accumulate=True)
+FATAL_ERRORS = Metric("fatal_errors", "Number of fatal errors", accumulate=True)
+NODES_UPSERTED = Metric("nodes_upserted", "Number of nodes upserted to the graph", accumulate=True)
 RELATIONSHIPS_UPSERTED = Metric(
-    "relationships_upserted", "Number of relationships upserted to the graph"
+    "relationships_upserted", "Number of relationships upserted to the graph", accumulate=True
 )
 TIME_TO_LIVE_OPERATIONS = Metric(
-    "time_to_live_operations", "Number of time-to-live operations executed"
+    "time_to_live_operations", "Number of time-to-live operations executed", accumulate=True
 )
 INGEST_HOOKS_EXECUTED = Metric(
-    "ingest_hooks_executed", "Number of ingest hooks executed to the graph"
-)
-BUFFERED_RECORDS = Metric(
-    "buffered_records", "Number of records buffered between steps"
+    "ingest_hooks_executed", "Number of ingest hooks executed to the graph", accumulate=True
 )
 STEPS_RUNNING = Metric(
     "steps_running", "Number of steps currently running in the pipeline"
@@ -184,6 +194,8 @@ STATS_TABLE_COLS = ["Statistic", "Value"]
 class ConsoleMetricHandler(MetricHandler):
     """A metric handler that prints metrics to the console."""
 
+    # Note: TODO: Tie incremental values to the metrics rather than the handler.
+
     def __init__(self, command: Command):
         self.metrics: dict[Metric, Number] = {}
         self.command = command
@@ -192,10 +204,19 @@ class ConsoleMetricHandler(MetricHandler):
         self.metrics[metric] = self.metrics.get(metric, 0) + value
 
     def decrement(self, metric: Metric, value: Number):
-        self.metrics[metric] = self.metrics.get(metric, 0) - value
+        self.metrics[metric] = self.metrics.get(metric, 0) - value 
+
+    def discharge(self) -> dict[Metric, Number]:
+        metrics = {}
+        for metric, value in self.metrics.items():
+            metrics[metric.name] = value
+            if metric.accumulate:
+                self.metrics[metric] = 0
+        return metrics
 
     def render(self):
-        stats = ((k.name, str(v)) for k, v in self.metrics.items() if v > 0)
+        metrics = self.discharge()
+        stats = ((k, str(v)) for k, v in metrics.items())
         table = self.command.table(STATS_TABLE_COLS, stats)
         table.render()
 
@@ -219,9 +240,20 @@ class JsonLogMetricHandler(MetricHandler):
     def decrement(self, metric: Metric, value: Number):
         self.metrics[metric] = self.metrics.get(metric, 0) - value
 
+    def discharge(self) -> dict[Metric, Number]:
+        metrics = {}
+        for metric, value in self.metrics.items():
+            metrics[metric.name] = value
+            if metric.accumulate:
+                self.metrics[metric] = 0
+
+        return metrics
+
     def render(self):
+        metrics = self.discharge()
         self.logger.info(
-            "Metrics Report", extra={k.name: v for k, v in self.metrics.items()}
+            "Metrics Report",
+            extra=metrics,
         )
 
     def stop(self):

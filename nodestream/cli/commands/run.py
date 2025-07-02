@@ -57,6 +57,12 @@ class Run(NodestreamCommand):
             description="Storage backend to use for checkpointing",
             flag=False,
         ),
+        option(
+            "time-interval-seconds",
+            description="Time interval to report metrics in seconds",
+            default=None,
+            flag=False,
+        ),
         *PROMETHEUS_OPTIONS,
     ]
 
