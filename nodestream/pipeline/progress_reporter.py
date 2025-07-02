@@ -1,4 +1,5 @@
 import os
+import time
 from dataclasses import dataclass, field
 from logging import Logger, getLogger
 from typing import Any, Callable, Optional
@@ -6,7 +7,6 @@ from typing import Any, Callable, Optional
 from psutil import Process
 
 from ..metrics import Metrics
-import time
 
 
 def no_op(*_, **__):

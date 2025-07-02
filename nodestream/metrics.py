@@ -27,16 +27,16 @@ class Metric:
     def register(self, handler: "MetricHandler"):
         handler.increment(self, 0)
         return self
-    
+
     def __str__(self):
         return f"{self.name}: {self.value}"
-    
+
     def __hash__(self):
         return hash(self.name)
-    
+
     def __eq__(self, other):
         return self.name == other.name
-    
+
     def __ne__(self, other):
         return self.name != other.name
 
@@ -88,17 +88,27 @@ class NullMetricHandler(MetricHandler):
 
 # Core metrics
 RECORDS = Metric("records", "Number of records processed", accumulate=True)
-NON_FATAL_ERRORS = Metric("non_fatal_errors", "Number of non-fatal errors", accumulate=True)
+NON_FATAL_ERRORS = Metric(
+    "non_fatal_errors", "Number of non-fatal errors", accumulate=True
+)
 FATAL_ERRORS = Metric("fatal_errors", "Number of fatal errors", accumulate=True)
-NODES_UPSERTED = Metric("nodes_upserted", "Number of nodes upserted to the graph", accumulate=True)
+NODES_UPSERTED = Metric(
+    "nodes_upserted", "Number of nodes upserted to the graph", accumulate=True
+)
 RELATIONSHIPS_UPSERTED = Metric(
-    "relationships_upserted", "Number of relationships upserted to the graph", accumulate=True
+    "relationships_upserted",
+    "Number of relationships upserted to the graph",
+    accumulate=True,
 )
 TIME_TO_LIVE_OPERATIONS = Metric(
-    "time_to_live_operations", "Number of time-to-live operations executed", accumulate=True
+    "time_to_live_operations",
+    "Number of time-to-live operations executed",
+    accumulate=True,
 )
 INGEST_HOOKS_EXECUTED = Metric(
-    "ingest_hooks_executed", "Number of ingest hooks executed to the graph", accumulate=True
+    "ingest_hooks_executed",
+    "Number of ingest hooks executed to the graph",
+    accumulate=True,
 )
 STEPS_RUNNING = Metric(
     "steps_running", "Number of steps currently running in the pipeline"
@@ -204,7 +214,7 @@ class ConsoleMetricHandler(MetricHandler):
         self.metrics[metric] = self.metrics.get(metric, 0) + value
 
     def decrement(self, metric: Metric, value: Number):
-        self.metrics[metric] = self.metrics.get(metric, 0) - value 
+        self.metrics[metric] = self.metrics.get(metric, 0) - value
 
     def discharge(self) -> dict[Metric, Number]:
         metrics = {}
