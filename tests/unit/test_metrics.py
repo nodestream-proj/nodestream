@@ -152,6 +152,11 @@ def test_metric_equality_and_hash():
     assert metric1 == metric2  # Same name
     assert metric1 != metric3  # Different name
 
+    # Test __str__
+    assert str(metric1) == "test_metric"
+    assert str(metric2) == "test_metric"
+    assert str(metric3) == "different_metric"
+
     # Test __hash__
     assert hash(metric1) == hash(metric2)  # Same name should have same hash
 

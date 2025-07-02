@@ -29,7 +29,7 @@ class Metric:
         return self
 
     def __str__(self):
-        return f"{self.name}: {self.value}"
+        return self.name
 
     def __hash__(self):
         return hash(self.name)
