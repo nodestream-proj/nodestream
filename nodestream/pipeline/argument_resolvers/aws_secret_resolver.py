@@ -227,6 +227,9 @@ class AWSSecretResolver(ArgumentResolver, alias="aws-secret"):  # type: ignore[c
         self._client = self._session.client(
             service_name="secretsmanager", region_name=self.config.region_name
         )
+        # Initialize instance attributes to prevent AttributeError
+        self._secret_value: Optional[str] = None
+        self.default: Optional[str] = None
 
     @staticmethod
     def _get_secret_name_from_env(env_var: str) -> Optional[str]:
@@ -261,7 +264,7 @@ class AWSSecretResolver(ArgumentResolver, alias="aws-secret"):  # type: ignore[c
         try:
             response = self._client.get_secret_value(SecretId=secret_name)
             if "SecretString" in response:
-                return response["SecretString"]  # type: ignore[no-any-return]
+                return str(response["SecretString"])
             raise SecretDecodeError(
                 f"Secret '{secret_name}' is binary, which is not supported"
             )
@@ -317,31 +320,27 @@ class AWSSecretResolver(ArgumentResolver, alias="aws-secret"):  # type: ignore[c
         if cached_json is not None:
             return cached_json
 
-        try:
-            # Get the secret string
-            secret_json_string = self._get_secret_from_aws(secret_name)
-
-            # Parse JSON
-            try:
-                secret_data = json.loads(secret_json_string)
-            except json.JSONDecodeError as e:
-                raise SecretDecodeError(
-                    f"Secret '{secret_name}' is not valid JSON: {e}"
-                ) from e
-
-            # Extract and cache the JSON value
-            if json_key not in secret_data:
-                raise SecretNotFoundError(
-                    f"Key '{json_key}' not found in secret '{secret_name}'"
-                )
-
-            json_cache.set(cache_key, secret_data[json_key])
-            logger.info(f"Cached JSON key '{json_key}' from secret '{secret_name}'")
-            return secret_data[json_key]
-
-        except SecretResolverError as e:
-            logger.error(f"Error resolving JSON secret '{secret_name}': {e}")
+        # Get the secret string - this may raise SecretResolverError
+        secret_json_string = self._get_secret_from_aws(secret_name)
+        if not secret_json_string:
+            logger.error(f"Failed to get secret string for '{secret_name}'")
             return None
+
+        # Parse JSON - this may raise SecretDecodeError
+        try:
+            secret_data = json.loads(secret_json_string)
+        except json.JSONDecodeError as e:
+            logger.error(f"Secret '{secret_name}' is not valid JSON: {e}")
+            return None
+
+        # Extract and cache the JSON value
+        if json_key not in secret_data:
+            logger.error(f"Key '{json_key}' not found in secret '{secret_name}'")
+            return None
+
+        json_cache.set(cache_key, secret_data[json_key])
+        logger.info(f"Cached JSON key '{json_key}' from secret '{secret_name}'")
+        return secret_data[json_key]
 
     @classmethod
     def resolve_argument(cls, variable_name: str) -> Optional[Any]:
@@ -394,7 +393,3 @@ class AWSSecretResolver(ArgumentResolver, alias="aws-secret"):  # type: ignore[c
     def get_value(self) -> str:
         """Return the secret value (or a default if not found)."""
         return self._secret_value or self.default  # type: ignore[no-any-return]
-
-    def get_secret_value(self, secret_id: str) -> str | None:
-        """Return the secret value (or None if not found)."""
-        return self._secret_value or None
