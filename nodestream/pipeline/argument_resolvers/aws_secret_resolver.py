@@ -162,9 +162,25 @@ class SecretCache:
             logger.debug(msg)
 
 
-# Initialize caches
-secret_cache = SecretCache()
-json_cache = SecretCache()
+# Initialize caches lazily
+_secret_cache: Optional[SecretCache] = None
+_json_cache: Optional[SecretCache] = None
+
+
+def _get_secret_cache() -> SecretCache:
+    """Get the secret cache, initializing it if necessary."""
+    global _secret_cache
+    if _secret_cache is None:
+        _secret_cache = SecretCache()
+    return _secret_cache
+
+
+def _get_json_cache() -> SecretCache:
+    """Get the JSON cache, initializing it if necessary."""
+    global _json_cache
+    if _json_cache is None:
+        _json_cache = SecretCache()
+    return _json_cache
 
 
 class AWSSecretResolver(ArgumentResolver, alias="aws-secret"):  # type: ignore[call-arg]
@@ -287,14 +303,14 @@ class AWSSecretResolver(ArgumentResolver, alias="aws-secret"):  # type: ignore[c
         logger.info(f"Resolving string secret '{secret_name}'")
 
         # Try cache first
-        cached_secret = secret_cache.get(secret_name)
+        cached_secret = _get_secret_cache().get(secret_name)
         if cached_secret is not None:
             return cached_secret  # type: ignore[no-any-return]
 
         try:
             # Fetch and cache
             secret_value = self._get_secret_from_aws(secret_name)
-            secret_cache.set(secret_name, secret_value)
+            _get_secret_cache().set(secret_name, secret_value)
             logger.info(f"Cached string secret '{secret_name}'")
             return secret_value
         except SecretResolverError as e:
@@ -316,7 +332,7 @@ class AWSSecretResolver(ArgumentResolver, alias="aws-secret"):  # type: ignore[c
         cache_key = f"{secret_name}:{json_key}"
 
         # Try JSON cache first
-        cached_json = json_cache.get(cache_key)
+        cached_json = _get_json_cache().get(cache_key)
         if cached_json is not None:
             return cached_json
 
@@ -338,7 +354,7 @@ class AWSSecretResolver(ArgumentResolver, alias="aws-secret"):  # type: ignore[c
             logger.error(f"Key '{json_key}' not found in secret '{secret_name}'")
             return None
 
-        json_cache.set(cache_key, secret_data[json_key])
+        _get_json_cache().set(cache_key, secret_data[json_key])
         logger.info(f"Cached JSON key '{json_key}' from secret '{secret_name}'")
         return secret_data[json_key]
 
