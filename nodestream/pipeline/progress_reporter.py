@@ -33,7 +33,7 @@ class PipelineProgressReporter:
     """A `PipelineProgressReporter` is a utility that can be used to report on the progress of a pipeline."""
 
     reporting_frequency: int = 10000
-    time_interval_seconds: Optional[float] = None
+    metrics_interval_in_seconds: Optional[float] = None
     logger: Logger = field(default_factory=getLogger)
     callback: Callable[[int, Metrics], None] = field(default=no_op)
     on_start_callback: Callable[[], None] = field(default=no_op)
@@ -71,9 +71,9 @@ class PipelineProgressReporter:
         )
 
     def report(self, index, metrics: Metrics):
-        if self.time_interval_seconds is not None:
+        if self.metrics_interval_in_seconds is not None:
             current_time = time.time()
-            if current_time - self.last_report_time >= self.time_interval_seconds:
+            if current_time - self.last_report_time >= self.metrics_interval_in_seconds:
                 self.callback(index, metrics)
                 self.last_report_time = current_time
         elif index % self.reporting_frequency == 0:

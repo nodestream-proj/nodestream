@@ -58,7 +58,7 @@ class Run(NodestreamCommand):
             flag=False,
         ),
         option(
-            "time-interval-seconds",
+            "metrics-interval-seconds",
             description="Time interval to report metrics in seconds",
             default=None,
             flag=False,

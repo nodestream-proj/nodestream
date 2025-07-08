@@ -60,7 +60,7 @@ def test_create_progress_reporter_with_time_interval_seconds(
     """Test that time_interval_seconds gets properly converted to float and passed to PipelineProgressReporter"""
     command = mocker.Mock()
     command.option.side_effect = lambda opt: {
-        "time-interval-seconds": "30.5",
+        "metrics-interval-in-seconds": "30.5",
         "reporting-frequency": "1000",
     }.get(opt)
     command.has_json_logging_set = False
@@ -75,7 +75,7 @@ def test_create_progress_reporter_with_time_interval_seconds(
     # Verify PipelineProgressReporter was called with correct time_interval_seconds
     mock_progress_reporter.assert_called_once()
     call_args = mock_progress_reporter.call_args
-    assert_that(call_args.kwargs["time_interval_seconds"], equal_to(30.5))
+    assert_that(call_args.kwargs["metrics_interval_in_seconds"], equal_to(30.5))
     assert_that(call_args.kwargs["reporting_frequency"], equal_to(1000))
 
 
@@ -85,7 +85,7 @@ def test_create_progress_reporter_without_time_interval_seconds(
     """Test that time_interval_seconds is None when not provided"""
     command = mocker.Mock()
     command.option.side_effect = lambda opt: {
-        "time-interval-seconds": None,
+        "metrics-interval-in-seconds": None,
         "reporting-frequency": "2000",
     }.get(opt)
     command.has_json_logging_set = False
@@ -100,7 +100,7 @@ def test_create_progress_reporter_without_time_interval_seconds(
     # Verify PipelineProgressReporter was called with None for time_interval_seconds
     mock_progress_reporter.assert_called_once()
     call_args = mock_progress_reporter.call_args
-    assert_that(call_args.kwargs["time_interval_seconds"], equal_to(None))
+    assert_that(call_args.kwargs["metrics_interval_in_seconds"], equal_to(None))
     assert_that(call_args.kwargs["reporting_frequency"], equal_to(2000))
 
 
@@ -108,7 +108,7 @@ def test_create_progress_reporter_with_json_indicator(run_pipeline_operation, mo
     """Test that create_progress_reporter works correctly with JSON progress indicator"""
     command = mocker.Mock()
     command.option.side_effect = lambda opt: {
-        "time-interval-seconds": "15.0",
+        "metrics-interval-in-seconds": "15.0",
         "reporting-frequency": "500",
     }.get(opt)
     command.has_json_logging_set = True
@@ -123,7 +123,7 @@ def test_create_progress_reporter_with_json_indicator(run_pipeline_operation, mo
     # Verify PipelineProgressReporter was called with correct arguments
     mock_progress_reporter.assert_called_once()
     call_args = mock_progress_reporter.call_args
-    assert_that(call_args.kwargs["time_interval_seconds"], equal_to(15.0))
+    assert_that(call_args.kwargs["metrics_interval_in_seconds"], equal_to(15.0))
     assert_that(call_args.kwargs["reporting_frequency"], equal_to(500))
 
 
@@ -142,7 +142,7 @@ def test_make_run_request_with_time_interval_seconds_integration(
         "annotations": annotations,
         "step-outbox-size": "10001",
         "target": targets,
-        "time-interval-seconds": "45.0",
+        "metrics-interval-in-seconds": "45.0",
         "reporting-frequency": "5000",
     }
     command.option.side_effect = lambda opt: option_responses.get(opt)
@@ -168,7 +168,7 @@ def test_make_run_request_with_time_interval_seconds_integration(
     # Verify the progress reporter was created with correct time_interval_seconds
     mock_progress_reporter.assert_called_once()
     call_args = mock_progress_reporter.call_args
-    assert_that(call_args.kwargs["time_interval_seconds"], equal_to(45.0))
+    assert_that(call_args.kwargs["metrics_interval_in_seconds"], equal_to(45.0))
     assert_that(call_args.kwargs["reporting_frequency"], equal_to(5000))
 
     # Verify other parts of the request are still correct

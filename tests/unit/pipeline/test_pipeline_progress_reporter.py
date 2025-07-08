@@ -22,11 +22,11 @@ async def test_pipeline_progress_reporter_for_testing(mocker):
     assert_that(result.logger.name, equal_to("test"))
 
 
-def test_pipeline_progress_reporter_with_time_interval_seconds(mocker):
-    """Test that time_interval_seconds works correctly"""
+def test_pipeline_progress_reporter_with_metrics_interval_in_seconds(mocker):
+    """Test that metrics_interval_in_seconds works correctly"""
     mock_callback = Mock()
     reporter = PipelineProgressReporter(
-        time_interval_seconds=0.1, callback=mock_callback
+        metrics_interval_in_seconds=0.1, callback=mock_callback
     )
 
     mock_time = mocker.patch("nodestream.pipeline.progress_reporter.time.time")
@@ -39,11 +39,11 @@ def test_pipeline_progress_reporter_with_time_interval_seconds(mocker):
     assert_that(mock_callback.call_count, equal_to(1))
 
 
-def test_pipeline_progress_reporter_without_time_interval_uses_frequency():
-    """Test that None time_interval_seconds falls back to frequency-based reporting"""
+def test_pipeline_progress_reporter_without_metrics_interval_in_seconds_uses_frequency():
+    """Test that None metrics_interval_in_seconds falls back to frequency-based reporting"""
     mock_callback = Mock()
     reporter = PipelineProgressReporter(
-        time_interval_seconds=None, reporting_frequency=3, callback=mock_callback
+        metrics_interval_in_seconds=None, reporting_frequency=3, callback=mock_callback
     )
 
     metrics = Metrics()
