@@ -20,7 +20,7 @@ def mock_boto3_client(mocker):
     return mock_client
 
 
-def test_resolve_string_secret(monkeypatch, mocker, mock_boto3_client):
+def test_resolve_string_secret(monkeypatch, mock_boto3_client):
     # Set up environment variable
     monkeypatch.setenv("FAKE_SECRET_ENV", "fake_secret_name")
     # Mock AWS response
@@ -30,7 +30,7 @@ def test_resolve_string_secret(monkeypatch, mocker, mock_boto3_client):
     assert_that(result, equal_to("supersecret"))
 
 
-def test_resolve_json_secret(monkeypatch, mocker, mock_boto3_client):
+def test_resolve_json_secret(monkeypatch, mock_boto3_client):
     # Set up environment variable
     monkeypatch.setenv("FAKE_JSON_SECRET_ENV", "fake_json_secret_name")
     # Mock AWS response with JSON string
@@ -41,7 +41,7 @@ def test_resolve_json_secret(monkeypatch, mocker, mock_boto3_client):
 
 
 def test_resolve_json_secret_with_invalid_json_returns_none(
-    monkeypatch, mocker, mock_boto3_client
+    monkeypatch, mock_boto3_client
 ):
     # Set up environment variable
     monkeypatch.setenv("FAKE_INVALID_JSON_ENV", "fake_invalid_json_secret_name")
@@ -55,7 +55,7 @@ def test_resolve_json_secret_with_invalid_json_returns_none(
 
 
 def test_resolve_json_secret_with_malformed_json_returns_none(
-    monkeypatch, mocker, mock_boto3_client
+    monkeypatch, mock_boto3_client
 ):
     # Set up environment variable
     monkeypatch.setenv("FAKE_MALFORMED_JSON_ENV", "fake_malformed_json_secret_name")
@@ -88,3 +88,64 @@ def test_secret_cache_expired(monkeypatch):
 def test_secret_cache_miss():
     cache = SecretCache(ttl=5)
     assert cache.get("missing") is None
+
+
+def test_resolve_argument_with_missing_env_var_returns_none(
+    monkeypatch, mock_boto3_client
+):
+    """Test that resolve_argument returns None when environment variable is not set."""
+    # Don't set any environment variable
+    # Should return None when environment variable is missing
+    result = AWSSecretResolver.resolve_argument("MISSING_ENV_VAR")
+    assert_that(
+        result,
+        equal_to(None),
+    )
+
+
+def test_resolve_argument_with_empty_env_var_returns_none(
+    monkeypatch, mock_boto3_client
+):
+    """Test that resolve_argument returns None when environment variable is empty."""
+    # Set environment variable to empty string
+    monkeypatch.setenv("EMPTY_ENV_VAR", "")
+    # Should return None when environment variable is empty
+    result = AWSSecretResolver.resolve_argument("EMPTY_ENV_VAR")
+    assert_that(
+        result,
+        equal_to(None),
+    )
+
+
+def test_resolve_json_argument_with_missing_env_var_returns_none(
+    monkeypatch, mock_boto3_client
+):
+    """Test that resolve_argument returns None for JSON secrets when env var is missing."""
+    # Don't set any environment variable
+    # Should return None when environment variable is missing
+    result = AWSSecretResolver.resolve_argument("MISSING_ENV_VAR.key")
+    assert_that(
+        result,
+        equal_to(None),
+    )
+
+
+def test_resolve_argument_with_unexpected_exception_returns_none(
+    monkeypatch, mock_boto3_client
+):
+    """Test that resolve_argument returns None when an unexpected exception occurs."""
+    # Clear the cache to ensure we don't get cached results
+    from nodestream.pipeline.argument_resolvers.aws_secret_resolver import (
+        _get_secret_cache,
+    )
+
+    _get_secret_cache()._cache.clear()
+
+    # Set up environment variable
+    monkeypatch.setenv("FAKE_SECRET_ENV", "fake_secret_name")
+    # Mock AWS client to raise an unexpected exception
+    mock_boto3_client.get_secret_value.side_effect = Exception("Unexpected error")
+
+    # Should return None when an unexpected exception occurs
+    result = AWSSecretResolver.resolve_argument("FAKE_SECRET_ENV")
+    assert_that(result, equal_to(None))

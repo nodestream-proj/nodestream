@@ -259,7 +259,7 @@ class AWSSecretResolver(ArgumentResolver, alias="aws-secret"):  # type: ignore[c
         """
         secret_name = os.environ.get(env_var)
         if not secret_name:
-            logger.error(f"Environment variable '{env_var}' is not set or is empty")
+            logger.warning(f"Environment variable '{env_var}' is not set or is empty")
             return None
         return secret_name
 
