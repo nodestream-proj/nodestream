@@ -2,12 +2,13 @@ from cleo.helpers import option
 
 from ..operations import InitializeProject, PrintProjectSchema
 from .nodestream_command import NodestreamCommand
-from .shared_options import PROJECT_FILE_OPTION
+from .shared_options import PROJECT_FILE_OPTION, MANY_PIPELINES_ARGUMENT
 
 
 class PrintSchema(NodestreamCommand):
     name = "print schema"
     description = "Print the schema for the current project"
+    arguments = [MANY_PIPELINES_ARGUMENT]
     options = [
         PROJECT_FILE_OPTION,
         option(
@@ -37,5 +38,6 @@ class PrintSchema(NodestreamCommand):
                 format_string=self.option("format"),
                 type_overrides_file=self.option("overrides"),
                 output_file=self.option("out"),
+                pipeline_names=self.argument("pipelines"),
             )
         )
