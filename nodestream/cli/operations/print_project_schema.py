@@ -29,11 +29,11 @@ class PrintProjectSchema(Operation):
         if self.pipeline_names:
             schema = self.project.get_pipelines_schema(
                 pipeline_names=self.pipeline_names,
-                type_overrides_file=type_overrides_file
+                type_overrides_file=type_overrides_file,
             )
         else:
             schema = self.project.get_schema(type_overrides_file=type_overrides_file)
-        
+
         # Import all schema printers so that they can register themselves
         SchemaPrinter.import_all()
         printer = SchemaPrinter.from_name(self.format_string)

@@ -291,7 +291,9 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
             schema.merge(overrides_schema)
         return schema
 
-    def get_pipelines_schema(self, pipeline_names: List[str], type_overrides_file: Optional[Path] = None) -> Schema:
+    def get_pipelines_schema(
+        self, pipeline_names: List[str], type_overrides_file: Optional[Path] = None
+    ) -> Schema:
         """Returns a `GraphSchema` representing only the specified pipelines.
 
         This method generates a schema from only the specified pipelines,
@@ -313,33 +315,36 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
             targets_by_name=self.targets_by_name,
             storage_configuration=self.storage_configuration,
         )
-        
+
         pipelines_found = []
-        
+
         for scope in self.scopes_by_name.values():
             filtered_scope = PipelineScope(
                 name=scope.name,
                 config=scope.config,
                 pipeline_configuration=scope.pipeline_configuration,
             )
-            
+
             for pipeline_name in pipeline_names:
                 if pipeline_name in scope.pipelines_by_name:
                     filtered_scope.add_pipeline_definition(
                         scope.pipelines_by_name[pipeline_name]
                     )
                     pipelines_found.append(pipeline_name)
-            
+
             if filtered_scope.pipelines_by_name:
                 filtered_project.add_scope(filtered_scope)
-        
+
         if not pipelines_found:
             available_pipelines = [
-                name for scope in self.scopes_by_name.values() 
+                name
+                for scope in self.scopes_by_name.values()
                 for name in scope.pipelines_by_name.keys()
             ]
-            raise ValueError(f"None of the specified pipelines {pipeline_names} were found. Available pipelines: {available_pipelines}")
-        
+            raise ValueError(
+                f"None of the specified pipelines {pipeline_names} were found. Available pipelines: {available_pipelines}"
+            )
+
         schema = filtered_project.make_schema()
         if type_overrides_file is not None:
             overrides_schema = Schema.read_from_file(type_overrides_file)

@@ -2,7 +2,7 @@ from cleo.helpers import option
 
 from ..operations import InitializeProject, PrintProjectSchema
 from .nodestream_command import NodestreamCommand
-from .shared_options import PROJECT_FILE_OPTION, MANY_PIPELINES_ARGUMENT
+from .shared_options import MANY_PIPELINES_ARGUMENT, PROJECT_FILE_OPTION
 
 
 class PrintSchema(NodestreamCommand):
