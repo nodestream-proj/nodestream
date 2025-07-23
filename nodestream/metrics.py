@@ -214,7 +214,6 @@ class ConsoleMetricHandler(MetricHandler):
         self.metrics[metric] = self.metrics.get(metric, 0) + value
 
     def decrement(self, metric: Metric, value: Number):
-        # Decrementing metrics that are accumulated doesn't help.
         if not metric.accumulate:
             self.metrics[metric] = self.metrics.get(metric, 0) - value
 
@@ -250,7 +249,6 @@ class JsonLogMetricHandler(MetricHandler):
         self.metrics[metric] = self.metrics.get(metric, 0) + value
 
     def decrement(self, metric: Metric, value: Number):
-        # Decrementing metrics that are accumulated doesn't help.
         if not metric.accumulate:
             self.metrics[metric] = self.metrics.get(metric, 0) - value
 
