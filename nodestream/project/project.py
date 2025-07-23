@@ -345,11 +345,7 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 f"None of the specified pipelines {pipeline_names} were found. Available pipelines: {available_pipelines}"
             )
 
-        schema = filtered_project.make_schema()
-        if type_overrides_file is not None:
-            overrides_schema = Schema.read_from_file(type_overrides_file)
-            schema.merge(overrides_schema)
-        return schema
+        return filtered_project.get_schema(type_overrides_file=type_overrides_file)
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return self.scopes_by_name.values()
