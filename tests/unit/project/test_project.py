@@ -378,3 +378,74 @@ def test_project_get_from_storage(project, mocker):
         result,
         same_instance(project.storage_configuration.initialize_by_name.return_value),
     )
+
+
+def test_get_pipelines_schema_single_pipeline(project, mocker):
+    """Test filtering schema for a single pipeline."""
+    mock_schema = mocker.Mock(spec=Schema)
+
+    # Mock the pipeline initialization to avoid file system dependencies
+    mocker.patch.object(project.__class__, "make_schema", return_value=mock_schema)
+    mock_pipeline_init = mocker.patch(
+        "nodestream.project.pipeline_definition.PipelineDefinition.initialize_for_introspection"
+    )
+    mock_pipeline = mocker.Mock()
+    mock_pipeline.expand_schema = mocker.Mock()
+    mock_pipeline_init.return_value = mock_pipeline
+
+    result = project.get_pipelines_schema(["test"])
+
+    # Verify the result
+    assert_that(result, same_instance(mock_schema))
+
+
+def test_get_pipelines_schema_with_type_overrides(project, mocker):
+    """Test pipeline schema generation with type overrides."""
+    mock_base_schema = mocker.Mock(spec=Schema)
+    mock_overrides_schema = mocker.Mock(spec=Schema)
+
+    # Mock the pipeline initialization and schema loading
+    mocker.patch.object(project.__class__, "make_schema", return_value=mock_base_schema)
+    mock_pipeline_init = mocker.patch(
+        "nodestream.project.pipeline_definition.PipelineDefinition.initialize_for_introspection"
+    )
+    mock_pipeline = mocker.Mock()
+    mock_pipeline.expand_schema = mocker.Mock()
+    mock_pipeline_init.return_value = mock_pipeline
+
+    Schema.read_from_file = mocker.Mock(return_value=mock_overrides_schema)
+
+    overrides_path = Path("some/overrides.yaml")
+    result = project.get_pipelines_schema(["test"], overrides_path)
+
+    Schema.read_from_file.assert_called_once_with(overrides_path)
+    mock_base_schema.merge.assert_called_once_with(mock_overrides_schema)
+    assert_that(result, same_instance(mock_base_schema))
+
+
+def test_get_pipelines_schema_nonexistent_pipeline_raises_error(project):
+    """Test that specifying non-existent pipelines raises ValueError with helpful message."""
+    with pytest.raises(ValueError) as exc_info:
+        project.get_pipelines_schema(["nonexistent"])
+
+    error_message = str(exc_info.value)
+    assert_that(
+        error_message,
+        equal_to(
+            "None of the specified pipelines ['nonexistent'] were found. Available pipelines: ['test', 'test2']"
+        ),
+    )
+
+
+def test_get_pipelines_schema_empty_list_raises_error(project):
+    """Test that providing an empty pipeline list raises ValueError."""
+    with pytest.raises(ValueError) as exc_info:
+        project.get_pipelines_schema([])
+
+    error_message = str(exc_info.value)
+    assert_that(
+        error_message,
+        equal_to(
+            "None of the specified pipelines [] were found. Available pipelines: ['test', 'test2']"
+        ),
+    )
