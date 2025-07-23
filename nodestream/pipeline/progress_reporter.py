@@ -68,7 +68,7 @@ class PipelineProgressReporter:
             on_start_callback=no_op,
             on_finish_callback=no_op,
             on_fatal_error_callback=raise_exception,
-            observability_callback=lambda _: lambda record: results_list.append(record),
+            observability_callback=lambda record: results_list.append(record),
         )
 
     def report(self, index, metrics: Metrics):
