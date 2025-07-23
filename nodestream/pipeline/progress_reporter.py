@@ -64,10 +64,11 @@ class PipelineProgressReporter:
         return cls(
             reporting_frequency=1,
             logger=getLogger("test"),
-            callback=lambda _, record: results_list.append(record),
+            callback=no_op,
             on_start_callback=no_op,
             on_finish_callback=no_op,
             on_fatal_error_callback=raise_exception,
+            observability_callback=lambda _: lambda record: results_list.append(record),
         )
 
     def report(self, index, metrics: Metrics):
