@@ -379,73 +379,79 @@ def test_project_get_from_storage(project, mocker):
         same_instance(project.storage_configuration.initialize_by_name.return_value),
     )
 
-
-def test_get_pipelines_schema_single_pipeline(project, mocker):
-    """Test filtering schema for a single pipeline."""
+def test_get_pipelines_schema_multiple_pipelines(project, mocker):
     mock_schema = mocker.Mock(spec=Schema)
+    mock_coordinator = mocker.Mock()
+    mock_coordinator.schema = mock_schema
 
-    # Mock the pipeline initialization to avoid file system dependencies
-    mocker.patch.object(project.__class__, "make_schema", return_value=mock_schema)
-    mock_pipeline_init = mocker.patch(
-        "nodestream.project.pipeline_definition.PipelineDefinition.initialize_for_introspection"
-    )
-    mock_pipeline = mocker.Mock()
-    mock_pipeline.expand_schema = mocker.Mock()
-    mock_pipeline_init.return_value = mock_pipeline
-
-    result = project.get_pipelines_schema(["test"])
-
-    # Verify the result
+    mocker.patch('nodestream.project.project.SchemaExpansionCoordinator', return_value=mock_coordinator)
+    
+    mock_pipeline1 = mocker.Mock()
+    mock_pipeline1.initialize_for_introspection = mocker.Mock()
+    mock_pipeline1.expand_schema = mocker.Mock()
+    
+    mock_pipeline2 = mocker.Mock()
+    mock_pipeline2.initialize_for_introspection = mocker.Mock()
+    mock_pipeline2.expand_schema = mocker.Mock()
+    
+    mocker.patch.object(project, 'get_pipeline_by_names', return_value=[mock_pipeline1, mock_pipeline2])
+    
+    result = project.get_pipelines_schema(["test", "test2"])
+    
+    mock_pipeline1.initialize_for_introspection.assert_called_once()
+    mock_pipeline1.expand_schema.assert_called_once_with(coordinator=mock_coordinator)
+    mock_pipeline2.initialize_for_introspection.assert_called_once()
+    mock_pipeline2.expand_schema.assert_called_once_with(coordinator=mock_coordinator)
     assert_that(result, same_instance(mock_schema))
 
 
 def test_get_pipelines_schema_with_type_overrides(project, mocker):
-    """Test pipeline schema generation with type overrides."""
     mock_base_schema = mocker.Mock(spec=Schema)
     mock_overrides_schema = mocker.Mock(spec=Schema)
-
-    # Mock the pipeline initialization and schema loading
-    mocker.patch.object(project.__class__, "make_schema", return_value=mock_base_schema)
-    mock_pipeline_init = mocker.patch(
-        "nodestream.project.pipeline_definition.PipelineDefinition.initialize_for_introspection"
-    )
-    mock_pipeline = mocker.Mock()
-    mock_pipeline.expand_schema = mocker.Mock()
-    mock_pipeline_init.return_value = mock_pipeline
-
+    mock_coordinator = mocker.Mock()
+    mock_coordinator.schema = mock_base_schema
+    
+    mocker.patch('nodestream.project.project.SchemaExpansionCoordinator', return_value=mock_coordinator)
     Schema.read_from_file = mocker.Mock(return_value=mock_overrides_schema)
-
+    
+    mock_pipeline = mocker.Mock()
+    mock_pipeline.initialize_for_introspection = mocker.Mock()
+    mock_pipeline.expand_schema = mocker.Mock()
+    mocker.patch.object(project, 'get_pipeline_by_names', return_value=[mock_pipeline])
+    
     overrides_path = Path("some/overrides.yaml")
     result = project.get_pipelines_schema(["test"], overrides_path)
-
+    
     Schema.read_from_file.assert_called_once_with(overrides_path)
     mock_base_schema.merge.assert_called_once_with(mock_overrides_schema)
     assert_that(result, same_instance(mock_base_schema))
 
 
-def test_get_pipelines_schema_nonexistent_pipeline_raises_error(project):
-    """Test that specifying non-existent pipelines raises ValueError with helpful message."""
+def test_get_pipelines_schema_nonexistent_pipeline_raises_error(project, mocker):
+    mocker.patch.object(project, 'get_pipeline_by_names', return_value=[])
+    
     with pytest.raises(ValueError) as exc_info:
         project.get_pipelines_schema(["nonexistent"])
-
+    
     error_message = str(exc_info.value)
-    assert_that(
-        error_message,
-        equal_to(
-            "None of the specified pipelines ['nonexistent'] were found. Available pipelines: ['test', 'test2']"
-        ),
-    )
+    assert_that(error_message, equal_to(
+        "None of the specified pipelines ['nonexistent'] were found. Available pipelines: ['test', 'test2']"
+    ))
+
+def test_get_pipeline_by_names(project):
+    pipelines = list(project.get_pipeline_by_names(["test", "test2"]))
+    
+    assert_that(pipelines, has_length(2))
+    assert_that([p.name for p in pipelines], contains_inanyorder("test", "test2"))
 
 
-def test_get_pipelines_schema_empty_list_raises_error(project):
-    """Test that providing an empty pipeline list raises ValueError."""
-    with pytest.raises(ValueError) as exc_info:
-        project.get_pipelines_schema([])
+def test_get_pipeline_by_names_nonexistent_pipeline(project):
+    pipelines = list(project.get_pipeline_by_names(["nonexistent"]))
+    assert_that(pipelines, has_length(0))
 
-    error_message = str(exc_info.value)
-    assert_that(
-        error_message,
-        equal_to(
-            "None of the specified pipelines [] were found. Available pipelines: ['test', 'test2']"
-        ),
-    )
+
+def test_get_pipeline_by_names_mixed_existing_nonexisting(project):
+    pipelines = list(project.get_pipeline_by_names(["test", "nonexistent", "test2"]))
+    
+    assert_that(pipelines, has_length(2))
+    assert_that([p.name for p in pipelines], contains_inanyorder("test", "test2"))

@@ -13,7 +13,12 @@ from ..file_io import (
 from ..pipeline import Step
 from ..pipeline.object_storage import ObjectStore
 from ..pluggable import Pluggable
-from ..schema import ExpandsSchema, ExpandsSchemaFromChildren, Schema
+from ..schema import (
+    ExpandsSchema,
+    ExpandsSchemaFromChildren,
+    Schema,
+    SchemaExpansionCoordinator,
+)
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .plugin import PluginConfiguration
@@ -245,6 +250,16 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
             if pipeline is not None:
                 return pipeline
 
+    def get_pipeline_by_names(
+        self, pipeline_names: List[str]
+    ) -> Iterable[PipelineDefinition]:
+        """Returns pipeline objects in the project."""
+        for scope in self.scopes_by_name.values():
+            for pipeline_name in pipeline_names:
+                pipeline = scope.pipelines_by_name.get(pipeline_name, None)
+                if pipeline is not None:
+                    yield pipeline
+
     def delete_pipeline(
         self,
         scope_name: Optional[str],
@@ -310,32 +325,9 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         Raises:
             ValueError: If none of the specified pipelines are found.
         """
-        # Create a temporary project to store only the specified pipelines
-        filtered_project = Project(
-            targets_by_name=self.targets_by_name,
-            storage_configuration=self.storage_configuration,
-        )
+        pipeline_definitions = list(self.get_pipeline_by_names(pipeline_names))
 
-        pipelines_found = []
-
-        for scope in self.scopes_by_name.values():
-            filtered_scope = PipelineScope(
-                name=scope.name,
-                config=scope.config,
-                pipeline_configuration=scope.pipeline_configuration,
-            )
-
-            for pipeline_name in pipeline_names:
-                if pipeline_name in scope.pipelines_by_name:
-                    filtered_scope.add_pipeline_definition(
-                        scope.pipelines_by_name[pipeline_name]
-                    )
-                    pipelines_found.append(pipeline_name)
-
-            if filtered_scope.pipelines_by_name:
-                filtered_project.add_scope(filtered_scope)
-
-        if not pipelines_found:
+        if not pipeline_definitions:
             available_pipelines = [
                 name
                 for scope in self.scopes_by_name.values()
@@ -345,7 +337,19 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 f"None of the specified pipelines {pipeline_names} were found. Available pipelines: {available_pipelines}"
             )
 
-        return filtered_project.get_schema(type_overrides_file=type_overrides_file)
+        coordinator = SchemaExpansionCoordinator(schema := Schema())
+
+        for pipeline in pipeline_definitions:
+            pipeline.initialize_for_introspection()
+            pipeline.expand_schema(coordinator=coordinator)
+
+        schema = coordinator.schema
+
+        if type_overrides_file is not None:
+            overrides_schema = Schema.read_from_file(type_overrides_file)
+            schema.merge(overrides_schema)
+
+        return schema
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return self.scopes_by_name.values()
