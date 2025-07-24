@@ -202,3 +202,40 @@ def test_json_log_metric_handler_discharge_with_accumulate(mocker):
     # Accumulating metric should be reset to 0, non-accumulating should remain
     assert handler.metrics[accumulating_metric] == 0
     assert handler.metrics[non_accumulating_metric] == 7
+
+
+def test_json_log_metric_handler_discharge_with_accumulate_and_decrement(mocker):
+    """Test that JsonLogMetricHandler does not decrement accumulating metrics"""
+    handler = JsonLogMetricHandler()
+
+    accumulating_metric = Metric("test_accumulate", accumulate=True)
+    non_accumulating_metric = Metric("test_no_accumulate", accumulate=False)
+
+    handler.increment(accumulating_metric, 10)
+    handler.decrement(accumulating_metric, 7)
+
+    handler.increment(non_accumulating_metric, 10)
+    handler.decrement(non_accumulating_metric, 7)
+
+    # Accumulating metric should be reset to 0, non-accumulating should remain
+    assert handler.metrics[accumulating_metric] == 10
+    assert handler.metrics[non_accumulating_metric] == 3
+
+
+def test_console_metric_handler_discharge_with_accumulate_and_decrement(mocker):
+    """Test that ConsoleMetricHandler does not decrement accumulating metrics"""
+    mock_command = mocker.Mock()
+    handler = ConsoleMetricHandler(mock_command)
+
+    accumulating_metric = Metric("test_accumulate", accumulate=True)
+    non_accumulating_metric = Metric("test_no_accumulate", accumulate=False)
+
+    handler.increment(accumulating_metric, 10)
+    handler.decrement(accumulating_metric, 7)
+
+    handler.increment(non_accumulating_metric, 10)
+    handler.decrement(non_accumulating_metric, 7)
+
+    # Accumulating metric should be reset to 0, non-accumulating should remain
+    assert handler.metrics[accumulating_metric] == 10
+    assert handler.metrics[non_accumulating_metric] == 3

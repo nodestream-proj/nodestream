@@ -51,6 +51,7 @@ class Channel:
         metric = Metric(
             f"buffered_{input_name}_to_{output_name}",
             f"Records buffered: {input_name} → {output_name}",
+            accumulate=True,
         )
         return cls(size, metric)
 
