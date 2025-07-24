@@ -13,7 +13,12 @@ from ..file_io import (
 from ..pipeline import Step
 from ..pipeline.object_storage import ObjectStore
 from ..pluggable import Pluggable
-from ..schema import ExpandsSchema, ExpandsSchemaFromChildren, Schema
+from ..schema import (
+    ExpandsSchema,
+    ExpandsSchemaFromChildren,
+    Schema,
+    SchemaExpansionCoordinator,
+)
 from .pipeline_definition import PipelineDefinition
 from .pipeline_scope import PipelineScope
 from .plugin import PluginConfiguration
@@ -245,6 +250,16 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
             if pipeline is not None:
                 return pipeline
 
+    def get_pipeline_by_names(
+        self, pipeline_names: List[str]
+    ) -> Iterable[PipelineDefinition]:
+        """Returns pipeline objects in the project."""
+        for scope in self.scopes_by_name.values():
+            for pipeline_name in pipeline_names:
+                pipeline = scope.pipelines_by_name.get(pipeline_name, None)
+                if pipeline is not None:
+                    yield pipeline
+
     def delete_pipeline(
         self,
         scope_name: Optional[str],
@@ -289,6 +304,51 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         if type_overrides_file is not None:
             overrides_schema = Schema.read_from_file(type_overrides_file)
             schema.merge(overrides_schema)
+        return schema
+
+    def get_pipelines_schema(
+        self, pipeline_names: List[str], type_overrides_file: Optional[Path] = None
+    ) -> Schema:
+        """Returns a `GraphSchema` representing only the specified pipelines.
+
+        This method generates a schema from only the specified pipelines,
+        allowing you to see what schema specific pipelines contribute without interference
+        from other pipelines in the project.
+
+        Args:
+            pipeline_names (List[str]): List of pipeline names to include in schema generation.
+            type_overrides_file (Optional[Path], optional): A path to a YAML file containing type overrides. Defaults to None.
+
+        Returns:
+            Schema: The schema representing only the specified pipelines.
+
+        Raises:
+            ValueError: If none of the specified pipelines are found.
+        """
+        pipeline_definitions = list(self.get_pipeline_by_names(pipeline_names))
+
+        if not pipeline_definitions:
+            available_pipelines = [
+                name
+                for scope in self.scopes_by_name.values()
+                for name in scope.pipelines_by_name.keys()
+            ]
+            raise ValueError(
+                f"None of the specified pipelines {pipeline_names} were found. Available pipelines: {available_pipelines}"
+            )
+
+        coordinator = SchemaExpansionCoordinator(schema := Schema())
+
+        for pipeline in pipeline_definitions:
+            pipeline.initialize_for_introspection()
+            pipeline.expand_schema(coordinator=coordinator)
+
+        schema = coordinator.schema
+
+        if type_overrides_file is not None:
+            overrides_schema = Schema.read_from_file(type_overrides_file)
+            schema.merge(overrides_schema)
+
         return schema
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
