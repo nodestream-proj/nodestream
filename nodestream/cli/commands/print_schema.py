@@ -1,4 +1,6 @@
-from cleo.helpers import option
+from typing import ClassVar
+
+from cleo.helpers import argument, option
 
 from ..operations import InitializeProject, PrintProjectSchema
 from .nodestream_command import NodestreamCommand
@@ -8,7 +10,7 @@ from .shared_options import MANY_PIPELINES_ARGUMENT, PROJECT_FILE_OPTION
 class PrintSchema(NodestreamCommand):
     name = "print schema"
     description = "Print the schema for the current project"
-    arguments = [MANY_PIPELINES_ARGUMENT]
+    arguments: ClassVar[list[argument]] = [MANY_PIPELINES_ARGUMENT]
     options = [
         PROJECT_FILE_OPTION,
         option(
