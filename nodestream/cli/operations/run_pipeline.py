@@ -122,8 +122,14 @@ class RunPipeline(Operation):
         self, command: NodestreamCommand, pipeline_name: str
     ) -> PipelineProgressReporter:
         indicator = self.get_progress_indicator(command, pipeline_name)
+        metrics_interval_in_seconds = (
+            float(command.option("metrics-interval-in-seconds"))
+            if command.option("metrics-interval-in-seconds")
+            else None
+        )
         return PipelineProgressReporter(
             reporting_frequency=int(command.option("reporting-frequency")),
+            metrics_interval_in_seconds=metrics_interval_in_seconds,
             callback=indicator.progress_callback,
             on_start_callback=indicator.on_start,
             on_finish_callback=indicator.on_finish,
