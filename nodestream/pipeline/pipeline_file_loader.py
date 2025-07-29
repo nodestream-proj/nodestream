@@ -52,7 +52,7 @@ class PipelineInitializationArguments:
     annotations: Optional[List[str]] = None
     on_effective_configuration_resolved: Optional[Callable[[List[Dict]], None]] = None
     extra_steps: Optional[List[Step]] = None
-    effecitve_config_values: Optional[ScopeConfig] = None
+    effective_config_values: Optional[ScopeConfig] = None
     object_store: ObjectStore = field(default_factory=ObjectStore.null)
 
     @classmethod
@@ -145,7 +145,7 @@ class PipelineFileContents(LoadsFromYamlFile):
         self.step_definitions = step_definitions
 
     def initialize_with_arguments(self, init_args: PipelineInitializationArguments):
-        with set_config(init_args.effecitve_config_values):
+        with set_config(init_args.effective_config_values):
             steps_defined_in_file = [
                 step_definition.load_step()
                 for step_definition in self.step_definitions
