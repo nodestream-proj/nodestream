@@ -4,7 +4,7 @@ from typing import Any
 
 from pythonjsonlogger.jsonlogger import JsonFormatter
 
-from nodestream.cli.commands.nodestream_command import BaseCommand
+from nodestream.cli.commands.nodestream_command import NodestreamCommand
 from nodestream.metrics import Metrics
 from nodestream.logging_metrics import MetricsLoggingHandler
 from .operation import Operation
@@ -40,6 +40,6 @@ def configure_logging_with_json_defaults():
 
 
 class InitializeLogger(Operation):
-    async def perform(self, command: BaseCommand) -> Any:
+    async def perform(self, command: NodestreamCommand) -> Any:
         if command.has_json_logging_set:
             configure_logging_with_json_defaults()

@@ -70,7 +70,7 @@ def test_pipeline_file_loads_lazy():
 
 def test_pipeline_file_loads_config_when_set():
     init_args = PipelineInitializationArguments(
-        effecitve_config_values=ScopeConfig({"name": "test"})
+        effective_config_values=ScopeConfig({"name": "test"})
     )
     file_contents = PipelineFileContents.read_from_file(
         Path("tests/unit/pipeline/fixtures/config_pipeline.yaml")
