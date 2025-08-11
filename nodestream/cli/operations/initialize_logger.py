@@ -4,8 +4,9 @@ from typing import Any
 
 from pythonjsonlogger.jsonlogger import JsonFormatter
 
-from ...metrics import Metrics
-from ..commands.nodestream_command import NodestreamCommand
+from nodestream.cli.commands.nodestream_command import BaseCommand
+from nodestream.metrics import Metrics
+from nodestream.logging_metrics import MetricsLoggingHandler
 from .operation import Operation
 
 
@@ -32,9 +33,13 @@ def configure_logging_with_json_defaults():
     )
     logger = logging.getLogger()  # Configure the root logger.
     logger.handlers[0].setFormatter(formatter)
+    
+    # Add metrics handler to track log level counts
+    metrics_handler = MetricsLoggingHandler()
+    logger.addHandler(metrics_handler)
 
 
 class InitializeLogger(Operation):
-    async def perform(self, command: NodestreamCommand) -> Any:
+    async def perform(self, command: BaseCommand) -> Any:
         if command.has_json_logging_set:
             configure_logging_with_json_defaults()
