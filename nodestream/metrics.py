@@ -94,10 +94,18 @@ NON_FATAL_ERRORS = Metric(
 FATAL_ERRORS = Metric("fatal_errors", "Number of fatal errors", accumulate=True)
 
 # Logging metrics
-LOG_ERROR_COUNT = Metric("log_error_count", "Number of error log messages", accumulate=True)
-LOG_WARNING_COUNT = Metric("log_warning_count", "Number of warning log messages", accumulate=True)
-LOG_INFO_COUNT = Metric("log_info_count", "Number of info log messages", accumulate=True)
-LOG_DEBUG_COUNT = Metric("log_debug_count", "Number of debug log messages", accumulate=True)
+LOG_ERROR_COUNT = Metric(
+    "log_error_count", "Number of error log messages", accumulate=True
+)
+LOG_WARNING_COUNT = Metric(
+    "log_warning_count", "Number of warning log messages", accumulate=True
+)
+LOG_INFO_COUNT = Metric(
+    "log_info_count", "Number of info log messages", accumulate=True
+)
+LOG_DEBUG_COUNT = Metric(
+    "log_debug_count", "Number of debug log messages", accumulate=True
+)
 
 NODES_UPSERTED = Metric(
     "nodes_upserted", "Number of nodes upserted to the graph", accumulate=True
