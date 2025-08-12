@@ -1,4 +1,5 @@
 import logging
+
 import pytest
 
 from nodestream.logging_metrics import MetricsLoggingHandler
@@ -7,8 +8,8 @@ from nodestream.metrics import (
     LOG_ERROR_COUNT,
     LOG_INFO_COUNT,
     LOG_WARNING_COUNT,
-    Metrics,
     ConsoleMetricHandler,
+    Metrics,
 )
 
 
