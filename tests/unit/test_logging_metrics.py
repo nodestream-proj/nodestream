@@ -99,3 +99,61 @@ def test_root_logger_handler_increments_for_distinct_logger(metrics):
     finally:
         root_logger.removeHandler(handler)
         root_logger.setLevel(original_level)
+
+
+# --- Exception handling tests ---
+class DummyMetrics:
+    def __init__(self):
+        self.calls = 0
+
+    def increment(self, *_, **__):
+        self.calls += 1
+        raise RuntimeError("increment failed")
+
+
+class SpyMetricsLoggingHandler(MetricsLoggingHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.handled = []
+
+    def handleError(self, record):  # noqa: N802 (match logging API)
+        self.handled.append(record)
+
+
+def test_handler_handles_increment_exception_without_raising():
+    logger = logging.getLogger("test_logger_exception")
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+
+    dummy_metrics = DummyMetrics()
+    handler = SpyMetricsLoggingHandler(dummy_metrics)
+    logger.addHandler(handler)
+
+    # Should not raise despite metrics increment failing
+    logger.error("trigger exception in metrics")
+
+    assert len(handler.handled) == 1
+    assert dummy_metrics.calls == 1
+
+    logger.removeHandler(handler)
+
+
+def test_root_logger_exception_handling_with_distinct_logger():
+    root_logger = logging.getLogger()
+    original_level = root_logger.level
+
+    dummy_metrics = DummyMetrics()
+    handler = SpyMetricsLoggingHandler(dummy_metrics)
+
+    try:
+        root_logger.setLevel(logging.DEBUG)
+        root_logger.addHandler(handler)
+
+        distinct_logger = logging.getLogger("distinct.logger.exception")
+        distinct_logger.info("trigger info path exception")
+
+        assert len(handler.handled) == 1
+        assert dummy_metrics.calls == 1
+    finally:
+        root_logger.removeHandler(handler)
+        root_logger.setLevel(original_level)
