@@ -92,7 +92,6 @@ NON_FATAL_ERRORS = Metric(
     "non_fatal_errors", "Number of non-fatal errors", accumulate=True
 )
 FATAL_ERRORS = Metric("fatal_errors", "Number of fatal errors", accumulate=True)
-
 NODES_UPSERTED = Metric(
     "nodes_upserted", "Number of nodes upserted to the graph", accumulate=True
 )
