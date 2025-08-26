@@ -48,8 +48,8 @@ class Record:
             await self.callback(self.callback_token)
 
         # If _we_ are being dropped, then there is a chance that our parent is
-        # done as well. So we can invite it to drop to them to have them
-        # consider dropping themselves.
+        # done as well. So we can propagate the drop up the chain and ensure that
+        # all records are properly cleaned up.
         if self.originated_from is not None:
             await self.originated_from.child_dropped()
 
