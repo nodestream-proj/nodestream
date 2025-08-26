@@ -128,7 +128,7 @@ class StepExecutor:
         async for entry in generator:
             record = await self.wrap_generator_entry(originating_record, entry)
             if not await self.emit_record(record):
-                return
+                return False
             produced_something = True
 
         # If a record did not result in any new records, then we can consider
@@ -137,14 +137,18 @@ class StepExecutor:
         if not produced_something and originating_record is not None:
             await originating_record.drop()
 
+        return True
+
     async def drive_step(self):
         try:
             while (next_record := await self.input.get()) is not None:
                 results = self.step.process_record(next_record.data, self.context)
-                await self.emit_generator(results, next_record)
+                if not await self.emit_generator(results, next_record):
+                    return
 
             outstanding = self.step.emit_outstanding_records(self.context)
-            await self.emit_generator(outstanding)
+            if not await self.emit_generator(outstanding):
+                return
 
             self.context.debug("Step finished emitting")
         except Exception as e:
