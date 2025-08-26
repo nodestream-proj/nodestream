@@ -149,6 +149,15 @@ class Step:
         """
         pass
 
+    async def finalize_record(self, record_token: object):
+        """Finalize a record.
+
+        This method is called when a record produced by this step has been
+        fully processed by all downstream steps. It is not called for records
+        that are not produced by this step.
+        """
+        pass
+
 
 class PassStep(Step):
     """A `PassStep` passes records through."""
