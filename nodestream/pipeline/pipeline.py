@@ -1,6 +1,7 @@
 from asyncio import create_task, gather
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Any, Iterable, List, Optional, Tuple, Type
 
 from ..metrics import (
@@ -90,6 +91,20 @@ class ExecutionState(ABC):
         pass
 
 
+class EmitResult(Enum):
+    EMITTED_RECORDS = auto()
+    CLOSED_DOWNSTREAM = auto()
+    NO_OP = auto()
+
+    @property
+    def should_continue(self) -> bool:
+        return self != EmitResult.CLOSED_DOWNSTREAM
+
+    @property
+    def did_emit_records(self) -> bool:
+        return self == EmitResult.EMITTED_RECORDS
+
+
 class StepExecutionState(ExecutionState):
     """State that a step is in when it is executing.
 
@@ -121,7 +136,7 @@ class StepExecutionState(ExecutionState):
         """
         return next_state(self.step, self.context, self.input, self.output)
 
-    async def emit_record(self, record: Record) -> bool:
+    async def emit_record(self, record: Record) -> EmitResult:
         """Emit a record to the output channel.
 
         This method is used to emit a record to the output channel. It will
@@ -130,21 +145,23 @@ class StepExecutionState(ExecutionState):
         closed on the other end.
 
         Returns:
-            bool: True if the record was successfully put in the channel, False
-            if the channel is closed on the other end and the record was not
-            put in the channel.
+            EmitResult: The result of the emit operation. If the downstream is
+            not accepting more records, it will return
+            `EmitResult.CLOSED_DOWNSTREAM`. Otherwise, it will return
+            `EmitResult.EMITTED_RECORDS`.
         """
         can_continue = await self.output.put(record)
         if not can_continue:
             self.context.debug("Downstream is not accepting records. Stopping")
+            return EmitResult.CLOSED_DOWNSTREAM
 
-        return can_continue
+        return EmitResult.EMITTED_RECORDS
 
     async def emit_from_generator(
         self,
         generator,
         origin: Optional[Record] = None,
-    ):
+    ) -> EmitResult:
         """Emit records from a generator.
 
         This method is used to emit records from a generator. It will block
@@ -153,18 +170,23 @@ class StepExecutionState(ExecutionState):
         on the other end.
 
         Returns:
-            bool: True if one or more records were produced and successfully
-            put in the channel, False if the channel is closed on the other
-            end and no records were put in the channel.
+            EmitResult: The result of the emit operation. If the downstream
+            is not accepting more records, it will return
+            `EmitResult.CLOSED_DOWNSTREAM`. If no records were emitted, it
+            will return `EmitResult.NO_OP`. Otherwise, it will return
+            `EmitResult.EMITTED_RECORDS`.
         """
-        produced_something = False
+        emitted_something = False
         async for emission in generator:
             record = Record.from_step_emission(self.step, emission, origin)
-            if not await self.emit_record(record):
-                return False
-            produced_something = True
+            if await self.emit_record(record) != EmitResult.EMITTED_RECORDS:
+                return EmitResult.CLOSED_DOWNSTREAM
+            emitted_something = True
 
-        return produced_something
+        if not emitted_something:
+            return EmitResult.NO_OP
+
+        return EmitResult.EMITTED_RECORDS
 
 
 class StartStepState(StepExecutionState):
@@ -204,16 +226,30 @@ class ProcessRecordsState(StepExecutionState):
     async def execute_until_state_change(self) -> Optional[StepExecutionState]:
         try:
             while (next := await self.input.get()) is not None:
-                results = self.step.process_record(next.data, self.context)
-                if not await self.emit_from_generator(results, next):
-                    # If nothing was emitted, then we need to drop the record
-                    # since it is not going to be processed further.
+                # Process the record and emit any resulting records downstream.
+                emissions = self.step.process_record(next.data, self.context)
+                result = await self.emit_from_generator(emissions, next)
+
+                # If we didn't emit any records, then we need to drop the
+                # record since it is not going to be processed further.
+                if not result.did_emit_records:
                     await next.drop()
+
+                # If the downstream is not accepting more records, then we need
+                # to stop processing records by transitioning to a stop state.
+                if not result.should_continue:
                     return self.make_state(StopStepExecution)
+
+        # If we get an exception, we need to stop processing records by
+        # transitioning to the stop state. Because this is part of the core
+        # execution of the step, we consider this a fatal error.
         except Exception as e:
             self.context.report_error("Error processing record", e, fatal=True)
             return self.make_state(StopStepExecution)
 
+        # If we have gotten here, then we have processed all of our input
+        # records and we need to transition to the next state which is to emit
+        # any outstanding records.
         return self.make_state(EmitOutstandingRecordsState)
 
 
@@ -228,8 +264,25 @@ class EmitOutstandingRecordsState(StepExecutionState):
 
     async def execute_until_state_change(self) -> Optional[StepExecutionState]:
         try:
+            # Emit any outstanding records. If we get an error, we will still
+            # transition to the stop state. Unlike the processing state, this
+            # state does not really care about the result of the emit
+            # operation because we are transitioning to the stop state
+            # regardless of success or failure and there is no originating
+            # record to drop.
+            #
+            # NOTE: This is not quite true, as in theory records can be
+            # outstanding that were some how originated from a record.
+            # However, there is no nice way I've thought of to account for
+            # this without breaking the step interface to track the
+            # originating record for each outstanding record. For now, we
+            # will just leave it out of scope.
             outstanding = self.step.emit_outstanding_records(self.context)
             await self.emit_from_generator(outstanding)
+
+        # If we get an exception, we will report it as fatal as steps
+        # processing outstanding records is part of the core execution
+        # of the step.
         except Exception as e:
             self.context.report_error(
                 "Error emitting outstanding records",
@@ -252,9 +305,20 @@ class StopStepExecution(StepExecutionState):
 
     async def execute_until_state_change(self) -> Optional[StepExecutionState]:
         try:
+            # Closing the output channel will signal to any downstream steps
+            # that we are done processing records and that there nothing left
+            # to wait for. Similarly, we mark the input as done to signal
+            # to any upstream steps that we are done processing records and
+            # that producing more records is futile.
             await self.output.done()
             self.input.done()
+
+            # Steps may need to do some finalization work when they are done.
             await self.step.finish(self.context)
+
+        # In the event of a failure closing out a step, we will report it as a
+        # non-fatal error because all core work has been accomplished. Resource
+        # cleanup, while messy, is not fatal to the pipeline as a whole.
         except Exception as e:
             self.context.report_error("Error stopping step", e)
 
