@@ -1,7 +1,7 @@
 from asyncio import create_task, gather
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from logging import getLogger
-from typing import Any, Coroutine, Iterable, List, Optional, Tuple
+from typing import Any, Iterable, List, Optional, Tuple, Type
 
 from ..metrics import (
     RECORDS,
@@ -24,10 +24,41 @@ class Record:
     """A `Record` is a unit of data that is processed by a pipeline."""
 
     data: Any
-    callback_token: Any = None
-    callback: Optional[Coroutine[None, None, None]] = field(default=no_op)
+    originating_step: Step
+    callback_token: Any
     originated_from: Optional["Record"] = field(default=None)
     child_record_count: int = field(default=0)
+
+    @staticmethod
+    def from_step_emission(
+        step: Step,
+        emission: Any,
+        originated_from: Optional["Record"] = None,
+    ):
+        """Create a record from a step's emission of data.
+
+        The `emission` can either be a single value or a tuple of two values.
+        If it is a single value, then it is assumed to be the data for the
+        record. If it is a tuple of two values, then the first value is
+        assumed to be the data for the record and the second value is assumed
+        to be the callback token for the record. If any other value is
+        provided, the data and callback token are both set to the value
+        provided.
+
+        Args:
+            step (Step): The step that emitted the record.
+            emission (Any): The emission from the step.
+            originated_from (Optional[Record], optional): The record that
+                this record was emitted from. Defaults to None.
+
+        Returns:
+            Record: The record created from the emission.
+        """
+        data = callback_token = emission
+        if isinstance(emission, tuple):
+            data, callback_token = emission
+
+        return Record(data, step, callback_token, originated_from)
 
     async def child_dropped(self):
         # If we have no children after this child has reported itself as
@@ -44,166 +75,290 @@ class Record:
         # If we are being told to drop, then we need to run our callback so
         # that the step that created us can clean up any resources it has
         # allocated for this record.
-        if self.callback is not None:
-            await self.callback(self.callback_token)
+        await self.originating_step.finalize_record(self.callback_token)
 
         # If _we_ are being dropped, then there is a chance that our parent is
-        # done as well. So we can propagate the drop up the chain and ensure that
-        # all records are properly cleaned up.
+        # done as well. So we can propagate the drop up the chain and ensure
+        # that all records are properly cleaned up.
         if self.originated_from is not None:
             await self.originated_from.child_dropped()
 
 
-class StepExecutor:
-    """`StepExecutor` is a utility that is used to run a step in a pipeline.
+class ExecutionState(ABC):
+    @abstractmethod
+    async def execute_until_state_change(self) -> Optional["ExecutionState"]:
+        pass
 
-    The `StepExecutor` is responsible for starting, stopping, and running a
-    step in a pipeline. It is used to execute a step by passing records
-    between the input and output channels of the step.
+
+class StepExecutionState(ExecutionState):
+    """State that a step is in when it is executing.
+
+    This is the base class for all states that a step can be in. It provides
+    the basic functionality for executing a step and transitioning between
+    states. It also provides the basic functionality for emitting records
+    and handling errors.
     """
-
-    __slots__ = ("step", "input", "output", "context")
 
     def __init__(
         self,
         step: Step,
+        context: StepContext,
         input: StepInput,
         output: StepOutput,
-        context: StepContext,
-    ) -> None:
+    ):
         self.step = step
+        self.context = context
         self.input = input
         self.output = output
-        self.context = context
 
-    async def start_step(self):
-        try:
-            Metrics.get().increment(STEPS_RUNNING)
-            await self.step.start(self.context)
-        except Exception as e:
-            self.context.report_error("Error starting step", e)
+    def make_state(self, next_state: Type["StepExecutionState"]):
+        """Make the next state for the step.
 
-    async def stop_step(self):
-        try:
-            Metrics.get().decrement(STEPS_RUNNING)
-            await self.step.finish(self.context)
-        except Exception as e:
-            self.context.report_error("Error stopping step", e)
+        This method is used to create the next state for the step. It is
+        responsible for creating the next state and returning it. The next
+        state is created with the same step, context, input, and output as the
+        current state.
+        """
+        return next_state(self.step, self.context, self.input, self.output)
 
-    async def emit_record(self, record):
+    async def emit_record(self, record: Record) -> bool:
+        """Emit a record to the output channel.
+
+        This method is used to emit a record to the output channel. It will
+        block until the record is put in the channel. If the channel is full,
+        it will block until there is space in the channel unless the channel is
+        closed on the other end.
+
+        Returns:
+            bool: True if the record was successfully put in the channel, False
+            if the channel is closed on the other end and the record was not
+            put in the channel.
+        """
         can_continue = await self.output.put(record)
         if not can_continue:
-            self.context.debug(
-                "Downstream is not accepting more records. Gracefully stopping."
-            )
+            self.context.debug("Downstream is not accepting records. Stopping")
 
         return can_continue
 
-    async def wrap_generator_entry(
-        self,
-        originating_record: Optional[Record],
-        entry: Tuple[Any, Any] | Any,
-    ) -> Record:
-        data = entry
-        token = None
-        callback = None
-
-        if isinstance(entry, tuple):
-            data, token = entry
-            callback = self.step.finalize_record
-
-        return Record(
-            data=data,
-            callback_token=token,
-            callback=callback,
-            originated_from=originating_record,
-        )
-
-    async def emit_generator(
+    async def emit_from_generator(
         self,
         generator,
-        originating_record: Optional[Record] = None,
+        origin: Optional[Record] = None,
     ):
+        """Emit records from a generator.
+
+        This method is used to emit records from a generator. It will block
+        until the record is put in the channel. If the channel is full, it will
+        block until there is space in the channel unless the channel is closed
+        on the other end.
+
+        Returns:
+            bool: True if one or more records were produced and successfully
+            put in the channel, False if the channel is closed on the other
+            end and no records were put in the channel.
+        """
         produced_something = False
-        async for entry in generator:
-            record = await self.wrap_generator_entry(originating_record, entry)
+        async for emission in generator:
+            record = Record.from_step_emission(self.step, emission, origin)
             if not await self.emit_record(record):
                 return False
             produced_something = True
 
-        # If a record did not result in any new records, then we can consider
-        # it to be dropped since it did not produce any new work and will leave
-        # scope here.
-        if not produced_something and originating_record is not None:
-            await originating_record.drop()
-
-        return True
-
-    async def drive_step(self):
-        try:
-            while (next_record := await self.input.get()) is not None:
-                results = self.step.process_record(next_record.data, self.context)
-                if not await self.emit_generator(results, next_record):
-                    return
-
-            outstanding = self.step.emit_outstanding_records(self.context)
-            if not await self.emit_generator(outstanding):
-                return
-
-            self.context.debug("Step finished emitting")
-        except Exception as e:
-            self.context.report_error("Error running step", e, fatal=True)
-
-    async def run(self):
-        self.context.debug("Starting step")
-        await self.start_step()
-        await self.drive_step()
-        await self.output.done()
-        self.input.done()
-        await self.stop_step()
-        self.context.debug("Finished step")
+        return produced_something
 
 
-class PipelineOutput:
-    """`PipelineOutput` is an output channel for a pipeline.
+class StartStepState(StepExecutionState):
+    """State that a step is in when it is starting.
 
-    A `PipelineOutput` is used to consume records from the last step in a
-    pipeline and report the progress of the pipeline.
+    This is the first state that a step is in when it is executed. The step
+    is in this state when it is first created and before it has started
+    processing records. Once the step has started, it will transition to the
+    `ProcessRecordsState`. If the step fails to start, it will transition to
+    the `StopStepExecution` state.
     """
 
-    __slots__ = ("input", "reporter", "observe_results")
+    async def execute_until_state_change(self) -> Optional[StepExecutionState]:
+        try:
+            Metrics.get().increment(STEPS_RUNNING)
+            await self.step.start(self.context)
+            return self.make_state(ProcessRecordsState)
+        except Exception as e:
+            self.context.report_error("Error starting step", e, fatal=True)
+            return None
 
-    def __init__(self, input: StepInput, reporter: PipelineProgressReporter):
+
+class ProcessRecordsState(StepExecutionState):
+    """State that a step is in when it is processing records.
+
+    This is the state that a step is in when it is actively processing records.
+    The step will remain in this state until it has processed all of its input
+    records and emitted all of its output records. Once the step has finished
+    processing records, it will transition to the
+    `EmitOutstandingRecordsState`.
+
+    If the step fails to process a record, it will transition to the
+    `StopStepExecution` state. If the step downstream is not accepting more
+    records, it will transition to the `StopStepExecution` state.
+    """
+
+    async def execute_until_state_change(self) -> Optional[StepExecutionState]:
+        try:
+            while (next := await self.input.get()) is not None:
+                results = self.step.process_record(next.data, self.context)
+                if not await self.emit_from_generator(results, next):
+                    # If nothing was emitted, then we need to drop the record
+                    # since it is not going to be processed further.
+                    await next.drop()
+                    return self.make_state(StopStepExecution)
+        except Exception as e:
+            self.context.report_error("Error processing record", e, fatal=True)
+            return self.make_state(StopStepExecution)
+
+        return self.make_state(EmitOutstandingRecordsState)
+
+
+class EmitOutstandingRecordsState(StepExecutionState):
+    """State that a step is in when it is emitting outstanding records.
+
+    This is the state that a step is in when it is emitting any outstanding
+    records. This is done after all records have been processed. Regardless of
+    success or failure, the step will transition to the `StopStepExecution`
+    state.
+    """
+
+    async def execute_until_state_change(self) -> Optional[StepExecutionState]:
+        try:
+            outstanding = self.step.emit_outstanding_records(self.context)
+            await self.emit_from_generator(outstanding)
+        except Exception as e:
+            self.context.report_error(
+                "Error emitting outstanding records",
+                e,
+                fatal=True,
+            )
+
+        # We are doing to transition to the stop state regardless of what
+        # happened to get us here.
+        return self.make_state(StopStepExecution)
+
+
+class StopStepExecution(StepExecutionState):
+    """State that a step is in when it is stopping.
+
+    This is the state that a step is in when it is stopping. This is the final
+    state that a step will be in. Once it transitions to this state, it will
+    not transition to any other state and end execution.
+    """
+
+    async def execute_until_state_change(self) -> Optional[StepExecutionState]:
+        try:
+            await self.output.done()
+            self.input.done()
+            await self.step.finish(self.context)
+        except Exception as e:
+            self.context.report_error("Error stopping step", e)
+
+        # We are done regarless of what happens. There is no next state.
+        Metrics.get().decrement(STEPS_RUNNING)
+        return None
+
+
+class PipelineOutputState(ExecutionState):
+    __slots__ = ("input", "reporter", "metrics")
+
+    def __init__(
+        self,
+        input: StepInput,
+        reporter: PipelineProgressReporter,
+        metrics: Metrics,
+    ):
         self.input = input
         self.reporter = reporter
+        self.metrics = metrics
 
-    def call_handling_errors(self, f, *args):
+    def make_state(self, next_state: Type["ExecutionState"]):
+        return next_state(self.input, self.reporter, self.metrics)
+
+    def call_ignoring_errors(self, f, *args):
         try:
             f(*args)
         except Exception:
             self.reporter.logger.exception(f"Error running {f.__name__}")
 
-    async def run(self):
-        """Run the pipeline output.
 
-        This method is used to run the pipeline output. It will consume records
-        from the last step in the pipeline and report the progress of the
-        pipeline using the `PipelineProgressReporter`. The pipeline output will
-        block until all records have been consumed from the last step in the
-        pipeline.
-        """
-        metrics = Metrics.get()
-        self.call_handling_errors(self.reporter.on_start_callback)
+class PipelineOutputStartState(PipelineOutputState):
+    """State that the pipeline output is in when it is starting.
 
+    This is the first state that the pipeline output is in when it is
+    executed. The pipeline output is in this state when it is first created
+    and before it has started processing records. Once the pipeline output
+    has started, it will transition to the `PipelineOutputProcessRecordsState`.
+    """
+
+    async def execute_until_state_change(self) -> Optional[ExecutionState]:
+        self.call_ignoring_errors(self.reporter.on_start_callback)
+        return self.make_state(PipelineOutputProcessRecordsState)
+
+
+class PipelineOutputProcessRecordsState(PipelineOutputState):
+    """State that the pipeline output is in when it is processing records.
+
+    This is the state that the pipeline output is in when it is processing
+    records. The pipeline output is in this state after it has started and
+    before it has finished processing all records. Once the pipeline output
+    has finished processing all records, it will transition to the
+    `PipelineOutputStopState`.
+    """
+
+    async def execute_until_state_change(self) -> Optional[ExecutionState]:
         index = 0
         while (record := await self.input.get()) is not None:
-            metrics.increment(RECORDS)
-            self.call_handling_errors(self.reporter.report, index, metrics)
-            self.call_handling_errors(self.reporter.observe, record)
+            self.metrics.increment(RECORDS)
+            self.call_ignoring_errors(self.reporter.report, index, self.metrics)
+            self.call_ignoring_errors(self.reporter.observe, record)
             await record.drop()
             index += 1
+        return self.make_state(PipelineOutputStopState)
 
-        self.call_handling_errors(self.reporter.on_finish_callback, metrics)
+
+class PipelineOutputStopState(PipelineOutputState):
+    """State that the pipeline output is in when it is stopping.
+
+    This is the state that the pipeline output is in when it is stopping. This
+    is the final state that the pipeline output will be in. Once it transitions
+    to this state, it will not transition to any other state and end execution.
+    """
+
+    async def execute_until_state_change(self) -> Optional[ExecutionState]:
+        self.call_ignoring_errors(self.reporter.on_finish_callback, self.metrics)
+        return None
+
+
+class Exectutor:
+    __slots__ = ("state",)
+
+    def __init__(self, state: ExecutionState) -> None:
+        self.state = state
+
+    @classmethod
+    def for_step(
+        cls,
+        step: Step,
+        input: StepInput,
+        output: StepOutput,
+        context: StepContext,
+    ) -> "Exectutor":
+        return cls(StartStepState(step, context, input, output))
+
+    @classmethod
+    def pipeline_output(
+        cls, input: StepInput, reporter: PipelineProgressReporter
+    ) -> "Exectutor":
+        return cls(PipelineOutputStartState(input, reporter, Metrics.get()))
+
+    async def run(self):
+        while self.state is not None:
+            self.state = await self.state.execute_until_state_change()
 
 
 class Pipeline(ExpandsSchemaFromChildren):
@@ -215,7 +370,7 @@ class Pipeline(ExpandsSchemaFromChildren):
     and running the steps in the pipeline.
     """
 
-    __slots__ = ("steps", "step_outbox_size", "logger", "object_store")
+    __slots__ = ("steps", "step_outbox_size", "object_store")
 
     def __init__(
         self,
@@ -225,7 +380,6 @@ class Pipeline(ExpandsSchemaFromChildren):
     ) -> None:
         self.steps = steps
         self.step_outbox_size = step_outbox_size
-        self.logger = getLogger(self.__class__.__name__)
         self.object_store = object_store
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
@@ -255,14 +409,14 @@ class Pipeline(ExpandsSchemaFromChildren):
         # step to the next step. The channels are used to pass records between
         # the steps in the pipeline. The channels have a fixed size to control
         # the flow of records between the steps.
-        executors: List[StepExecutor] = []
+        executors: List[Exectutor] = []
         current_input_name = None
         current_output_name = self.steps[-1].__class__.__name__ + f"_{len(self.steps)}"
 
         current_input, current_output = channel(
             self.step_outbox_size, current_output_name, current_input_name
         )
-        pipeline_output = PipelineOutput(current_input, reporter)
+        executors.append(Exectutor.pipeline_output(current_input, reporter))
 
         # Create the executors for the steps in the pipeline. The executors
         # will be used to run the steps concurrently. The steps are created in
@@ -282,7 +436,7 @@ class Pipeline(ExpandsSchemaFromChildren):
             current_input, next_output = channel(
                 self.step_outbox_size, current_output_name, current_input_name
             )
-            exec = StepExecutor(step, current_input, current_output, context)
+            exec = Exectutor.for_step(step, current_input, current_output, context)
             current_output = next_output
             executors.append(exec)
 
@@ -294,6 +448,5 @@ class Pipeline(ExpandsSchemaFromChildren):
 
         # Run the pipeline by running all the steps and the pipeline output
         # concurrently. This will block until all steps are finished.
-        running_steps = (create_task(executor.run()) for executor in executors)
-
-        await gather(*running_steps, create_task(pipeline_output.run()))
+        # Wait for all the executors to finish.
+        await gather(*(create_task(executor.run()) for executor in executors))
