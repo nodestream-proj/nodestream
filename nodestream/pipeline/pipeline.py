@@ -1,14 +1,10 @@
-from asyncio import create_task, gather
 from abc import ABC, abstractmethod
+from asyncio import create_task, gather
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Iterable, List, Optional, Tuple, Type
 
-from ..metrics import (
-    RECORDS,
-    STEPS_RUNNING,
-    Metrics,
-)
+from ..metrics import RECORDS, STEPS_RUNNING, Metrics
 from ..schema import ExpandsSchema, ExpandsSchemaFromChildren
 from .channel import StepInput, StepOutput, channel
 from .object_storage import ObjectStore
@@ -176,17 +172,25 @@ class StepExecutionState(ExecutionState):
             will return `EmitResult.NO_OP`. Otherwise, it will return
             `EmitResult.EMITTED_RECORDS`.
         """
-        emitted_something = False
+        emitted = False
         async for emission in generator:
+            # We can create a record for this data and attempt to submit it
+            # downstream. If we _failed_ to emit a record, then we need to
+            # stop processing any more records and we will report this to
+            # whatever state is calling us. Depending on that state, it can
+            # decide what to do.
             record = Record.from_step_emission(self.step, emission, origin)
-            if await self.emit_record(record) != EmitResult.EMITTED_RECORDS:
-                return EmitResult.CLOSED_DOWNSTREAM
-            emitted_something = True
+            result = await self.emit_record(record)
+            if result == EmitResult.CLOSED_DOWNSTREAM:
+                return result
 
-        if not emitted_something:
-            return EmitResult.NO_OP
+            # If we got here, then we successfully emitted at least 1 record.
+            emitted = True
 
-        return EmitResult.EMITTED_RECORDS
+        # If we succesfully left the loop, then we either emitted something or
+        # or the generator was empty. Depending that, we can return the correct
+        # status to the caller.
+        return EmitResult.EMITTED_RECORDS if emitted else EmitResult.NO_OP
 
 
 class StartStepState(StepExecutionState):
@@ -379,7 +383,7 @@ class PipelineOutputProcessRecordsState(PipelineOutputState):
         while (record := await self.input.get()) is not None:
             self.metrics.increment(RECORDS)
             self.call_ignoring_errors(self.reporter.report, index, self.metrics)
-            self.call_ignoring_errors(self.reporter.observe, record)
+            self.call_ignoring_errors(self.reporter.observe, record.data)
             await record.drop()
             index += 1
         return self.make_state(PipelineOutputStopState)

@@ -1,10 +1,6 @@
 from typing import AsyncGenerator, Optional
 
-from ..metrics import (
-    FATAL_ERRORS,
-    NON_FATAL_ERRORS,
-    Metrics,
-)
+from ..metrics import FATAL_ERRORS, NON_FATAL_ERRORS, Metrics
 from .object_storage import ObjectStore
 from .progress_reporter import PipelineProgressReporter
 
@@ -149,7 +145,7 @@ class Step:
         """
         pass
 
-    async def finalize_record(self, record_token: object):
+    async def finalize_record(self, record_or_token: object):
         """Finalize a record.
 
         This method is called when a record produced by this step has been

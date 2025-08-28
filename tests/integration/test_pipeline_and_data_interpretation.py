@@ -63,8 +63,9 @@ async def test_pipeline_interpretation_snapshot(
     snapshot.snapshot_dir = "tests/integration/snapshots"
     pipeline_file = get_pipeline_fixture_file_by_name(pipeline_name)
     definition = PipelineDefinition.from_path(pipeline_file)
+    results = await drive_definition_to_completion(definition)
     results_as_json = json.dumps(
-        [asdict(r) for r in (await drive_definition_to_completion(definition))],
+        [asdict(r) for r in results],
         default=set_default,
         indent=4,
         sort_keys=True,
