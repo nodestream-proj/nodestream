@@ -146,8 +146,7 @@ class StepExecutionState(ExecutionState):
             `EmitResult.CLOSED_DOWNSTREAM`. Otherwise, it will return
             `EmitResult.EMITTED_RECORDS`.
         """
-        can_continue = await self.output.put(record)
-        if not can_continue:
+        if not await self.output.put(record):
             self.context.debug("Downstream is not accepting records. Stopping")
             return EmitResult.CLOSED_DOWNSTREAM
 
