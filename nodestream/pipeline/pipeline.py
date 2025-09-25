@@ -401,7 +401,7 @@ class PipelineOutputStopState(PipelineOutputState):
         return None
 
 
-class Exectutor:
+class Executor:
     __slots__ = ("state",)
 
     def __init__(self, state: ExecutionState) -> None:
@@ -414,13 +414,13 @@ class Exectutor:
         input: StepInput,
         output: StepOutput,
         context: StepContext,
-    ) -> "Exectutor":
+    ) -> "Executor":
         return cls(StartStepState(step, context, input, output))
 
     @classmethod
     def pipeline_output(
         cls, input: StepInput, reporter: PipelineProgressReporter
-    ) -> "Exectutor":
+    ) -> "Executor":
         return cls(PipelineOutputStartState(input, reporter, Metrics.get()))
 
     async def run(self):
@@ -476,14 +476,14 @@ class Pipeline(ExpandsSchemaFromChildren):
         # step to the next step. The channels are used to pass records between
         # the steps in the pipeline. The channels have a fixed size to control
         # the flow of records between the steps.
-        executors: List[Exectutor] = []
+        executors: List[Executor] = []
         current_input_name = None
         current_output_name = self.steps[-1].__class__.__name__ + f"_{len(self.steps)}"
 
         current_input, current_output = channel(
             self.step_outbox_size, current_output_name, current_input_name
         )
-        executors.append(Exectutor.pipeline_output(current_input, reporter))
+        executors.append(Executor.pipeline_output(current_input, reporter))
 
         # Create the executors for the steps in the pipeline. The executors
         # will be used to run the steps concurrently. The steps are created in
@@ -503,7 +503,7 @@ class Pipeline(ExpandsSchemaFromChildren):
             current_input, next_output = channel(
                 self.step_outbox_size, current_output_name, current_input_name
             )
-            exec = Exectutor.for_step(step, current_input, current_output, context)
+            exec = Executor.for_step(step, current_input, current_output, context)
             current_output = next_output
             executors.append(exec)
 
