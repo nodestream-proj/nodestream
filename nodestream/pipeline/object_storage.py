@@ -253,7 +253,7 @@ class NullObjectStore(ObjectStore, alias="null"):
     """An object store that does not store any objects."""
 
     def __init__(self):
-        logger.error("Using null ObjectStore. No persistence is configured.")
+        logger.info("Using null ObjectStore. No persistence is configured.")
 
     def get(self, _: str) -> Optional[bytes]:
         return None
