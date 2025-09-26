@@ -233,6 +233,8 @@ async def test_cleanup_flow_with_exception():
     """Test cleanup flow when an exception occurs during processing."""
 
     class FailingTransformer(Transformer):
+        tracks_lineage: bool = True
+
         def __init__(self):
             self.allocated_resources = {}
             self.finalized_tokens = []
