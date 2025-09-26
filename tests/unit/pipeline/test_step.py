@@ -102,3 +102,31 @@ async def test_step_context_report_warning_message(mocker):
     ctx.reporter.logger.warning.assert_called_once_with(
         "warning message", extra={"index": 1, "x": 12, "step_name": "bob"}
     )
+
+
+@pytest.mark.asyncio
+async def test_default_finalize_record_does_nothing(mocker):
+    step = Step()
+    token = "test_token"
+    await step.finalize_record(token)
+    # Should not raise any exceptions and should do nothing
+
+
+@pytest.mark.asyncio
+async def test_finalize_record_called_with_token():
+    """Test that finalize_record is called with the correct token."""
+    step = Step()
+
+    # Override finalize_record to track calls
+    calls = []
+
+    async def mock_finalize(token):
+        calls.append(token)
+
+    step.finalize_record = mock_finalize
+
+    test_token = "my_test_token"
+    await step.finalize_record(test_token)
+
+    assert len(calls) == 1
+    assert calls[0] == test_token

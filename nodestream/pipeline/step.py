@@ -1,10 +1,6 @@
 from typing import AsyncGenerator, Optional
 
-from ..metrics import (
-    FATAL_ERRORS,
-    NON_FATAL_ERRORS,
-    Metrics,
-)
+from ..metrics import FATAL_ERRORS, NON_FATAL_ERRORS, Metrics
 from .object_storage import ObjectStore
 from .progress_reporter import PipelineProgressReporter
 
@@ -110,6 +106,8 @@ class Step:
     asynchronous context. They can process records and emit new records.
     """
 
+    tracks_lineage: bool = False
+
     async def start(self, context: StepContext):
         """Start the step.
 
@@ -146,6 +144,15 @@ class Step:
         cleaning up the step and releasing any resources that were acquired
         during the processing of records. This method is called once after all
         records have been processed.
+        """
+        pass
+
+    async def finalize_record(self, record_or_token: object):
+        """Finalize a record.
+
+        This method is called when a record produced by this step has been
+        fully processed by all downstream steps. It is not called for records
+        that are not produced by this step.
         """
         pass
 
