@@ -1,0 +1,657 @@
+import json
+from unittest.mock import AsyncMock, patch
+
+import pytest
+from hamcrest import assert_that, equal_to, has_entries, has_length
+from httpx import HTTPStatusError
+
+from nodestream.pipeline.extractors.stores.splunk_extractor import SplunkExtractor
+
+
+@pytest.fixture
+def mock_job_creation_response():
+    """Mock response for job creation."""
+    return '<?xml version="1.0" encoding="UTF-8"?><response><sid>1234567890.123</sid></response>'
+
+
+@pytest.fixture
+def mock_job_results():
+    """Sample Splunk search results in the format returned by the results API."""
+    return {
+        "results": [
+            {
+                "_time": "2023-01-01T10:00:00",
+                "host": "server1",
+                "message": "Login successful",
+            },
+            {
+                "_time": "2023-01-01T10:01:00",
+                "host": "server2",
+                "message": "Error occurred",
+            },
+            {"_time": "2023-01-01T10:02:00", "host": "server1", "message": "Logout"},
+        ]
+    }
+
+
+@pytest.fixture
+def splunk_extractor():
+    """Create a SplunkExtractor instance for testing."""
+    return SplunkExtractor.from_file_data(
+        base_url="https://splunk.example.com:8089",
+        query="index=test | head 10",
+        auth_token="test-token-123",
+        earliest_time="-1h",
+        latest_time="now",
+        chunk_size=100,
+    )
+
+
+@pytest.fixture
+def splunk_extractor_basic_auth():
+    """Create a SplunkExtractor instance with basic auth for testing."""
+    return SplunkExtractor.from_file_data(
+        base_url="https://splunk.example.com:8089",
+        query="index=test",
+        username="testuser",
+        password="testpass",
+    )
+
+
+def test_splunk_extractor_from_file_data_with_token_auth():
+    extractor = SplunkExtractor.from_file_data(
+        base_url="https://splunk.example.com:8089/",  # trailing slash should be stripped
+        query="index=main",
+        auth_token="my-token",
+        earliest_time="-24h",
+        chunk_size=500,
+    )
+
+    assert_that(extractor.base_url, equal_to("https://splunk.example.com:8089"))
+    assert_that(extractor.query, equal_to("index=main"))
+    assert_that(extractor.auth_token, equal_to("my-token"))
+    assert_that(extractor.username, equal_to(None))
+    assert_that(extractor.password, equal_to(None))
+    assert_that(extractor.earliest_time, equal_to("-24h"))
+    assert_that(extractor.chunk_size, equal_to(500))
+
+
+def test_splunk_extractor_from_file_data_with_basic_auth():
+    extractor = SplunkExtractor.from_file_data(
+        base_url="https://splunk.example.com:8089",
+        query="index=security",
+        username="admin",
+        password="secret",
+    )
+
+    assert_that(extractor.auth_token, equal_to(None))
+    assert_that(extractor.username, equal_to("admin"))
+    assert_that(extractor.password, equal_to("secret"))
+
+
+def test_splunk_extractor_from_file_data_defaults():
+    extractor = SplunkExtractor.from_file_data(
+        base_url="https://splunk.example.com:8089",
+        query="index=main",
+    )
+
+    assert_that(extractor.verify_ssl, equal_to(True))
+    assert_that(extractor.request_timeout_seconds, equal_to(300))
+    assert_that(extractor.chunk_size, equal_to(1000))
+
+
+# Helper property tests
+def test_splunk_extractor_auth_property_with_token(splunk_extractor):
+    assert_that(splunk_extractor._auth, equal_to(None))  # Token goes in header
+
+
+def test_splunk_extractor_auth_property_with_basic_auth(splunk_extractor_basic_auth):
+    auth = splunk_extractor_basic_auth._auth
+    assert_that(auth is not None, equal_to(True))
+
+
+def test_splunk_extractor_auth_property_returns_none_when_no_credentials():
+    """Test _auth property returns None when no credentials are provided."""
+    extractor = SplunkExtractor.from_file_data(
+        base_url="https://splunk.example.com:8089",
+        query="index=main",
+        # No auth_token, username, or password provided
+    )
+    assert_that(extractor._auth, equal_to(None))
+
+
+def test_splunk_extractor_headers_with_token(splunk_extractor):
+    headers = splunk_extractor._headers
+    assert_that(
+        headers,
+        has_entries(
+            {"Accept": "application/json", "Authorization": "Splunk test-token-123"}
+        ),
+    )
+
+
+def test_splunk_extractor_headers_without_token(splunk_extractor_basic_auth):
+    headers = splunk_extractor_basic_auth._headers
+    assert_that(headers, equal_to({"Accept": "application/json"}))
+
+
+def test_splunk_extractor_normalized_query_adds_search_prefix():
+    # Query already has search prefix
+    extractor = SplunkExtractor.from_file_data(
+        base_url="https://splunk.example.com:8089",
+        query="search index=main",
+    )
+    assert_that(extractor._normalized_query, equal_to("search index=main"))
+
+    # Query without search prefix
+    extractor2 = SplunkExtractor.from_file_data(
+        base_url="https://splunk.example.com:8089",
+        query="index=main | head 10",
+    )
+    assert_that(extractor2._normalized_query, equal_to("search index=main | head 10"))
+
+
+def test_splunk_extractor_endpoint_urls(splunk_extractor):
+    jobs_endpoint = splunk_extractor.get_jobs_endpoint()
+    assert_that(
+        jobs_endpoint,
+        equal_to("https://splunk.example.com:8089/servicesNS/admin/search/search/jobs"),
+    )
+
+    results_endpoint = splunk_extractor.get_results_endpoint("test123")
+    assert_that(
+        results_endpoint,
+        equal_to(
+            "https://splunk.example.com:8089/servicesNS/admin/search/search/jobs/test123/results"
+        ),
+    )
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_create_search_job_json_response(
+    splunk_extractor, mocker
+):
+    """Test job creation with JSON response (preferred format)."""
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 201
+    mock_response.json.return_value = {"sid": "json123"}
+
+    mock_client = mocker.MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    search_id = await splunk_extractor._create_search_job(mock_client)
+
+    assert_that(search_id, equal_to("json123"))
+    # Verify we requested JSON format
+    call_args = mock_client.post.call_args
+    assert_that(call_args[1]["data"]["output_mode"], equal_to("json"))
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_create_search_job_xml_fallback(
+    splunk_extractor, mock_job_creation_response, mocker
+):
+    """Test job creation with XML response (fallback when JSON fails)."""
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 201
+    mock_response.text = mock_job_creation_response
+    mock_response.json.side_effect = json.JSONDecodeError("Not JSON", "", 0)
+
+    mock_client = mocker.MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    search_id = await splunk_extractor._create_search_job(mock_client)
+
+    assert_that(search_id, equal_to("1234567890.123"))
+    mock_client.post.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_create_search_job_malformed_xml(
+    splunk_extractor, mocker
+):
+    """Test job creation with malformed XML response."""
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 201
+    mock_response.text = "Invalid XML <unclosed"
+    mock_response.json.side_effect = json.JSONDecodeError("Not JSON", "", 0)
+
+    mock_client = mocker.MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with pytest.raises(RuntimeError, match="Failed to extract search ID"):
+        await splunk_extractor._create_search_job(mock_client)
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_create_search_job_http_error(splunk_extractor, mocker):
+    """Test job creation when Splunk returns non-201 status code."""
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 400
+    mock_response.request = mocker.MagicMock()
+
+    mock_client = mocker.MagicMock()
+    mock_client.post = AsyncMock(return_value=mock_response)
+
+    with pytest.raises(HTTPStatusError, match="Failed to create search job: 400"):
+        await splunk_extractor._create_search_job(mock_client)
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_wait_for_job_completion_json_response(
+    splunk_extractor, mocker
+):
+    """Test job status checking with JSON response (expected format)."""
+    mock_response_running = mocker.MagicMock()
+    mock_response_running.status_code = 200
+    mock_response_running.json.return_value = {
+        "entry": [{"content": {"dispatchState": "RUNNING"}}]
+    }
+
+    mock_response_done = mocker.MagicMock()
+    mock_response_done.status_code = 200
+    mock_response_done.json.return_value = {
+        "entry": [{"content": {"dispatchState": "DONE"}}]
+    }
+
+    mock_client = mocker.MagicMock()
+    mock_client.get = AsyncMock(side_effect=[mock_response_running, mock_response_done])
+
+    await splunk_extractor._wait_for_job_completion(
+        mock_client, "test123", max_wait_seconds=10
+    )
+
+    # Verify we requested JSON format
+    call_args = mock_client.get.call_args_list[0]
+    assert_that(call_args[1]["params"]["output_mode"], equal_to("json"))
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_wait_for_job_completion_xml_fallback(
+    splunk_extractor, mocker
+):
+    """Test job status checking with XML response (fallback)."""
+    xml_response = """<?xml version="1.0" encoding="UTF-8"?>
+    <response>
+        <entry>
+            <content>
+                <key name="dispatchState">DONE</key>
+            </content>
+        </entry>
+    </response>"""
+
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = xml_response
+    mock_response.json.side_effect = json.JSONDecodeError("Not JSON", "", 0)
+
+    mock_client = mocker.MagicMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    # Should complete without raising (finds DONE in XML)
+    await splunk_extractor._wait_for_job_completion(
+        mock_client, "test123", max_wait_seconds=10
+    )
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_wait_for_job_completion_http_error(
+    splunk_extractor, mocker
+):
+    """Test job status checking when Splunk returns non-200 status code."""
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 403
+    mock_response.request = mocker.MagicMock()
+
+    mock_client = mocker.MagicMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    with pytest.raises(HTTPStatusError, match="Failed to check job status: 403"):
+        await splunk_extractor._wait_for_job_completion(mock_client, "test123")
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_wait_for_job_completion_parse_error_warning(
+    splunk_extractor, mocker
+):
+    """Test job status checking when both JSON and XML parsing fail."""
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = "Invalid response format"
+    mock_response.json.side_effect = json.JSONDecodeError("Not JSON", "", 0)
+
+    mock_client = mocker.MagicMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    # Mock the logger to verify warning is logged
+    with patch.object(splunk_extractor, "logger") as mock_logger:
+        with pytest.raises(RuntimeError, match="Search job timed out"):
+            await splunk_extractor._wait_for_job_completion(
+                mock_client, "test123", max_wait_seconds=1
+            )
+
+        # Verify warning was logged for parse failure
+        mock_logger.warning.assert_called()
+        warning_call = mock_logger.warning.call_args
+        assert "Failed to parse job status" in warning_call[0][0]
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_wait_for_job_completion_timeout(
+    splunk_extractor, mocker
+):
+    """Test job status checking timeout."""
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "entry": [{"content": {"dispatchState": "RUNNING"}}]
+    }
+
+    mock_client = mocker.MagicMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    with pytest.raises(
+        RuntimeError, match="Search job timed out after 1 seconds: test123"
+    ):
+        await splunk_extractor._wait_for_job_completion(
+            mock_client, "test123", max_wait_seconds=1
+        )
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_wait_for_job_completion_failure(
+    splunk_extractor, mocker
+):
+    """Test job status checking when job fails."""
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "entry": [{"content": {"dispatchState": "FAILED"}}]
+    }
+
+    mock_client = mocker.MagicMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    with pytest.raises(RuntimeError, match="Search job failed"):
+        await splunk_extractor._wait_for_job_completion(mock_client, "test123")
+
+
+# Results retrieval tests
+@pytest.mark.asyncio
+async def test_splunk_extractor_get_job_results_single_chunk(
+    splunk_extractor, mock_job_results, mocker
+):
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = mock_job_results
+
+    mock_client = mocker.MagicMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    results = []
+    async for result in splunk_extractor._get_job_results(mock_client, "test123"):
+        results.append(result)
+
+    assert_that(results, has_length(3))
+    assert_that(
+        results[0],
+        has_entries(
+            {
+                "_time": "2023-01-01T10:00:00",
+                "host": "server1",
+                "message": "Login successful",
+            }
+        ),
+    )
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_get_job_results_json_parse_error(
+    splunk_extractor, mocker
+):
+    """Test results retrieval when JSON parsing fails."""
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = "Invalid JSON response"
+    mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
+
+    mock_client = mocker.MagicMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    results = []
+    async for result in splunk_extractor._get_job_results(mock_client, "test123"):
+        results.append(result)
+
+    # Should handle gracefully and return empty results
+    assert_that(results, has_length(0))
+    assert_that(splunk_extractor.is_done, equal_to(True))
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_get_job_results_pagination(splunk_extractor, mocker):
+    # Set small chunk size for testing
+    splunk_extractor.chunk_size = 2
+
+    # Mock responses for pagination
+    first_response = mocker.MagicMock()
+    first_response.status_code = 200
+    first_response.json.return_value = {
+        "results": [
+            {"_time": "2023-01-01T10:00:00", "host": "server1"},
+            {"_time": "2023-01-01T10:01:00", "host": "server2"},
+        ]
+    }
+
+    second_response = mocker.MagicMock()
+    second_response.status_code = 200
+    second_response.json.return_value = {
+        "results": [
+            {"_time": "2023-01-01T10:02:00", "host": "server3"},
+        ]
+    }
+
+    mock_client = mocker.MagicMock()
+    mock_client.get = AsyncMock(side_effect=[first_response, second_response])
+
+    results = []
+    async for result in splunk_extractor._get_job_results(mock_client, "test123"):
+        results.append(result)
+
+    assert_that(results, has_length(3))
+    assert_that(splunk_extractor.offset, equal_to(3))
+    assert_that(splunk_extractor.is_done, equal_to(True))
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_get_job_results_http_error(splunk_extractor, mocker):
+    """Test results retrieval when Splunk returns non-200 status code."""
+    mock_response = mocker.MagicMock()
+    mock_response.status_code = 404
+    mock_response.request = mocker.MagicMock()
+
+    mock_client = mocker.MagicMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    with pytest.raises(HTTPStatusError, match="Failed to get job results: 404"):
+        async for _ in splunk_extractor._get_job_results(mock_client, "test123"):
+            pass
+
+
+# Full extraction test
+@pytest.mark.asyncio
+async def test_splunk_extractor_extract_records_full_flow(splunk_extractor, mocker):
+    with patch(
+        "nodestream.pipeline.extractors.stores.splunk_extractor.AsyncClient"
+    ) as mock_client_class:
+        mock_client = mocker.MagicMock()
+        mock_client_class.return_value.__aenter__.return_value = mock_client
+        mock_client_class.return_value.__aexit__.return_value = None
+
+        # Mock job creation
+        job_response = mocker.MagicMock()
+        job_response.status_code = 201
+        job_response.json.return_value = {"sid": "test123"}
+        mock_client.post = AsyncMock(return_value=job_response)
+
+        # Mock job completion
+        status_response = mocker.MagicMock()
+        status_response.status_code = 200
+        status_response.json.return_value = {
+            "entry": [{"content": {"dispatchState": "DONE"}}]
+        }
+
+        # Mock results
+        results_response = mocker.MagicMock()
+        results_response.status_code = 200
+        results_response.json.return_value = {
+            "results": [
+                {"_time": "2023-01-01T10:00:00", "host": "server1"},
+            ]
+        }
+
+        # Setup get calls: first for status check, then for results
+        mock_client.get = AsyncMock(side_effect=[status_response, results_response])
+
+        records = []
+        async for record in splunk_extractor.extract_records():
+            records.append(record)
+
+        assert_that(records, has_length(1))
+        assert_that(
+            records[0],
+            has_entries({"_time": "2023-01-01T10:00:00", "host": "server1"}),
+        )
+
+
+# Checkpointing tests
+@pytest.mark.asyncio
+async def test_splunk_extractor_make_checkpoint(splunk_extractor):
+    splunk_extractor.search_id = "test123"
+    splunk_extractor.offset = 100
+    splunk_extractor.is_done = False
+
+    checkpoint = await splunk_extractor.make_checkpoint()
+
+    assert_that(
+        checkpoint,
+        equal_to({"search_id": "test123", "offset": 100, "is_done": False}),
+    )
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_resume_from_checkpoint(splunk_extractor):
+    checkpoint = {"search_id": "restored123", "offset": 50, "is_done": False}
+
+    await splunk_extractor.resume_from_checkpoint(checkpoint)
+
+    assert_that(splunk_extractor.search_id, equal_to("restored123"))
+    assert_that(splunk_extractor.offset, equal_to(50))
+    assert_that(splunk_extractor.is_done, equal_to(False))
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_extract_records_http_error_handling(
+    splunk_extractor, mocker
+):
+    """Test extract_records handles HTTPStatusError and logs properly."""
+    with patch(
+        "nodestream.pipeline.extractors.stores.splunk_extractor.AsyncClient"
+    ) as mock_client_class:
+        mock_client = mocker.MagicMock()
+        mock_client_class.return_value.__aenter__.return_value = mock_client
+        mock_client_class.return_value.__aexit__.return_value = None
+
+        # Mock HTTPStatusError during job creation
+        mock_response = mocker.MagicMock()
+        mock_response.status_code = 401
+        mock_response.text = "Unauthorized"
+        mock_response.request = mocker.MagicMock()
+        mock_response.request.url = "https://splunk.example.com/jobs"
+
+        http_error = HTTPStatusError(
+            "Unauthorized", request=mock_response.request, response=mock_response
+        )
+        mock_client.post = AsyncMock(side_effect=http_error)
+
+        # Mock the logger to verify error logging
+        with patch.object(splunk_extractor, "logger") as mock_logger:
+            with pytest.raises(HTTPStatusError):
+                async for _ in splunk_extractor.extract_records():
+                    pass
+
+            # Verify HTTPStatusError was logged with proper details
+            mock_logger.error.assert_called()
+            error_call = mock_logger.error.call_args
+            assert "Splunk request failed" in error_call[0][0]
+            assert error_call[1]["extra"]["status_code"] == 401
+            assert error_call[1]["extra"]["content"] == "Unauthorized"
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_extract_records_generic_exception_handling(
+    splunk_extractor, mocker
+):
+    """Test extract_records handles generic exceptions and logs properly."""
+    with patch(
+        "nodestream.pipeline.extractors.stores.splunk_extractor.AsyncClient"
+    ) as mock_client_class:
+        mock_client = mocker.MagicMock()
+        mock_client_class.return_value.__aenter__.return_value = mock_client
+        mock_client_class.return_value.__aexit__.return_value = None
+
+        # Mock a generic exception during job creation
+        generic_error = ValueError("Something went wrong")
+        mock_client.post = AsyncMock(side_effect=generic_error)
+
+        # Mock the logger to verify error logging
+        with patch.object(splunk_extractor, "logger") as mock_logger:
+            with pytest.raises(ValueError):
+                async for _ in splunk_extractor.extract_records():
+                    pass
+
+            # Verify generic exception was logged with proper details
+            mock_logger.error.assert_called()
+            error_call = mock_logger.error.call_args
+            assert "Unexpected error during extraction" in error_call[0][0]
+            assert error_call[1]["extra"]["error"] == "Something went wrong"
+            assert error_call[1]["extra"]["error_type"] == "ValueError"
+
+
+@pytest.mark.asyncio
+async def test_splunk_extractor_extract_records_http_error_without_text_attribute(
+    splunk_extractor, mocker
+):
+    """Test HTTPStatusError handling when response doesn't have text attribute."""
+    with patch(
+        "nodestream.pipeline.extractors.stores.splunk_extractor.AsyncClient"
+    ) as mock_client_class:
+        mock_client = mocker.MagicMock()
+        mock_client_class.return_value.__aenter__.return_value = mock_client
+        mock_client_class.return_value.__aexit__.return_value = None
+
+        # Mock HTTPStatusError with response that doesn't have text attribute
+        mock_response = mocker.MagicMock()
+        mock_response.status_code = 500
+        # Remove text attribute to test fallback
+        del mock_response.text
+        mock_response.request = mocker.MagicMock()
+        mock_response.request.url = "https://splunk.example.com/jobs"
+
+        http_error = HTTPStatusError(
+            "Server Error", request=mock_response.request, response=mock_response
+        )
+        mock_client.post = AsyncMock(side_effect=http_error)
+
+        # Mock the logger to verify error logging
+        with patch.object(splunk_extractor, "logger") as mock_logger:
+            with pytest.raises(HTTPStatusError):
+                async for _ in splunk_extractor.extract_records():
+                    pass
+
+            # Verify HTTPStatusError was logged with str(response) fallback
+            mock_logger.error.assert_called()
+            error_call = mock_logger.error.call_args
+            assert "Splunk request failed" in error_call[0][0]
+            assert error_call[1]["extra"]["status_code"] == 500
+            # Should use str(response) when text attribute is missing
+            assert str(mock_response) in error_call[1]["extra"]["content"]
