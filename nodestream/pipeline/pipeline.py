@@ -125,7 +125,11 @@ class PipelineOutput:
                 self.call_handling_errors(self.reporter.observe, record)
             index += 1
 
-        self.call_handling_errors(self.reporter.on_finish_callback, metrics)
+        # For cases where the reporter _wants_ to have the exception thrown
+        # (e.g to have a status code in the CLI) we need to make sure we call
+        # on_finish_callback without swallowing exceptions
+        # (because thats the point).
+        self.reporter.on_finish_callback(metrics)
 
 
 class Pipeline(ExpandsSchemaFromChildren):
@@ -218,4 +222,10 @@ class Pipeline(ExpandsSchemaFromChildren):
         # concurrently. This will block until all steps are finished.
         running_steps = (create_task(executor.run()) for executor in executors)
 
-        await gather(*running_steps, create_task(pipeline_output.run()))
+        # Here lies a footgun. DO NOT MOVE the `create_task` call after the
+        # running_steps generator. It will break the pipeline because we need
+        # to ensure the on_start_callback is called before any operations
+        # occur in the actual steps in the pipeline. To do this, we need to
+        # make sure that the first coroutine scheduled is the one that calls
+        # the on_start_callback.
+        await gather(create_task(pipeline_output.run()), *running_steps)
