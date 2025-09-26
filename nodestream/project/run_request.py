@@ -56,4 +56,4 @@ class RunRequest:
         await pipeline.run(self.progress_reporter)
 
     def set_configuration(self, scope_config: ScopeConfig):
-        self.initialization_arguments.effecitve_config_values = scope_config
+        self.initialization_arguments.effective_config_values = scope_config

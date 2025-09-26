@@ -4,8 +4,9 @@ from typing import Any
 
 from pythonjsonlogger.jsonlogger import JsonFormatter
 
-from ...metrics import Metrics
-from ..commands.nodestream_command import NodestreamCommand
+from nodestream.cli.commands.nodestream_command import NodestreamCommand
+from nodestream.metrics import Metrics
+
 from .operation import Operation
 
 
