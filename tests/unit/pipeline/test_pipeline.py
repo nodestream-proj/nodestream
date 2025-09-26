@@ -15,8 +15,8 @@ from nodestream.pipeline.pipeline import (
     Record,
     StartStepState,
     StepExecutionState,
-    StopStepExecution,
     StepInput,
+    StopStepExecution,
 )
 from nodestream.pipeline.progress_reporter import PipelineProgressReporter
 from nodestream.pipeline.step import Step, StepContext
@@ -600,8 +600,8 @@ async def test_executor_run():
 # Tests for Pipeline class
 @pytest.mark.asyncio
 async def test_pipeline_init():
-    from nodestream.pipeline.step import PassStep
     from nodestream.pipeline.object_storage import NullObjectStore
+    from nodestream.pipeline.step import PassStep
 
     steps = (PassStep(), PassStep())
     step_outbox_size = 100
@@ -616,8 +616,8 @@ async def test_pipeline_init():
 
 @pytest.mark.asyncio
 async def test_pipeline_get_child_expanders():
-    from nodestream.pipeline.step import PassStep
     from nodestream.pipeline.object_storage import NullObjectStore
+    from nodestream.pipeline.step import PassStep
     from nodestream.schema import ExpandsSchema
 
     # Create a mock step that implements both Step and ExpandsSchema
@@ -642,8 +642,8 @@ async def test_pipeline_get_child_expanders():
 
 @pytest.mark.asyncio
 async def test_pipeline_run():
-    from nodestream.pipeline.step import PassStep
     from nodestream.pipeline.object_storage import NullObjectStore
+    from nodestream.pipeline.step import PassStep
 
     # Create simple steps
     step1 = PassStep()
@@ -771,8 +771,8 @@ async def test_pipeline_on_start_callback_called_before_step_operations(
     to ensure the on_start_callback is called before any operations
     occur in the actual steps in the pipeline.'
     """
-    from nodestream.pipeline.pipeline import Pipeline
     from nodestream.pipeline.object_storage import ObjectStore
+    from nodestream.pipeline.pipeline import Pipeline
 
     # Track the order of operations
     call_order = []
