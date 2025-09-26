@@ -1,13 +1,11 @@
-import asyncio
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
 from nodestream.pipeline.extractors import Extractor
 from nodestream.pipeline.object_storage import ObjectStore
-from nodestream.pipeline.pipeline import Pipeline, Record
+from nodestream.pipeline.pipeline import Pipeline
 from nodestream.pipeline.progress_reporter import PipelineProgressReporter
-from nodestream.pipeline.step import Step, StepContext
 from nodestream.pipeline.transformers import Transformer
 from nodestream.pipeline.writers import Writer
 

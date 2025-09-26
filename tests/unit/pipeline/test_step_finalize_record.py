@@ -1,10 +1,8 @@
-from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 from nodestream.pipeline.pipeline import Record
-from nodestream.pipeline.progress_reporter import PipelineProgressReporter
-from nodestream.pipeline.step import Step, StepContext
+from nodestream.pipeline.step import Step
 
 
 class TestStep(Step):
