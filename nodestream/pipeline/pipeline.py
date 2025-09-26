@@ -233,8 +233,9 @@ class ProcessRecordsState(StepExecutionState):
                 emissions = self.step.process_record(next.data, self.context)
                 result = await self.emit_from_generator(emissions, next)
 
-                # If we didn't emit any records, then we need to drop the
-                # record since it is not going to be processed further.
+                # If we didn't emit any records by processing this record,
+                # then we need to drop the record since it is not
+                # going to participate in the pipeline any further.
                 if not result.did_emit_records:
                     await next.drop()
 
@@ -397,7 +398,10 @@ class PipelineOutputStopState(PipelineOutputState):
     """
 
     async def execute_until_state_change(self) -> Optional[ExecutionState]:
-        self.call_ignoring_errors(self.reporter.on_finish_callback, self.metrics)
+        # For cases where the reporter _wants_ to have the exception thrown
+        # (e.g to have a status code in the CLI) we need to make sure we call
+        # on_finish_callback without swallowing exceptions (because thats the point).
+        self.reporter.on_finish_callback(self.metrics)
         return None
 
 
@@ -480,6 +484,12 @@ class Pipeline(ExpandsSchemaFromChildren):
         current_input_name = None
         current_output_name = self.steps[-1].__class__.__name__ + f"_{len(self.steps)}"
 
+        # Here lies a footgun. DO NOT MOVE this executor from the first
+        # position in the list that makes its way to the gather call. It will
+        # break the pipeline because we need to ensure the on_start_callback
+        # is called before any operations occur in the actual steps in the
+        # pipeline. To do this, we need to make sure that the first coroutine
+        # scheduled is the one that calls the on_start_callback.
         current_input, current_output = channel(
             self.step_outbox_size, current_output_name, current_input_name
         )

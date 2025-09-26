@@ -16,6 +16,7 @@ from nodestream.pipeline.pipeline import (
     StartStepState,
     StepExecutionState,
     StopStepExecution,
+    StepInput,
 )
 from nodestream.pipeline.progress_reporter import PipelineProgressReporter
 from nodestream.pipeline.step import Step, StepContext
@@ -723,3 +724,106 @@ async def test_process_records_state_should_continue_false(mock_step, mock_conte
 
     # Should transition to StopStepExecution due to should_continue being False
     assert isinstance(next_state, StopStepExecution)
+
+
+@pytest.mark.asyncio
+async def test_pipeline_output_on_finish_callback_exceptions_not_swallowed(
+    mocker,
+):
+    """Test that on_finish_callback exceptions are not swallowed.
+
+    This test covers the case described in the diff comment:
+    'For cases where the reporter _wants_ to have the exception thrown
+    (e.g to have a status code in the CLI) we need to make sure we call
+    on_finish_callback without swallowing exceptions (because thats the
+    point).'
+    """
+
+    def on_finish_callback(metrics):
+        raise ValueError("CLI status code exception")
+
+    input_mock = mocker.Mock(StepInput)
+    # No records to process
+    input_mock.get = mocker.AsyncMock(return_value=None)
+
+    executor = Executor.pipeline_output(
+        input_mock,
+        PipelineProgressReporter(
+            on_finish_callback=on_finish_callback,
+            logger=mocker.Mock(),
+        ),
+    )
+
+    # The exception should propagate up and not be caught
+    with pytest.raises(ValueError, match="CLI status code exception"):
+        await executor.run()
+
+
+@pytest.mark.asyncio
+async def test_pipeline_on_start_callback_called_before_step_operations(
+    mocker,
+):
+    """Test that on_start_callback is called before any step operations begin.
+
+    This test covers the case described in the diff comment:
+    'Here lies a footgun. DO NOT MOVE the `create_task` call after the
+    running_steps generator. It will break the pipeline because we need
+    to ensure the on_start_callback is called before any operations
+    occur in the actual steps in the pipeline.'
+    """
+    from nodestream.pipeline.pipeline import Pipeline
+    from nodestream.pipeline.object_storage import ObjectStore
+
+    # Track the order of operations
+    call_order = []
+
+    def on_start_callback():
+        call_order.append("on_start_callback")
+
+    def on_finish_callback(metrics):
+        call_order.append("on_finish_callback")
+
+    # Create a mock step that records when it starts
+    mock_step = mocker.Mock(Step)
+    mock_step.__class__.__name__ = "MockStep"
+
+    async def mock_start(context):
+        call_order.append("step_start")
+
+    async def mock_finish(context):
+        call_order.append("step_finish")
+
+    async def mock_process_record(record, context):
+        call_order.append("step_process")
+        yield record
+
+    async def mock_emit_outstanding_records(context):
+        call_order.append("step_emit_outstanding")
+        for record in ():
+            yield record
+
+    mock_step.start = mock_start
+    mock_step.finish = mock_finish
+    mock_step.process_record = mock_process_record
+    mock_step.emit_outstanding_records = mock_emit_outstanding_records
+
+    # Create pipeline with the mock step
+    object_store = mocker.Mock(spec=ObjectStore)
+    object_store.namespaced.return_value = object_store
+
+    pipeline = Pipeline((mock_step,), 10, object_store)
+
+    reporter = PipelineProgressReporter(
+        on_start_callback=on_start_callback,
+        on_finish_callback=on_finish_callback,
+        logger=mocker.Mock(),
+    )
+
+    await pipeline.run(reporter)
+
+    # Verify that on_start_callback was called before any step operations
+    assert call_order[0] == "on_start_callback"
+    assert "step_start" in call_order
+    start_idx = call_order.index("on_start_callback")
+    step_idx = call_order.index("step_start")
+    assert start_idx < step_idx
