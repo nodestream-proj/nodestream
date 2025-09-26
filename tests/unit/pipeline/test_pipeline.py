@@ -690,7 +690,7 @@ async def test_emit_from_generator_early_return_on_closed_downstream(
     assert call_count == 2  # First yield + attempt at second yield
 
 
-# Test to cover line 244 - the specific case where should_continue is False
+# Test to cover line 246 - the specific case where should_continue is False
 @pytest.mark.asyncio
 async def test_process_records_state_should_continue_false(mock_step, mock_context):
     """Test ProcessRecordsState when emit result should_continue is False."""
@@ -710,20 +710,21 @@ async def test_process_records_state_should_continue_false(mock_step, mock_conte
 
     mock_step.process_record.return_value = test_generator("test_data", mock_context)
 
-    # Put record in input channel
-    await input_channel.channel.put(test_record)
+    # Mock emit_from_generator to return CLOSED_DOWNSTREAM to trigger should_continue = False
+    from unittest.mock import patch
 
-    # Set input_dropped after putting the record to simulate downstream closing
-    # during processing (this will make should_continue False)
-    output_channel.channel.input_dropped = True
+    with patch.object(
+        state, "emit_from_generator", return_value=EmitResult.CLOSED_DOWNSTREAM
+    ):
+        # Put record in input channel
+        await input_channel.channel.put(test_record)
+        # Put end signal
+        await input_channel.channel.put(None)
 
-    # Put end signal
-    await input_channel.channel.put(None)
+        next_state = await state.execute_until_state_change()
 
-    next_state = await state.execute_until_state_change()
-
-    # Should transition to StopStepExecution due to should_continue being False
-    assert isinstance(next_state, StopStepExecution)
+        # Should transition to StopStepExecution due to should_continue being False
+        assert isinstance(next_state, StopStepExecution)
 
 
 @pytest.mark.asyncio
