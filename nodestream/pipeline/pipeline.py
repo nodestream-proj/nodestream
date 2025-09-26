@@ -52,7 +52,7 @@ class Record:
             Record: The record created from the emission.
         """
         data = callback_token = emission
-        if isinstance(emission, tuple):
+        if isinstance(emission, tuple) and step.tracks_lineage:
             data, callback_token = emission
 
         return Record(data, step, callback_token, originated_from)
@@ -71,8 +71,9 @@ class Record:
     async def drop(self):
         # If we are being told to drop, then we need to run our callback so
         # that the step that created us can clean up any resources it has
-        # allocated for this record.
-        await self.originating_step.finalize_record(self.callback_token)
+        # allocated for this record if it opts into the feature.
+        if self.originating_step.tracks_lineage:
+            await self.originating_step.finalize_record(self.callback_token)
 
         # If _we_ are being dropped, then there is a chance that our parent is
         # done as well. So we can propagate the drop up the chain and ensure
