@@ -7,6 +7,7 @@ from .regex_value_provider import RegexValueProvider
 from .split_value_provider import SplitValueProvider
 from .static_value_provider import StaticValueProvider
 from .string_format_value_provider import StringFormattingValueProvider
+from .uuid_value_provider import UuidValueProvider
 from .value_provider import (
     VALUE_PROVIDER_REGISTRY,
     StaticValueOrValueProvider,
@@ -28,4 +29,5 @@ __all__ = (
     "StaticValueOrValueProvider",
     "RegexValueProvider",
     "CastValueProvider",
+    "UuidValueProvider",
 )
