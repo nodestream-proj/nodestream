@@ -1,4 +1,3 @@
-
 import pytest
 
 from nodestream.pipeline.pipeline import Record
@@ -63,6 +62,7 @@ async def test_step_finalize_record_custom_implementation():
 async def test_finalize_record_called_on_record_drop():
     """Test that finalize_record is called when a record is dropped."""
     step = TestStep()
+    step.tracks_lineage = True
     token = "test_token"
 
     record = Record(data="test_data", originating_step=step, callback_token=token)
@@ -76,6 +76,7 @@ async def test_finalize_record_called_on_record_drop():
 async def test_finalize_record_called_with_correct_token():
     """Test that finalize_record is called with the correct callback token."""
     step = TestStep()
+    step.tracks_lineage = True
 
     # Test with simple data (token == data)
     record1 = Record.from_step_emission(step, "simple_data")
@@ -92,6 +93,7 @@ async def test_finalize_record_called_with_correct_token():
 async def test_finalize_record_resource_cleanup():
     """Test finalize_record for resource cleanup scenario."""
     step = ResourceTrackingStep()
+    step.tracks_lineage = True
 
     # Simulate processing records
     record1_data = "record1"
@@ -134,6 +136,7 @@ async def test_finalize_record_exception_handling():
             raise ValueError(f"Failed to finalize {record_token}")
 
     step = FailingStep()
+    step.tracks_lineage = True
     record = Record(data="test", originating_step=step, callback_token="failing_token")
 
     # Exception should propagate
@@ -145,7 +148,9 @@ async def test_finalize_record_exception_handling():
 async def test_finalize_record_with_child_records():
     """Test finalize_record behavior with parent-child record relationships."""
     parent_step = TestStep()
+    parent_step.tracks_lineage = True
     child_step = TestStep()
+    child_step.tracks_lineage = True
 
     parent_record = Record(
         data="parent",
@@ -201,6 +206,7 @@ async def test_finalize_record_async_behavior():
             self.finalized_tokens.append(record_token)
 
     step = AsyncStep()
+    step.tracks_lineage = True
     record = Record(
         data="async_test", originating_step=step, callback_token="async_token"
     )
@@ -215,6 +221,7 @@ async def test_finalize_record_async_behavior():
 async def test_finalize_record_multiple_tokens_same_step():
     """Test finalize_record called multiple times on same step."""
     step = TestStep()
+    step.tracks_lineage = True
 
     records = []
     for i in range(5):
@@ -235,6 +242,7 @@ async def test_finalize_record_multiple_tokens_same_step():
 async def test_finalize_record_with_none_token():
     """Test finalize_record behavior with None token."""
     step = TestStep()
+    step.tracks_lineage = True
 
     record = Record(data="test", originating_step=step, callback_token=None)
 
@@ -247,6 +255,7 @@ async def test_finalize_record_with_none_token():
 async def test_finalize_record_with_complex_token():
     """Test finalize_record with complex token objects."""
     step = TestStep()
+    step.tracks_lineage = True
 
     complex_token = {
         "id": "record_123",
