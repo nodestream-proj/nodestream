@@ -13,8 +13,6 @@ from nodestream.pipeline.writers import Writer
 class ResourceTrackingExtractor(Extractor):
     """Extractor that tracks resource allocation and cleanup."""
 
-    tracks_lineage: bool = True
-
     def __init__(self, data_items):
         self.data_items = data_items
         self.allocated_resources = {}

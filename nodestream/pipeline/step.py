@@ -106,8 +106,6 @@ class Step:
     asynchronous context. They can process records and emit new records.
     """
 
-    tracks_lineage: bool = False
-
     async def start(self, context: StepContext):
         """Start the step.
 
