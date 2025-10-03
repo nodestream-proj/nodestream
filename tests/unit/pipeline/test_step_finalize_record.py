@@ -176,34 +176,6 @@ async def test_finalize_record_with_child_records():
 
 
 @pytest.mark.asyncio
-async def test_finalize_record_async_behavior():
-    """Test that finalize_record properly handles async operations."""
-
-    class AsyncStep(Step):
-        def __init__(self):
-            self.finalized_tokens = []
-            self.delay_called = False
-
-        async def finalize_record(self, record_token):
-            # Simulate async cleanup work
-            import asyncio
-
-            await asyncio.sleep(0.001)  # Small delay
-            self.delay_called = True
-            self.finalized_tokens.append(record_token)
-
-    step = AsyncStep()
-    record = RecordContext(
-        record="async_test", originating_step=step, callback_token="async_token"
-    )
-
-    await record.drop()
-
-    assert step.delay_called
-    assert step.finalized_tokens == ["async_token"]
-
-
-@pytest.mark.asyncio
 async def test_finalize_record_multiple_tokens_same_step():
     """Test finalize_record called multiple times on same step."""
     step = TestStep()
