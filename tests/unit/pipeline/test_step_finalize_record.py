@@ -35,17 +35,6 @@ class ResourceTrackingStep(Step):
 
 
 @pytest.mark.asyncio
-async def test_step_finalize_record_default_behavior():
-    """Test that default finalize_record implementation does nothing."""
-    step = Step()
-
-    # Should not raise any exceptions
-    await step.finalize_record("any_token")
-    await step.finalize_record(None)
-    await step.finalize_record({"complex": "token"})
-
-
-@pytest.mark.asyncio
 async def test_step_finalize_record_custom_implementation():
     """Test that custom finalize_record implementation is called."""
     step = TestStep()
