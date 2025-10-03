@@ -12,7 +12,7 @@ from nodestream.pipeline.pipeline import (
     PipelineOutputStartState,
     PipelineOutputStopState,
     ProcessRecordsState,
-    Record,
+    RecordContext,
     StartStepState,
     StepExecutionState,
     StepInput,
@@ -53,9 +53,9 @@ async def test_record_from_step_emission_simple():
     step = Mock(spec=Step)
     data = {"test": "data"}
 
-    record = Record.from_step_emission(step, data)
+    record = RecordContext.from_step_emission(step, data)
 
-    assert record.data == data
+    assert record.record == data
     assert record.callback_token == data
     assert record.originating_step == step
     assert record.originated_from is None
@@ -68,9 +68,9 @@ async def test_record_from_step_emission_with_tuple():
     data = {"test": "data"}
     token = "callback_token"
 
-    record = Record.from_step_emission(step, (data, token))
+    record = RecordContext.from_step_emission(step, (data, token))
 
-    assert record.data == data
+    assert record.record == data
     assert record.callback_token == token
     assert record.originating_step == step
 
@@ -81,7 +81,7 @@ async def test_record_drop_calls_finalize():
     step.finalize_record = AsyncMock()
     token = "test_token"
 
-    record = Record(data="test", originating_step=step, callback_token=token)
+    record = RecordContext(record="test", originating_step=step, callback_token=token)
     await record.drop()
 
     step.finalize_record.assert_called_once_with(token)
@@ -94,11 +94,11 @@ async def test_record_drop_propagates_to_parent():
     child_step = Mock(spec=Step)
     child_step.finalize_record = AsyncMock()
 
-    parent_record = Record(
-        data="parent", originating_step=parent_step, callback_token="parent_token"
+    parent_record = RecordContext(
+        record="parent", originating_step=parent_step, callback_token="parent_token"
     )
-    child_record = Record(
-        data="child",
+    child_record = RecordContext(
+        record="child",
         originating_step=child_step,
         callback_token="child_token",
         originated_from=parent_record,
@@ -116,8 +116,11 @@ async def test_record_child_dropped():
     step = Mock(spec=Step)
     step.finalize_record = AsyncMock()
 
-    record = Record(
-        data="test", originating_step=step, callback_token="token", child_record_count=1
+    record = RecordContext(
+        record="test",
+        originating_step=step,
+        callback_token="token",
+        child_record_count=1,
     )
     await record.child_dropped()
 
@@ -193,8 +196,8 @@ async def test_process_records_state_drops_record_when_no_emission():
     # Create a record with finalize_record mock
     originating_step = Mock(spec=Step)
     originating_step.finalize_record = AsyncMock()
-    test_record = Record(
-        data="test_data", originating_step=originating_step, callback_token="token"
+    test_record = RecordContext(
+        record="test_data", originating_step=originating_step, callback_token="token"
     )
 
     # Mock process_record to return empty generator
@@ -273,7 +276,7 @@ async def test_pipeline_output_observes_data_not_record():
 
     # Put records in input channel
     for data in test_data:
-        record = Record(data=data, originating_step=step, callback_token=data)
+        record = RecordContext(record=data, originating_step=step, callback_token=data)
         await input_channel.channel.put(record)
 
     # Signal end
@@ -296,8 +299,8 @@ async def test_step_execution_state_emit_record_success(mock_step, mock_context)
     input_channel, output_channel = channel(10)
     state = StartStepState(mock_step, mock_context, input_channel, output_channel)
 
-    test_record = Record(
-        data="test", originating_step=mock_step, callback_token="token"
+    test_record = RecordContext(
+        record="test", originating_step=mock_step, callback_token="token"
     )
     result = await state.emit_record(test_record)
 
@@ -314,8 +317,8 @@ async def test_step_execution_state_emit_record_closed_downstream(
     # Set input_dropped to simulate downstream not accepting records
     output_channel.channel.input_dropped = True
 
-    test_record = Record(
-        data="test", originating_step=mock_step, callback_token="token"
+    test_record = RecordContext(
+        record="test", originating_step=mock_step, callback_token="token"
     )
     result = await state.emit_record(test_record)
 
@@ -370,8 +373,8 @@ async def test_process_records_state_exception_handling(mock_step, mock_context)
     # Create a record
     originating_step = Mock(spec=Step)
     originating_step.finalize_record = AsyncMock()
-    test_record = Record(
-        data="test_data", originating_step=originating_step, callback_token="token"
+    test_record = RecordContext(
+        record="test_data", originating_step=originating_step, callback_token="token"
     )
 
     # Mock process_record to raise an exception directly (not return a coroutine)
@@ -408,8 +411,8 @@ async def test_process_records_state_closed_downstream_transition(
     # Create a record
     originating_step = Mock(spec=Step)
     originating_step.finalize_record = AsyncMock()
-    test_record = Record(
-        data="test_data", originating_step=originating_step, callback_token="token"
+    test_record = RecordContext(
+        record="test_data", originating_step=originating_step, callback_token="token"
     )
 
     # Mock process_record to return a generator with records
@@ -700,8 +703,8 @@ async def test_process_records_state_should_continue_false(mock_step, mock_conte
     # Create a record
     originating_step = Mock(spec=Step)
     originating_step.finalize_record = AsyncMock()
-    test_record = Record(
-        data="test_data", originating_step=originating_step, callback_token="token"
+    test_record = RecordContext(
+        record="test_data", originating_step=originating_step, callback_token="token"
     )
 
     # Mock process_record to return a generator that yields records

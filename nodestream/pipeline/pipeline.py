@@ -17,20 +17,20 @@ async def no_op(_):
 
 
 @dataclass(slots=True)
-class Record:
+class RecordContext:
     """A `Record` is a unit of data that is processed by a pipeline."""
 
-    data: Any
+    record: Any
     originating_step: Step
     callback_token: Any
-    originated_from: Optional["Record"] = field(default=None)
+    originated_from: Optional["RecordContext"] = field(default=None)
     child_record_count: int = field(default=0)
 
     @staticmethod
     def from_step_emission(
         step: Step,
         emission: Any,
-        originated_from: Optional["Record"] = None,
+        originated_from: Optional["RecordContext"] = None,
     ):
         """Create a record from a step's emission of data.
 
@@ -51,11 +51,11 @@ class Record:
         Returns:
             Record: The record created from the emission.
         """
-        data = callback_token = emission
+        record = callback_token = emission
         if isinstance(emission, tuple):
-            data, callback_token = emission
+            record, callback_token = emission
 
-        return Record(data, step, callback_token, originated_from)
+        return RecordContext(record, step, callback_token, originated_from)
 
     async def child_dropped(self):
         # If we have no children after this child has reported itself as
@@ -133,7 +133,7 @@ class StepExecutionState(ExecutionState):
         """
         return next_state(self.step, self.context, self.input, self.output)
 
-    async def emit_record(self, record: Record) -> EmitResult:
+    async def emit_record(self, record: RecordContext) -> EmitResult:
         """Emit a record to the output channel.
 
         This method is used to emit a record to the output channel. It will
@@ -156,7 +156,7 @@ class StepExecutionState(ExecutionState):
     async def emit_from_generator(
         self,
         generator,
-        origin: Optional[Record] = None,
+        origin: Optional[RecordContext] = None,
     ) -> EmitResult:
         """Emit records from a generator.
 
@@ -179,7 +179,7 @@ class StepExecutionState(ExecutionState):
             # stop processing any more records and we will report this to
             # whatever state is calling us. Depending on that state, it can
             # decide what to do.
-            record = Record.from_step_emission(self.step, emission, origin)
+            record = RecordContext.from_step_emission(self.step, emission, origin)
             result = await self.emit_record(record)
             if result == EmitResult.CLOSED_DOWNSTREAM:
                 return result
@@ -231,7 +231,7 @@ class ProcessRecordsState(StepExecutionState):
         try:
             while (next := await self.input.get()) is not None:
                 # Process the record and emit any resulting records downstream.
-                emissions = self.step.process_record(next.data, self.context)
+                emissions = self.step.process_record(next.record, self.context)
                 result = await self.emit_from_generator(emissions, next)
 
                 # If we didn't emit any records by processing this record,
@@ -381,11 +381,11 @@ class PipelineOutputProcessRecordsState(PipelineOutputState):
 
     async def execute_until_state_change(self) -> Optional[ExecutionState]:
         index = 0
-        while (record := await self.input.get()) is not None:
+        while (next := await self.input.get()) is not None:
             self.metrics.increment(RECORDS)
             self.call_ignoring_errors(self.reporter.report, index, self.metrics)
-            self.call_ignoring_errors(self.reporter.observe, record.data)
-            await record.drop()
+            self.call_ignoring_errors(self.reporter.observe, next.record)
+            await next.drop()
             index += 1
         return self.make_state(PipelineOutputStopState)
 

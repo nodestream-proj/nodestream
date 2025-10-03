@@ -35,8 +35,6 @@ class ResourceTrackingExtractor(Extractor):
 class ResourceTrackingTransformer(Transformer):
     """Transformer that tracks resource allocation and cleanup."""
 
-    tracks_lineage: bool = True
-
     def __init__(self):
         self.allocated_resources = {}
         self.finalized_tokens = []
@@ -63,8 +61,6 @@ class ResourceTrackingTransformer(Transformer):
 
 class ResourceTrackingWriter(Writer):
     """Writer that tracks resource allocation and cleanup."""
-
-    tracks_lineage: bool = True
 
     def __init__(self):
         self.allocated_resources = {}
@@ -131,8 +127,6 @@ async def test_cleanup_flow_with_filtering():
     """Test cleanup flow when some records are filtered out."""
 
     class FilteringTransformer(Transformer):
-        tracks_lineage: bool = True
-
         def __init__(self):
             self.allocated_resources = {}
             self.finalized_tokens = []
@@ -182,8 +176,6 @@ async def test_cleanup_flow_with_record_multiplication():
     """Test cleanup flow when one record generates multiple records."""
 
     class MultiplyingTransformer(Transformer):
-        tracks_lineage: bool = True
-
         def __init__(self):
             self.allocated_resources = {}
             self.finalized_tokens = []
@@ -231,8 +223,6 @@ async def test_cleanup_flow_with_exception():
     """Test cleanup flow when an exception occurs during processing."""
 
     class FailingTransformer(Transformer):
-        tracks_lineage: bool = True
-
         def __init__(self):
             self.allocated_resources = {}
             self.finalized_tokens = []

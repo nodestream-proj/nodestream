@@ -1,6 +1,6 @@
 import pytest
 
-from nodestream.pipeline.pipeline import Record
+from nodestream.pipeline.pipeline import RecordContext
 from nodestream.pipeline.step import Step
 
 
@@ -64,7 +64,9 @@ async def test_finalize_record_called_on_record_drop():
     step = TestStep()
     token = "test_token"
 
-    record = Record(data="test_data", originating_step=step, callback_token=token)
+    record = RecordContext(
+        record="test_data", originating_step=step, callback_token=token
+    )
 
     await record.drop()
 
@@ -77,11 +79,11 @@ async def test_finalize_record_called_with_correct_token():
     step = TestStep()
 
     # Test with simple data (token == data)
-    record1 = Record.from_step_emission(step, "simple_data")
+    record1 = RecordContext.from_step_emission(step, "simple_data")
     await record1.drop()
 
     # Test with tuple (data, token)
-    record2 = Record.from_step_emission(step, ("data", "custom_token"))
+    record2 = RecordContext.from_step_emission(step, ("data", "custom_token"))
     await record2.drop()
 
     assert step.finalize_calls == ["simple_data", "custom_token"]
@@ -98,12 +100,12 @@ async def test_finalize_record_resource_cleanup():
 
     # Process first record
     async for emission in step.process_record(record1_data, None):
-        record1 = Record.from_step_emission(step, emission)
+        record1 = RecordContext.from_step_emission(step, emission)
         break
 
     # Process second record
     async for emission in step.process_record(record2_data, None):
-        record2 = Record.from_step_emission(step, emission)
+        record2 = RecordContext.from_step_emission(step, emission)
         break
 
     # Verify resources were allocated
@@ -133,7 +135,9 @@ async def test_finalize_record_exception_handling():
             raise ValueError(f"Failed to finalize {record_token}")
 
     step = FailingStep()
-    record = Record(data="test", originating_step=step, callback_token="failing_token")
+    record = RecordContext(
+        record="test", originating_step=step, callback_token="failing_token"
+    )
 
     # Exception should propagate
     with pytest.raises(ValueError, match="Failed to finalize failing_token"):
@@ -146,22 +150,22 @@ async def test_finalize_record_with_child_records():
     parent_step = TestStep()
     child_step = TestStep()
 
-    parent_record = Record(
-        data="parent",
+    parent_record = RecordContext(
+        record="parent",
         originating_step=parent_step,
         callback_token="parent_token",
         child_record_count=2,
     )
 
-    child1 = Record(
-        data="child1",
+    child1 = RecordContext(
+        record="child1",
         originating_step=child_step,
         callback_token="child1_token",
         originated_from=parent_record,
     )
 
-    child2 = Record(
-        data="child2",
+    child2 = RecordContext(
+        record="child2",
         originating_step=child_step,
         callback_token="child2_token",
         originated_from=parent_record,
@@ -200,8 +204,8 @@ async def test_finalize_record_async_behavior():
             self.finalized_tokens.append(record_token)
 
     step = AsyncStep()
-    record = Record(
-        data="async_test", originating_step=step, callback_token="async_token"
+    record = RecordContext(
+        record="async_test", originating_step=step, callback_token="async_token"
     )
 
     await record.drop()
@@ -217,8 +221,8 @@ async def test_finalize_record_multiple_tokens_same_step():
 
     records = []
     for i in range(5):
-        record = Record(
-            data=f"data_{i}", originating_step=step, callback_token=f"token_{i}"
+        record = RecordContext(
+            record=f"data_{i}", originating_step=step, callback_token=f"token_{i}"
         )
         records.append(record)
 
@@ -235,7 +239,7 @@ async def test_finalize_record_with_none_token():
     """Test finalize_record behavior with None token."""
     step = TestStep()
 
-    record = Record(data="test", originating_step=step, callback_token=None)
+    record = RecordContext(record="test", originating_step=step, callback_token=None)
 
     await record.drop()
 
@@ -253,7 +257,9 @@ async def test_finalize_record_with_complex_token():
         "resources": ["file1.txt", "file2.txt"],
     }
 
-    record = Record(data="test", originating_step=step, callback_token=complex_token)
+    record = RecordContext(
+        record="test", originating_step=step, callback_token=complex_token
+    )
 
     await record.drop()
 

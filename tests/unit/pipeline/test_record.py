@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from nodestream.pipeline.pipeline import Record
+from nodestream.pipeline.pipeline import RecordContext
 from nodestream.pipeline.step import Step
 
 
@@ -12,9 +12,9 @@ async def test_record_creation_simple():
     step = Mock(spec=Step)
     data = {"test": "data"}
 
-    record = Record(data=data, originating_step=step, callback_token="token")
+    record = RecordContext(record=data, originating_step=step, callback_token="token")
 
-    assert record.data == data
+    assert record.record == data
     assert record.originating_step == step
     assert record.callback_token == "token"
     assert record.originated_from is None
@@ -27,9 +27,9 @@ async def test_record_from_step_emission_simple_data():
     step = Mock(spec=Step)
     data = {"test": "data"}
 
-    record = Record.from_step_emission(step, data)
+    record = RecordContext.from_step_emission(step, data)
 
-    assert record.data == data
+    assert record.record == data
     assert record.callback_token == data
     assert record.originating_step == step
     assert record.originated_from is None
@@ -42,9 +42,9 @@ async def test_record_from_step_emission_tuple_data():
     data = {"test": "data"}
     token = "callback_token"
 
-    record = Record.from_step_emission(step, (data, token))
+    record = RecordContext.from_step_emission(step, (data, token))
 
-    assert record.data == data
+    assert record.record == data
     assert record.callback_token == token
     assert record.originating_step == step
 
@@ -54,13 +54,13 @@ async def test_record_from_step_emission_with_origin():
     """Test Record.from_step_emission with originated_from."""
     step = Mock(spec=Step)
     origin_step = Mock(spec=Step)
-    origin_record = Record(
-        data="origin", originating_step=origin_step, callback_token="origin_token"
+    origin_record = RecordContext(
+        record="origin", originating_step=origin_step, callback_token="origin_token"
     )
 
-    record = Record.from_step_emission(step, "new_data", origin_record)
+    record = RecordContext.from_step_emission(step, "new_data", origin_record)
 
-    assert record.data == "new_data"
+    assert record.record == "new_data"
     assert record.originated_from == origin_record
 
 
@@ -71,7 +71,7 @@ async def test_record_drop_calls_finalize_record():
     step.finalize_record = AsyncMock()
     token = "test_token"
 
-    record = Record(data="test", originating_step=step, callback_token=token)
+    record = RecordContext(record="test", originating_step=step, callback_token=token)
 
     await record.drop()
 
@@ -86,12 +86,12 @@ async def test_record_drop_propagates_to_parent():
     child_step = Mock(spec=Step)
     child_step.finalize_record = AsyncMock()
 
-    parent_record = Record(
-        data="parent", originating_step=parent_step, callback_token="parent_token"
+    parent_record = RecordContext(
+        record="parent", originating_step=parent_step, callback_token="parent_token"
     )
 
-    child_record = Record(
-        data="child",
+    child_record = RecordContext(
+        record="child",
         originating_step=child_step,
         callback_token="child_token",
         originated_from=parent_record,
@@ -112,8 +112,11 @@ async def test_record_child_dropped_decrements_count():
     step = Mock(spec=Step)
     step.finalize_record = AsyncMock()
 
-    record = Record(
-        data="test", originating_step=step, callback_token="token", child_record_count=3
+    record = RecordContext(
+        record="test",
+        originating_step=step,
+        callback_token="token",
+        child_record_count=3,
     )
 
     await record.child_dropped()
@@ -129,8 +132,11 @@ async def test_record_child_dropped_finalizes_when_count_zero():
     step = Mock(spec=Step)
     step.finalize_record = AsyncMock()
 
-    record = Record(
-        data="test", originating_step=step, callback_token="token", child_record_count=1
+    record = RecordContext(
+        record="test",
+        originating_step=step,
+        callback_token="token",
+        child_record_count=1,
     )
 
     await record.child_dropped()
@@ -149,23 +155,23 @@ async def test_record_child_dropped_propagates_to_grandparent():
     child_step = Mock(spec=Step)
     child_step.finalize_record = AsyncMock()
 
-    grandparent_record = Record(
-        data="grandparent",
+    grandparent_record = RecordContext(
+        record="grandparent",
         originating_step=grandparent_step,
         callback_token="grandparent_token",
         child_record_count=1,
     )
 
-    parent_record = Record(
-        data="parent",
+    parent_record = RecordContext(
+        record="parent",
         originating_step=parent_step,
         callback_token="parent_token",
         originated_from=grandparent_record,
         child_record_count=1,
     )
 
-    child_record = Record(
-        data="child",
+    child_record = RecordContext(
+        record="child",
         originating_step=child_step,
         callback_token="child_token",
         originated_from=parent_record,
@@ -191,8 +197,8 @@ async def test_record_multiple_children_cleanup():
     parent_step = Mock(spec=Step)
     parent_step.finalize_record = AsyncMock()
 
-    parent_record = Record(
-        data="parent",
+    parent_record = RecordContext(
+        record="parent",
         originating_step=parent_step,
         callback_token="parent_token",
         child_record_count=2,  # Has 2 children
@@ -215,7 +221,9 @@ async def test_record_cleanup_with_no_parent():
     step = Mock(spec=Step)
     step.finalize_record = AsyncMock()
 
-    record = Record(data="orphan", originating_step=step, callback_token="orphan_token")
+    record = RecordContext(
+        record="orphan", originating_step=step, callback_token="orphan_token"
+    )
 
     await record.drop()
 
@@ -230,15 +238,15 @@ async def test_record_cleanup_exception_handling():
     child_step = Mock(spec=Step)
     child_step.finalize_record = AsyncMock(side_effect=Exception("Cleanup failed"))
 
-    parent_record = Record(
-        data="parent",
+    parent_record = RecordContext(
+        record="parent",
         originating_step=parent_step,
         callback_token="parent_token",
         child_record_count=1,
     )
 
-    child_record = Record(
-        data="child",
+    child_record = RecordContext(
+        record="child",
         originating_step=child_step,
         callback_token="child_token",
         originated_from=parent_record,
