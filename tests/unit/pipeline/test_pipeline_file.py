@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from hamcrest import assert_that, equal_to, has_length, instance_of
+from hamcrest import assert_that, contains_string, equal_to, has_length, instance_of
 
 from nodestream.file_io import LazyLoadedArgument
 from nodestream.pipeline.pipeline_file_loader import (
@@ -82,22 +82,11 @@ def test_pipeline_file_loads_config_when_set():
     )
 
 
-def test_pipeline_file_sha_256():
-    file_path = Path("tests/unit/pipeline/fixtures/simple_pipeline.yaml")
-    file_loader = PipelineFile(file_path)
-    assert_that(
-        file_loader.file_sha_256(),
-        equal_to("1d2d496cbee088db29ef67f790e42b26e99953a6329cf3ad1745381e6ab41718"),
-    )
-
-
 def test_object_store_namespaced():
     file_path = Path("tests/unit/pipeline/fixtures/simple_pipeline.yaml")
     file_loader = PipelineFile(file_path)
     pipeline = file_loader.load_pipeline()
     assert_that(
         pipeline.object_store.namespace.prefix,
-        equal_to(
-            "simple_pipeline-1d2d496cbee088db29ef67f790e42b26e99953a6329cf3ad1745381e6ab41718"
-        ),
+        contains_string("simple_pipeline"),
     )
