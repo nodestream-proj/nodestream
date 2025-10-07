@@ -47,7 +47,7 @@ class AwsClientFactory:
         }
 
     def get_credentials_from_provider_chain(self):
-        session = Session()
+        session = boto3.Session(**self.session_args)
         session_credentials = session.get_credentials().get_frozen_credentials()
         return {
             "access_key": session_credentials.access_key,
