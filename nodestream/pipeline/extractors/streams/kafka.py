@@ -39,7 +39,11 @@ class KafkaConsumerFactory:
     ):
         consumer = Consumer(
             cls.build_consumer_config(
-                offset_reset, security_protocol, group_id, bootstrap_servers, **extra_params,
+                offset_reset,
+                security_protocol,
+                group_id,
+                bootstrap_servers,
+                **extra_params,
             )
         )
         consumer.subscribe([topic_name])
