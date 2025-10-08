@@ -178,7 +178,9 @@ class PipelineFile:
     ) -> Pipeline:
         self.logger.info("Loading Pipeline")
         init_args = init_args or PipelineInitializationArguments()
-        init_args.object_store = init_args.object_store.namespaced(self.file_sha_256())
+        init_args.object_store = init_args.object_store.namespaced(
+            self.file_path.stem + "-" + self.file_sha_256()
+        )
         contents = self.get_contents()
         return contents.initialize_with_arguments(init_args)
 

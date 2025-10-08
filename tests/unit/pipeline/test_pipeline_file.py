@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from hamcrest import assert_that, equal_to, has_length, instance_of
+from hamcrest import assert_that, contains_string, equal_to, has_length, instance_of
 
 from nodestream.file_io import LazyLoadedArgument
 from nodestream.pipeline.pipeline_file_loader import (
@@ -79,4 +79,14 @@ def test_pipeline_file_loads_config_when_set():
     assert_that(
         loaded_pipeline.steps[0].name,
         equal_to("test"),
+    )
+
+
+def test_object_store_namespaced():
+    file_path = Path("tests/unit/pipeline/fixtures/simple_pipeline.yaml")
+    file_loader = PipelineFile(file_path)
+    pipeline = file_loader.load_pipeline()
+    assert_that(
+        pipeline.object_store.namespace.prefix,
+        contains_string("simple_pipeline"),
     )
