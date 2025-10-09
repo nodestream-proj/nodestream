@@ -39,6 +39,7 @@ dependencies = [
     "psutil~=6.0",
     "uvloop>=0.17.0,<=0.21.0 ; sys_platform == 'darwin'",
     "uvloop>=0.17.0,<=0.21.0 ; sys_platform == 'linux'",
+    "prometheus-client>=0.21.1",
 ]
 
 [project.optional-dependencies]
