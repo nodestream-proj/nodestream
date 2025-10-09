@@ -1,18 +1,19 @@
-[tool.poetry]
+[project]
 name = "nodestream"
 version = "0.14.17"
 description = "A Fast, Declarative ETL for Graph Databases."
-license = "GPL-3.0-only"
-authors = [
-    "Zach Probst <Zach_Probst@intuit.com>"
-]
+authors = [{ name = "Zach Probst", email = "Zach_Probst@intuit.com" }]
+requires-python = "~=3.10"
 readme = "README.md"
-
-homepage = "https://github.com/nodestream-proj/nodestream"
-repository = "https://github.com/nodestream-proj/nodestream"
-documentation = "https://nodestream-proj.github.io/nodestream"
-
-keywords = ["etl", "neo4j", "declarative", "data", "kafka", "ingest"]
+license = "GPL-3.0-only"
+keywords = [
+    "etl",
+    "neo4j",
+    "declarative",
+    "data",
+    "kafka",
+    "ingest",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -20,59 +21,82 @@ classifiers = [
     "Intended Audience :: Information Technology",
     "License :: OSI Approved :: GNU Affero General Public License v3",
     "Natural Language :: English",
-    "Topic :: Database"
+    "Topic :: Database",
 ]
-packages = [ { include = "nodestream" } ]
+dependencies = [
+    "pyyaml~=6.0",
+    "jmespath~=1.0",
+    "cleo~=2.0",
+    "python-json-logger~=2.0",
+    "boto3>=1.34.127,<2",
+    "confluent-kafka~=2.5",
+    "Jinja2>=3,<4",
+    "pandas>=2,<3",
+    "pyarrow>=17.0.0,<19.0.0",
+    "schema>=0.7,<0.8",
+    "cookiecutter~=2.0",
+    "httpx>=0.27,<0.28",
+    "psutil~=6.0",
+    "uvloop>=0.17.0,<=0.21.0 ; sys_platform == 'darwin'",
+    "uvloop>=0.17.0,<=0.21.0 ; sys_platform == 'linux'",
+]
+
+[project.optional-dependencies]
+prometheus = ["prometheus-client>=0.21.1,<0.22"]
+validation = [
+    "genson>=1.3.0,<2",
+    "jsonschema>=4.23.0,<5",
+]
+
+[project.urls]
+Homepage = "https://github.com/nodestream-proj/nodestream"
+Repository = "https://github.com/nodestream-proj/nodestream"
+Documentation = "https://nodestream-proj.github.io/nodestream"
+
+[project.scripts]
+nodestream = "nodestream.cli.application:run"
+
+[project.entry-points."nodestream.plugins"]
+argument_resolvers = "nodestream.pipeline.argument_resolvers"
+file_formats = "nodestream.pipeline.extractors.files"
+interpretations = "nodestream.interpreting.interpretations"
+normalizers = "nodestream.pipeline.normalizers"
+value_providers = "nodestream.pipeline.value_providers"
+record_formats = "nodestream.pipeline.extractors.streams"
+stream_connectors = "nodestream.pipeline.extractors.streams"
+commands = "nodestream.cli.commands"
+audits = "nodestream.project.audits"
+schema_printers = "nodestream.schema.printers"
+databases = "nodestream.databases.null"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.2,<9",
+    "black>=25.1.0,<26",
+    "pyhamcrest>=2.1.0,<3",
+    "isort>=6.0.1,<7",
+    "pytest-cov>=6.1.1,<7",
+    "pytest-asyncio>=1.0.0,<2",
+    "pytest-mock>=3.14.1,<4",
+    "freezegun>=1.2.2,<2",
+    "moto[s3, dynamodb]>=5,<6",
+    "ruff>=0.11.12,<0.12",
+    "pytest-snapshot>=0.9.0,<0.10",
+    "pytest-httpx>=0.30.0,<0.31",
+]
 
 [tool.isort]
 profile = "black"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-pyyaml = "^6.0"
-jmespath = "^1.0"
-cleo = "^2.0"
-python-json-logger = "^2.0"
-boto3 = "^1.34.127"
-confluent-kafka = "^2.5"
-Jinja2 = "^3"
-pandas = "^2"
-pyarrow = ">=17.0.0,<19.0.0"
-schema = "^0.7"
-cookiecutter = "^2.0"
-httpx = "^0.27"
-psutil = "^6.0"
+[tool.hatch.build.targets.sdist]
+include = ["nodestream"]
 
-uvloop = [
-    { version = ">=0.17.0,<=0.21.0", platform = "darwin"},
-    { version = ">=0.17.0,<=0.21.0", platform = "linux"}
-]
-
-prometheus-client = {version = "^0.21.1", optional = true}
-genson = {version = "^1.3.0", optional = true}
-jsonschema = {version = "^4.23.0", optional = true}
-
-[tool.poetry.extras]
-prometheus = ["prometheus-client"]
-validation = ["genson", "jsonschema"]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.2"
-black = "^25.1.0"
-pyhamcrest = "^2.1.0"
-isort = "^6.0.1"
-pytest-cov = "^6.1.1"
-pytest-asyncio = "^1.0.0"
-pytest-mock = "^3.14.1"
-freezegun = "^1.2.2"
-moto = {version = "^5", extras = ["s3", "dynamodb"]}
-ruff = "^0.11.12"
-pytest-snapshot = "^0.9.0"
-pytest-httpx = "^0.30.0"
+[tool.hatch.build.targets.wheel]
+include = ["nodestream"]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 markers = [
@@ -80,24 +104,6 @@ markers = [
     "e2e: marks the test as an end-to-end test (deselect with '-m \"not e2e\"')",
 ]
 asyncio_default_fixture_loop_scope = "function"
-
-[tool.poetry.scripts]
-nodestream = 'nodestream.cli.application:run'
-
-# To prevent the "builin" stuff being a special case of plugins,
-# nodestream just considers itself a plugin for all of the things that are pluggable.
-[tool.poetry.plugins."nodestream.plugins"]
-"argument_resolvers" = "nodestream.pipeline.argument_resolvers"
-"file_formats" = "nodestream.pipeline.extractors.files"
-"interpretations" = "nodestream.interpreting.interpretations"
-"normalizers" = "nodestream.pipeline.normalizers"
-"value_providers" = "nodestream.pipeline.value_providers"
-"record_formats" = "nodestream.pipeline.extractors.streams"
-"stream_connectors" = "nodestream.pipeline.extractors.streams"
-"commands" = "nodestream.cli.commands"
-"audits" = "nodestream.project.audits"
-"schema_printers" = "nodestream.schema.printers"
-"databases" = "nodestream.databases.null"
 
 [tool.black]
 line-length = 88
