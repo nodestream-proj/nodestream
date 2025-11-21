@@ -14,7 +14,11 @@ class PrintSchema(NodestreamCommand):
     options = [
         PROJECT_FILE_OPTION,
         option(
-            "format", "f", "Format to print the schema in", default="plain", flag=False
+            "format",
+            "f",
+            "Format to print the schema in",
+            default="plain",
+            flag=False,
         ),
         option(
             "overrides",

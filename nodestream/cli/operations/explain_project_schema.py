@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from ...project import Project
 from ..commands.nodestream_command import NodestreamCommand
@@ -32,17 +32,19 @@ class ExplainProjectSchema(Operation):
 
         if not pipelines:
             scope_fragment = f" in scope '{self.scope}'" if self.scope else ""
-            command.write(
+            command.line(
                 f"No pipelines found for {self.kind} type '{self.type_name}'"
                 f"{scope_fragment}."
             )
             return
 
-        scope_fragment = f" in scope '{self.scope}'" if self.scope else " across all scopes"
-        command.write(
+        scope_fragment = (
+            f" in scope '{self.scope}'" if self.scope else " across all scopes"
+        )
+        command.line(
             f"Pipelines contributing to {self.kind} type '{self.type_name}'"
             f"{scope_fragment}:"
         )
-        for name in pipelines:
-            command.write(f" - {name}")
 
+        for name in pipelines:
+            command.line(name)

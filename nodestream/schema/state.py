@@ -6,7 +6,13 @@ from typing import Callable, Dict, Iterable, Optional, Set, Tuple
 
 from nodestream.utils import LayeredDict, LayeredList
 
-from ..file_io import LoadsFromYaml, LoadsFromYamlFile, SavesToYaml, SavesToYamlFile
+from ..file_io import (
+    LoadsFromYaml,
+    LoadsFromYamlFile,
+    SavesToYaml,
+    SavesToYamlFile,
+    WritesToYamlToStdout,
+)
 
 
 class GraphObjectType(str, Enum):
@@ -380,8 +386,8 @@ class AdjacencyCardinality:
 
     def to_file_data(self):
         return {
-            "from_side_cardinality": self.from_side_cardinality,
-            "to_side_cardinality": self.to_side_cardinality,
+            "from_side_cardinality": self.from_side_cardinality.value,
+            "to_side_cardinality": self.to_side_cardinality.value,
         }
 
 
@@ -411,7 +417,7 @@ class SchemaProvenance:
 
 
 @dataclass(slots=True, frozen=True)
-class Schema(SavesToYamlFile, LoadsFromYamlFile):
+class Schema(WritesToYamlToStdout, LoadsFromYamlFile):
     """A schema for a database."""
 
     type_schemas: Dict[Tuple[GraphObjectType, str], GraphObjectSchema] = field(

@@ -342,6 +342,17 @@ try:
             self.mode = self.mode.inform_mode_change()
             return self.mode.should_filter(record)
 
+    __all__ = [
+        "SchemaEnforcementMode",
+        "Schema",
+        "SchemaBuilder",
+        "FetchSchema",
+        "InferSchema",
+        "EnforceSchema",
+        "WarnSchema",
+        "SchemaEnforcer",
+    ]
+
 except ImportError:
 
     class SchemaEnforcer(PassStep):

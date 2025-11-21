@@ -9,11 +9,12 @@ from .shared_options import PROJECT_FILE_OPTION
 
 class ExplainSchema(NodestreamCommand):
     name = "explain schema"
-    description = (
-        "Explain which pipelines contribute to a given node or relationship type."
-    )
+    description = "Explain which pipelines contribute to a given graph type."
     arguments: ClassVar[list[argument]] = [
-        argument("kind", "The kind of type to explain ('node' or 'relationship')."),
+        argument(
+            "kind",
+            "The kind of type to explain ('node' or 'relationship').",
+        ),
         argument("name", "The node or relationship type name."),
     ]
     options = [
@@ -46,4 +47,3 @@ class ExplainSchema(NodestreamCommand):
             )
         )
         return 0
-

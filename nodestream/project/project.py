@@ -341,6 +341,7 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         coordinator = SchemaExpansionCoordinator(schema := Schema())
 
         for pipeline in pipeline_definitions:
+            pipeline.initialize_for_introspection()
             pipeline.expand_schema(coordinator=coordinator)
 
         schema = coordinator.schema
