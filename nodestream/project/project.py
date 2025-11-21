@@ -16,6 +16,7 @@ from ..pluggable import Pluggable
 from ..schema import (
     ExpandsSchema,
     ExpandsSchemaFromChildren,
+    GraphObjectType,
     Schema,
     SchemaExpansionCoordinator,
 )
@@ -340,7 +341,6 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         coordinator = SchemaExpansionCoordinator(schema := Schema())
 
         for pipeline in pipeline_definitions:
-            pipeline.initialize_for_introspection()
             pipeline.expand_schema(coordinator=coordinator)
 
         schema = coordinator.schema
@@ -350,6 +350,66 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
             schema.merge(overrides_schema)
 
         return schema
+
+    def explain_node_type(
+        self, node_type_name: str, scope_name: Optional[str] = None
+    ) -> List[str]:
+        """Return pipeline names that contribute to the given node type.
+
+        If ``scope_name`` is provided, only pipelines in that scope are
+        considered. Otherwise, all scopes are considered.
+        """
+        coordinator = SchemaExpansionCoordinator(Schema())
+
+        scopes: Iterable[PipelineScope]
+        if scope_name is None:
+            scopes = self.scopes_by_name.values()
+        else:
+            scope = self.scopes_by_name.get(scope_name)
+            if scope is None:
+                return []
+            scopes = (scope,)
+
+        for scope in scopes:
+            for pipeline in scope.pipelines_by_name.values():
+                pipeline.expand_schema(coordinator)
+
+        return sorted(
+            coordinator.provenance.get_pipelines_for(
+                object_type=GraphObjectType.NODE,
+                name=node_type_name,
+            )
+        )
+
+    def explain_relationship_type(
+        self, relationship_type_name: str, scope_name: Optional[str] = None
+    ) -> List[str]:
+        """Return pipeline names that contribute to the given relationship type.
+
+        If ``scope_name`` is provided, only pipelines in that scope are
+        considered. Otherwise, all scopes are considered.
+        """
+        coordinator = SchemaExpansionCoordinator(Schema())
+
+        scopes: Iterable[PipelineScope]
+        if scope_name is None:
+            scopes = self.scopes_by_name.values()
+        else:
+            scope = self.scopes_by_name.get(scope_name)
+            if scope is None:
+                return []
+            scopes = (scope,)
+
+        for scope in scopes:
+            for pipeline in scope.pipelines_by_name.values():
+                pipeline.expand_schema(coordinator)
+
+        return sorted(
+            coordinator.provenance.get_pipelines_for(
+                object_type=GraphObjectType.RELATIONSHIP,
+                name=relationship_type_name,
+            )
+        )
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return self.scopes_by_name.values()
