@@ -10,7 +10,6 @@ from ..file_io import (
     LoadsFromYaml,
     LoadsFromYamlFile,
     SavesToYaml,
-    SavesToYamlFile,
     WritesToYamlToStdout,
 )
 
