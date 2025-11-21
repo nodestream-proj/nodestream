@@ -157,3 +157,12 @@ def test_schema_to_yaml_stdout_uses_validated_data(basic_schema, capsys):
     captured = capsys.readouterr()
     rebuilt = Schema.validate_and_load(yaml.safe_load(captured.out))
     assert_that(rebuilt.nodes_by_name, equal_to(basic_schema.nodes_by_name))
+
+
+def test_schema_write_to_stdout_uses_default_print(basic_schema, capsys):
+    # When we call write_to_stdout, it should delegate to print (or the given
+    # print_fn) with a YAML string that can be round-tripped via validate_and_load.
+    basic_schema.write_to_stdout()
+    captured = capsys.readouterr()
+    rebuilt = Schema.validate_and_load(yaml.safe_load(captured.out))
+    assert_that(rebuilt.nodes_by_name, equal_to(basic_schema.nodes_by_name))
