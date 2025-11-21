@@ -94,7 +94,8 @@ async def test_handle_async_unknown_target_error(copy_command, mocker):
     copy_command.line_error = mocker.Mock()
     copy_command.run_operation = mocker.AsyncMock()
     copy_command.get_taget_from_user = mocker.Mock(side_effect=UnknownTargetError)
-    await copy_command.handle_async()
+    result = await copy_command.handle_async()
+    assert_that(result, equal_to(1))
     assert copy_command.run_operation.await_count == 3
 
 

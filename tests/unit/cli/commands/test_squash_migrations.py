@@ -12,6 +12,7 @@ async def test_show_handle_async(mocker):
     squash.option = mocker.Mock(
         side_effect=["from_migration_name", "to_migration_name"]
     )
-    await squash.handle_async()
+    result = await squash.handle_async()
 
+    assert_that(result, equal_to(0))
     assert_that(squash.run_operation.await_count, equal_to(1))

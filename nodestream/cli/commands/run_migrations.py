@@ -25,8 +25,9 @@ class RunMigrations(NodestreamCommand):
 
         if len(targets) == 0:
             self.info("No targets specified, nothing to do.")
-            return
+            return 0
 
         for target_name in targets:
             target = project.get_target_by_name(target_name)
             await self.run_operation(ExecuteMigrations(migrations, target))
+        return 0

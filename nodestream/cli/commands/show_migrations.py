@@ -62,3 +62,4 @@ class ShowMigrations(NodestreamCommand):
         headers, rows = await self.generate_output_table()
         table = self.table(headers, rows)
         table.render()
+        return 0

@@ -47,3 +47,4 @@ class PrintSchema(NodestreamCommand):
                 pipeline_names=self.argument("pipelines"),
             )
         )
+        return 0

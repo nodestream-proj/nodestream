@@ -60,7 +60,7 @@ class Copy(NodestreamCommand):
                     all_rel_types, "relationship"
                 )
             except UnknownTargetError:
-                return
+                return 1
 
             self.line("Starting to Copy:")
             self.line(f"<info>From: {from_target.name}</info>")
@@ -70,6 +70,7 @@ class Copy(NodestreamCommand):
             await self.run_operation(
                 RunCopy(from_target, to_target, project, node_types, rel_types)
             )
+        return 0
 
     def get_taget_from_user(self, project: Project, action: str) -> Target:
         # If the user has specified the target in the options, we don't need to prompt

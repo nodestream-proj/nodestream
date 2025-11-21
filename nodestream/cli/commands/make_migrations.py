@@ -23,3 +23,4 @@ class MakeMigration(NodestreamCommand):
         migrations = self.get_migrations()
         dry_run = self.option("dry-run")
         await self.run_operation(GenerateMigration(migrations, schema, dry_run))
+        return 0

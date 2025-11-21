@@ -23,3 +23,4 @@ class New(NodestreamCommand):
         db = self.option("database")
         generate = RunProjectCookiecutter(project_name, project_path, db)
         await self.run_operation(generate)
+        return 0

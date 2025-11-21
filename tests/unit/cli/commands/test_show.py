@@ -10,5 +10,6 @@ async def test_show_handle_async(mocker):
     show.option = mocker.Mock()
     show.argument = mocker.Mock()
     show.run_operation = mocker.AsyncMock()
-    await show.handle_async()
+    result = await show.handle_async()
+    assert_that(result, equal_to(0))
     assert_that(show.run_operation.await_count, equal_to(2))

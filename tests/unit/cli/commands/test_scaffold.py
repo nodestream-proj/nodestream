@@ -16,4 +16,5 @@ async def test_handle_async(scaffold_command, mocker, project_dir):
     scaffold_command.get_project_path = mocker.Mock(return_value=project_dir)
     scaffold_command.argument.return_value = "my_pipeline_thats_generated"
     scaffold_command.option.side_effect = ["scope", "neo4j"]
-    await scaffold_command.handle_async()
+    result = await scaffold_command.handle_async()
+    assert result == 0
