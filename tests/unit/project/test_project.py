@@ -29,7 +29,7 @@ from nodestream.project import (
 from nodestream.project.pipeline_definition import PipelineConfiguration
 from nodestream.project.plugin import PluginConfiguration
 from nodestream.project.storage import StorageConfiguration
-from nodestream.schema import Schema
+from nodestream.schema import GraphObjectType, Schema
 
 
 @pytest.fixture
@@ -468,3 +468,143 @@ def test_get_pipeline_by_names_mixed_existing_nonexisting(project):
 
     assert_that(pipelines, has_length(2))
     assert_that([p.name for p in pipelines], contains_inanyorder("test", "test2"))
+
+
+class DummyStep:
+    pass
+
+
+class OtherStep:
+    pass
+
+
+def test_explain_node_type_all_scopes_aggregates_provenance(project, mocker):
+    coordinator_cls = mocker.patch(
+        "nodestream.project.project.SchemaExpansionCoordinator"
+    )
+    coordinator = coordinator_cls.return_value
+
+    coordinator.provenance.get_pipelines_for.return_value = {"pipe1", "pipe2"}
+
+    scope1 = project.scopes_by_name["scope1"]
+    scope2 = project.scopes_by_name["scope2"]
+    for pipeline in scope1.pipelines_by_name.values():
+        pipeline.expand_schema = mocker.Mock()
+    for pipeline in scope2.pipelines_by_name.values():
+        pipeline.expand_schema = mocker.Mock()
+
+    result = project.explain_node_type("Person")
+
+    for pipeline in scope1.pipelines_by_name.values():
+        pipeline.expand_schema.assert_called_once_with(coordinator)
+    for pipeline in scope2.pipelines_by_name.values():
+        pipeline.expand_schema.assert_called_once_with(coordinator)
+    coordinator.provenance.get_pipelines_for.assert_called_once_with(
+        object_type=GraphObjectType.NODE,
+        name="Person",
+    )
+    assert_that(result, equal_to(["pipe1", "pipe2"]))
+
+
+def test_explain_node_type_with_valid_scope_uses_only_that_scope(project, mocker):
+    coordinator_cls = mocker.patch(
+        "nodestream.project.project.SchemaExpansionCoordinator"
+    )
+    coordinator = coordinator_cls.return_value
+
+    coordinator.provenance.get_pipelines_for.return_value = {"pipe1"}
+
+    scope1 = project.scopes_by_name["scope1"]
+    scope2 = project.scopes_by_name["scope2"]
+    for pipeline in scope1.pipelines_by_name.values():
+        pipeline.expand_schema = mocker.Mock()
+    for pipeline in scope2.pipelines_by_name.values():
+        pipeline.expand_schema = mocker.Mock()
+
+    result = project.explain_node_type("Person", scope_name="scope1")
+
+    for pipeline in scope1.pipelines_by_name.values():
+        pipeline.expand_schema.assert_called_once_with(coordinator)
+    for pipeline in scope2.pipelines_by_name.values():
+        pipeline.expand_schema.assert_not_called()
+    coordinator.provenance.get_pipelines_for.assert_called_once_with(
+        object_type=GraphObjectType.NODE,
+        name="Person",
+    )
+    assert_that(result, equal_to(["pipe1"]))
+
+
+def test_explain_node_type_with_invalid_scope_returns_empty(project):
+    result = project.explain_node_type("Person", scope_name="missing-scope")
+    assert_that(result, equal_to([]))
+
+
+def test_explain_relationship_type_all_scopes_aggregates_provenance(project, mocker):
+    coordinator_cls = mocker.patch(
+        "nodestream.project.project.SchemaExpansionCoordinator"
+    )
+    coordinator = coordinator_cls.return_value
+
+    coordinator.provenance.get_pipelines_for.return_value = {"pipeA"}
+
+    scope1 = project.scopes_by_name["scope1"]
+    scope2 = project.scopes_by_name["scope2"]
+    for pipeline in scope1.pipelines_by_name.values():
+        pipeline.expand_schema = mocker.Mock()
+    for pipeline in scope2.pipelines_by_name.values():
+        pipeline.expand_schema = mocker.Mock()
+
+    result = project.explain_relationship_type("FRIEND_OF")
+
+    for pipeline in scope1.pipelines_by_name.values():
+        pipeline.expand_schema.assert_called_once_with(coordinator)
+    for pipeline in scope2.pipelines_by_name.values():
+        pipeline.expand_schema.assert_called_once_with(coordinator)
+    coordinator.provenance.get_pipelines_for.assert_called_once_with(
+        object_type=GraphObjectType.RELATIONSHIP,
+        name="FRIEND_OF",
+    )
+    assert_that(result, equal_to(["pipeA"]))
+
+
+def test_explain_relationship_type_with_invalid_scope_returns_empty(project):
+    result = project.explain_relationship_type("FRIEND_OF", scope_name="missing-scope")
+    assert_that(result, equal_to([]))
+
+
+def test_get_child_expanders_returns_scopes(project, scopes):
+    child_expanders = list(project.get_child_expanders())
+    assert_that(child_expanders, equal_to(scopes))
+
+
+def test_dig_for_step_of_type_yields_matching_steps(project, mocker):
+    pipeline1 = mocker.Mock()
+    pipeline2 = mocker.Mock()
+
+    pipeline1.initialize_for_introspection.return_value.steps = [
+        DummyStep(),
+        OtherStep(),
+    ]
+    pipeline2.initialize_for_introspection.return_value.steps = [
+        OtherStep(),
+        DummyStep(),
+    ]
+
+    scope1 = project.scopes_by_name["scope1"]
+    scope2 = project.scopes_by_name["scope2"]
+    scope1.pipelines_by_name = {"p1": pipeline1}
+    scope2.pipelines_by_name = {"p2": pipeline2}
+
+    matches = list(project.dig_for_step_of_type(DummyStep))
+
+    assert_that(len(matches), equal_to(2))
+
+    (pl1, idx1, step1), (pl2, idx2, step2) = matches
+
+    assert_that(pl1, same_instance(pipeline1))
+    assert_that(idx1, equal_to(0))
+    assert isinstance(step1, DummyStep)
+
+    assert_that(pl2, same_instance(pipeline2))
+    assert_that(idx2, equal_to(1))
+    assert isinstance(step2, DummyStep)
