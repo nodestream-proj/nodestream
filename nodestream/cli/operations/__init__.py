@@ -1,6 +1,7 @@
 from .add_pipeline_to_project import AddPipelineToProject
 from .commit_project_to_disk import CommitProjectToDisk
 from .execute_migration import ExecuteMigrations
+from .explain_project_schema import ExplainProjectSchema
 from .generate_migration import GenerateMigration
 from .generate_pipeline_scaffold import GeneratePipelineScaffold
 from .generate_squashed_migration import GenerateSquashedMigration
@@ -15,7 +16,6 @@ from .run_copy import RunCopy
 from .run_pipeline import RunPipeline
 from .run_project_cookiecutter import RunProjectCookiecutter
 from .show_pipelines import ShowPipelines
-from .explain_project_schema import ExplainProjectSchema
 
 __all__ = (
     "AddPipelineToProject",
