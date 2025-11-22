@@ -14,6 +14,7 @@ from ..pipeline import Step
 from ..pipeline.object_storage import ObjectStore
 from ..pluggable import Pluggable
 from ..schema import (
+    Adjacency,
     ExpandsSchema,
     ExpandsSchemaFromChildren,
     GraphObjectType,
@@ -352,13 +353,13 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
 
         return schema
 
-    def explain_node_type(
-        self, node_type_name: str, scope_name: Optional[str] = None
-    ) -> List[str]:
-        """Return pipeline names that contribute to the given node type.
+    def _expand_schema_for_scopes(
+        self, scope_name: Optional[str]
+    ) -> SchemaExpansionCoordinator:
+        """Expand schema for the given scope(s) and return the coordinator.
 
-        If ``scope_name`` is provided, only pipelines in that scope are
-        considered. Otherwise, all scopes are considered.
+        This helper is shared by the various *explain* helpers so they can
+        inspect both provenance and adjacencies using a single expansion pass.
         """
         coordinator = SchemaExpansionCoordinator(Schema())
 
@@ -368,12 +369,28 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         else:
             scope = self.scopes_by_name.get(scope_name)
             if scope is None:
-                return []
+                return coordinator
             scopes = (scope,)
 
         for scope in scopes:
             for pipeline in scope.pipelines_by_name.values():
                 pipeline.expand_schema(coordinator)
+
+        # Resolve any alias-based adjacencies (e.g. source_node -> related node)
+        # into concrete node-type adjacencies on the coordinator's schema.
+        coordinator.clear_aliases()
+
+        return coordinator
+
+    def explain_node_type(
+        self, node_type_name: str, scope_name: Optional[str] = None
+    ) -> List[str]:
+        """Return pipeline names that contribute to the given node type.
+
+        If ``scope_name`` is provided, only pipelines in that scope are
+        considered. Otherwise, all scopes are considered.
+        """
+        coordinator = self._expand_schema_for_scopes(scope_name)
 
         return sorted(
             coordinator.provenance.get_pipelines_for(
@@ -390,26 +407,36 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         If ``scope_name`` is provided, only pipelines in that scope are
         considered. Otherwise, all scopes are considered.
         """
-        coordinator = SchemaExpansionCoordinator(Schema())
-
-        scopes: Iterable[PipelineScope]
-        if scope_name is None:
-            scopes = self.scopes_by_name.values()
-        else:
-            scope = self.scopes_by_name.get(scope_name)
-            if scope is None:
-                return []
-            scopes = (scope,)
-
-        for scope in scopes:
-            for pipeline in scope.pipelines_by_name.values():
-                pipeline.expand_schema(coordinator)
+        coordinator = self._expand_schema_for_scopes(scope_name)
 
         return sorted(
             coordinator.provenance.get_pipelines_for(
                 object_type=GraphObjectType.RELATIONSHIP,
                 name=relationship_type_name,
             )
+        )
+
+    def explain_relationship_adjacencies(
+        self, relationship_type_name: str, scope_name: Optional[str] = None
+    ) -> List[Adjacency]:
+        """Return adjacencies for the given relationship type.
+
+        This inspects the expanded schema to discover which node types are
+        connected by the given relationship type. The result is a list of
+        :class:`Adjacency` objects with concrete node type names (aliases such
+        as ``source_node`` have already been resolved by the time adjacencies
+        are bound).
+        """
+        coordinator = self._expand_schema_for_scopes(scope_name)
+        schema = coordinator.schema
+
+        return sorted(
+            (
+                a
+                for a in schema.adjacencies
+                if a.relationship_type == relationship_type_name
+            ),
+            key=lambda a: (a.from_node_type, a.to_node_type),
         )
 
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:

@@ -8,40 +8,41 @@ from nodestream.cli.operations.explain_project_schema import (
 
 
 @pytest.mark.asyncio
-async def test_explain_project_schema_writes_one_pipeline_per_line(mocker):
+async def test_explain_project_schema_node_only_no_matching_pipelines(mocker):
     project = mocker.Mock()
-    project.explain_node_type.return_value = ["pipe1", "pipe2"]
-
-    command = Mock()
-
-    operation = ExplainProjectSchema(
-        project=project,
-        kind="node",
-        type_name="Person",
-        scope=None,
-    )
-
-    await operation.perform(command)
-
-    # Expect: header plus one line per pipeline
-    command.line.assert_any_call(
-        "Pipelines contributing to node type 'Person' across all scopes:"
-    )
-    command.line.assert_any_call("pipe1")
-    command.line.assert_any_call("pipe2")
-
-
-@pytest.mark.asyncio
-async def test_explain_project_schema_no_pipelines_with_scope(mocker):
-    project = mocker.Mock()
+    project.scopes_by_name = {
+        "default": mocker.Mock(name="default", pipelines_by_name={})
+    }
     project.explain_node_type.return_value = []
 
     command = Mock()
 
     operation = ExplainProjectSchema(
         project=project,
-        kind="node",
-        type_name="Person",
+        node_type_name="Person",
+        relationship_type_name=None,
+        scope=None,
+    )
+
+    await operation.perform(command)
+
+    command.line.assert_any_call(
+        "No pipelines found for node type 'Person' across all scopes."
+    )
+
+
+@pytest.mark.asyncio
+async def test_explain_project_schema_no_pipelines_with_scope(mocker):
+    project = mocker.Mock()
+    project.scopes_by_name = {"myscope": mocker.Mock(pipelines_by_name={})}
+    project.explain_node_type.return_value = []
+
+    command = Mock()
+
+    operation = ExplainProjectSchema(
+        project=project,
+        node_type_name="Person",
+        relationship_type_name=None,
         scope="myscope",
     )
 
@@ -55,20 +56,50 @@ async def test_explain_project_schema_no_pipelines_with_scope(mocker):
 @pytest.mark.asyncio
 async def test_explain_project_schema_relationships_across_scopes(mocker):
     project = mocker.Mock()
-    project.explain_relationship_type.return_value = ["pipe1"]
+    project.scopes_by_name = {
+        "default": mocker.Mock(name="default", pipelines_by_name={})
+    }
+    project.explain_relationship_type.return_value = []
 
     command = Mock()
 
     operation = ExplainProjectSchema(
         project=project,
-        kind="relationship",
-        type_name="LIKES",
+        node_type_name=None,
+        relationship_type_name="LIKES",
         scope=None,
     )
 
     await operation.perform(command)
 
     command.line.assert_any_call(
-        "Pipelines contributing to relationship type 'LIKES' across all" " scopes:"
+        "No pipelines found for relationship type 'LIKES' across all scopes."
     )
-    command.line.assert_any_call("pipe1")
+
+
+@pytest.mark.asyncio
+async def test_explain_project_schema_node_and_relationship_intersection_message(
+    mocker,
+):
+    project = mocker.Mock()
+    project.scopes_by_name = {
+        "default": mocker.Mock(name="default", pipelines_by_name={})
+    }
+    project.explain_node_type.return_value = []
+    project.explain_relationship_type.return_value = []
+
+    command = Mock()
+
+    operation = ExplainProjectSchema(
+        project=project,
+        node_type_name="Person",
+        relationship_type_name="LIKES",
+        scope=None,
+    )
+
+    await operation.perform(command)
+
+    command.line.assert_called_once_with(
+        "No pipelines found that contribute to both node type 'Person' and "
+        "relationship type 'LIKES' across all scopes."
+    )
