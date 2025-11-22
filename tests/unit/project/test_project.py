@@ -572,6 +572,36 @@ def test_explain_relationship_type_with_invalid_scope_returns_empty(project):
     assert_that(result, equal_to([]))
 
 
+def test_explain_relationship_adjacencies_filters_by_relationship_type(project, mocker):
+    coordinator_cls = mocker.patch(
+        "nodestream.project.project.SchemaExpansionCoordinator"
+    )
+    coordinator = coordinator_cls.return_value
+
+    # Prevent real pipelines from expanding or touching the filesystem.
+    for scope in project.scopes_by_name.values():
+        for pipeline in scope.pipelines_by_name.values():
+            pipeline.expand_schema = mocker.Mock()
+
+    # Two adjacencies for the requested relationship and one for a different
+    # relationship type. Only the matching ones should be returned.
+    adjacency1 = mocker.Mock(
+        relationship_type="FRIEND_OF", from_node_type="User", to_node_type="User"
+    )
+    adjacency2 = mocker.Mock(
+        relationship_type="FRIEND_OF", from_node_type="User", to_node_type="Group"
+    )
+    adjacency3 = mocker.Mock(
+        relationship_type="FOLLOWS", from_node_type="User", to_node_type="User"
+    )
+
+    coordinator.schema.adjacencies = [adjacency1, adjacency2, adjacency3]
+
+    result = project.explain_relationship_adjacencies("FRIEND_OF")
+
+    assert_that(result, equal_to([adjacency2, adjacency1]))
+
+
 def test_get_child_expanders_returns_scopes(project, scopes):
     child_expanders = list(project.get_child_expanders())
     assert_that(child_expanders, equal_to(scopes))

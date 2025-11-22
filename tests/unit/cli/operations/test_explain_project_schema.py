@@ -87,6 +87,9 @@ async def test_explain_project_schema_node_and_relationship_intersection_message
     }
     project.explain_node_type.return_value = []
     project.explain_relationship_type.return_value = []
+    project.explain_relationship_adjacencies.return_value = [
+        mocker.Mock(from_node_type="Person", to_node_type="Movie")
+    ]
 
     command = Mock()
 
@@ -99,6 +102,40 @@ async def test_explain_project_schema_node_and_relationship_intersection_message
 
     await operation.perform(command)
 
+    command.line.assert_called_once_with(
+        "No pipelines found that contribute to both node type 'Person' and "
+        "relationship type 'LIKES' across all scopes."
+    )
+
+
+@pytest.mark.asyncio
+async def test_explain_project_schema_node_and_relationship_with_mismatched_endpoint(
+    mocker,
+):
+    project = mocker.Mock()
+    project.scopes_by_name = {
+        "default": mocker.Mock(name="default", pipelines_by_name={})
+    }
+    project.explain_node_type.return_value = ["pipeline1"]
+    project.explain_relationship_type.return_value = ["pipeline1"]
+    project.explain_relationship_adjacencies.return_value = [
+        mocker.Mock(from_node_type="OtherNode", to_node_type="Movie")
+    ]
+
+    command = Mock()
+
+    operation = ExplainProjectSchema(
+        project=project,
+        node_type_name="Person",
+        relationship_type_name="LIKES",
+        scope=None,
+    )
+
+    await operation.perform(command)
+
+    # The node type is not an endpoint of the relationship in the schema, so
+    # even though provenance suggests there are pipelines for both the node and
+    # relationship, the operation should still report no matching pipelines.
     command.line.assert_called_once_with(
         "No pipelines found that contribute to both node type 'Person' and "
         "relationship type 'LIKES' across all scopes."
