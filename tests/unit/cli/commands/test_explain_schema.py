@@ -7,7 +7,7 @@ from nodestream.cli.commands import ExplainSchema
 @pytest.mark.asyncio
 async def test_handle_async_invalid_kind_returns_error_code(mocker):
     command = ExplainSchema()
-    # Legacy positional mode
+    # Positional KIND/NAME mode
     command.argument = mocker.Mock(side_effect=["invalid", "TypeName"])
     command.option = mocker.Mock(side_effect=[None, None, None])
     command.run_operation = mocker.AsyncMock()
@@ -24,7 +24,7 @@ async def test_handle_async_invalid_kind_returns_error_code(mocker):
 
 
 @pytest.mark.asyncio
-async def test_handle_async_valid_legacy_kind_invokes_operation(mocker):
+async def test_handle_async_valid_positional_kind_invokes_operation(mocker):
     command = ExplainSchema()
     command.argument = mocker.Mock(side_effect=["node", "Person"])
     # scope, node, relationship
@@ -47,7 +47,7 @@ async def test_handle_async_node_and_relationship_options_invoke_intersection(
     mocker,
 ):
     command = ExplainSchema()
-    # No legacy kind/name provided
+    # No positional KIND/NAME provided
     command.argument = mocker.Mock(side_effect=[None, None])
     # scope, node, relationship
     command.option = mocker.Mock(side_effect=["scope1", "Person", "LIKES"])

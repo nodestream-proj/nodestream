@@ -18,7 +18,7 @@ class ExplainSchema(NodestreamCommand):
         ),
         argument(
             "name",
-            "The node or relationship type name (deprecated when using --node/--relationship).",
+            ("The node or relationship type name when using positional " "KIND/NAME."),
             optional=True,
         ),
     ]
@@ -51,10 +51,10 @@ class ExplainSchema(NodestreamCommand):
         ),
     ]
 
-    def _get_legacy_kind_and_name(self) -> Optional[tuple[str, str]]:
-        """Return (kind, name) if using the legacy positional interface.
+    def _get_positional_kind_and_name(self) -> Optional[tuple[str, str]]:
+        """Return (kind, name) when using the positional KIND/NAME interface.
 
-        The legacy mode requires both positional arguments to be provided and no
+        This mode requires both positional arguments to be provided and no
         --node/--relationship options to be set.
         """
 
@@ -73,9 +73,9 @@ class ExplainSchema(NodestreamCommand):
         project = await self.run_operation(InitializeProject())
         scope = self.option("scope")
 
-        legacy = self._get_legacy_kind_and_name()
-        if legacy is not None:
-            kind, type_name = legacy
+        kind_and_name = self._get_positional_kind_and_name()
+        if kind_and_name is not None:
+            kind, type_name = kind_and_name
 
             if kind not in {"node", "relationship"}:
                 self.line_error("Kind must be either 'node' or 'relationship'.")
