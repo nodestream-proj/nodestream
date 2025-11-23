@@ -110,17 +110,18 @@ async def test_explain_project_schema_node_and_relationship_intersection_message
 
 @pytest.mark.asyncio
 async def test_explain_project_schema_node_and_relationship_with_mismatched_endpoint(
+    project_with_default_scope,
     mocker,
 ):
-    project = mocker.Mock()
-    project.scopes_by_name = {
-        "default": mocker.Mock(name="default", pipelines_by_name={})
-    }
-    project.explain_node_type.return_value = ["pipeline1"]
-    project.explain_relationship_type.return_value = ["pipeline1"]
-    project.explain_relationship_adjacencies.return_value = [
-        mocker.Mock(from_node_type="OtherNode", to_node_type="Movie")
-    ]
+    project = project_with_default_scope
+    scope = next(iter(project.scopes_by_name.values()))
+    pipeline = next(iter(scope.pipelines_by_name.values()))
+
+    project.explain_node_type = mocker.Mock(return_value=[pipeline.name])
+    project.explain_relationship_type = mocker.Mock(return_value=[pipeline.name])
+    project.explain_relationship_adjacencies = mocker.Mock(
+        return_value=[mocker.Mock(from_node_type="OtherNode", to_node_type="Movie")]
+    )
 
     command = Mock()
 
