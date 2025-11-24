@@ -110,8 +110,8 @@ class RegexMatcher:
 
     def __init__(
         self,
-        value_provider: StaticValueOrValueProvider,
-        regex: StaticValueOrValueProvider,
+        value_provider: ValueProvider,
+        regex: str,
         include: bool,
         normalization: Dict[str, Any],
     ) -> None:

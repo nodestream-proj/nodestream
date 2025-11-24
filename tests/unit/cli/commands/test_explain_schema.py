@@ -43,6 +43,51 @@ async def test_handle_async_valid_positional_kind_invokes_operation(mocker):
 
 
 @pytest.mark.asyncio
+async def test_handle_async_valid_positional_relationship_invokes_operation(
+    mocker,
+):
+    command = ExplainSchema()
+    command.argument = mocker.Mock(side_effect=["relationship", "LIKES"])
+    # scope, node, relationship
+    command.option = mocker.Mock(side_effect=["scope1", None, None])
+    command.run_operation = mocker.AsyncMock()
+
+    result = await command.handle_async()
+
+    assert_that(result, equal_to(0))
+    # First call: InitializeProject, second call: ExplainProjectSchema
+    assert_that(command.run_operation.await_count, equal_to(2))
+    operation = command.run_operation.call_args.args[0]
+    assert_that(operation.node_type_name, equal_to(None))
+    assert_that(operation.relationship_type_name, equal_to("LIKES"))
+    assert_that(operation.scope, equal_to("scope1"))
+
+
+@pytest.mark.asyncio
+async def test_handle_async_prefers_options_over_positional_when_both_given(
+    mocker,
+):
+    command = ExplainSchema()
+    # Positional KIND/NAME is provided, but options should take precedence.
+    command.argument = mocker.Mock(side_effect=["node", "PersonPositional"])
+    # scope, node (for positional gating), node (effective), relationship
+    command.option = mocker.Mock(
+        side_effect=["scope1", "PersonFromOption", "PersonFromOption", None]
+    )
+    command.run_operation = mocker.AsyncMock()
+
+    result = await command.handle_async()
+
+    assert_that(result, equal_to(0))
+    # First call: InitializeProject, second call: ExplainProjectSchema
+    assert_that(command.run_operation.await_count, equal_to(2))
+    operation = command.run_operation.call_args.args[0]
+    assert_that(operation.node_type_name, equal_to("PersonFromOption"))
+    assert_that(operation.relationship_type_name, equal_to(None))
+    assert_that(operation.scope, equal_to("scope1"))
+
+
+@pytest.mark.asyncio
 async def test_handle_async_node_and_relationship_options_invoke_intersection(
     mocker,
 ):

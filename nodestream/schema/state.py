@@ -634,10 +634,10 @@ class Schema(WritesToYamlToStdout, LoadsFromYamlFile):
             other: The other schema.
         """
         self.cardinalities.update(other.cardinalities)
-        all_types = set(self.type_schemas).union(set(other.type_schemas))
-        for obj_type, type in all_types:
-            us = self.get_by_type_and_object_type(obj_type, type)
-            them = other.get_by_type_and_object_type(obj_type, type)
+        all_types = set(self.type_schemas).union(other.type_schemas)
+        for object_type, name in all_types:
+            us = self.get_by_type_and_object_type(object_type, name)
+            them = other.get_by_type_and_object_type(object_type, name)
             us.merge(them)
 
     def has_node_of_type(self, node_type_name: str) -> bool:
