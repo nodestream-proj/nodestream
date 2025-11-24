@@ -76,6 +76,13 @@ def test_athena_extractor_get_query_status(athena_extractor):
     )
 
 
+def test_athena_extractor_get_query_status_failed_request(athena_extractor):
+    athena_extractor.client.get_query_execution.side_effect = Exception(
+        "Failed to get query status"
+    )
+    assert_that(athena_extractor.get_query_status(), equal_to("FAILED"))
+
+
 def test_execute_query(athena_extractor):
     athena_extractor.client.start_query_execution.return_value = {
         "QueryExecutionId": "some_query_execution_id",

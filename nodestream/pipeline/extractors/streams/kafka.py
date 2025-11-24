@@ -17,12 +17,14 @@ class KafkaConsumerFactory:
         security_protocol: str,
         group_id: str,
         bootstrap_servers: List[str],
+        **kwargs: Any,
     ):
         return {
             "bootstrap.servers": ",".join(bootstrap_servers),
             "auto.offset.reset": offset_reset,
             "security.protocol": security_protocol,
             "group.id": group_id,
+            **kwargs,
         }
 
     @classmethod
@@ -33,10 +35,15 @@ class KafkaConsumerFactory:
         bootstrap_servers: List[str],
         offset_reset: str,
         security_protocol: str,
+        **kwargs: Any,
     ):
         consumer = Consumer(
             cls.build_consumer_config(
-                offset_reset, security_protocol, group_id, bootstrap_servers
+                offset_reset,
+                security_protocol,
+                group_id,
+                bootstrap_servers,
+                **kwargs,
             )
         )
         consumer.subscribe([topic_name])

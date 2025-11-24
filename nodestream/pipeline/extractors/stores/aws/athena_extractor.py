@@ -108,10 +108,13 @@ class AthenaExtractor(Extractor):
         )
 
     def get_query_status(self):
-        result = self.client.get_query_execution(
-            QueryExecutionId=self.query_execution_id
-        )
-        return result["QueryExecution"]["Status"]["State"]
+        try:
+            result = self.client.get_query_execution(
+                QueryExecutionId=self.query_execution_id
+            )
+            return result["QueryExecution"]["Status"]["State"]
+        except Exception:
+            return ATHENA_STATE_FAILED
 
     def await_query_completion(self):
         while (status := self.get_query_status()) in PENDING_ATHENA_STATES:
