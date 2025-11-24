@@ -69,38 +69,55 @@ class ExplainSchema(NodestreamCommand):
 
         return kind, type_name
 
-    async def handle_async(self):
-        project = await self.run_operation(InitializeProject())
-        scope = self.option("scope")
+    def _resolve_type_args(
+        self,
+    ) -> tuple[Optional[str], Optional[str], Optional[str]]:
+        """Resolve node/relationship arguments from positional or options.
+
+        Returns:
+            A tuple of (node_type_name, relationship_type_name, error_message).
+            If error_message is not None, the caller should report it and
+            return a non-zero exit code.
+        """
 
         kind_and_name = self._get_positional_kind_and_name()
         if kind_and_name is not None:
             kind, type_name = kind_and_name
 
             if kind not in {"node", "relationship"}:
-                self.line_error("Kind must be either 'node' or 'relationship'.")
-                return 1
-
-            await self.run_operation(
-                ExplainProjectSchema(
-                    project=project,
-                    node_type_name=type_name if kind == "node" else None,
-                    relationship_type_name=(
-                        type_name if kind == "relationship" else None
-                    ),
-                    scope=scope,
+                return (
+                    None,
+                    None,
+                    "Kind must be either 'node' or 'relationship'.",
                 )
-            )
-            return 0
+
+            if kind == "node":
+                return type_name, None, None
+
+            return None, type_name, None
 
         node_type_name = self.option("node")
         relationship_type_name = self.option("relationship")
 
         if not node_type_name and not relationship_type_name:
-            self.line_error(
-                "You must specify either positional KIND/NAME or at least one of "
-                "--node/--relationship."
+            return (
+                None,
+                None,
+                (
+                    "You must specify either positional KIND/NAME or "
+                    "at least one of --node/--relationship."
+                ),
             )
+
+        return node_type_name, relationship_type_name, None
+
+    async def handle_async(self):
+        project = await self.run_operation(InitializeProject())
+        scope = self.option("scope")
+
+        node_type_name, relationship_type_name, error = self._resolve_type_args()
+        if error is not None:
+            self.line_error(error)
             return 1
 
         await self.run_operation(
