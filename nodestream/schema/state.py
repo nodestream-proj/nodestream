@@ -701,6 +701,8 @@ class SchemaExpansionCoordinator:
     unbound_adjacencies: LayeredList[UnboundAdjacency] = field(
         default_factory=LayeredList
     )
+    # Maps node types to their additional types for relationship expansion
+    additional_types_map: Dict[str, Tuple[str, ...]] = field(default_factory=dict)
 
     def on_node_schema(
         self,
@@ -817,9 +819,59 @@ class SchemaExpansionCoordinator:
         self.unbound_aliases.decrement_context_level()
         self.aliases.decrement_context_level()
 
+    def register_additional_types(
+        self, main_type: str, additional_types: Tuple[str, ...]
+    ):
+        """Register additional types for a main type.
+
+        This allows relationships connected to the main type to also be connected
+        to the additional types.
+
+        Args:
+            main_type: The main node type.
+            additional_types: The additional types associated with the main type.
+        """
+        if additional_types:
+            self.additional_types_map[main_type] = additional_types
+
     def clear_aliases(self):
         for unbound_adjacency in self.unbound_adjacencies:
             unbound_adjacency.bind(self.schema, self.aliases)
+
+        # Create duplicate adjacencies for additional types
+        adjacencies_to_add = []
+        for adjacency, cardinality in list(self.schema.cardinalities.items()):
+            from_types = [adjacency.from_node_type]
+            to_types = [adjacency.to_node_type]
+
+            # Add additional types for from_node_type
+            if adjacency.from_node_type in self.additional_types_map:
+                from_types.extend(self.additional_types_map[adjacency.from_node_type])
+
+            # Add additional types for to_node_type
+            if adjacency.to_node_type in self.additional_types_map:
+                to_types.extend(self.additional_types_map[adjacency.to_node_type])
+
+            # Create adjacencies for all combinations (excluding the original)
+            for from_type in from_types:
+                for to_type in to_types:
+                    # Skip the original adjacency (already exists)
+                    if (
+                        from_type == adjacency.from_node_type
+                        and to_type == adjacency.to_node_type
+                    ):
+                        continue
+
+                    new_adjacency = Adjacency(
+                        from_node_type=from_type,
+                        to_node_type=to_type,
+                        relationship_type=adjacency.relationship_type,
+                    )
+                    adjacencies_to_add.append((new_adjacency, cardinality))
+
+        # Add all the new adjacencies
+        for adjacency, cardinality in adjacencies_to_add:
+            self.schema.add_adjacency(adjacency, cardinality)
 
 
 class ExpandsSchema:

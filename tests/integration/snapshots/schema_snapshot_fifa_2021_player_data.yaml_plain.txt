@@ -21,3 +21,11 @@
   age: STRING
   potential: STRING
   last_ingested_at: DATETIME
+[NODE] Person:
+  player_id: STRING
+  name: STRING
+  overall: STRING
+  hits: STRING
+  age: STRING
+  potential: STRING
+  last_ingested_at: DATETIME

@@ -88,6 +88,8 @@ async def test_pipeline_interpretation_snapshot(
         ("dns.yaml", "graphql"),
         ("multiple_passes.yaml", "plain"),
         ("multiple_passes.yaml", "graphql"),
+        ("additional_types_schema_test.yaml", "plain"),
+        ("additional_types_schema_test.yaml", "graphql"),
     ],
 )
 async def test_pipeline_schema_inference(pipeline_name, format, snapshot):

@@ -1,0 +1,860 @@
+
+
+type Athlete @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    player_id: String
+
+    name: String
+
+    overall: String
+
+    age: String
+
+    hits: String
+
+    last_ingested_at: DateTime
+
+    position: String
+
+    # Inbound Relationships
+
+    
+    teamMemberIsPlayer: [TeamMember!]!
+        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
+    
+
+    # Outbound Relationships
+
+    
+    originatesFromCountry: Country
+        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
+    
+
+    
+    playsForTeam: Team
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForOrganization: Organization
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForSportsClub: SportsClub
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    competesAtPosition: Position
+        @relationship(type: "COMPETES_AT", direction: OUT, properties: "CompetesAt")
+    
+
+    
+    playsForEntity: Entity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForLegalEntity: LegalEntity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+}
+
+type Competitor @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    player_id: String
+
+    overall: String
+
+    position: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    teamMemberIsPlayer: [TeamMember!]!
+        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
+    
+
+    # Outbound Relationships
+
+    
+    originatesFromCountry: Country
+        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
+    
+
+    
+    playsForTeam: Team
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForOrganization: Organization
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForSportsClub: SportsClub
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    competesAtPosition: Position
+        @relationship(type: "COMPETES_AT", direction: OUT, properties: "CompetesAt")
+    
+
+    
+    playsForEntity: Entity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForLegalEntity: LegalEntity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+}
+
+type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    playerOriginatesFrom: [Player!]!
+        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
+    
+
+    
+    personOriginatesFrom: [Person!]!
+        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
+    
+
+    
+    athleteOriginatesFrom: [Athlete!]!
+        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
+    
+
+    
+    personLivesIn: [Person!]!
+        @relationship(type: "LIVES_IN", direction: IN, properties: "LivesIn")
+    
+
+    
+    humanOriginatesFrom: [Human!]!
+        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
+    
+
+    
+    individualOriginatesFrom: [Individual!]!
+        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
+    
+
+    
+    humanLivesIn: [Human!]!
+        @relationship(type: "LIVES_IN", direction: IN, properties: "LivesIn")
+    
+
+    
+    individualLivesIn: [Individual!]!
+        @relationship(type: "LIVES_IN", direction: IN, properties: "LivesIn")
+    
+
+    
+    competitorOriginatesFrom: [Competitor!]!
+        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
+    
+
+    
+    sportsPersonOriginatesFrom: [SportsPerson!]!
+        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
+    
+
+    
+    organizationBasedIn: [Organization!]!
+        @relationship(type: "BASED_IN", direction: IN, properties: "BasedIn")
+    
+
+    
+    entityBasedIn: [Entity!]!
+        @relationship(type: "BASED_IN", direction: IN, properties: "BasedIn")
+    
+
+    
+    legalEntityBasedIn: [LegalEntity!]!
+        @relationship(type: "BASED_IN", direction: IN, properties: "BasedIn")
+    
+
+    # Outbound Relationships
+
+}
+
+type Entity @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    country: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    playerPlaysFor: [Player!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    personPlaysFor: [Person!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    athletePlaysFor: [Athlete!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    humanPlaysFor: [Human!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    individualPlaysFor: [Individual!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    competitorPlaysFor: [Competitor!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    sportsPersonPlaysFor: [SportsPerson!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    # Outbound Relationships
+
+    
+    basedInCountry: Country
+        @relationship(type: "BASED_IN", direction: OUT, properties: "BasedIn")
+    
+
+}
+
+type Human @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    player_id: String
+
+    name: String
+
+    potential: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    teamMemberIsPlayer: [TeamMember!]!
+        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
+    
+
+    # Outbound Relationships
+
+    
+    originatesFromCountry: Country
+        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
+    
+
+    
+    playsForTeam: Team
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForOrganization: Organization
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForSportsClub: SportsClub
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    livesInCountry: Country
+        @relationship(type: "LIVES_IN", direction: OUT, properties: "LivesIn")
+    
+
+    
+    playsForEntity: Entity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForLegalEntity: LegalEntity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+}
+
+type Individual @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    player_id: String
+
+    name: String
+
+    potential: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    teamMemberIsPlayer: [TeamMember!]!
+        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
+    
+
+    # Outbound Relationships
+
+    
+    originatesFromCountry: Country
+        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
+    
+
+    
+    playsForTeam: Team
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForOrganization: Organization
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForSportsClub: SportsClub
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    livesInCountry: Country
+        @relationship(type: "LIVES_IN", direction: OUT, properties: "LivesIn")
+    
+
+    
+    playsForEntity: Entity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForLegalEntity: LegalEntity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+}
+
+type LegalEntity @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    country: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    playerPlaysFor: [Player!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    personPlaysFor: [Person!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    athletePlaysFor: [Athlete!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    humanPlaysFor: [Human!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    individualPlaysFor: [Individual!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    competitorPlaysFor: [Competitor!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    sportsPersonPlaysFor: [SportsPerson!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    # Outbound Relationships
+
+    
+    basedInCountry: Country
+        @relationship(type: "BASED_IN", direction: OUT, properties: "BasedIn")
+    
+
+}
+
+type Organization @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: DateTime
+
+    country: String
+
+    # Inbound Relationships
+
+    
+    playerPlaysFor: [Player!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    personPlaysFor: [Person!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    athletePlaysFor: [Athlete!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    humanPlaysFor: [Human!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    individualPlaysFor: [Individual!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    competitorPlaysFor: [Competitor!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    sportsPersonPlaysFor: [SportsPerson!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    # Outbound Relationships
+
+    
+    basedInCountry: Country
+        @relationship(type: "BASED_IN", direction: OUT, properties: "BasedIn")
+    
+
+}
+
+type Person @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    player_id: String
+
+    name: String
+
+    overall: String
+
+    age: String
+
+    hits: String
+
+    last_ingested_at: DateTime
+
+    potential: String
+
+    # Inbound Relationships
+
+    
+    teamMemberIsPlayer: [TeamMember!]!
+        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
+    
+
+    # Outbound Relationships
+
+    
+    originatesFromCountry: Country
+        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
+    
+
+    
+    playsForTeam: Team
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForOrganization: Organization
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForSportsClub: SportsClub
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    livesInCountry: Country
+        @relationship(type: "LIVES_IN", direction: OUT, properties: "LivesIn")
+    
+
+    
+    playsForEntity: Entity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForLegalEntity: LegalEntity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+}
+
+type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    player_id: String
+
+    name: String
+
+    overall: String
+
+    age: String
+
+    hits: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    teamMemberIsPlayer: [TeamMember!]!
+        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
+    
+
+    # Outbound Relationships
+
+    
+    originatesFromCountry: Country
+        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
+    
+
+    
+    playsForTeam: Team
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForOrganization: Organization
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForSportsClub: SportsClub
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForEntity: Entity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForLegalEntity: LegalEntity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+}
+
+type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    athleteCompetesAt: [Athlete!]!
+        @relationship(type: "COMPETES_AT", direction: IN, properties: "CompetesAt")
+    
+
+    
+    competitorCompetesAt: [Competitor!]!
+        @relationship(type: "COMPETES_AT", direction: IN, properties: "CompetesAt")
+    
+
+    
+    sportsPersonCompetesAt: [SportsPerson!]!
+        @relationship(type: "COMPETES_AT", direction: IN, properties: "CompetesAt")
+    
+
+    # Outbound Relationships
+
+}
+
+type SportsClub @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    playerPlaysFor: [Player!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    personPlaysFor: [Person!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    athletePlaysFor: [Athlete!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    humanPlaysFor: [Human!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    individualPlaysFor: [Individual!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    competitorPlaysFor: [Competitor!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    sportsPersonPlaysFor: [SportsPerson!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    # Outbound Relationships
+
+}
+
+type SportsPerson @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    player_id: String
+
+    overall: String
+
+    position: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    teamMemberIsPlayer: [TeamMember!]!
+        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
+    
+
+    # Outbound Relationships
+
+    
+    originatesFromCountry: Country
+        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
+    
+
+    
+    playsForTeam: Team
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForOrganization: Organization
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForSportsClub: SportsClub
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    competesAtPosition: Position
+        @relationship(type: "COMPETES_AT", direction: OUT, properties: "CompetesAt")
+    
+
+    
+    playsForEntity: Entity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+    
+    playsForLegalEntity: LegalEntity
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+}
+
+type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    playerPlaysFor: [Player!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    personPlaysFor: [Person!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    athletePlaysFor: [Athlete!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    humanPlaysFor: [Human!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    individualPlaysFor: [Individual!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    competitorPlaysFor: [Competitor!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    
+    sportsPersonPlaysFor: [SportsPerson!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    # Outbound Relationships
+
+}
+
+type TeamMember @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    member_id: String
+
+    name: String
+
+    team_name: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    isPlayerPlayer: Player
+        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
+    
+
+    
+    isPlayerPerson: Person
+        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
+    
+
+    
+    isPlayerAthlete: Athlete
+        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
+    
+
+    
+    isPlayerHuman: Human
+        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
+    
+
+    
+    isPlayerIndividual: Individual
+        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
+    
+
+    
+    isPlayerCompetitor: Competitor
+        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
+    
+
+    
+    isPlayerSportsPerson: SportsPerson
+        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
+    
+
+}
+interface OriginatesFrom @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface PlaysFor @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface LivesIn @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface CompetesAt @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface IsPlayer @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface BasedIn @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}

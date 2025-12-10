@@ -227,6 +227,19 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
                 node_type=self.node_type.value,
             )
 
+            # Expand schemas for node additional types with the same structure
+            for additional_type in self.node_additional_types:
+                coordinator.on_node_schema(
+                    self.expand_related_node_schema,
+                    node_type=additional_type,
+                )
+
+            # Register additional types so relationships are also connected to them
+            coordinator.register_additional_types(
+                self.node_type.value,
+                self.node_additional_types,
+            )
+
         if self.relationship_type.is_static and self.node_type.is_static:
             source_node = SourceNodeInterpretation.SOURCE_NODE_TYPE_ALIAS
             related_node = self.node_type.value
