@@ -156,3 +156,16 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
             alias=self.SOURCE_NODE_TYPE_ALIAS,
             node_type=self.node_type.value,
         )
+
+        # Expand schemas for additional types with the same structure
+        for additional_type in self.additional_types:
+            coordinator.on_node_schema(
+                self.expand_source_node_schema,
+                node_type=additional_type,
+            )
+
+        # Register additional types so relationships are also connected to them
+        coordinator.register_additional_types(
+            self.node_type.value,
+            self.additional_types,
+        )
