@@ -45,6 +45,7 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
     storage_configuration: StorageConfiguration = field(
         default_factory=StorageConfiguration
     )
+    include_additional_types: bool = False
 
     @classmethod
     def read_from_file(cls, file_path: Path) -> LoadsFromYaml:
@@ -76,6 +77,7 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                     str: {str: object},
                 },
                 Optional("storage"): StorageConfiguration.describe_yaml_schema(),
+                Optional("include_additional_types"): bool,
             }
         )
 
@@ -113,7 +115,11 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         }
 
         storage = StorageConfiguration.from_file_data(data.pop("storage", {}))
-        project = cls(targets_by_name=target_cfgs, storage_configuration=storage)
+        project = cls(
+            targets_by_name=target_cfgs,
+            storage_configuration=storage,
+            include_additional_types=data.pop("include_additional_types", False),
+        )
 
         for plugin in plugins:
             project.add_plugin(plugin)
@@ -145,6 +151,13 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 for name, target in self.targets_by_name.items()
             },
             "storage": self.storage_configuration.to_file_data(),
+            # Only include this flag when it is explicitly enabled to preserve
+            # backwards compatibility of existing project files.
+            **(
+                {"include_additional_types": self.include_additional_types}
+                if self.include_additional_types
+                else {}
+            ),
         }
 
     def get_target_by_name(self, target_name: str) -> Target:
@@ -300,7 +313,9 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         Returns:
             GraphSchema: The schema representing the project.
         """
-        schema = self.make_schema()
+        schema = self.make_schema(
+            include_additional_types=self.include_additional_types
+        )
         if type_overrides_file is not None:
             overrides_schema = Schema.read_from_file(type_overrides_file)
             schema.merge(overrides_schema)
@@ -337,7 +352,9 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
                 f"None of the specified pipelines {pipeline_names} were found. Available pipelines: {available_pipelines}"
             )
 
-        coordinator = SchemaExpansionCoordinator(schema := Schema())
+        coordinator = SchemaExpansionCoordinator(
+            schema := Schema(), include_additional_types=self.include_additional_types
+        )
 
         for pipeline in pipeline_definitions:
             pipeline.initialize_for_introspection()
