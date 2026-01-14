@@ -18,29 +18,6 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
 }
 
-type Person @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    player_id: String
-
-    name: String
-
-    overall: String
-
-    hits: String
-
-    age: String
-
-    potential: String
-
-    last_ingested_at: DateTime
-
-    # Inbound Relationships
-
-    # Outbound Relationships
-
-}
-
 type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 

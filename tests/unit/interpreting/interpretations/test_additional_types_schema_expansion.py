@@ -1,6 +1,6 @@
 """Tests for additional_types schema expansion feature."""
 
-from hamcrest import assert_that, equal_to, has_items
+from hamcrest import assert_that, equal_to
 
 from nodestream.interpreting.interpretations import (
     RelationshipInterpretation,
@@ -49,7 +49,7 @@ def test_source_node_additional_types_expand_schema():
 def test_source_node_and_relationship_additional_types_create_adjacencies():
     """Test that relationships are created for both main node and additional types."""
     schema = Schema()
-    coordinator = SchemaExpansionCoordinator(schema)
+    coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
 
     # Create source node with additional types
     source_interpretation = SourceNodeInterpretation(
@@ -69,24 +69,20 @@ def test_source_node_and_relationship_additional_types_create_adjacencies():
     rel_interpretation.expand_schema(coordinator)
     coordinator.clear_aliases()
 
-    # Check that adjacencies exist for both Player and Person
-    adjacency_pairs = [
+    # Check that adjacencies exist for both Player and Person.
+    # The coordinator may create additional adjacencies beyond these due to
+    # expansion rules, so we only assert that the expected ones are present.
+    adjacency_pairs = {
         (adj.from_node_type, adj.to_node_type) for adj in schema.adjacencies
-    ]
-
-    assert_that(
-        adjacency_pairs,
-        has_items(
-            ("Player", "Team"),
-            ("Person", "Team"),
-        ),
-    )
+    }
+    expected = {("Player", "Team"), ("Person", "Team")}
+    assert expected.issubset(adjacency_pairs)
 
 
 def test_relationship_node_additional_types_create_adjacencies():
     """Test that related nodes with additional types also get relationships."""
     schema = Schema()
-    coordinator = SchemaExpansionCoordinator(schema)
+    coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
 
     # Create source node
     source_interpretation = SourceNodeInterpretation(
@@ -106,18 +102,12 @@ def test_relationship_node_additional_types_create_adjacencies():
     rel_interpretation.expand_schema(coordinator)
     coordinator.clear_aliases()
 
-    # Check that adjacencies exist for both Team and Organization
-    adjacency_pairs = [
+    # Check that adjacencies exist for both Team and Organization.
+    adjacency_pairs = {
         (adj.from_node_type, adj.to_node_type) for adj in schema.adjacencies
-    ]
-
-    assert_that(
-        adjacency_pairs,
-        has_items(
-            ("Player", "Team"),
-            ("Player", "Organization"),
-        ),
-    )
+    }
+    expected = {("Player", "Team"), ("Player", "Organization")}
+    assert expected.issubset(adjacency_pairs)
 
     # Check that both Team and Organization have the same schema
     team_schema = schema.get_node_type_by_name("Team")
@@ -131,7 +121,7 @@ def test_relationship_node_additional_types_create_adjacencies():
 def test_both_source_and_related_node_have_additional_types():
     """Test the full feature with both source and related nodes having additional types."""
     schema = Schema()
-    coordinator = SchemaExpansionCoordinator(schema)
+    coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
 
     # Create source node with additional types
     source_interpretation = SourceNodeInterpretation(
@@ -152,22 +142,21 @@ def test_both_source_and_related_node_have_additional_types():
     rel_interpretation.expand_schema(coordinator)
     coordinator.clear_aliases()
 
-    # Check that all adjacencies exist
-    adjacency_pairs = [
+    # Check that all expected adjacencies exist. Additional expansion-related
+    # adjacencies are allowed; we only require that the core ones are present.
+    adjacency_pairs = {
         (adj.from_node_type, adj.to_node_type) for adj in schema.adjacencies
-    ]
+    }
 
     # Player -> Team, Player -> Organization
     # Person -> Team, Person -> Organization
     # Athlete -> Team, Athlete -> Organization
-    assert_that(
-        adjacency_pairs,
-        has_items(
-            ("Player", "Team"),
-            ("Player", "Organization"),
-            ("Person", "Team"),
-            ("Person", "Organization"),
-            ("Athlete", "Team"),
-            ("Athlete", "Organization"),
-        ),
-    )
+    expected = {
+        ("Player", "Team"),
+        ("Player", "Organization"),
+        ("Person", "Team"),
+        ("Person", "Organization"),
+        ("Athlete", "Team"),
+        ("Athlete", "Organization"),
+    }
+    assert expected.issubset(adjacency_pairs)
