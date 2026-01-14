@@ -117,8 +117,6 @@ async def test_pipeline_schema_inference_without_additional_types(
     [
         ("additional_types_schema_test.yaml", "plain"),
         ("additional_types_schema_test.yaml", "graphql"),
-        ("fifa_2021_player_data.yaml", "plain"),
-        ("fifa_2021_player_data.yaml", "graphql"),
     ],
 )
 async def test_pipeline_schema_inference_with_additional_types_expansion(

@@ -691,7 +691,7 @@ class SchemaExpansionCoordinator:
     """A coordinator for expanding a schema."""
 
     schema: Schema
-    include_additional_types: bool = True
+    include_additional_types: bool = False
     aliases: LayeredDict[str, str] = field(default_factory=LayeredDict)
     unbound_aliases: LayeredDict[str, GraphObjectSchema] = field(
         default_factory=LayeredDict
