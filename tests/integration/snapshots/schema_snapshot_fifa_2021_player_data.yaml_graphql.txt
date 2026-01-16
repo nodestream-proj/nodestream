@@ -14,50 +14,7 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
         @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
     
 
-    
-    personOriginatesFrom: [Person!]!
-        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
-    
-
     # Outbound Relationships
-
-}
-
-type Person @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    player_id: String
-
-    name: String
-
-    overall: String
-
-    hits: String
-
-    age: String
-
-    potential: String
-
-    last_ingested_at: DateTime
-
-    # Inbound Relationships
-
-    # Outbound Relationships
-
-    
-    originatesFromCountry: Country
-        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
-    
-
-    
-    linesUpAtPosition: Position
-        @relationship(type: "LINES_UP_AT", direction: OUT, properties: "LinesUpAt")
-    
-
-    
-    playsForTeam: Team
-        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
-    
 
 }
 
@@ -113,11 +70,6 @@ type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit
         @relationship(type: "LINES_UP_AT", direction: IN, properties: "LinesUpAt")
     
 
-    
-    personLinesUpAt: [Person!]!
-        @relationship(type: "LINES_UP_AT", direction: IN, properties: "LinesUpAt")
-    
-
     # Outbound Relationships
 
 }
@@ -133,11 +85,6 @@ type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {d
 
     
     playerPlaysFor: [Player!]!
-        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
-    
-
-    
-    personPlaysFor: [Person!]!
         @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
     
 

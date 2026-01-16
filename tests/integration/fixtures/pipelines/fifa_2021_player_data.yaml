@@ -17,8 +17,6 @@
           hits:  !jmespath hits
           age:  !jmespath age
           potential: !jmespath potential
-        additional_types:
-          - Person
       - type: relationship
         node_type: Country
         relationship_type: ORIGINATES_FROM

@@ -4,9 +4,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "158023"
                     },
@@ -50,9 +48,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "158023"
                     },
@@ -96,9 +92,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "158023"
                     },
@@ -142,9 +136,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "158023"
             },
@@ -167,9 +159,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "20801"
                     },
@@ -213,9 +203,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "20801"
                     },
@@ -259,9 +247,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "20801"
                     },
@@ -305,9 +291,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "20801"
             },
@@ -330,9 +314,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "190871"
                     },
@@ -376,9 +358,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "190871"
                     },
@@ -422,9 +402,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "190871"
                     },
@@ -468,9 +446,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "190871"
             },
@@ -493,9 +469,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "203376"
                     },
@@ -539,9 +513,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "203376"
                     },
@@ -585,9 +557,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "203376"
                     },
@@ -631,9 +601,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "203376"
             },
@@ -656,9 +624,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "200389"
                     },
@@ -702,9 +668,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "200389"
                     },
@@ -748,9 +712,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "200389"
                     },
@@ -794,9 +756,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "200389"
             },
@@ -819,9 +779,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192985"
                     },
@@ -865,9 +823,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192985"
                     },
@@ -911,9 +867,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192985"
                     },
@@ -957,9 +911,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "192985"
             },
@@ -982,9 +934,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "188545"
                     },
@@ -1028,9 +978,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "188545"
                     },
@@ -1074,9 +1022,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "188545"
                     },
@@ -1120,9 +1066,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "188545"
             },
@@ -1145,9 +1089,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "183277"
                     },
@@ -1191,9 +1133,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "183277"
                     },
@@ -1237,9 +1177,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "183277"
                     },
@@ -1283,9 +1221,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "183277"
             },
@@ -1308,9 +1244,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212831"
                     },
@@ -1354,9 +1288,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212831"
                     },
@@ -1400,9 +1332,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212831"
                     },
@@ -1446,9 +1376,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "212831"
             },
@@ -1471,9 +1399,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "209331"
                     },
@@ -1517,9 +1443,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "209331"
                     },
@@ -1563,9 +1487,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "209331"
                     },
@@ -1609,9 +1531,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "209331"
             },
@@ -1634,9 +1554,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208722"
                     },
@@ -1680,9 +1598,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208722"
                     },
@@ -1726,9 +1642,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208722"
                     },
@@ -1772,9 +1686,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "208722"
             },
@@ -1797,9 +1709,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192448"
                     },
@@ -1843,9 +1753,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192448"
                     },
@@ -1889,9 +1797,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192448"
                     },
@@ -1935,9 +1841,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "192448"
             },
@@ -1960,9 +1864,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "153079"
                     },
@@ -2006,9 +1908,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "153079"
                     },
@@ -2052,9 +1952,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "153079"
                     },
@@ -2098,9 +1996,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "153079"
             },
@@ -2123,9 +2019,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "231747"
                     },
@@ -2169,9 +2063,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "231747"
                     },
@@ -2215,9 +2107,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "231747"
                     },
@@ -2261,9 +2151,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "231747"
             },
@@ -2286,9 +2174,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "215914"
                     },
@@ -2332,9 +2218,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "215914"
                     },
@@ -2378,9 +2262,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "215914"
                     },
@@ -2424,9 +2306,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "215914"
             },
@@ -2449,9 +2329,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "202126"
                     },
@@ -2495,9 +2373,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "202126"
                     },
@@ -2541,9 +2417,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "202126"
                     },
@@ -2587,9 +2461,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "202126"
             },
@@ -2612,9 +2484,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "194765"
                     },
@@ -2658,9 +2528,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "194765"
                     },
@@ -2704,9 +2572,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "194765"
                     },
@@ -2750,9 +2616,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "194765"
             },
@@ -2775,9 +2639,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "182521"
                     },
@@ -2821,9 +2683,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "182521"
                     },
@@ -2867,9 +2727,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "182521"
                     },
@@ -2913,9 +2771,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "182521"
             },
@@ -2938,9 +2794,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "177003"
                     },
@@ -2984,9 +2838,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "177003"
                     },
@@ -3030,9 +2882,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "177003"
                     },
@@ -3076,9 +2926,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "177003"
             },
@@ -3101,9 +2949,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "176580"
                     },
@@ -3147,9 +2993,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "176580"
                     },
@@ -3193,9 +3037,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "176580"
                     },
@@ -3239,9 +3081,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "176580"
             },
@@ -3264,9 +3104,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "167495"
                     },
@@ -3310,9 +3148,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "167495"
                     },
@@ -3356,9 +3192,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "167495"
                     },
@@ -3402,9 +3236,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "167495"
             },
@@ -3427,9 +3259,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "155862"
                     },
@@ -3473,9 +3303,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "155862"
                     },
@@ -3519,9 +3347,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "155862"
                     },
@@ -3565,9 +3391,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "155862"
             },
@@ -3590,9 +3414,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "210257"
                     },
@@ -3636,9 +3458,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "210257"
                     },
@@ -3682,9 +3502,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "210257"
                     },
@@ -3728,9 +3546,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "210257"
             },
@@ -3753,9 +3569,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "202652"
                     },
@@ -3799,9 +3613,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "202652"
                     },
@@ -3845,9 +3657,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "202652"
                     },
@@ -3891,9 +3701,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "202652"
             },
@@ -3916,9 +3724,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201942"
                     },
@@ -3962,9 +3768,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201942"
                     },
@@ -4008,9 +3812,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201942"
                     },
@@ -4054,9 +3856,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "201942"
             },
@@ -4079,9 +3879,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201024"
                     },
@@ -4125,9 +3923,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201024"
                     },
@@ -4171,9 +3967,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201024"
                     },
@@ -4217,9 +4011,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "201024"
             },
@@ -4242,9 +4034,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "200145"
                     },
@@ -4288,9 +4078,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "200145"
                     },
@@ -4334,9 +4122,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "200145"
                     },
@@ -4380,9 +4166,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "200145"
             },
@@ -4405,9 +4189,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "193080"
                     },
@@ -4451,9 +4233,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "193080"
                     },
@@ -4497,9 +4277,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "193080"
                     },
@@ -4543,9 +4321,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "193080"
             },
@@ -4568,9 +4344,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192119"
                     },
@@ -4614,9 +4388,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192119"
                     },
@@ -4660,9 +4432,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192119"
                     },
@@ -4706,9 +4476,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "192119"
             },
@@ -4731,9 +4499,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189511"
                     },
@@ -4777,9 +4543,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189511"
                     },
@@ -4823,9 +4587,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189511"
                     },
@@ -4869,9 +4631,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "189511"
             },
@@ -4894,9 +4654,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "188567"
                     },
@@ -4940,9 +4698,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "188567"
                     },
@@ -4986,9 +4742,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "188567"
                     },
@@ -5032,9 +4786,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "188567"
             },
@@ -5057,9 +4809,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "165153"
                     },
@@ -5103,9 +4853,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "165153"
                     },
@@ -5149,9 +4897,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "165153"
                     },
@@ -5195,9 +4941,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "165153"
             },
@@ -5220,9 +4964,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "162835"
                     },
@@ -5266,9 +5008,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "162835"
                     },
@@ -5312,9 +5052,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "162835"
                     },
@@ -5358,9 +5096,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "162835"
             },
@@ -5383,9 +5119,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "152729"
                     },
@@ -5429,9 +5163,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "152729"
                     },
@@ -5475,9 +5207,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "152729"
                     },
@@ -5521,9 +5251,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "152729"
             },
@@ -5546,9 +5274,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "138956"
                     },
@@ -5592,9 +5318,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "138956"
                     },
@@ -5638,9 +5362,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "138956"
                     },
@@ -5684,9 +5406,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "138956"
             },
@@ -5709,9 +5429,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "218667"
                     },
@@ -5755,9 +5473,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "218667"
                     },
@@ -5801,9 +5517,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "218667"
                     },
@@ -5847,9 +5561,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "218667"
             },
@@ -5872,9 +5584,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212622"
                     },
@@ -5918,9 +5628,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212622"
                     },
@@ -5964,9 +5672,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212622"
                     },
@@ -6010,9 +5716,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "212622"
             },
@@ -6035,9 +5739,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212218"
                     },
@@ -6081,9 +5783,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212218"
                     },
@@ -6127,9 +5827,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212218"
                     },
@@ -6173,9 +5871,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "212218"
             },
@@ -6198,9 +5894,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "211110"
                     },
@@ -6244,9 +5938,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "211110"
                     },
@@ -6290,9 +5982,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "211110"
                     },
@@ -6336,9 +6026,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "211110"
             },
@@ -6361,9 +6049,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "200104"
                     },
@@ -6407,9 +6093,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "200104"
                     },
@@ -6453,9 +6137,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "200104"
                     },
@@ -6499,9 +6181,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "200104"
             },
@@ -6524,9 +6204,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "199556"
                     },
@@ -6570,9 +6248,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "199556"
                     },
@@ -6616,9 +6292,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "199556"
                     },
@@ -6662,9 +6336,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "199556"
             },
@@ -6687,9 +6359,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "195864"
                     },
@@ -6733,9 +6403,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "195864"
                     },
@@ -6779,9 +6447,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "195864"
                     },
@@ -6825,9 +6491,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "195864"
             },
@@ -6850,9 +6514,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "193041"
                     },
@@ -6896,9 +6558,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "193041"
                     },
@@ -6942,9 +6602,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "193041"
                     },
@@ -6988,9 +6646,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "193041"
             },
@@ -7013,9 +6669,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192387"
                     },
@@ -7059,9 +6713,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192387"
                     },
@@ -7105,9 +6757,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192387"
                     },
@@ -7151,9 +6801,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "192387"
             },
@@ -7176,9 +6824,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "190460"
                     },
@@ -7222,9 +6868,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "190460"
                     },
@@ -7268,9 +6912,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "190460"
                     },
@@ -7314,9 +6956,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "190460"
             },
@@ -7339,9 +6979,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189513"
                     },
@@ -7385,9 +7023,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189513"
                     },
@@ -7431,9 +7067,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189513"
                     },
@@ -7477,9 +7111,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "189513"
             },
@@ -7502,9 +7134,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "188350"
                     },
@@ -7548,9 +7178,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "188350"
                     },
@@ -7594,9 +7222,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "188350"
                     },
@@ -7640,9 +7266,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "188350"
             },
@@ -7665,9 +7289,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "186153"
                     },
@@ -7711,9 +7333,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "186153"
                     },
@@ -7757,9 +7377,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "186153"
                     },
@@ -7803,9 +7421,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "186153"
             },
@@ -7828,9 +7444,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "183898"
                     },
@@ -7874,9 +7488,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "183898"
                     },
@@ -7920,9 +7532,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "183898"
                     },
@@ -7966,9 +7576,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "183898"
             },
@@ -7991,9 +7599,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "182493"
                     },
@@ -8037,9 +7643,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "182493"
                     },
@@ -8083,9 +7687,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "182493"
                     },
@@ -8129,9 +7731,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "182493"
             },
@@ -8154,9 +7754,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "178603"
                     },
@@ -8200,9 +7798,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "178603"
                     },
@@ -8246,9 +7842,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "178603"
                     },
@@ -8292,9 +7886,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "178603"
             },
@@ -8317,9 +7909,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "175943"
                     },
@@ -8363,9 +7953,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "175943"
                     },
@@ -8409,9 +7997,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "175943"
                     },
@@ -8455,9 +8041,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "175943"
             },
@@ -8480,9 +8064,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "168542"
                     },
@@ -8526,9 +8108,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "168542"
                     },
@@ -8572,9 +8152,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "168542"
                     },
@@ -8618,9 +8196,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "168542"
             },
@@ -8643,9 +8219,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "167948"
                     },
@@ -8689,9 +8263,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "167948"
                     },
@@ -8735,9 +8307,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "167948"
                     },
@@ -8781,9 +8351,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "167948"
             },
@@ -8806,9 +8374,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "164240"
                     },
@@ -8852,9 +8418,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "164240"
                     },
@@ -8898,9 +8462,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "164240"
                     },
@@ -8944,9 +8506,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "164240"
             },
@@ -8969,9 +8529,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "233049"
                     },
@@ -9015,9 +8573,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "233049"
                     },
@@ -9061,9 +8617,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "233049"
                     },
@@ -9107,9 +8661,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "233049"
             },
@@ -9132,9 +8684,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "232363"
                     },
@@ -9178,9 +8728,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "232363"
                     },
@@ -9224,9 +8772,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "232363"
                     },
@@ -9270,9 +8816,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "232363"
             },
@@ -9295,9 +8839,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "228702"
                     },
@@ -9341,9 +8883,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "228702"
                     },
@@ -9387,9 +8927,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "228702"
                     },
@@ -9433,9 +8971,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "228702"
             },
@@ -9458,9 +8994,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "222492"
                     },
@@ -9504,9 +9038,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "222492"
                     },
@@ -9550,9 +9082,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "222492"
                     },
@@ -9596,9 +9126,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "222492"
             },
@@ -9621,9 +9149,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "220440"
                     },
@@ -9667,9 +9193,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "220440"
                     },
@@ -9713,9 +9237,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "220440"
                     },
@@ -9759,9 +9281,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "220440"
             },
@@ -9784,9 +9304,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "216267"
                     },
@@ -9830,9 +9348,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "216267"
                     },
@@ -9876,9 +9392,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "216267"
                     },
@@ -9922,9 +9436,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "216267"
             },
@@ -9947,9 +9459,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212198"
                     },
@@ -9993,9 +9503,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212198"
                     },
@@ -10039,9 +9547,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212198"
                     },
@@ -10085,9 +9591,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "212198"
             },
@@ -10110,9 +9614,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212188"
                     },
@@ -10156,9 +9658,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212188"
                     },
@@ -10202,9 +9702,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212188"
                     },
@@ -10248,9 +9746,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "212188"
             },
@@ -10273,9 +9769,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "209499"
                     },
@@ -10319,9 +9813,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "209499"
                     },
@@ -10365,9 +9857,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "209499"
                     },
@@ -10411,9 +9901,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "209499"
             },
@@ -10436,9 +9924,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208830"
                     },
@@ -10482,9 +9968,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208830"
                     },
@@ -10528,9 +10012,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208830"
                     },
@@ -10574,9 +10056,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "208830"
             },
@@ -10599,9 +10079,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208670"
                     },
@@ -10645,9 +10123,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208670"
                     },
@@ -10691,9 +10167,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208670"
                     },
@@ -10737,9 +10211,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "208670"
             },
@@ -10762,9 +10234,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "207865"
                     },
@@ -10808,9 +10278,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "207865"
                     },
@@ -10854,9 +10322,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "207865"
                     },
@@ -10900,9 +10366,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "207865"
             },
@@ -10925,9 +10389,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "204485"
                     },
@@ -10971,9 +10433,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "204485"
                     },
@@ -11017,9 +10477,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "204485"
                     },
@@ -11063,9 +10521,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "204485"
             },
@@ -11088,9 +10544,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201535"
                     },
@@ -11134,9 +10588,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201535"
                     },
@@ -11180,9 +10632,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201535"
                     },
@@ -11226,9 +10676,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "201535"
             },
@@ -11251,9 +10699,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201399"
                     },
@@ -11297,9 +10743,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201399"
                     },
@@ -11343,9 +10787,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "201399"
                     },
@@ -11389,9 +10831,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "201399"
             },
@@ -11414,9 +10854,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "198219"
                     },
@@ -11460,9 +10898,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "198219"
                     },
@@ -11506,9 +10942,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "198219"
                     },
@@ -11552,9 +10986,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "198219"
             },
@@ -11577,9 +11009,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "193747"
                     },
@@ -11623,9 +11053,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "193747"
                     },
@@ -11669,9 +11097,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "193747"
                     },
@@ -11715,9 +11141,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "193747"
             },
@@ -11740,9 +11164,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192505"
                     },
@@ -11786,9 +11208,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192505"
                     },
@@ -11832,9 +11252,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192505"
                     },
@@ -11878,9 +11296,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "192505"
             },
@@ -11903,9 +11319,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189509"
                     },
@@ -11949,9 +11363,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189509"
                     },
@@ -11995,9 +11407,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189509"
                     },
@@ -12041,9 +11451,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "189509"
             },
@@ -12066,9 +11474,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189332"
                     },
@@ -12112,9 +11518,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189332"
                     },
@@ -12158,9 +11562,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "189332"
                     },
@@ -12204,9 +11606,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "189332"
             },
@@ -12229,9 +11629,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "184344"
                     },
@@ -12275,9 +11673,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "184344"
                     },
@@ -12321,9 +11717,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "184344"
                     },
@@ -12367,9 +11761,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "184344"
             },
@@ -12392,9 +11784,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "184087"
                     },
@@ -12438,9 +11828,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "184087"
                     },
@@ -12484,9 +11872,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "184087"
                     },
@@ -12530,9 +11916,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "184087"
             },
@@ -12555,9 +11939,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "180206"
                     },
@@ -12601,9 +11983,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "180206"
                     },
@@ -12647,9 +12027,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "180206"
                     },
@@ -12693,9 +12071,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "180206"
             },
@@ -12718,9 +12094,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "179813"
                     },
@@ -12764,9 +12138,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "179813"
                     },
@@ -12810,9 +12182,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "179813"
                     },
@@ -12856,9 +12226,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "179813"
             },
@@ -12881,9 +12249,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "177683"
                     },
@@ -12927,9 +12293,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "177683"
                     },
@@ -12973,9 +12337,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "177683"
                     },
@@ -13019,9 +12381,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "177683"
             },
@@ -13044,9 +12404,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "143076"
                     },
@@ -13090,9 +12448,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "143076"
                     },
@@ -13136,9 +12492,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "143076"
                     },
@@ -13182,9 +12536,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "143076"
             },
@@ -13207,9 +12559,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "235243"
                     },
@@ -13253,9 +12603,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "235243"
                     },
@@ -13299,9 +12647,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "235243"
                     },
@@ -13345,9 +12691,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "235243"
             },
@@ -13370,9 +12714,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "231866"
                     },
@@ -13416,9 +12758,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "231866"
                     },
@@ -13462,9 +12802,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "231866"
                     },
@@ -13508,9 +12846,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "231866"
             },
@@ -13533,9 +12869,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "231281"
                     },
@@ -13579,9 +12913,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "231281"
                     },
@@ -13625,9 +12957,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "231281"
                     },
@@ -13671,9 +13001,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "231281"
             },
@@ -13696,9 +13024,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "230658"
                     },
@@ -13742,9 +13068,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "230658"
                     },
@@ -13788,9 +13112,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "230658"
                     },
@@ -13834,9 +13156,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "230658"
             },
@@ -13859,9 +13179,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "230621"
                     },
@@ -13905,9 +13223,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "230621"
                     },
@@ -13951,9 +13267,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "230621"
                     },
@@ -13997,9 +13311,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "230621"
             },
@@ -14022,9 +13334,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "226753"
                     },
@@ -14068,9 +13378,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "226753"
                     },
@@ -14114,9 +13422,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "226753"
                     },
@@ -14160,9 +13466,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "226753"
             },
@@ -14185,9 +13489,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "223848"
                     },
@@ -14231,9 +13533,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "223848"
                     },
@@ -14277,9 +13577,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "223848"
                     },
@@ -14323,9 +13621,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "223848"
             },
@@ -14348,9 +13644,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "216594"
                     },
@@ -14394,9 +13688,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "216594"
                     },
@@ -14440,9 +13732,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "216594"
                     },
@@ -14486,9 +13776,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "216594"
             },
@@ -14511,9 +13799,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "216460"
                     },
@@ -14557,9 +13843,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "216460"
                     },
@@ -14603,9 +13887,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "216460"
                     },
@@ -14649,9 +13931,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "216460"
             },
@@ -14674,9 +13954,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212190"
                     },
@@ -14720,9 +13998,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212190"
                     },
@@ -14766,9 +14042,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "212190"
                     },
@@ -14812,9 +14086,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "212190"
             },
@@ -14837,9 +14109,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208421"
                     },
@@ -14883,9 +14153,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208421"
                     },
@@ -14929,9 +14197,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "208421"
                     },
@@ -14975,9 +14241,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "208421"
             },
@@ -15000,9 +14264,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "206113"
                     },
@@ -15046,9 +14308,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "206113"
                     },
@@ -15092,9 +14352,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "206113"
                     },
@@ -15138,9 +14396,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "206113"
             },
@@ -15163,9 +14419,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "205600"
                     },
@@ -15209,9 +14463,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "205600"
                     },
@@ -15255,9 +14507,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "205600"
                     },
@@ -15301,9 +14551,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "205600"
             },
@@ -15326,9 +14574,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "204963"
                     },
@@ -15372,9 +14618,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "204963"
                     },
@@ -15418,9 +14662,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "204963"
                     },
@@ -15464,9 +14706,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "204963"
             },
@@ -15489,9 +14729,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "198706"
                     },
@@ -15535,9 +14773,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "198706"
                     },
@@ -15581,9 +14817,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "198706"
                     },
@@ -15627,9 +14861,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "198706"
             },
@@ -15652,9 +14884,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "198176"
                     },
@@ -15698,9 +14928,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "198176"
                     },
@@ -15744,9 +14972,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "198176"
                     },
@@ -15790,9 +15016,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "198176"
             },
@@ -15815,9 +15039,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "197965"
                     },
@@ -15861,9 +15083,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "197965"
                     },
@@ -15907,9 +15127,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "197965"
                     },
@@ -15953,9 +15171,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "197965"
             },
@@ -15978,9 +15194,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "197781"
                     },
@@ -16024,9 +15238,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "197781"
                     },
@@ -16070,9 +15282,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "197781"
                     },
@@ -16116,9 +15326,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "197781"
             },
@@ -16141,9 +15349,7 @@
         "relationships": [
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192629"
                     },
@@ -16187,9 +15393,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192629"
                     },
@@ -16233,9 +15437,7 @@
             },
             {
                 "from_node": {
-                    "additional_types": [
-                        "Person"
-                    ],
+                    "additional_types": [],
                     "key_values": {
                         "player_id": "192629"
                     },
@@ -16279,9 +15481,7 @@
             }
         ],
         "source": {
-            "additional_types": [
-                "Person"
-            ],
+            "additional_types": [],
             "key_values": {
                 "player_id": "192629"
             },

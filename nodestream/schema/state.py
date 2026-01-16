@@ -691,6 +691,7 @@ class SchemaExpansionCoordinator:
     """A coordinator for expanding a schema."""
 
     schema: Schema
+    include_additional_types: bool = False
     aliases: LayeredDict[str, str] = field(default_factory=LayeredDict)
     unbound_aliases: LayeredDict[str, GraphObjectSchema] = field(
         default_factory=LayeredDict
@@ -838,6 +839,9 @@ class SchemaExpansionCoordinator:
         for unbound_adjacency in self.unbound_adjacencies:
             unbound_adjacency.bind(self.schema, self.aliases)
 
+        if not self.include_additional_types:
+            return
+
         # Create duplicate adjacencies for additional types
         adjacencies_to_add = []
         for adjacency, cardinality in list(self.schema.cardinalities.items()):
@@ -888,13 +892,15 @@ class ExpandsSchema:
         """
         pass
 
-    def make_schema(self) -> Schema:
+    def make_schema(self, include_additional_types: bool = False) -> Schema:
         """Generates a new schema.
 
         Returns:
             The new schema.
         """
-        coordinator = SchemaExpansionCoordinator(schema := Schema())
+        coordinator = SchemaExpansionCoordinator(
+            schema := Schema(), include_additional_types=include_additional_types
+        )
         self.expand_schema(coordinator)
         return schema
 
