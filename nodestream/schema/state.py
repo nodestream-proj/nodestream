@@ -691,7 +691,7 @@ class SchemaExpansionCoordinator:
     """A coordinator for expanding a schema."""
 
     schema: Schema
-    include_additional_types: bool = False
+    include_additional_types: bool = True
     aliases: LayeredDict[str, str] = field(default_factory=LayeredDict)
     unbound_aliases: LayeredDict[str, GraphObjectSchema] = field(
         default_factory=LayeredDict
@@ -832,7 +832,7 @@ class SchemaExpansionCoordinator:
             main_type: The main node type.
             additional_types: The additional types associated with the main type.
         """
-        if additional_types:
+        if additional_types and self.include_additional_types:
             self.additional_types_map[main_type] = additional_types
 
     def clear_aliases(self):

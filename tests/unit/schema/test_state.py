@@ -146,3 +146,43 @@ def test_overlapping_property_definitions(basic_schema):
     property_defintion = person.properties["name"]
     assert_that(property_defintion.is_key, equal_to(True))
     assert_that(property_defintion.is_indexed, equal_to(True))
+
+
+def test_register_additional_types_with_include_additional_types_false(
+    schema_coordinator,
+):
+    schema_coordinator.include_additional_types = False
+    schema_coordinator.register_additional_types("Person", ["NewType"])
+    assert_that(schema_coordinator.additional_types_map, equal_to({}))
+
+
+def test_register_additional_types_with_include_additional_types_true(
+    schema_coordinator,
+):
+    schema_coordinator.include_additional_types = True
+    schema_coordinator.register_additional_types("Person", ["NewType"])
+    assert_that(
+        schema_coordinator.additional_types_map, equal_to({"Person": ["NewType"]})
+    )
+
+
+def test_clear_aliases_with_include_additional_types_false(schema_coordinator):
+    schema_coordinator.include_additional_types = False
+    # Even if additional types are registered, clear_aliases should ignore them
+    # when include_additional_types is False.
+    schema_coordinator.register_additional_types("Person", ["NewType"])
+    schema_coordinator.clear_aliases()
+    assert_that(
+        schema_coordinator.additional_types_map, equal_to({"Person": ["NewType"]})
+    )
+
+
+def test_clear_aliases_with_include_additional_types_true(schema_coordinator):
+    schema_coordinator.include_additional_types = True
+    schema_coordinator.register_additional_types("Person", ["NewType"])
+    schema_coordinator.clear_aliases()
+    # clear_aliases should not remove the additional types mapping; it uses it
+    # to expand adjacencies.
+    assert_that(
+        schema_coordinator.additional_types_map, equal_to({"Person": ["NewType"]})
+    )
