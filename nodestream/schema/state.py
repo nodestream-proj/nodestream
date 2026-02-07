@@ -693,14 +693,6 @@ class UnboundAdjacency:
     def bind(
         self, schema: Schema, aliases: LayeredDict[str, str]
     ) -> tuple[Adjacency, AdjacencyCardinality]:
-        """Bind this unbound adjacency into the provided schema.
-
-        Returns the concrete `Adjacency` and `AdjacencyCardinality` that were
-        added to the schema. This allows callers (such as the schema expansion
-        coordinator) to reason about exactly which adjacencies were created as
-        part of the current context, without having to reimplement the alias
-        resolution logic here.
-        """
         from_type = aliases.get(self.from_type_or_alias, self.from_type_or_alias)
         to_type = aliases.get(self.to_type_or_alias, self.to_type_or_alias)
         adjacency = Adjacency(
@@ -721,7 +713,7 @@ class SchemaExpansionCoordinator:
     """A coordinator for expanding a schema."""
 
     schema: Schema
-    include_additional_types: bool = True
+    include_additional_types: bool = False
     aliases: LayeredDict[str, str] = field(default_factory=LayeredDict)
     unbound_aliases: LayeredDict[str, GraphObjectSchema] = field(
         default_factory=LayeredDict
