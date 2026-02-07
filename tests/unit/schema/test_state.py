@@ -11,6 +11,7 @@ from nodestream.schema import (
     PropertyMetadata,
     PropertyType,
     Schema,
+    SchemaExpansionCoordinator,
 )
 
 
@@ -148,41 +149,39 @@ def test_overlapping_property_definitions(basic_schema):
     assert_that(property_defintion.is_indexed, equal_to(True))
 
 
-def test_register_additional_types_with_include_additional_types_false(
-    schema_coordinator,
-):
-    schema_coordinator.include_additional_types = False
-    schema_coordinator.register_additional_types("Person", ["NewType"])
-    assert_that(schema_coordinator.additional_types_map, equal_to({}))
+def test_register_additional_types_with_include_additional_types_false():
+    coordinator = SchemaExpansionCoordinator(Schema(), include_additional_types=False)
+    coordinator.register_additional_types("Person", ("NewType",))
+    # When additional types are disabled, registrations should be ignored.
+    assert_that(coordinator.additional_types_map.effective_items, equal_to({}))
 
 
-def test_register_additional_types_with_include_additional_types_true(
-    schema_coordinator,
-):
-    schema_coordinator.include_additional_types = True
-    schema_coordinator.register_additional_types("Person", ["NewType"])
+def test_register_additional_types_with_include_additional_types_true():
+    coordinator = SchemaExpansionCoordinator(Schema(), include_additional_types=True)
+    coordinator.register_additional_types("Person", ("NewType",))
+    # With additional types enabled, the effective mapping should include the
+    # registered additional type for the main type.
     assert_that(
-        schema_coordinator.additional_types_map, equal_to({"Person": ["NewType"]})
+        coordinator.additional_types_map.effective_items,
+        equal_to({"Person": ("NewType",)}),
     )
 
 
-def test_clear_aliases_with_include_additional_types_false(schema_coordinator):
-    schema_coordinator.include_additional_types = False
-    # Even if additional types are registered, clear_aliases should ignore them
-    # when include_additional_types is False.
-    schema_coordinator.register_additional_types("Person", ["NewType"])
-    schema_coordinator.clear_aliases()
-    assert_that(
-        schema_coordinator.additional_types_map, equal_to({"Person": ["NewType"]})
-    )
+def test_clear_aliases_with_include_additional_types_false():
+    coordinator = SchemaExpansionCoordinator(Schema(), include_additional_types=False)
+    coordinator.register_additional_types("Person", ("NewType",))
+    coordinator.clear_aliases()
+    # Mapping remains empty because registration is ignored when include_additional_types is False.
+    assert_that(coordinator.additional_types_map.effective_items, equal_to({}))
 
 
-def test_clear_aliases_with_include_additional_types_true(schema_coordinator):
-    schema_coordinator.include_additional_types = True
-    schema_coordinator.register_additional_types("Person", ["NewType"])
-    schema_coordinator.clear_aliases()
+def test_clear_aliases_with_include_additional_types_true():
+    coordinator = SchemaExpansionCoordinator(Schema(), include_additional_types=True)
+    coordinator.register_additional_types("Person", ("NewType",))
+    coordinator.clear_aliases()
     # clear_aliases should not remove the additional types mapping; it uses it
     # to expand adjacencies.
     assert_that(
-        schema_coordinator.additional_types_map, equal_to({"Person": ["NewType"]})
+        coordinator.additional_types_map.effective_items,
+        equal_to({"Person": ("NewType",)}),
     )
