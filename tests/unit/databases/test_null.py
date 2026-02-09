@@ -41,3 +41,14 @@ async def test_retriever_get_nodes_of_type(retriver):
 async def test_retriever_get_relationships_of_type(retriver):
     results = [r async for r in retriver.get_relationships_of_type("IS_FOO")]
     assert_that(results, empty())
+
+
+@pytest.mark.asyncio
+async def test_retriever_get_relationships_of_type_between(retriver):
+    results = [
+        r
+        async for r in retriver.get_relationships_of_type_between(
+            "Person", "Person", "KNOWS"
+        )
+    ]
+    assert_that(results, empty())
