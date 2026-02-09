@@ -861,9 +861,10 @@ class SchemaExpansionCoordinator:
         if additional_types and self.include_additional_types:
             # Merge with any existing additional types for this main_type in the
             # current context level so that multiple registrations in the same
-            # context accumulate rather than overwrite.
+            # context accumulate rather than overwrite. Preserve a stable
+            # insertion order to keep schema expansion deterministic.
             existing = self.additional_types_map.get(main_type, tuple())
-            merged = tuple({*existing, *additional_types})
+            merged = existing + tuple(t for t in additional_types if t not in existing)
             self.additional_types_map[main_type] = merged
 
     def expand_additional_types(
