@@ -198,12 +198,12 @@ type Organization @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(l
     
 
     
-    athletePlaysFor: [Athlete!]!
+    personPlaysFor: [Person!]!
         @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
     
 
     
-    personPlaysFor: [Person!]!
+    athletePlaysFor: [Athlete!]!
         @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
     
 
@@ -342,12 +342,12 @@ type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {d
     
 
     
-    athletePlaysFor: [Athlete!]!
+    personPlaysFor: [Person!]!
         @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
     
 
     
-    personPlaysFor: [Person!]!
+    athletePlaysFor: [Athlete!]!
         @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
     
 
