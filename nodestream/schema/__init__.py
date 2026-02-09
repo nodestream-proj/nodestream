@@ -10,6 +10,7 @@ from .state import (
     PropertyType,
     Schema,
     SchemaExpansionCoordinator,
+    UnboundAdjacency,
 )
 
 __all__ = (
@@ -24,4 +25,5 @@ __all__ = (
     "Adjacency",
     "PropertyMetadata",
     "PropertyType",
+    "UnboundAdjacency",
 )

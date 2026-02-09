@@ -12,6 +12,7 @@ from nodestream.schema import (
     PropertyType,
     Schema,
     SchemaExpansionCoordinator,
+    UnboundAdjacency,
 )
 
 
@@ -185,3 +186,89 @@ def test_clear_aliases_with_include_additional_types_true():
         coordinator.additional_types_map.effective_items,
         equal_to({"Person": ("NewType",)}),
     )
+
+
+def test_bind_unbound_adjacencies_uses_aliases_and_updates_schema():
+    """_bind_unbound_adjacencies should bind via aliases and mutate schema.cardinalities."""
+    schema = Schema()
+    coordinator = SchemaExpansionCoordinator(schema)
+
+    # Alias "player_alias" → "Player"
+    coordinator.aliases["player_alias"] = "Player"
+
+    # Unbound adjacency from alias to concrete type.
+    unbound = UnboundAdjacency(
+        from_type_or_alias="player_alias",
+        to_type_or_alias="Team",
+        relationship_type="PLAYS_FOR",
+        from_cardinality=Cardinality.SINGLE,
+        to_cardinality=Cardinality.MANY,
+    )
+    coordinator.unbound_adjacencies.append(unbound)
+
+    base_adjacencies = coordinator._bind_unbound_adjacencies()
+
+    # We should have exactly one bound adjacency with the alias resolved.
+    assert_that(len(base_adjacencies), equal_to(1))
+    adjacency, cardinality = base_adjacencies[0]
+    assert_that(adjacency.from_node_type, equal_to("Player"))
+    assert_that(adjacency.to_node_type, equal_to("Team"))
+    assert_that(adjacency.relationship_type, equal_to("PLAYS_FOR"))
+    # And it should have been written into the schema.
+    assert_that(schema.cardinalities[adjacency], equal_to(cardinality))
+
+
+def test_expand_adjacencies_for_additional_types_duplicates_edges():
+    """_expand_adjacencies_for_additional_types should create edges for additional types."""
+    schema = Schema()
+    coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
+
+    base_adj = Adjacency("Player", "Team", "PLAYS_FOR")
+    base_card = AdjacencyCardinality(Cardinality.SINGLE, Cardinality.MANY)
+    schema.add_adjacency(base_adj, base_card)
+
+    # Register additional types for Player in the current context.
+    coordinator.additional_types_map["Player"] = ("Person", "Athlete")
+
+    coordinator._expand_adjacencies_for_additional_types([(base_adj, base_card)])
+
+    adjacency_pairs = {
+        (adj.from_node_type, adj.to_node_type) for adj in schema.adjacencies
+    }
+    # Original plus duplicates for additional types.
+    expected = {("Player", "Team"), ("Person", "Team"), ("Athlete", "Team")}
+    assert_that(expected.issubset(adjacency_pairs), equal_to(True))
+
+
+def test_expand_properties_for_additional_types_propagates_alias_properties():
+    """Alias-level properties should be applied to additional types for the base type."""
+    schema = Schema()
+    coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
+
+    # Base type and additional types exist in the schema.
+    schema.put_node_type(GraphObjectSchema("Player"))
+    schema.put_node_type(GraphObjectSchema("Person"))
+    schema.put_node_type(GraphObjectSchema("Athlete"))
+
+    # Alias "source_node" is bound to "Player".
+    coordinator.aliases["source_node"] = "Player"
+
+    # Alias schema carries properties defined via `properties` interpretations.
+    alias_schema = GraphObjectSchema(
+        name="source_node",
+        properties={
+            "alias_prop": PropertyMetadata(PropertyType.STRING),
+        },
+    )
+    coordinator.unbound_aliases["source_node"] = alias_schema
+
+    # Register additional types for Player in this context.
+    coordinator.additional_types_map["Player"] = ("Person", "Athlete")
+
+    coordinator._expand_properties_for_additional_types()
+
+    person_schema = schema.get_node_type_by_name("Person")
+    athlete_schema = schema.get_node_type_by_name("Athlete")
+
+    assert_that("alias_prop" in person_schema.properties, equal_to(True))
+    assert_that("alias_prop" in athlete_schema.properties, equal_to(True))

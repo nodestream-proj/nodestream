@@ -5,11 +5,7 @@ type Athlete @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
     player_id: String
 
-    name: String
-
     overall: String
-
-    age: String
 
     hits: String
 
@@ -19,17 +15,7 @@ type Athlete @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
     # Inbound Relationships
 
-    
-    teamMemberIsPlayer: [TeamMember!]!
-        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
-    
-
     # Outbound Relationships
-
-    
-    originatesFromCountry: Country
-        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
-    
 
     
     playsForTeam: Team
@@ -38,11 +24,6 @@ type Athlete @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
     
     playsForOrganization: Organization
-        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
-    
-
-    
-    playsForSportsClub: SportsClub
         @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
     
 
@@ -57,8 +38,6 @@ type Competitor @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(lim
     # Node Properties
 
     player_id: String
-
-    overall: String
 
     position: String
 
@@ -85,27 +64,7 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
     # Inbound Relationships
 
     
-    playerOriginatesFrom: [Player!]!
-        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
-    
-
-    
-    personOriginatesFrom: [Person!]!
-        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
-    
-
-    
-    athleteOriginatesFrom: [Athlete!]!
-        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
-    
-
-    
     personLivesIn: [Person!]!
-        @relationship(type: "LIVES_IN", direction: IN, properties: "LivesIn")
-    
-
-    
-    individualLivesIn: [Individual!]!
         @relationship(type: "LIVES_IN", direction: IN, properties: "LivesIn")
     
 
@@ -115,17 +74,22 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
     
 
     
+    individualLivesIn: [Individual!]!
+        @relationship(type: "LIVES_IN", direction: IN, properties: "LivesIn")
+    
+
+    
     organizationBasedIn: [Organization!]!
         @relationship(type: "BASED_IN", direction: IN, properties: "BasedIn")
     
 
     
-    legalEntityBasedIn: [LegalEntity!]!
+    entityBasedIn: [Entity!]!
         @relationship(type: "BASED_IN", direction: IN, properties: "BasedIn")
     
 
     
-    entityBasedIn: [Entity!]!
+    legalEntityBasedIn: [LegalEntity!]!
         @relationship(type: "BASED_IN", direction: IN, properties: "BasedIn")
     
 
@@ -162,7 +126,7 @@ type Human @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {
 
     name: String
 
-    potential: String
+    age: String
 
     # Inbound Relationships
 
@@ -184,7 +148,7 @@ type Individual @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(lim
 
     name: String
 
-    potential: String
+    age: String
 
     # Inbound Relationships
 
@@ -234,12 +198,12 @@ type Organization @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(l
     
 
     
-    personPlaysFor: [Person!]!
+    athletePlaysFor: [Athlete!]!
         @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
     
 
     
-    athletePlaysFor: [Athlete!]!
+    personPlaysFor: [Person!]!
         @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
     
 
@@ -257,31 +221,19 @@ type Person @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
 
     player_id: String
 
-    name: String
-
     overall: String
-
-    age: String
 
     hits: String
 
     last_ingested_at: DateTime
 
-    potential: String
+    name: String
+
+    age: String
 
     # Inbound Relationships
 
-    
-    teamMemberIsPlayer: [TeamMember!]!
-        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
-    
-
     # Outbound Relationships
-
-    
-    originatesFromCountry: Country
-        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
-    
 
     
     playsForTeam: Team
@@ -290,11 +242,6 @@ type Person @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
 
     
     playsForOrganization: Organization
-        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
-    
-
-    
-    playsForSportsClub: SportsClub
         @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
     
 
@@ -310,11 +257,7 @@ type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
 
     player_id: String
 
-    name: String
-
     overall: String
-
-    age: String
 
     hits: String
 
@@ -322,17 +265,7 @@ type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
 
     # Inbound Relationships
 
-    
-    teamMemberIsPlayer: [TeamMember!]!
-        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
-    
-
     # Outbound Relationships
-
-    
-    originatesFromCountry: Country
-        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
-    
 
     
     playsForTeam: Team
@@ -341,11 +274,6 @@ type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
 
     
     playsForOrganization: Organization
-        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
-    
-
-    
-    playsForSportsClub: SportsClub
         @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
     
 
@@ -379,40 +307,10 @@ type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit
 
 }
 
-type SportsClub @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    name: String
-
-    last_ingested_at: DateTime
-
-    # Inbound Relationships
-
-    
-    playerPlaysFor: [Player!]!
-        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
-    
-
-    
-    personPlaysFor: [Person!]!
-        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
-    
-
-    
-    athletePlaysFor: [Athlete!]!
-        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
-    
-
-    # Outbound Relationships
-
-}
-
 type SportsPerson @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     player_id: String
-
-    overall: String
 
     position: String
 
@@ -444,53 +342,16 @@ type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {d
     
 
     
-    personPlaysFor: [Person!]!
-        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
-    
-
-    
     athletePlaysFor: [Athlete!]!
         @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
     
 
-    # Outbound Relationships
-
-}
-
-type TeamMember @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    member_id: String
-
-    name: String
-
-    team_name: String
-
-    last_ingested_at: DateTime
-
-    # Inbound Relationships
+    
+    personPlaysFor: [Person!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
 
     # Outbound Relationships
-
-    
-    isPlayerPlayer: Player
-        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
-    
-
-    
-    isPlayerPerson: Person
-        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
-    
-
-    
-    isPlayerAthlete: Athlete
-        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
-    
-
-}
-interface OriginatesFrom @relationshipProperties {
-
-    last_ingested_at: DateTime
 
 }
 interface PlaysFor @relationshipProperties {
@@ -504,11 +365,6 @@ interface LivesIn @relationshipProperties {
 
 }
 interface CompetesAt @relationshipProperties {
-
-    last_ingested_at: DateTime
-
-}
-interface IsPlayer @relationshipProperties {
 
     last_ingested_at: DateTime
 

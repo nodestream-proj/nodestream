@@ -12,7 +12,7 @@ from nodestream.schema import Schema, SchemaExpansionCoordinator
 def test_source_node_additional_types_expand_schema():
     """Test that additional_types are expanded in the schema with the same structure as the main node."""
     schema = Schema()
-    coordinator = SchemaExpansionCoordinator(schema)
+    coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
 
     interpretation = SourceNodeInterpretation(
         node_type="Player",

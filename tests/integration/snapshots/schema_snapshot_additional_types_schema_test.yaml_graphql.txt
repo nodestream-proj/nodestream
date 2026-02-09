@@ -5,17 +5,9 @@ type Athlete @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
     player_id: String
 
-    name: String
-
-    overall: String
-
-    age: String
-
-    hits: String
+    position: String
 
     last_ingested_at: DateTime
-
-    position: String
 
     # Inbound Relationships
 
@@ -28,23 +20,6 @@ type Athlete @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
 }
 
-type Competitor @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    player_id: String
-
-    overall: String
-
-    position: String
-
-    last_ingested_at: DateTime
-
-    # Inbound Relationships
-
-    # Outbound Relationships
-
-}
-
 type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
@@ -53,11 +28,6 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
     last_ingested_at: DateTime
 
     # Inbound Relationships
-
-    
-    playerOriginatesFrom: [Player!]!
-        @relationship(type: "ORIGINATES_FROM", direction: IN, properties: "OriginatesFrom")
-    
 
     
     personLivesIn: [Person!]!
@@ -73,78 +43,14 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
 
 }
 
-type Entity @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    name: String
-
-    country: String
-
-    last_ingested_at: DateTime
-
-    # Inbound Relationships
-
-    # Outbound Relationships
-
-}
-
-type Human @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    player_id: String
-
-    last_ingested_at: DateTime
-
-    name: String
-
-    potential: String
-
-    # Inbound Relationships
-
-    # Outbound Relationships
-
-}
-
-type Individual @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    player_id: String
-
-    last_ingested_at: DateTime
-
-    name: String
-
-    potential: String
-
-    # Inbound Relationships
-
-    # Outbound Relationships
-
-}
-
-type LegalEntity @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    name: String
-
-    country: String
-
-    last_ingested_at: DateTime
-
-    # Inbound Relationships
-
-    # Outbound Relationships
-
-}
-
 type Organization @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
     name: String
 
-    last_ingested_at: DateTime
-
     country: String
+
+    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -160,19 +66,13 @@ type Organization @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(l
 type Person @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
-    player_id: String
-
     name: String
-
-    overall: String
 
     age: String
 
-    hits: String
+    player_id: String
 
     last_ingested_at: DateTime
-
-    potential: String
 
     # Inbound Relationships
 
@@ -190,11 +90,7 @@ type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
 
     player_id: String
 
-    name: String
-
     overall: String
-
-    age: String
 
     hits: String
 
@@ -202,17 +98,7 @@ type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: 
 
     # Inbound Relationships
 
-    
-    teamMemberIsPlayer: [TeamMember!]!
-        @relationship(type: "IS_PLAYER", direction: IN, properties: "IsPlayer")
-    
-
     # Outbound Relationships
-
-    
-    originatesFromCountry: Country
-        @relationship(type: "ORIGINATES_FROM", direction: OUT, properties: "OriginatesFrom")
-    
 
     
     playsForTeam: Team
@@ -239,36 +125,6 @@ type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit
 
 }
 
-type SportsClub @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    name: String
-
-    last_ingested_at: DateTime
-
-    # Inbound Relationships
-
-    # Outbound Relationships
-
-}
-
-type SportsPerson @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    player_id: String
-
-    overall: String
-
-    position: String
-
-    last_ingested_at: DateTime
-
-    # Inbound Relationships
-
-    # Outbound Relationships
-
-}
-
 type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
     # Node Properties
 
@@ -286,33 +142,6 @@ type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {d
     # Outbound Relationships
 
 }
-
-type TeamMember @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
-    # Node Properties
-
-    member_id: String
-
-    name: String
-
-    team_name: String
-
-    last_ingested_at: DateTime
-
-    # Inbound Relationships
-
-    # Outbound Relationships
-
-    
-    isPlayerPlayer: Player
-        @relationship(type: "IS_PLAYER", direction: OUT, properties: "IsPlayer")
-    
-
-}
-interface OriginatesFrom @relationshipProperties {
-
-    last_ingested_at: DateTime
-
-}
 interface PlaysFor @relationshipProperties {
 
     last_ingested_at: DateTime
@@ -324,11 +153,6 @@ interface LivesIn @relationshipProperties {
 
 }
 interface CompetesAt @relationshipProperties {
-
-    last_ingested_at: DateTime
-
-}
-interface IsPlayer @relationshipProperties {
 
     last_ingested_at: DateTime
 
