@@ -151,18 +151,38 @@ class SourceNodeInterpretation(Interpretation, alias="source_node"):
         if not self.node_type.is_static:
             return
 
+        # First, bind the source-node alias to the concrete base node type and
+        # apply this interpretation's keys / properties / indexes to it.
         coordinator.on_node_schema(
             self.expand_source_node_schema,
             alias=self.SOURCE_NODE_TYPE_ALIAS,
             node_type=self.node_type.value,
         )
 
-        # Expand schemas for additional types with the same structure
+        # Capture any properties that were accumulated on the alias from
+        # `properties` interpretations in this context so they can also be
+        # applied to additional types for this source.
+        alias_schema = coordinator.unbound_aliases.get(
+            self.SOURCE_NODE_TYPE_ALIAS, None
+        )
+
+        # Expand schemas for additional types with the same structure. In
+        # addition to this interpretation's own keys/properties/indexes, also
+        # apply any alias-level properties (from `properties` interpretations)
+        # so that additional types for this source carry the same contextual
+        # properties as the base type within this interpretation pass.
         for additional_type in self.additional_types:
             coordinator.on_node_schema(
                 self.expand_source_node_schema,
                 node_type=additional_type,
             )
+
+            if alias_schema is not None:
+                additional_schema = coordinator.schema.get_node_type_by_name(
+                    additional_type
+                )
+                for property_name, metadata in alias_schema.properties.items():
+                    additional_schema.add_property(property_name, metadata)
 
         # Register additional types so relationships are also connected to them
         coordinator.register_additional_types(

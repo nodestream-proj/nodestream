@@ -42,14 +42,14 @@
   last_ingested_at: DATETIME
 [NODE] Human:
   player_id: STRING
+  last_ingested_at: DATETIME
   name: STRING
   potential: STRING
-  last_ingested_at: DATETIME
 [NODE] Individual:
   player_id: STRING
+  last_ingested_at: DATETIME
   name: STRING
   potential: STRING
-  last_ingested_at: DATETIME
 [RELATIONSHIP] COMPETES_AT:
   last_ingested_at: DATETIME
 [NODE] Position:

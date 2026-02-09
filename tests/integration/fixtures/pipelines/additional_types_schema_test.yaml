@@ -42,12 +42,13 @@
           node_type: Person
           key:
             player_id: !jmespath player_id  # Same key as first pass
-          properties:
-            name: !jmespath name  # Overlaps with Pass 1
-            potential: !jmespath potential  # New property only on Person in this pass
           additional_types:
             - Human
             - Individual
+        - type: properties
+          properties:
+            name: !jmespath name  # Overlaps with Pass 1
+            potential: !jmespath potential  # New property only on Person in this passs
         - type: relationship
           node_type: Country
           relationship_type: LIVES_IN

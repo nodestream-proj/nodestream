@@ -105,12 +105,12 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
     
 
     
-    humanLivesIn: [Human!]!
+    individualLivesIn: [Individual!]!
         @relationship(type: "LIVES_IN", direction: IN, properties: "LivesIn")
     
 
     
-    individualLivesIn: [Individual!]!
+    humanLivesIn: [Human!]!
         @relationship(type: "LIVES_IN", direction: IN, properties: "LivesIn")
     
 
@@ -120,12 +120,12 @@ type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit:
     
 
     
-    entityBasedIn: [Entity!]!
+    legalEntityBasedIn: [LegalEntity!]!
         @relationship(type: "BASED_IN", direction: IN, properties: "BasedIn")
     
 
     
-    legalEntityBasedIn: [LegalEntity!]!
+    entityBasedIn: [Entity!]!
         @relationship(type: "BASED_IN", direction: IN, properties: "BasedIn")
     
 
@@ -158,11 +158,11 @@ type Human @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {
 
     player_id: String
 
+    last_ingested_at: DateTime
+
     name: String
 
     potential: String
-
-    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -180,11 +180,11 @@ type Individual @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(lim
 
     player_id: String
 
+    last_ingested_at: DateTime
+
     name: String
 
     potential: String
-
-    last_ingested_at: DateTime
 
     # Inbound Relationships
 
@@ -366,12 +366,12 @@ type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit
     
 
     
-    sportsPersonCompetesAt: [SportsPerson!]!
+    competitorCompetesAt: [Competitor!]!
         @relationship(type: "COMPETES_AT", direction: IN, properties: "CompetesAt")
     
 
     
-    competitorCompetesAt: [Competitor!]!
+    sportsPersonCompetesAt: [SportsPerson!]!
         @relationship(type: "COMPETES_AT", direction: IN, properties: "CompetesAt")
     
 
