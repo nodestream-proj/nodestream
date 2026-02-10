@@ -4,6 +4,7 @@ from typing import AsyncGenerator, List
 from ..model import Node, RelationshipWithNodes
 from ..pipeline import Extractor
 from ..schema import Adjacency, Schema
+import logging
 
 
 class TypeRetriever(ABC):
@@ -30,9 +31,14 @@ class Copier(Extractor):
         self.relationship_types = relationship_types_to_copy
         self.node_types = node_types_to_copy
         self.schema = schema
+        self.logger = logging.getLogger(__name__)
+        self.logger.info(
+            f"Copying {len(self.node_types)} node types and {len(self.relationship_types)} relationship types"
+        )
 
     async def extract_records(self):
         for node_type in self.node_types:
+            self.logger.info(f"Copying nodes of type {node_type}")
             async for node in self.type_retriever.get_nodes_of_type(node_type):
                 yield self.convert_node_to_ingest(node)
 
@@ -41,6 +47,7 @@ class Copier(Extractor):
             # fully specify from/to node types for the retriever. Note that it
             # is impossible to have a relationship without an adjacency, we only
             # support copyting from a nodestream schema.
+            self.logger.info(f"Copying relationships of type {rel_type}")
             adjacencies: List[Adjacency] = list(
                 self.schema.get_adjacencies_by_relationship_type(rel_type)
             )
