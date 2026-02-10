@@ -95,6 +95,14 @@ def test_convert_node_to_ingest_with_unknown_type_does_not_error(subject):
     assert ingest.source.key_values == {}
 
 
+def test_convert_node_to_ingest_with_none_type_does_not_error(subject):
+    """reorganize_node_key_properties should be a no-op when the node type is None."""
+    input_node = Node(type=None, properties={"name": "bob"})
+    ingest = subject.convert_node_to_ingest(input_node)
+    # When type is None, get_node_type_by_name returns None and the method returns early.
+    assert ingest.source.key_values == {}
+
+
 def test_convert_relationship_to_ingest(subject):
     rel = RelationshipWithNodes(
         Node("Person", properties={"name": "Bob"}),
