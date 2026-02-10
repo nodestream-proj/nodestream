@@ -17,13 +17,6 @@ class TypeRetriever(ABC):
     ) -> AsyncGenerator[RelationshipWithNodes, None]:
         raise NotImplementedError
 
-    @abstractmethod
-    def get_relationships_of_type(
-        self, relationship_type: str
-    ) -> AsyncGenerator[RelationshipWithNodes, None]:
-        """Retrieve relationships when concrete from/to node types are not declared."""
-        raise NotImplementedError
-
 
 class Copier(Extractor):
     def __init__(
@@ -45,29 +38,20 @@ class Copier(Extractor):
 
         for rel_type in self.relationship_types:
             # Prefer schema-driven adjacency expansion when available so we can
-            # fully specify from/to node types for the retriever.
+            # fully specify from/to node types for the retriever. Note that it
+            # is impossible to have a relationship without an adjacency, we only
+            # support copyting from a nodestream schema.
             adjacencies: List[Adjacency] = list(
                 self.schema.get_adjacencies_by_relationship_type(rel_type)
             )
 
-            if adjacencies:
-                for adjacency in adjacencies:
-                    async for (
-                        relationship
-                    ) in self.type_retriever.get_relationships_of_type_between(
-                        adjacency.from_node_type,
-                        adjacency.to_node_type,
-                        adjacency.relationship_type,
-                    ):
-                        yield self.convert_relationship_to_ingest(relationship)
-            else:
-                # When the schema does not yet carry adjacencies for this
-                # relationship type, fall back to requesting relationships by
-                # type only. The concrete `TypeRetriever` implementation can
-                # decide how to interpret the from/to node semantics in this
-                # schemaless scenario.
-                async for relationship in self.type_retriever.get_relationships_of_type(
-                    rel_type
+            for adjacency in adjacencies:
+                async for (
+                    relationship
+                ) in self.type_retriever.get_relationships_of_type_between(
+                    adjacency.from_node_type,
+                    adjacency.to_node_type,
+                    adjacency.relationship_type,
                 ):
                     yield self.convert_relationship_to_ingest(relationship)
 
