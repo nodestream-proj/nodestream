@@ -272,3 +272,36 @@ def test_expand_properties_for_additional_types_propagates_alias_properties():
 
     assert_that("alias_prop" in person_schema.properties, equal_to(True))
     assert_that("alias_prop" in athlete_schema.properties, equal_to(True))
+
+
+def test_expand_properties_for_additional_types_skips_when_no_additional_types():
+    """Alias-level properties should not be applied when there are no additional types."""
+    schema = Schema()
+    coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
+
+    # Base type and some other type exist in the schema.
+    schema.put_node_type(GraphObjectSchema("Player"))
+    schema.put_node_type(GraphObjectSchema("Other"))
+
+    # Alias bound to Player, with an alias-level property.
+    coordinator.aliases["source_node"] = "Player"
+    alias_schema = GraphObjectSchema(
+        name="source_node",
+        properties={"alias_prop": PropertyMetadata(PropertyType.STRING)},
+    )
+    coordinator.unbound_aliases["source_node"] = alias_schema
+
+    # Do NOT register any additional types for Player.
+    coordinator._expand_properties_for_additional_types()
+
+    other_schema = schema.get_node_type_by_name("Other")
+    assert_that("alias_prop" in other_schema.properties, equal_to(False))
+
+
+def test_get_node_type_by_name_none_returns_none_and_does_not_mutate_schema():
+    """get_node_type_by_name should gracefully handle None and not create a type."""
+    schema = Schema()
+    result = schema.get_node_type_by_name(None)
+    assert_that(result, equal_to(None))
+    # No types should have been added as a side effect.
+    assert_that(list(schema.nodes_by_name.keys()), equal_to([]))
