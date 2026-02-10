@@ -1,5 +1,5 @@
-import logging
 from abc import ABC, abstractmethod
+from logging import getLogger
 from typing import AsyncGenerator, List
 
 from ..model import Node, RelationshipWithNodes
@@ -31,7 +31,7 @@ class Copier(Extractor):
         self.relationship_types = relationship_types_to_copy
         self.node_types = node_types_to_copy
         self.schema = schema
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
         self.logger.info(
             f"Copying {len(self.node_types)} node types and {len(self.relationship_types)} relationship types"
         )
