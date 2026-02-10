@@ -1,10 +1,10 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import AsyncGenerator, List
 
 from ..model import Node, RelationshipWithNodes
 from ..pipeline import Extractor
 from ..schema import Adjacency, Schema
-import logging
 
 
 class TypeRetriever(ABC):
