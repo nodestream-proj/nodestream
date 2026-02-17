@@ -71,5 +71,5 @@ class NullConnector(DatabaseConnector, alias="null"):
     def make_query_executor(self) -> QueryExecutor:
         return NullQueryExecutor()
 
-    def make_type_retriever(self) -> TypeRetriever:
+    def make_type_retriever(self, limit: int = 1000) -> TypeRetriever:
         return NullRetriver()

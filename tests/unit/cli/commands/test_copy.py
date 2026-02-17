@@ -111,5 +111,22 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
     copy_command.get_type_selection_from_user = mocker.Mock(
         side_effect=[["Person", "Organization"], ["BEST_FRIEND_OF", "HAS_EMPLOYEE"]]
     )
+
+    option_values = {
+        "limit": "1000",
+        "run-concurrently": False,
+        "concurrency-limit": "10",
+        "batch-size": "1000",
+        "step-outbox-size": "10000",
+        "flush-concurrency": "1",
+        "node-flush-concurrency": "0",
+        "relationship-flush-concurrency": "1",
+        "connector-option": [],
+        "reporting-frequency": "1000",
+        "metrics-interval-in-seconds": None,
+    }
+    copy_command.option = mocker.Mock(side_effect=lambda name: option_values[name])
+    mocker.patch.object(type(copy_command), "has_json_logging_set", new_callable=mocker.PropertyMock, return_value=False)
+
     await copy_command.handle_async()
-    copy_command.run_operation.await_count == 2
+    assert copy_command.run_operation.await_count == 4

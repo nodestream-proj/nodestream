@@ -32,7 +32,7 @@ class DatabaseConnector(ABC, Pluggable):
         raise NotImplementedError
 
     @abstractmethod
-    def make_type_retriever(self) -> TypeRetriever:
+    def make_type_retriever(self, limit: int = 1000) -> TypeRetriever:
         raise NotImplementedError
 
     @abstractmethod
@@ -45,5 +45,5 @@ class DatabaseConnector(ABC, Pluggable):
             connector = QueryExecutorWithStatistics(connector)
         return connector
 
-    def get_type_retriever(self):
-        return self.make_type_retriever()
+    def get_type_retriever(self, limit: int = 1000):
+        return self.make_type_retriever(limit=limit)

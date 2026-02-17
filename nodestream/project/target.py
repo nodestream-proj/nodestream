@@ -1,10 +1,20 @@
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict
 
 from ..file_io import LazyLoadedArgument
 from ..schema.migrations import Migrator
 
-WRITER_ARGUMENTS = ("batch_size", "collect_stats", "ingest_strategy_name")
+logger = logging.getLogger(__name__)
+
+WRITER_ARGUMENTS = (
+    "batch_size",
+    "collect_stats",
+    "ingest_strategy_name",
+    "flush_concurrency",
+    "node_flush_concurrency",
+    "relationship_flush_concurrency",
+)
 
 
 @dataclass(slots=True, frozen=True)
@@ -33,19 +43,28 @@ class Target:
 
     @property
     def connector(self):
+        return self.make_connector()
+
+    def make_connector(self, **overrides):
         from ..databases import DatabaseConnector
 
-        return DatabaseConnector.from_database_args(**self.resolved_connector_config)
+        config = {**self.resolved_connector_config, **overrides}
+        logger.info(
+            "Effective connector config for target '%s': %s",
+            self.name,
+            config,
+        )
+        return DatabaseConnector.from_database_args(**config)
 
-    def make_writer(self):
+    def make_writer(self, connector_overrides=None, **writer_overrides):
         from ..databases import GraphDatabaseWriter
 
-        return GraphDatabaseWriter.from_connector(
-            connector=self.connector, **self.writer_arguments
-        )
+        writer_args = {**self.writer_arguments, **writer_overrides}
+        connector = self.make_connector(**(connector_overrides or {}))
+        return GraphDatabaseWriter.from_connector(connector=connector, **writer_args)
 
-    def make_type_retriever(self):
-        return self.connector.make_type_retriever()
+    def make_type_retriever(self, limit: int = 1000):
+        return self.connector.make_type_retriever(limit=limit)
 
     def make_migrator(self) -> "Migrator":
         return self.connector.make_migrator()

@@ -1,9 +1,11 @@
+import asyncio
 from abc import ABC, abstractmethod
 from logging import getLogger
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator, Callable, Coroutine, List
 
 from ..model import Node, RelationshipWithNodes
 from ..pipeline import Extractor
+from ..pipeline.channel import DoneObject
 from ..schema import Adjacency, Schema
 
 
@@ -20,6 +22,8 @@ class TypeRetriever(ABC):
 
 
 class Copier(Extractor):
+    """Copies nodes and relationships sequentially, one type at a time."""
+
     def __init__(
         self,
         type_retriver: TypeRetriever,
@@ -35,6 +39,26 @@ class Copier(Extractor):
         self.logger.info(
             f"Copying {len(self.node_types)} node types and {len(self.relationship_types)} relationship types"
         )
+
+    @classmethod
+    def create(
+        cls,
+        type_retriever: TypeRetriever,
+        schema: Schema,
+        node_types: List[str],
+        relationship_types: List[str],
+        run_concurrently: bool = False,
+        concurrency_limit: int = 10,
+    ) -> "Copier":
+        if run_concurrently:
+            return ConcurrentCopier(
+                type_retriever,
+                schema,
+                node_types,
+                relationship_types,
+                concurrency_limit=concurrency_limit,
+            )
+        return cls(type_retriever, schema, node_types, relationship_types)
 
     async def extract_records(self):
         for node_type in self.node_types:
@@ -83,3 +107,87 @@ class Copier(Extractor):
         self.reorganize_node_key_properties(relationship.from_node)
         self.reorganize_node_key_properties(relationship.to_node)
         return relationship.into_ingest()
+
+
+class ConcurrentCopier(Copier):
+    """Copier that runs concurrent fetch loops per type.
+
+    All node types are fetched concurrently first (bounded by a semaphore),
+    then all relationship types are fetched concurrently (bounded by the same
+    limit).  The two groups are **never mixed** — nodes complete before
+    relationships begin — so slow relationship pattern-scans cannot starve
+    fast node label-scans.
+    """
+
+    def __init__(
+        self,
+        type_retriver: TypeRetriever,
+        schema: Schema,
+        node_types_to_copy: List[str],
+        relationship_types_to_copy: List[str],
+        concurrency_limit: int = 10,
+    ) -> None:
+        super().__init__(
+            type_retriver, schema, node_types_to_copy, relationship_types_to_copy
+        )
+        # Ensure we always have at least one concurrent worker.
+        self.concurrency_limit = max(1, concurrency_limit)
+
+    async def extract_records(self):
+        # Spin up independent producers per node / relationship type and
+        # multiplex their outputs through a shared queue.
+        queue: asyncio.Queue = asyncio.Queue()
+
+        async def produce_nodes(node_type: str) -> None:
+            self.logger.info(f"Copying nodes of type {node_type}")
+            async for node in self.type_retriever.get_nodes_of_type(node_type):
+                await queue.put(self.convert_node_to_ingest(node))
+
+        async def produce_relationships(rel_type: str) -> None:
+            self.logger.info(f"Copying relationships of type {rel_type}")
+            adjacencies: List[Adjacency] = list(
+                self.schema.get_adjacencies_by_relationship_type(rel_type)
+            )
+            for adjacency in adjacencies:
+                async for (
+                    relationship
+                ) in self.type_retriever.get_relationships_of_type_between(
+                    adjacency.from_node_type,
+                    adjacency.to_node_type,
+                    adjacency.relationship_type,
+                ):
+                    await queue.put(self.convert_relationship_to_ingest(relationship))
+
+        async def run_bounded_producers(
+            items: List[str],
+            producer_fn: Callable[[str], Coroutine],
+        ) -> None:
+            # Use a semaphore to bound the number of concurrently running
+            # producer coroutines.
+            sem = asyncio.Semaphore(self.concurrency_limit)
+
+            async def run_one(item: str) -> None:
+                async with sem:
+                    await producer_fn(item)
+
+            if not items:
+                return
+            await asyncio.gather(*(run_one(item) for item in items))
+
+        async def orchestrate() -> None:
+            # First all node streams, then all relationship streams, each
+            # bounded by the concurrency limit across types.
+            await run_bounded_producers(self.node_types, produce_nodes)
+            await run_bounded_producers(self.relationship_types, produce_relationships)
+            await queue.put(DoneObject)
+
+        orchestrator = asyncio.create_task(orchestrate())
+        try:
+            while True:
+                item = await queue.get()
+                if item is DoneObject:
+                    break
+                yield item
+        finally:
+            # Let the orchestrator finish; re-raises any producer exception.
+            await orchestrator

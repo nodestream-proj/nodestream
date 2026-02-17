@@ -2,16 +2,13 @@ from copy import deepcopy
 
 import pytest
 from hamcrest import assert_that, has_length
-
-from nodestream.databases.copy import Copier
+from nodestream.databases.copy import Copier, ConcurrentCopier
 from nodestream.model import Node, Relationship, RelationshipWithNodes
 from nodestream.schema import Adjacency, AdjacencyCardinality, Cardinality
 
 
-@pytest.fixture
-def subject(mocker, basic_schema):
-    # Use a schema that declares the adjacencies we expect to copy so that the
-    # copier always exercises the schema-driven relationship path.
+def _build_schema_with_adjacencies(basic_schema):
+    """Helper to build a schema with KNOWS (self-ref) and LIVES_AT adjacencies."""
     schema = deepcopy(basic_schema)
     schema.add_adjacency(
         Adjacency("Person", "Person", "KNOWS"),
@@ -21,6 +18,14 @@ def subject(mocker, basic_schema):
         Adjacency("Person", "Address", "LIVES_AT"),
         AdjacencyCardinality(Cardinality.SINGLE, Cardinality.MANY),
     )
+    return schema
+
+
+@pytest.fixture
+def subject(mocker, basic_schema):
+    # Use a schema that declares the adjacencies we expect to copy so that the
+    # copier always exercises the schema-driven relationship path.
+    schema = _build_schema_with_adjacencies(basic_schema)
     return Copier(mocker.Mock(), schema, ["Person", "Address"], ["KNOWS", "LIVES_AT"])
 
 
@@ -111,3 +116,98 @@ def test_convert_relationship_to_ingest(subject):
     )
     ingest = subject.convert_relationship_to_ingest(rel)
     assert ingest == rel.into_ingest()
+
+
+# ---------------------------------------------------------------------------
+# ConcurrentCopier tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def concurrent_subject(mocker, basic_schema):
+    schema = _build_schema_with_adjacencies(basic_schema)
+    return ConcurrentCopier(
+        mocker.Mock(),
+        schema,
+        ["Person", "Address"],
+        ["KNOWS", "LIVES_AT"],
+        concurrency_limit=10,
+    )
+
+
+@pytest.mark.asyncio
+async def test_concurrent_copier_extract_records(concurrent_subject, mocker):
+    """All node types are fetched first, then all relationship types."""
+    people = async_generator(
+        Node("Person", {"name": "Bob"}),
+        Node("Person", {"name": "Alice"}),
+    )
+    addresses = async_generator(
+        Node("Address", {"street": "123 Main St"}),
+        Node("Address", {"street": "456 Main St"}),
+    )
+    knows_rels = async_generator(
+        RelationshipWithNodes(
+            Relationship("KNOWS", {"since": 2010}),
+            Node("Person", {"name": "Bob"}),
+            Node("Person", {"name": "Alice"}),
+        ),
+    )
+    lives_at_rels = async_generator(
+        RelationshipWithNodes(
+            Relationship("LIVES_AT", {"since": 2010}),
+            Node("Person", {"name": "Bob"}),
+            Node("Address", {"street": "123 Main St"}),
+        ),
+    )
+
+    concurrent_subject.convert_node_to_ingest = mocker.Mock()
+    concurrent_subject.convert_relationship_to_ingest = mocker.Mock()
+    concurrent_subject.type_retriever.get_nodes_of_type.side_effect = [
+        people,
+        addresses,
+    ]
+    concurrent_subject.type_retriever.get_relationships_of_type_between.side_effect = [
+        knows_rels,
+        lives_at_rels,
+    ]
+
+    records = [record async for record in concurrent_subject.extract_records()]
+
+    # 4 nodes + 2 relationships = 6 records total
+    assert_that(records, has_length(6))
+    assert (
+        concurrent_subject.type_retriever.get_relationships_of_type_between.call_count
+        == 2
+    )
+
+
+@pytest.mark.asyncio
+async def test_concurrent_copier_no_types(mocker, basic_schema):
+    """ConcurrentCopier should handle empty type lists gracefully."""
+    schema = deepcopy(basic_schema)
+    copier = ConcurrentCopier(mocker.Mock(), schema, [], [], concurrency_limit=5)
+    records = [record async for record in copier.extract_records()]
+    assert records == []
+
+
+def test_copier_create_sequential(mocker, basic_schema):
+    """Copier.create returns a plain Copier when run_concurrently is False."""
+    copier = Copier.create(
+        mocker.Mock(), basic_schema, ["Person"], ["KNOWS"], run_concurrently=False
+    )
+    assert type(copier) is Copier
+
+
+def test_copier_create_concurrent(mocker, basic_schema):
+    """Copier.create returns a ConcurrentCopier when run_concurrently is True."""
+    copier = Copier.create(
+        mocker.Mock(),
+        basic_schema,
+        ["Person"],
+        ["KNOWS"],
+        run_concurrently=True,
+        concurrency_limit=5,
+    )
+    assert isinstance(copier, ConcurrentCopier)
+    assert copier.concurrency_limit == 5

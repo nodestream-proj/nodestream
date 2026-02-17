@@ -181,8 +181,15 @@ class PipelineFile:
         init_args.object_store = init_args.object_store.namespaced(
             self.file_path.stem + "-" + self.file_sha_256()
         )
+        if init_args.object_store is ObjectStore.null():
+            self.logger.info("Using null ObjectStore. No persistence is configured.")
         contents = self.get_contents()
         return contents.initialize_with_arguments(init_args)
+
+    def load_pipeline_for_introspection(self) -> Pipeline:
+        intitialization_arguments = PipelineInitializationArguments.for_introspection()
+        contents = self.get_contents()
+        return contents.initialize_with_arguments(intitialization_arguments)
 
     def get_contents(self) -> PipelineFileContents:
         return PipelineFileContents.read_from_file(self.file_path)

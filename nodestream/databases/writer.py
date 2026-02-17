@@ -1,3 +1,8 @@
+import asyncio
+import time
+from logging import getLogger
+from typing import Callable, Optional, Set
+
 from ..pipeline import Writer
 from .database_connector import DatabaseConnector
 from .debounced_ingest_strategy import DebouncedIngestStrategy
@@ -14,6 +19,9 @@ class GraphDatabaseWriter(Writer):
         ),
         collect_stats: bool = True,
         batch_size: int = 1000,
+        flush_concurrency: int = 1,
+        node_flush_concurrency: int = 0,
+        relationship_flush_concurrency: int = 1,
         **database_args,
     ):
         connector = DatabaseConnector.from_database_args(
@@ -24,6 +32,9 @@ class GraphDatabaseWriter(Writer):
             ingest_strategy_name=ingest_strategy_name,
             collect_stats=collect_stats,
             batch_size=batch_size,
+            flush_concurrency=flush_concurrency,
+            node_flush_concurrency=node_flush_concurrency,
+            relationship_flush_concurrency=relationship_flush_concurrency,
         )
 
     @classmethod
@@ -35,32 +46,167 @@ class GraphDatabaseWriter(Writer):
         ),
         collect_stats: bool = True,
         batch_size: int = 1000,
+        flush_concurrency: int = 1,
+        node_flush_concurrency: int = 0,
+        relationship_flush_concurrency: int = 1,
     ):
         executor = connector.get_query_executor(collect_stats=collect_stats)
         ingest_strategy_cls = INGESTION_STRATEGY_REGISTRY.get(ingest_strategy_name)
-        ingest_strategy = ingest_strategy_cls(executor)
+
+        extra_strategy_kwargs = {}
+        if node_flush_concurrency > 0:
+            extra_strategy_kwargs["node_flush_concurrency"] = node_flush_concurrency
+        if relationship_flush_concurrency > 1:
+            extra_strategy_kwargs["relationship_flush_concurrency"] = (
+                relationship_flush_concurrency
+            )
+
+        def strategy_factory():
+            return ingest_strategy_cls(executor, **extra_strategy_kwargs)
 
         return cls(
             batch_size=batch_size,
-            ingest_strategy=ingest_strategy,
+            ingest_strategy=strategy_factory(),
+            strategy_factory=strategy_factory,
+            flush_concurrency=flush_concurrency,
         )
 
-    def __init__(self, batch_size: int, ingest_strategy: IngestionStrategy) -> None:
+    def __init__(
+        self,
+        batch_size: int,
+        ingest_strategy: IngestionStrategy,
+        strategy_factory: Optional[Callable[[], IngestionStrategy]] = None,
+        flush_concurrency: int = 1,
+    ) -> None:
         self.batch_size = batch_size
         self.ingest_strategy = ingest_strategy
         self.pending_records = 0
+        self._strategy_factory = strategy_factory
+        self._flush_concurrency = max(1, flush_concurrency)
+        self._flush_tasks: Set[asyncio.Task] = set()
+        self._flush_semaphore: Optional[asyncio.Semaphore] = None
+        self._flush_errors: list = []
+        self.logger = getLogger(self.__class__.__name__)
+        self._accumulate_start: float = time.monotonic()
 
-    async def flush(self):
-        await self.ingest_strategy.flush()
-        self.pending_records = 0
+    @property
+    def _concurrent_flush_enabled(self) -> bool:
+        return self._flush_concurrency > 1 and self._strategy_factory is not None
 
     async def write_record(self, ingestible):
+        # Fail fast if a background flush encountered an error.
+        self._raise_if_flush_errors()
         await ingestible.ingest(self.ingest_strategy)
         self.pending_records += 1
         if self.pending_records >= self.batch_size:
-            await self.flush()
+            if self._concurrent_flush_enabled:
+                await self._rotate_and_flush()
+            else:
+                await self._sync_flush()
+
+    async def _sync_flush(self):
+        """Original synchronous flush behaviour (flush_concurrency=1)."""
+        accumulate_elapsed = time.monotonic() - self._accumulate_start
+        flush_start = time.monotonic()
+        await self.ingest_strategy.flush()
+        flush_elapsed = time.monotonic() - flush_start
+        self.logger.info(
+            "Writer batch cycle",
+            extra={
+                "records_in_batch": self.pending_records,
+                "accumulate_s": round(accumulate_elapsed, 3),
+                "flush_s": round(flush_elapsed, 3),
+            },
+        )
+        self.pending_records = 0
+        self._accumulate_start = time.monotonic()
+
+    async def _rotate_and_flush(self):
+        """Rotate the active strategy and flush the full one in the background.
+
+        The writer immediately starts accumulating into a fresh strategy while
+        the previous batch is flushed concurrently.  A semaphore bounds the
+        number of in-flight flush tasks to ``flush_concurrency``.
+        """
+        if self._flush_semaphore is None:
+            self._flush_semaphore = asyncio.Semaphore(self._flush_concurrency)
+            self.logger.info(
+                "Concurrent flush enabled",
+                extra={"flush_concurrency": self._flush_concurrency},
+            )
+
+        # Block until a flush lane is available (backpressure).
+        wait_start = time.monotonic()
+        await self._flush_semaphore.acquire()
+        wait_time = time.monotonic() - wait_start
+        if wait_time > 0.1:
+            self.logger.info(
+                "Flush lane wait (backpressure)",
+                extra={"wait_seconds": round(wait_time, 3)},
+            )
+
+        # Re-check for errors after potentially waiting.
+        self._raise_if_flush_errors()
+
+        # Swap: move the full strategy out, create a fresh one.
+        full_strategy = self.ingest_strategy
+        records_in_batch = self.pending_records
+        self.ingest_strategy = self._strategy_factory()
+        self.pending_records = 0
+        self._accumulate_start = time.monotonic()
+
+        # Launch the flush as a background task.
+        task = asyncio.create_task(
+            self._background_flush(full_strategy, records_in_batch)
+        )
+        self._flush_tasks.add(task)
+        task.add_done_callback(self._flush_tasks.discard)
+
+    async def _background_flush(
+        self, strategy: IngestionStrategy, records_in_batch: int
+    ):
+        """Flush a strategy in the background, releasing the semaphore slot on
+        completion (success or failure)."""
+        try:
+            flush_start = time.monotonic()
+            await strategy.flush()
+            flush_elapsed = time.monotonic() - flush_start
+            self.logger.info(
+                "Background flush completed",
+                extra={
+                    "records_in_batch": records_in_batch,
+                    "flush_s": round(flush_elapsed, 3),
+                },
+            )
+        except Exception as e:
+            self._flush_errors.append(e)
+        finally:
+            if self._flush_semaphore is not None:
+                self._flush_semaphore.release()
+
+    def _raise_if_flush_errors(self):
+        """Raise the first captured background flush error, if any."""
+        if self._flush_errors:
+            raise self._flush_errors.pop(0)
+
+    async def _drain_flush_tasks(self):
+        """Wait for all in-flight background flushes to complete."""
+        if self._flush_tasks:
+            await asyncio.gather(*self._flush_tasks, return_exceptions=True)
+            self._flush_tasks.clear()
+        self._raise_if_flush_errors()
+
+    async def flush(self):
+        """Drain all background tasks, then flush the active strategy.
+
+        This is the "full barrier" flush invoked by the pipeline on ``Flush``
+        sentinels and during ``finish()``.
+        """
+        await self._drain_flush_tasks()
+        await self.ingest_strategy.flush()
+        self.pending_records = 0
 
     async def finish(self, _):
-        """Close connector by calling finish method from Step"""
+        """Drain backgrounds, flush remaining records, close the executor."""
         await self.flush()
         await self.ingest_strategy.finish()

@@ -1,3 +1,4 @@
+import time
 from logging import getLogger
 from typing import Iterable, Optional
 
@@ -162,19 +163,28 @@ class SpinnerProgressIndicator(ProgressIndicator):
     def __init__(self, command: NodestreamCommand, pipeline_name: str) -> None:
         super().__init__(command, pipeline_name)
         self.exception = None
+        self._start_time: float = 0.0
 
     def on_start(self):
+        self._start_time = time.monotonic()
         self.progress = self.command.progress_indicator()
         self.progress.start(f"Running pipeline: '{self.pipeline_name}'")
 
     def progress_callback(self, index, metrics: Metrics):
+        elapsed = time.monotonic() - self._start_time
+        rps = index / elapsed if elapsed > 0 else 0
         self.progress.set_message(
-            f"Currently processing record at index: <info>{index}</info>"
+            f"Record <info>{index}</info>  "
+            f"elapsed <info>{elapsed:.1f}s</info>  "
+            f"<info>{rps:.0f}</info> rec/s"
         )
         metrics.tick()
 
     def on_finish(self, metrics: Metrics):
-        self.progress.finish(f"Finished running pipeline: '{self.pipeline_name}'")
+        elapsed = time.monotonic() - self._start_time
+        self.progress.finish(
+            f"Finished running pipeline: '{self.pipeline_name}' " f"in {elapsed:.1f}s"
+        )
         metrics.tick()
         if self.exception:
             raise self.exception
@@ -191,16 +201,31 @@ class JsonProgressIndicator(ProgressIndicator):
         super().__init__(command, pipeline_name)
         self.logger = getLogger()
         self.exception = None
+        self._start_time: float = 0.0
 
     def on_start(self):
+        self._start_time = time.monotonic()
         self.logger.info("Starting Pipeline")
 
     def progress_callback(self, index, metrics: Metrics):
-        self.logger.info("Processing Record", extra={"index": index})
+        elapsed = time.monotonic() - self._start_time
+        rps = index / elapsed if elapsed > 0 else 0
+        self.logger.info(
+            "Processing Record",
+            extra={
+                "index": index,
+                "elapsed_seconds": round(elapsed, 1),
+                "records_per_second": round(rps, 1),
+            },
+        )
         metrics.tick()
 
     def on_finish(self, metrics: Metrics):
-        self.logger.info("Pipeline Completed")
+        elapsed = time.monotonic() - self._start_time
+        self.logger.info(
+            "Pipeline Completed",
+            extra={"elapsed_seconds": round(elapsed, 1)},
+        )
         metrics.tick()
         if self.exception:
             raise self.exception
