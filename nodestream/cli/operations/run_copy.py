@@ -25,8 +25,6 @@ class RunCopy(Operation):
         batch_size: int = 1000,
         step_outbox_size: int = 10000,
         flush_concurrency: int = 1,
-        node_flush_concurrency: int = 0,
-        relationship_flush_concurrency: int = 1,
         connector_overrides: Optional[Dict[str, object]] = None,
     ) -> None:
         self.from_target = from_target
@@ -41,8 +39,6 @@ class RunCopy(Operation):
         self.batch_size = batch_size
         self.step_outbox_size = step_outbox_size
         self.flush_concurrency = flush_concurrency
-        self.node_flush_concurrency = node_flush_concurrency
-        self.relationship_flush_concurrency = relationship_flush_concurrency
         self.connector_overrides = connector_overrides or {}
 
     async def perform(self, command: NodestreamCommand):
@@ -66,6 +62,7 @@ class RunCopy(Operation):
             self.relationship_types,
             run_concurrently=self.run_concurrently,
             concurrency_limit=self.concurrency_limit,
+            orchestrator_queue_size=self.step_outbox_size,
         )
 
     def build_writer(self) -> GraphDatabaseWriter:
@@ -73,6 +70,4 @@ class RunCopy(Operation):
             connector_overrides=self.connector_overrides,
             batch_size=self.batch_size,
             flush_concurrency=self.flush_concurrency,
-            node_flush_concurrency=self.node_flush_concurrency,
-            relationship_flush_concurrency=self.relationship_flush_concurrency,
         )

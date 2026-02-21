@@ -100,7 +100,7 @@ async def test_handle_async_unknown_target_error(copy_command, mocker):
 
 @pytest.mark.asyncio
 async def test_handle_async(copy_command, mocker, basic_schema, project):
-    project.get_schema = mocker.Mock(return_value=basic_schema)
+    project.make_schema = mocker.Mock(return_value=basic_schema)
     copy_command.line = mocker.Mock()
     copy_command.run_operation = mocker.AsyncMock(
         side_effect=[None, None, project, None]
@@ -119,14 +119,17 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
         "batch-size": "1000",
         "step-outbox-size": "10000",
         "flush-concurrency": "1",
-        "node-flush-concurrency": "0",
-        "relationship-flush-concurrency": "1",
         "connector-option": [],
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
     }
     copy_command.option = mocker.Mock(side_effect=lambda name: option_values[name])
-    mocker.patch.object(type(copy_command), "has_json_logging_set", new_callable=mocker.PropertyMock, return_value=False)
+    mocker.patch.object(
+        type(copy_command),
+        "has_json_logging_set",
+        new_callable=mocker.PropertyMock,
+        return_value=False,
+    )
 
     await copy_command.handle_async()
     assert copy_command.run_operation.await_count == 4

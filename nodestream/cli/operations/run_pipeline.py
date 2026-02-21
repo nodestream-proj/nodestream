@@ -178,14 +178,12 @@ class SpinnerProgressIndicator(ProgressIndicator):
             f"elapsed <info>{elapsed:.1f}s</info>  "
             f"<info>{rps:.0f}</info> rec/s"
         )
-        metrics.tick()
 
     def on_finish(self, metrics: Metrics):
         elapsed = time.monotonic() - self._start_time
         self.progress.finish(
             f"Finished running pipeline: '{self.pipeline_name}' " f"in {elapsed:.1f}s"
         )
-        metrics.tick()
         if self.exception:
             raise self.exception
 
@@ -218,7 +216,6 @@ class JsonProgressIndicator(ProgressIndicator):
                 "records_per_second": round(rps, 1),
             },
         )
-        metrics.tick()
 
     def on_finish(self, metrics: Metrics):
         elapsed = time.monotonic() - self._start_time
@@ -226,7 +223,6 @@ class JsonProgressIndicator(ProgressIndicator):
             "Pipeline Completed",
             extra={"elapsed_seconds": round(elapsed, 1)},
         )
-        metrics.tick()
         if self.exception:
             raise self.exception
 

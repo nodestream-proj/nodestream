@@ -22,8 +22,6 @@ def test_build_writer(subject):
         connector_overrides={},
         batch_size=1000,
         flush_concurrency=1,
-        node_flush_concurrency=0,
-        relationship_flush_concurrency=1,
     )
     assert_that(result, equal_to(subject.to_target.make_writer.return_value))
 

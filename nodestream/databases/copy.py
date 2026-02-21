@@ -1,12 +1,22 @@
 import asyncio
 from abc import ABC, abstractmethod
 from logging import getLogger
-from typing import AsyncGenerator, Callable, Coroutine, List
+from typing import AsyncGenerator, Coroutine, List
 
 from ..model import Node, RelationshipWithNodes
 from ..pipeline import Extractor
 from ..pipeline.channel import DoneObject
 from ..schema import Adjacency, Schema
+from ..metrics import Metric, Metrics
+
+ORCHESTRATOR_QUEUE = Metric(
+    "orchestrator_queue", "Number of items in the orchestrator queue", accumulate=False
+)
+ACTIVE_QUERIES = Metric(
+    "active_queries",
+    "Number of active database queries in the copier",
+    accumulate=False,
+)
 
 
 class TypeRetriever(ABC):
@@ -49,6 +59,7 @@ class Copier(Extractor):
         relationship_types: List[str],
         run_concurrently: bool = False,
         concurrency_limit: int = 10,
+        orchestrator_queue_size: int | None = None,
     ) -> "Copier":
         if run_concurrently:
             return ConcurrentCopier(
@@ -57,6 +68,7 @@ class Copier(Extractor):
                 node_types,
                 relationship_types,
                 concurrency_limit=concurrency_limit,
+                orchestrator_queue_size=orchestrator_queue_size,
             )
         return cls(type_retriever, schema, node_types, relationship_types)
 
@@ -126,65 +138,81 @@ class ConcurrentCopier(Copier):
         node_types_to_copy: List[str],
         relationship_types_to_copy: List[str],
         concurrency_limit: int = 10,
+        orchestrator_queue_size: int | None = None,
     ) -> None:
         super().__init__(
             type_retriver, schema, node_types_to_copy, relationship_types_to_copy
         )
         # Ensure we always have at least one concurrent worker.
         self.concurrency_limit = max(1, concurrency_limit)
+        # Limit for the internal orchestrator queue; when None/0 it is unbounded.
+        self.orchestrator_queue_size = orchestrator_queue_size or 0
 
     async def extract_records(self):
         # Spin up independent producers per node / relationship type and
         # multiplex their outputs through a shared queue.
-        queue: asyncio.Queue = asyncio.Queue()
+        queue: asyncio.Queue = asyncio.Queue(maxsize=self.orchestrator_queue_size)
 
         async def produce_nodes(node_type: str) -> None:
             self.logger.info(f"Copying nodes of type {node_type}")
             async for node in self.type_retriever.get_nodes_of_type(node_type):
-                await queue.put(self.convert_node_to_ingest(node))
+                Metrics.get().increment(ORCHESTRATOR_QUEUE)
+                item = self.convert_node_to_ingest(node)
+                await queue.put(item)
 
-        async def produce_relationships(rel_type: str) -> None:
-            self.logger.info(f"Copying relationships of type {rel_type}")
-            adjacencies: List[Adjacency] = list(
-                self.schema.get_adjacencies_by_relationship_type(rel_type)
+        async def produce_adjacency(adjacency: Adjacency) -> None:
+            self.logger.info(
+                f"Copying relationships of type {adjacency.relationship_type} "
+                f"({adjacency.from_node_type} -> {adjacency.to_node_type})"
             )
-            for adjacency in adjacencies:
-                async for (
-                    relationship
-                ) in self.type_retriever.get_relationships_of_type_between(
-                    adjacency.from_node_type,
-                    adjacency.to_node_type,
-                    adjacency.relationship_type,
-                ):
-                    await queue.put(self.convert_relationship_to_ingest(relationship))
+            async for (
+                relationship
+            ) in self.type_retriever.get_relationships_of_type_between(
+                adjacency.from_node_type,
+                adjacency.to_node_type,
+                adjacency.relationship_type,
+            ):
+                Metrics.get().increment(ORCHESTRATOR_QUEUE)
+                item = self.convert_relationship_to_ingest(relationship)
+                await queue.put(item)
 
-        async def run_bounded_producers(
-            items: List[str],
-            producer_fn: Callable[[str], Coroutine],
-        ) -> None:
+        async def run_bounded(coros: List[Coroutine]) -> None:
             # Use a semaphore to bound the number of concurrently running
             # producer coroutines.
             sem = asyncio.Semaphore(self.concurrency_limit)
 
-            async def run_one(item: str) -> None:
+            async def run_one(coro: Coroutine) -> None:
                 async with sem:
-                    await producer_fn(item)
+                    Metrics.get().increment(ACTIVE_QUERIES)
+                    try:
+                        await coro
+                    finally:
+                        Metrics.get().decrement(ACTIVE_QUERIES)
 
-            if not items:
+            if not coros:
                 return
-            await asyncio.gather(*(run_one(item) for item in items))
+            await asyncio.gather(*(run_one(c) for c in coros))
 
         async def orchestrate() -> None:
             # First all node streams, then all relationship streams, each
-            # bounded by the concurrency limit across types.
-            await run_bounded_producers(self.node_types, produce_nodes)
-            await run_bounded_producers(self.relationship_types, produce_relationships)
+            # bounded by the concurrency limit.
+            await run_bounded([produce_nodes(nt) for nt in self.node_types])
+
+            # Flatten all adjacencies across all relationship types so each
+            # adjacency is an independent producer bounded by the semaphore.
+            all_adjacencies: List[Adjacency] = []
+            for rel_type in self.relationship_types:
+                all_adjacencies.extend(
+                    self.schema.get_adjacencies_by_relationship_type(rel_type)
+                )
+            await run_bounded([produce_adjacency(adj) for adj in all_adjacencies])
             await queue.put(DoneObject)
 
         orchestrator = asyncio.create_task(orchestrate())
         try:
             while True:
                 item = await queue.get()
+                Metrics.get().decrement(ORCHESTRATOR_QUEUE)
                 if item is DoneObject:
                     break
                 yield item

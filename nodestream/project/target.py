@@ -12,8 +12,6 @@ WRITER_ARGUMENTS = (
     "collect_stats",
     "ingest_strategy_name",
     "flush_concurrency",
-    "node_flush_concurrency",
-    "relationship_flush_concurrency",
 )
 
 

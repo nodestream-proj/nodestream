@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from asyncio import create_task, gather
+from asyncio import CancelledError, create_task, gather, sleep
+from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Iterable, List, Optional, Tuple, Type
@@ -524,7 +525,27 @@ class Pipeline(ExpandsSchemaFromChildren):
         # onto it.
         await current_output.done()
 
+        # Optionally start a background metrics daemon that ticks on a fixed
+        # interval, decoupled from progress callbacks.
+        metrics_daemon = None
+        if reporter.metrics_interval_in_seconds:
+
+            async def _metrics_daemon(interval: float):
+                while True:
+                    await sleep(interval)
+                    Metrics.get().tick()
+
+            metrics_daemon = create_task(
+                _metrics_daemon(reporter.metrics_interval_in_seconds)
+            )
+
         # Run the pipeline by running all the steps and the pipeline output
         # concurrently. This will block until all steps are finished.
         # Wait for all the executors to finish.
-        await gather(*(create_task(executor.run()) for executor in executors))
+        try:
+            await gather(*(create_task(executor.run()) for executor in executors))
+        finally:
+            if metrics_daemon is not None:
+                metrics_daemon.cancel()
+                with suppress(CancelledError):
+                    await metrics_daemon

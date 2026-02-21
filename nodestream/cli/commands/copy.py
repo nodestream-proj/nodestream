@@ -72,18 +72,6 @@ class Copy(NodestreamCommand):
             flag=False,
         ),
         option(
-            "node-flush-concurrency",
-            description="Max node types flushed in parallel per batch (0=unbounded)",
-            default=0,
-            flag=False,
-        ),
-        option(
-            "relationship-flush-concurrency",
-            description="Number of relationship types flushed in parallel",
-            default=1,
-            flag=False,
-        ),
-        option(
             "connector-option",
             description="key=value connector override (repeatable)",
             flag=False,
@@ -113,7 +101,10 @@ class Copy(NodestreamCommand):
             try:
                 from_target = self.get_taget_from_user(project, "from")
                 to_target = self.get_taget_from_user(project, "to")
-                schema = project.get_schema()
+                # For copy operations we intentionally build a schema *without*
+                # expanding additional types so that we only copy the concrete
+                # node / relationship types declared in pipelines.
+                schema = project.make_schema(include_additional_types=False)
                 all_node_types = schema.nodes
                 all_rel_types = schema.relationships
                 node_types = self.get_type_selection_from_user(all_node_types, "node")
@@ -126,10 +117,6 @@ class Copy(NodestreamCommand):
                 batch_size = int(self.option("batch-size"))
                 step_outbox_size = int(self.option("step-outbox-size"))
                 flush_concurrency = int(self.option("flush-concurrency"))
-                node_flush_concurrency = int(self.option("node-flush-concurrency"))
-                relationship_flush_concurrency = int(
-                    self.option("relationship-flush-concurrency")
-                )
                 connector_overrides = self.parse_connector_options()
             except UnknownTargetError:
                 return
@@ -141,13 +128,7 @@ class Copy(NodestreamCommand):
             self.line(f"<info>Relationship Types: {', '.join(rel_types)}</info>")
             self.line(f"<info>Batch Size: {batch_size}</info>")
             self.line(f"<info>Step Outbox Size: {step_outbox_size}</info>")
-            self.line(
-                f"<info>Relationship Flush Concurrency: {relationship_flush_concurrency}</info>"
-            )
             self.line(f"<info>Flush Concurrency: {flush_concurrency}</info>")
-            self.line(
-                f"<info>Node Flush Concurrency: {node_flush_concurrency or 'unbounded'}</info>"
-            )
             if connector_overrides:
                 self.line(f"<info>Connector Overrides: {connector_overrides}</info>")
             reporter = self.create_progress_reporter()
@@ -165,8 +146,6 @@ class Copy(NodestreamCommand):
                     batch_size=batch_size,
                     step_outbox_size=step_outbox_size,
                     flush_concurrency=flush_concurrency,
-                    node_flush_concurrency=node_flush_concurrency,
-                    relationship_flush_concurrency=relationship_flush_concurrency,
                     connector_overrides=connector_overrides,
                 )
             )

@@ -1,12 +1,26 @@
 import asyncio
 import time
 from logging import getLogger
+
 from typing import Callable, Optional, Set
 
+from ..metrics import Metric, Metrics
 from ..pipeline import Writer
 from .database_connector import DatabaseConnector
 from .debounced_ingest_strategy import DebouncedIngestStrategy
 from .ingest_strategy import INGESTION_STRATEGY_REGISTRY, IngestionStrategy
+
+
+WRITER_PENDING_RECORDS = Metric(
+    "writer_pending_records",
+    "Number of records pending in the writer",
+    accumulate=False,
+)
+WRITER_ACTIVE_FLUSH_LANES = Metric(
+    "writer_active_flush_lanes",
+    "Number of active background flush tasks in the writer",
+    accumulate=False,
+)
 
 
 class GraphDatabaseWriter(Writer):
@@ -20,8 +34,6 @@ class GraphDatabaseWriter(Writer):
         collect_stats: bool = True,
         batch_size: int = 1000,
         flush_concurrency: int = 1,
-        node_flush_concurrency: int = 0,
-        relationship_flush_concurrency: int = 1,
         **database_args,
     ):
         connector = DatabaseConnector.from_database_args(
@@ -33,8 +45,6 @@ class GraphDatabaseWriter(Writer):
             collect_stats=collect_stats,
             batch_size=batch_size,
             flush_concurrency=flush_concurrency,
-            node_flush_concurrency=node_flush_concurrency,
-            relationship_flush_concurrency=relationship_flush_concurrency,
         )
 
     @classmethod
@@ -47,26 +57,22 @@ class GraphDatabaseWriter(Writer):
         collect_stats: bool = True,
         batch_size: int = 1000,
         flush_concurrency: int = 1,
-        node_flush_concurrency: int = 0,
-        relationship_flush_concurrency: int = 1,
     ):
+        """Create a writer from an existing connector.
+
+        When ``flush_concurrency > 1``, the writer will rotate strategies and
+        flush full batches concurrently using multiple "buckets".
+        """
         executor = connector.get_query_executor(collect_stats=collect_stats)
         ingest_strategy_cls = INGESTION_STRATEGY_REGISTRY.get(ingest_strategy_name)
 
-        extra_strategy_kwargs = {}
-        if node_flush_concurrency > 0:
-            extra_strategy_kwargs["node_flush_concurrency"] = node_flush_concurrency
-        if relationship_flush_concurrency > 1:
-            extra_strategy_kwargs["relationship_flush_concurrency"] = (
-                relationship_flush_concurrency
-            )
-
         def strategy_factory():
-            return ingest_strategy_cls(executor, **extra_strategy_kwargs)
+            return ingest_strategy_cls(executor)
 
+        ingest_strategy = strategy_factory()
         return cls(
             batch_size=batch_size,
-            ingest_strategy=strategy_factory(),
+            ingest_strategy=ingest_strategy,
             strategy_factory=strategy_factory,
             flush_concurrency=flush_concurrency,
         )
@@ -88,6 +94,7 @@ class GraphDatabaseWriter(Writer):
         self._flush_errors: list = []
         self.logger = getLogger(self.__class__.__name__)
         self._accumulate_start: float = time.monotonic()
+        Metrics.get().set_value(WRITER_ACTIVE_FLUSH_LANES, 0)
 
     @property
     def _concurrent_flush_enabled(self) -> bool:
@@ -98,6 +105,7 @@ class GraphDatabaseWriter(Writer):
         self._raise_if_flush_errors()
         await ingestible.ingest(self.ingest_strategy)
         self.pending_records += 1
+        Metrics.get().increment(WRITER_PENDING_RECORDS)
         if self.pending_records >= self.batch_size:
             if self._concurrent_flush_enabled:
                 await self._rotate_and_flush()
@@ -119,6 +127,7 @@ class GraphDatabaseWriter(Writer):
             },
         )
         self.pending_records = 0
+        Metrics.get().set_value(WRITER_PENDING_RECORDS, 0)
         self._accumulate_start = time.monotonic()
 
     async def _rotate_and_flush(self):
@@ -126,33 +135,31 @@ class GraphDatabaseWriter(Writer):
 
         The writer immediately starts accumulating into a fresh strategy while
         the previous batch is flushed concurrently.  A semaphore bounds the
-        number of in-flight flush tasks to ``flush_concurrency``.
+        number of in-flight flush tasks to ``flush_concurrency`` so that we
+        only allow N concurrent writer buckets at a time.
         """
         if self._flush_semaphore is None:
             self._flush_semaphore = asyncio.Semaphore(self._flush_concurrency)
-            self.logger.info(
-                "Concurrent flush enabled",
-                extra={"flush_concurrency": self._flush_concurrency},
-            )
 
-        # Block until a flush lane is available (backpressure).
-        wait_start = time.monotonic()
+        # Block until a flush lane is available (backpressure). This ensures we
+        # never have more than ``flush_concurrency`` background flushes in flight.
         await self._flush_semaphore.acquire()
-        wait_time = time.monotonic() - wait_start
-        if wait_time > 0.1:
-            self.logger.info(
-                "Flush lane wait (backpressure)",
-                extra={"wait_seconds": round(wait_time, 3)},
-            )
 
-        # Re-check for errors after potentially waiting.
+        # Fail fast if any previous background flush failed now that a lane is free.
         self._raise_if_flush_errors()
+
+        # Track that we have consumed a flush lane for metrics purposes.
+        Metrics.get().set_value(
+            WRITER_ACTIVE_FLUSH_LANES, self._flush_concurrency - self._flush_semaphore._value  # type: ignore[attr-defined]
+        )
 
         # Swap: move the full strategy out, create a fresh one.
         full_strategy = self.ingest_strategy
         records_in_batch = self.pending_records
         self.ingest_strategy = self._strategy_factory()
+        Metrics.get().set_value(WRITER_PENDING_RECORDS, 0)
         self.pending_records = 0
+
         self._accumulate_start = time.monotonic()
 
         # Launch the flush as a background task.
@@ -183,6 +190,11 @@ class GraphDatabaseWriter(Writer):
         finally:
             if self._flush_semaphore is not None:
                 self._flush_semaphore.release()
+                # Update active lane count after releasing the semaphore.
+                Metrics.get().set_value(
+                    WRITER_ACTIVE_FLUSH_LANES,
+                    self._flush_concurrency - self._flush_semaphore._value,  # type: ignore[attr-defined]
+                )
 
     def _raise_if_flush_errors(self):
         """Raise the first captured background flush error, if any."""
