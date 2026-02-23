@@ -61,8 +61,8 @@ class Target:
         connector = self.make_connector(**(connector_overrides or {}))
         return GraphDatabaseWriter.from_connector(connector=connector, **writer_args)
 
-    def make_type_retriever(self, limit: int = 1000):
-        return self.connector.make_type_retriever(limit=limit)
+    def make_type_retriever(self, **kwargs):
+        return self.connector.make_type_retriever(**kwargs)
 
     def make_migrator(self) -> "Migrator":
         return self.connector.make_migrator()

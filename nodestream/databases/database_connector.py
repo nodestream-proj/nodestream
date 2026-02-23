@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from ..pluggable import Pluggable
+from ..schema.migrations import Migrator
 from ..subclass_registry import SubclassRegistry
 from .copy import TypeRetriever
 from .query_executor import QueryExecutor
@@ -32,11 +33,11 @@ class DatabaseConnector(ABC, Pluggable):
         raise NotImplementedError
 
     @abstractmethod
-    def make_type_retriever(self, limit: int = 1000) -> TypeRetriever:
+    def make_type_retriever(self, **kwargs) -> TypeRetriever:
         raise NotImplementedError
 
     @abstractmethod
-    def make_migrator(self) -> TypeRetriever:
+    def make_migrator(self) -> Migrator:
         raise NotImplementedError
 
     def get_query_executor(self, collect_stats: bool = True):
@@ -45,5 +46,5 @@ class DatabaseConnector(ABC, Pluggable):
             connector = QueryExecutorWithStatistics(connector)
         return connector
 
-    def get_type_retriever(self, limit: int = 1000):
-        return self.make_type_retriever(limit=limit)
+    def get_type_retriever(self, **kwargs):
+        return self.make_type_retriever(**kwargs)

@@ -45,7 +45,6 @@ class Copy(NodestreamCommand):
             flag=False,
             multiple=True,
         ),
-        option("limit", "l", "The limit of records to copy", flag=False),
         option("run-concurrently", "r", "Run the copy concurrently", flag=True),
         option(
             "concurrency-limit",
@@ -89,6 +88,17 @@ class Copy(NodestreamCommand):
             default=None,
             flag=False,
         ),
+        option(
+            "retriever-option",
+            description="key=value type retriever parameter (repeatable, e.g. limit=1000)",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "storage-backend",
+            description="Storage backend to use for checkpointing",
+            flag=False,
+        ),
         *PROMETHEUS_OPTIONS,
     ]
 
@@ -111,13 +121,15 @@ class Copy(NodestreamCommand):
                 rel_types = self.get_type_selection_from_user(
                     all_rel_types, "relationship"
                 )
-                limit = int(self.option("limit"))
                 run_concurrently = self.option("run-concurrently")
                 concurrency_limit = int(self.option("concurrency-limit") or 10)
                 batch_size = int(self.option("batch-size"))
                 step_outbox_size = int(self.option("step-outbox-size"))
                 flush_concurrency = int(self.option("flush-concurrency"))
-                connector_overrides = self.parse_connector_options()
+                connector_overrides = self.parse_key_value_options("connector-option")
+                retriever_overrides = self.parse_key_value_options("retriever-option")
+                storage_name = self.option("storage-backend")
+                object_store = project.get_object_storage_by_name(storage_name)
             except UnknownTargetError:
                 return
 
@@ -129,8 +141,11 @@ class Copy(NodestreamCommand):
             self.line(f"<info>Batch Size: {batch_size}</info>")
             self.line(f"<info>Step Outbox Size: {step_outbox_size}</info>")
             self.line(f"<info>Flush Concurrency: {flush_concurrency}</info>")
+            self.line(f"<info>Storage Backend: {storage_name or 'none'}</info>")
             if connector_overrides:
                 self.line(f"<info>Connector Overrides: {connector_overrides}</info>")
+            if retriever_overrides:
+                self.line(f"<info>Retriever Options: {retriever_overrides}</info>")
             reporter = self.create_progress_reporter()
             await self.run_operation(
                 RunCopy(
@@ -139,7 +154,6 @@ class Copy(NodestreamCommand):
                     schema=schema,
                     node_types=node_types,
                     relationship_types=rel_types,
-                    limit=limit,
                     run_concurrently=run_concurrently,
                     concurrency_limit=concurrency_limit,
                     progress_reporter=reporter,
@@ -147,11 +161,13 @@ class Copy(NodestreamCommand):
                     step_outbox_size=step_outbox_size,
                     flush_concurrency=flush_concurrency,
                     connector_overrides=connector_overrides,
+                    retriever_overrides=retriever_overrides,
+                    object_store=object_store,
                 )
             )
 
-    def parse_connector_options(self) -> Dict[str, object]:
-        raw = self.option("connector-option") or []
+    def parse_key_value_options(self, option_name: str) -> Dict[str, object]:
+        raw = self.option(option_name) or []
         overrides: Dict[str, object] = {}
         for item in raw:
             key, _, value = item.partition("=")

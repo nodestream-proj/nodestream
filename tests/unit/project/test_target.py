@@ -45,9 +45,7 @@ def test_target_make_type_retriever(mocker):
     mock_connector = mocker.patch("nodestream.databases.DatabaseConnector")
     target.make_type_retriever()
     mock_connector.from_database_args.assert_called_once_with(a="b")
-    mock_connector.from_database_args.return_value.make_type_retriever.assert_called_once_with(
-        limit=1000
-    )
+    mock_connector.from_database_args.return_value.make_type_retriever.assert_called_once_with()
 
 
 def test_target_resolves_lazy_tags(mocker):

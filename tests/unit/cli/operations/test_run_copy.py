@@ -7,9 +7,13 @@ from nodestream.pipeline import PipelineProgressReporter
 
 @pytest.fixture
 def subject(mocker, basic_schema):
+    from_target = mocker.Mock()
+    from_target.name = "source"
+    to_target = mocker.Mock()
+    to_target.name = "destination"
     return RunCopy(
-        from_target=mocker.Mock(),
-        to_target=mocker.Mock(),
+        from_target=from_target,
+        to_target=to_target,
         schema=basic_schema,
         node_types=["Person", "Movie"],
         relationship_types=["ACTED_IN"],
@@ -28,7 +32,7 @@ def test_build_writer(subject):
 
 def test_build_copier(subject):
     result = subject.build_copier()
-    subject.from_target.make_type_retriever.assert_called_once_with(limit=1000)
+    subject.from_target.make_type_retriever.assert_called_once_with()
     assert_that(result.node_types, equal_to(subject.node_types))
     assert_that(result.relationship_types, equal_to(subject.relationship_types))
 

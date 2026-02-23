@@ -1,13 +1,14 @@
 import asyncio
 from abc import ABC, abstractmethod
 from logging import getLogger
-from typing import AsyncGenerator, Coroutine, List
+from typing import Any, AsyncGenerator, Coroutine, Dict, List
 
+from ..metrics import Metric, Metrics
 from ..model import Node, RelationshipWithNodes
 from ..pipeline import Extractor
 from ..pipeline.channel import DoneObject
+from ..pipeline.step import StepContext
 from ..schema import Adjacency, Schema
-from ..metrics import Metric, Metrics
 
 ORCHESTRATOR_QUEUE = Metric(
     "orchestrator_queue", "Number of items in the orchestrator queue", accumulate=False
@@ -21,6 +22,16 @@ ACTIVE_QUERIES = Metric(
 
 class TypeRetriever(ABC):
     @abstractmethod
+    async def preview_relationship_count(
+        self, relationship_type: str
+    ) -> Coroutine[int, Any, Any]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def preview_node_count(self, node_type: str) -> Coroutine[int, Any, Any]:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_nodes_of_type(self, node_type: str) -> AsyncGenerator[Node, None]:
         raise NotImplementedError
 
@@ -31,8 +42,29 @@ class TypeRetriever(ABC):
         raise NotImplementedError
 
 
+def _node_progress_key(node_type: str) -> str:
+    """Return a stable checkpoint key for a node-type producer."""
+    return f"node:{node_type}"
+
+
+def _adjacency_progress_key(adjacency: Adjacency) -> str:
+    """Return a stable checkpoint key for an adjacency producer."""
+    return (
+        f"adj:{adjacency.from_node_type}"
+        f":{adjacency.to_node_type}"
+        f":{adjacency.relationship_type}"
+    )
+
+
 class Copier(Extractor):
-    """Copies nodes and relationships sequentially, one type at a time."""
+    """Copies nodes and relationships sequentially, one type at a time.
+
+    Supports checkpoint-based resumption.  The ``_progress`` dict maps each
+    producer key (``node:<type>`` or ``adj:<from>:<to>:<rel>``) to the number
+    of records that have been **yielded downstream**.  On resume the copier
+    re-iterates through the ``TypeRetriever`` generators but skips records that
+    were already yielded before the last checkpoint.
+    """
 
     def __init__(
         self,
@@ -46,9 +78,28 @@ class Copier(Extractor):
         self.node_types = node_types_to_copy
         self.schema = schema
         self.logger = getLogger(__name__)
+        # Checkpoint state: maps producer key -> records yielded.
+        self._progress: Dict[str, int] = {}
+        # Preview counts populated during start(); used for progress logging.
+        self._node_counts: Dict[str, int] = {}
+        self._rel_counts: Dict[str, int] = {}
         self.logger.info(
-            f"Copying {len(self.node_types)} node types and {len(self.relationship_types)} relationship types"
+            f"Copying {len(self.node_types)} node types and "
+            f"{len(self.relationship_types)} relationship types"
         )
+
+    # -- Checkpoint protocol --------------------------------------------------
+
+    async def make_checkpoint(self):
+        if not self._progress:
+            return None
+        return {"progress": dict(self._progress)}
+
+    async def resume_from_checkpoint(self, checkpoint_object):
+        self._progress = checkpoint_object.get("progress", {})
+        self.logger.info(f"Resuming copy from checkpoint: {self._progress}")
+
+    # -- Factory --------------------------------------------------------------
 
     @classmethod
     def create(
@@ -72,23 +123,86 @@ class Copier(Extractor):
             )
         return cls(type_retriever, schema, node_types, relationship_types)
 
+    async def start(self, context: StepContext):
+        await super().start(context)
+
+        # Build histograms and sort descending so largest types are copied first.
+        for node_type in self.node_types:
+            self._node_counts[node_type] = await self.type_retriever.preview_node_count(
+                node_type
+            )
+
+        for rel_type in self.relationship_types:
+            self._rel_counts[rel_type] = (
+                await self.type_retriever.preview_relationship_count(rel_type)
+            )
+
+        self.node_types = sorted(
+            self.node_types, key=lambda t: self._node_counts[t], reverse=True
+        )
+        self.relationship_types = sorted(
+            self.relationship_types, key=lambda t: self._rel_counts[t], reverse=True
+        )
+
+        # Log the sorted histogram.
+        self.logger.info("Node type histogram (descending):")
+        for node_type in self.node_types:
+            self.logger.info(f"  {node_type}: {self._node_counts[node_type]}")
+        self.logger.info("Relationship type histogram (descending):")
+        for rel_type in self.relationship_types:
+            self.logger.info(f"  {rel_type}: {self._rel_counts[rel_type]}")
+        self.logger.info(
+            f"Total nodes: {sum(self._node_counts.values())}, "
+            f"Total relationships: {sum(self._rel_counts.values())}"
+        )
+
     async def extract_records(self):
         for node_type in self.node_types:
-            self.logger.info(f"Copying nodes of type {node_type}")
+            key = _node_progress_key(node_type)
+            expected = self._node_counts.get(node_type, "?")
+            skip_count = self._progress.get(key, 0)
+            if skip_count:
+                self.logger.info(
+                    f"Resuming nodes of type {node_type} "
+                    f"(expected ~{expected}, skipping {skip_count} already-copied)"
+                )
+            else:
+                self.logger.info(
+                    f"Copying nodes of type {node_type} (expected ~{expected})"
+                )
+
+            count = 0
             async for node in self.type_retriever.get_nodes_of_type(node_type):
+                count += 1
+                if count <= skip_count:
+                    continue
+                self._progress[key] = count
                 yield self.convert_node_to_ingest(node)
 
         for rel_type in self.relationship_types:
-            # Prefer schema-driven adjacency expansion when available so we can
-            # fully specify from/to node types for the retriever. Note that it
-            # is impossible to have a relationship without an adjacency, we only
-            # support copyting from a nodestream schema.
-            self.logger.info(f"Copying relationships of type {rel_type}")
+            expected = self._rel_counts.get(rel_type, "?")
             adjacencies: List[Adjacency] = list(
                 self.schema.get_adjacencies_by_relationship_type(rel_type)
             )
 
             for adjacency in adjacencies:
+                key = _adjacency_progress_key(adjacency)
+                skip_count = self._progress.get(key, 0)
+                if skip_count:
+                    self.logger.info(
+                        f"Resuming relationships {adjacency.relationship_type} "
+                        f"({adjacency.from_node_type} -> {adjacency.to_node_type}, "
+                        f"expected ~{expected}), "
+                        f"skipping {skip_count} already-copied"
+                    )
+                else:
+                    self.logger.info(
+                        f"Copying relationships of type {adjacency.relationship_type} "
+                        f"({adjacency.from_node_type} -> {adjacency.to_node_type}, "
+                        f"expected ~{expected})"
+                    )
+
+                count = 0
                 async for (
                     relationship
                 ) in self.type_retriever.get_relationships_of_type_between(
@@ -96,6 +210,10 @@ class Copier(Extractor):
                     adjacency.to_node_type,
                     adjacency.relationship_type,
                 ):
+                    count += 1
+                    if count <= skip_count:
+                        continue
+                    self._progress[key] = count
                     yield self.convert_relationship_to_ingest(relationship)
 
     def reorganize_node_key_properties(self, node: Node):
@@ -129,6 +247,12 @@ class ConcurrentCopier(Copier):
     limit).  The two groups are **never mixed** — nodes complete before
     relationships begin — so slow relationship pattern-scans cannot starve
     fast node label-scans.
+
+    Checkpoint support works by tagging every item placed onto the internal
+    queue with its producer key.  The consumer loop (which is the point at
+    which records are *yielded downstream*) updates ``_progress`` per-key.
+    On resume each producer reads its skip-count from ``_progress`` and
+    discards that many records before producing new ones.
     """
 
     def __init__(
@@ -150,21 +274,53 @@ class ConcurrentCopier(Copier):
 
     async def extract_records(self):
         # Spin up independent producers per node / relationship type and
-        # multiplex their outputs through a shared queue.
+        # multiplex their outputs through a shared queue.  Each item is a
+        # (progress_key, ingest) tuple so the consumer can track per-producer
+        # progress for checkpointing.
         queue: asyncio.Queue = asyncio.Queue(maxsize=self.orchestrator_queue_size)
 
         async def produce_nodes(node_type: str) -> None:
-            self.logger.info(f"Copying nodes of type {node_type}")
+            key = _node_progress_key(node_type)
+            expected = self._node_counts.get(node_type, "?")
+            skip_count = self._progress.get(key, 0)
+            if skip_count:
+                self.logger.info(
+                    f"Resuming nodes of type {node_type} "
+                    f"(expected ~{expected}, skipping {skip_count} already-copied)"
+                )
+            else:
+                self.logger.info(
+                    f"Copying nodes of type {node_type} (expected ~{expected})"
+                )
+
+            count = 0
             async for node in self.type_retriever.get_nodes_of_type(node_type):
+                count += 1
+                if count <= skip_count:
+                    continue
                 Metrics.get().increment(ORCHESTRATOR_QUEUE)
                 item = self.convert_node_to_ingest(node)
-                await queue.put(item)
+                await queue.put((key, item))
 
         async def produce_adjacency(adjacency: Adjacency) -> None:
-            self.logger.info(
-                f"Copying relationships of type {adjacency.relationship_type} "
-                f"({adjacency.from_node_type} -> {adjacency.to_node_type})"
-            )
+            key = _adjacency_progress_key(adjacency)
+            expected = self._rel_counts.get(adjacency.relationship_type, "?")
+            skip_count = self._progress.get(key, 0)
+            if skip_count:
+                self.logger.info(
+                    f"Resuming relationships {adjacency.relationship_type} "
+                    f"({adjacency.from_node_type} -> {adjacency.to_node_type}, "
+                    f"expected ~{expected}), "
+                    f"skipping {skip_count} already-copied"
+                )
+            else:
+                self.logger.info(
+                    f"Copying relationships of type {adjacency.relationship_type} "
+                    f"({adjacency.from_node_type} -> {adjacency.to_node_type}, "
+                    f"expected ~{expected})"
+                )
+
+            count = 0
             async for (
                 relationship
             ) in self.type_retriever.get_relationships_of_type_between(
@@ -172,9 +328,12 @@ class ConcurrentCopier(Copier):
                 adjacency.to_node_type,
                 adjacency.relationship_type,
             ):
+                count += 1
+                if count <= skip_count:
+                    continue
                 Metrics.get().increment(ORCHESTRATOR_QUEUE)
                 item = self.convert_relationship_to_ingest(relationship)
-                await queue.put(item)
+                await queue.put((key, item))
 
         async def run_bounded(coros: List[Coroutine]) -> None:
             # Use a semaphore to bound the number of concurrently running
@@ -211,10 +370,12 @@ class ConcurrentCopier(Copier):
         orchestrator = asyncio.create_task(orchestrate())
         try:
             while True:
-                item = await queue.get()
-                Metrics.get().decrement(ORCHESTRATOR_QUEUE)
-                if item is DoneObject:
+                raw = await queue.get()
+                if raw is DoneObject:
                     break
+                key, item = raw
+                Metrics.get().decrement(ORCHESTRATOR_QUEUE)
+                self._progress[key] = self._progress.get(key, 0) + 1
                 yield item
         finally:
             # Let the orchestrator finish; re-raises any producer exception.
