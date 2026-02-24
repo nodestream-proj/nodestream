@@ -94,11 +94,6 @@ class Copy(NodestreamCommand):
             flag=False,
             multiple=True,
         ),
-        option(
-            "storage-backend",
-            description="Storage backend to use for checkpointing",
-            flag=False,
-        ),
         *PROMETHEUS_OPTIONS,
     ]
 
@@ -128,8 +123,6 @@ class Copy(NodestreamCommand):
                 flush_concurrency = int(self.option("flush-concurrency"))
                 connector_overrides = self.parse_key_value_options("connector-option")
                 retriever_overrides = self.parse_key_value_options("retriever-option")
-                storage_name = self.option("storage-backend")
-                object_store = project.get_object_storage_by_name(storage_name)
             except UnknownTargetError:
                 return
 
@@ -141,7 +134,6 @@ class Copy(NodestreamCommand):
             self.line(f"<info>Batch Size: {batch_size}</info>")
             self.line(f"<info>Step Outbox Size: {step_outbox_size}</info>")
             self.line(f"<info>Flush Concurrency: {flush_concurrency}</info>")
-            self.line(f"<info>Storage Backend: {storage_name or 'none'}</info>")
             if connector_overrides:
                 self.line(f"<info>Connector Overrides: {connector_overrides}</info>")
             if retriever_overrides:
@@ -162,7 +154,6 @@ class Copy(NodestreamCommand):
                     flush_concurrency=flush_concurrency,
                     connector_overrides=connector_overrides,
                     retriever_overrides=retriever_overrides,
-                    object_store=object_store,
                 )
             )
 

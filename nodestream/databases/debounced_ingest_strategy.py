@@ -1,5 +1,4 @@
 import asyncio
-import time
 from dataclasses import asdict
 from logging import getLogger
 
@@ -16,10 +15,7 @@ from .query_executor import QueryExecutor
 
 
 class DebouncedIngestStrategy(IngestionStrategy, alias="debounced"):
-    def __init__(
-        self,
-        query_executor: QueryExecutor,
-    ) -> None:
+    def __init__(self, query_executor: QueryExecutor) -> None:
         self.logger = getLogger(self.__class__.__name__)
         self.executor = query_executor
         self.debouncer = OperationDebouncer()
@@ -50,49 +46,35 @@ class DebouncedIngestStrategy(IngestionStrategy, alias="debounced"):
         await self.executor.perform_ttl_op(config)
         self.logger.info("Executed TTL", extra=asdict(config))
 
-    async def flush_nodes_updates(self):
-        await asyncio.gather(
-            *(
-                self.executor.upsert_nodes_in_bulk_with_same_operation(
-                    operation, node_group
-                )
-                for operation, node_group in self.debouncer.drain_node_groups()
+    def flush_nodes_updates(self):
+        update_coroutines = (
+            self.executor.upsert_nodes_in_bulk_with_same_operation(
+                operation, node_group
             )
+            for operation, node_group in self.debouncer.drain_node_groups()
         )
+        return asyncio.gather(*update_coroutines)
 
     async def flush_relationship_updates(self):
-        await asyncio.gather(
-            *(
-                self.executor.upsert_relationships_in_bulk_of_same_operation(
-                    rel_shape, rel_group
-                )
-                for rel_shape, rel_group in self.debouncer.drain_relationship_groups()
+        # Because databases tend to require exclusive locks on both nodes,
+        # and these updates are very likely to be related to at least one of the nodes
+        # in the relationship, we need to update relationships one operation type
+        # at a time to avoid deadlocks.
+        for rel_shape, rel_group in self.debouncer.drain_relationship_groups():
+            await self.executor.upsert_relationships_in_bulk_of_same_operation(
+                rel_shape, rel_group
             )
-        )
 
     async def flush(self):
-        t0 = time.monotonic()
-        await asyncio.gather(
-            self.flush_nodes_updates(),
-            self.flush_relationship_updates(),
-        )
-        t1 = time.monotonic()
+        await self.flush_nodes_updates()
+        await self.flush_relationship_updates()
+
         # Because we don't know what exactly the hooks do, we can't reliably parallelize
         # them because we could overwhelm the database so we are going to do them one at
         # a time.
         for hook in self.hooks_saved_for_after_ingest:
             await self.executor.execute_hook(hook)
         self.hooks_saved_for_after_ingest.clear()
-        t2 = time.monotonic()
-
-        self.logger.info(
-            "Flush completed",
-            extra={
-                "flush_wall_time_s": round(t2 - t0, 3),
-                "upserts_flush_s": round(t1 - t0, 3),
-                "hooks_flush_s": round(t2 - t1, 3),
-            },
-        )
 
     async def finish(self):
         """Close connector by calling finish method from Step"""

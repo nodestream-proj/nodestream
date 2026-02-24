@@ -1,4 +1,3 @@
-import hashlib
 from typing import Dict, List, Optional
 
 from ...databases import Copier, GraphDatabaseWriter
@@ -27,7 +26,6 @@ class RunCopy(Operation):
         flush_concurrency: int = 1,
         connector_overrides: Optional[Dict[str, object]] = None,
         retriever_overrides: Optional[Dict[str, object]] = None,
-        object_store: Optional[ObjectStore] = None,
     ) -> None:
         self.from_target = from_target
         self.to_target = to_target
@@ -42,27 +40,10 @@ class RunCopy(Operation):
         self.flush_concurrency = flush_concurrency
         self.connector_overrides = connector_overrides or {}
         self.retriever_overrides = retriever_overrides or {}
-        self.object_store = object_store or ObjectStore.null()
 
     async def perform(self, command: NodestreamCommand):
         pipeline = self.build_pipeline()
         await pipeline.run(reporter=self.progress_reporter)
-
-    def _checkpoint_namespace(self) -> str:
-        """Derive a deterministic namespace from the copy configuration.
-
-        The same source/destination/types always map to the same namespace so
-        that a resumed run picks up the previous checkpoint.
-        """
-        key_parts = [
-            self.from_target.name,
-            self.to_target.name,
-            ",".join(sorted(self.node_types)),
-            ",".join(sorted(self.relationship_types)),
-        ]
-        key_string = "|".join(key_parts)
-        digest = hashlib.sha256(key_string.encode()).hexdigest()[:16]
-        return f"copy-{digest}"
 
     def build_pipeline(self) -> Pipeline:
         copier = self.build_copier()
@@ -70,7 +51,7 @@ class RunCopy(Operation):
         return Pipeline(
             (copier, writer),
             step_outbox_size=self.step_outbox_size,
-            object_store=self.object_store.namespaced(self._checkpoint_namespace()),
+            object_store=ObjectStore.null(),
         )
 
     def build_copier(self) -> Copier:

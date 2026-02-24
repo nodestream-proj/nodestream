@@ -122,7 +122,6 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
         "retriever-option": [],
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
-        "storage-backend": None,
     }
     copy_command.option = mocker.Mock(side_effect=lambda name: option_values[name])
     mocker.patch.object(
