@@ -45,11 +45,11 @@ class Copy(NodestreamCommand):
             flag=False,
             multiple=True,
         ),
-        option("run-concurrently", "r", "Run the copy concurrently", flag=True),
         option(
             "concurrency-limit",
             "c",
-            "The concurrency limit for the copy",
+            "Number of concurrent copy workers (1 = sequential)",
+            default=1,
             flag=False,
         ),
         option(
@@ -116,8 +116,7 @@ class Copy(NodestreamCommand):
                 rel_types = self.get_type_selection_from_user(
                     all_rel_types, "relationship"
                 )
-                run_concurrently = self.option("run-concurrently")
-                concurrency_limit = int(self.option("concurrency-limit") or 10)
+                concurrency_limit = int(self.option("concurrency-limit"))
                 batch_size = int(self.option("batch-size"))
                 step_outbox_size = int(self.option("step-outbox-size"))
                 flush_concurrency = int(self.option("flush-concurrency"))
@@ -146,7 +145,6 @@ class Copy(NodestreamCommand):
                     schema=schema,
                     node_types=node_types,
                     relationship_types=rel_types,
-                    run_concurrently=run_concurrently,
                     concurrency_limit=concurrency_limit,
                     progress_reporter=reporter,
                     batch_size=batch_size,

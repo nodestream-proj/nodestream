@@ -196,21 +196,18 @@ async def test_concurrent_copier_no_types(mocker, basic_schema):
 
 
 def test_copier_create_sequential(mocker, basic_schema):
-    """Copier.create returns a plain Copier when run_concurrently is False."""
-    copier = Copier.create(
-        mocker.Mock(), basic_schema, ["Person"], ["KNOWS"], run_concurrently=False
-    )
+    """Copier.create returns a plain Copier when concurrency_limit is 1."""
+    copier = Copier.create(mocker.Mock(), basic_schema, ["Person"], ["KNOWS"])
     assert type(copier) is Copier
 
 
 def test_copier_create_concurrent(mocker, basic_schema):
-    """Copier.create returns a ConcurrentCopier when run_concurrently is True."""
+    """Copier.create returns a ConcurrentCopier when concurrency_limit > 1."""
     copier = Copier.create(
         mocker.Mock(),
         basic_schema,
         ["Person"],
         ["KNOWS"],
-        run_concurrently=True,
         concurrency_limit=5,
     )
     assert isinstance(copier, ConcurrentCopier)

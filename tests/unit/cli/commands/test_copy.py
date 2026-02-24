@@ -113,8 +113,7 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
     )
 
     option_values = {
-        "run-concurrently": False,
-        "concurrency-limit": "10",
+        "concurrency-limit": "1",
         "batch-size": "1000",
         "step-outbox-size": "10000",
         "flush-concurrency": "1",

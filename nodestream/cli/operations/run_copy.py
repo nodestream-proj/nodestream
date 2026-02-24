@@ -18,8 +18,7 @@ class RunCopy(Operation):
         schema: Schema,
         node_types: List[str],
         relationship_types: List[str],
-        run_concurrently: bool = False,
-        concurrency_limit: int = 10,
+        concurrency_limit: int = 1,
         progress_reporter: Optional[PipelineProgressReporter] = None,
         batch_size: int = 1000,
         step_outbox_size: int = 10000,
@@ -32,7 +31,6 @@ class RunCopy(Operation):
         self.schema = schema
         self.node_types = node_types
         self.relationship_types = relationship_types
-        self.run_concurrently = run_concurrently
         self.concurrency_limit = concurrency_limit
         self.progress_reporter = progress_reporter or PipelineProgressReporter()
         self.batch_size = batch_size
@@ -60,7 +58,6 @@ class RunCopy(Operation):
             self.schema,
             self.node_types,
             self.relationship_types,
-            run_concurrently=self.run_concurrently,
             concurrency_limit=self.concurrency_limit,
             orchestrator_queue_size=self.step_outbox_size,
         )

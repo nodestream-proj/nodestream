@@ -67,11 +67,10 @@ class Copier(Extractor):
         schema: Schema,
         node_types: List[str],
         relationship_types: List[str],
-        run_concurrently: bool = False,
-        concurrency_limit: int = 10,
+        concurrency_limit: int = 1,
         orchestrator_queue_size: int | None = None,
     ) -> "Copier":
-        if run_concurrently:
+        if concurrency_limit > 1:
             return ConcurrentCopier(
                 type_retriever,
                 schema,
@@ -120,8 +119,6 @@ class Copier(Extractor):
             sum(self._node_counts.values()),
             sum(self._relationship_counts.values()),
         )
-
-    # -- Record extraction ----------------------------------------------------
 
     async def extract_records(self):
         for node_type in self.node_types:
