@@ -186,7 +186,7 @@ class SpinnerProgressIndicator(ProgressIndicator):
     def on_finish(self, metrics: Metrics):
         elapsed = time.monotonic() - self._start_time
         self.progress.finish(
-            f"Finished running pipeline: '{self.pipeline_name}' " f"in {elapsed:.1f}s"
+            f"Finished running pipeline: '{self.pipeline_name}' in {elapsed:.1f}s"
         )
         metrics.tick()
         if self.exception:

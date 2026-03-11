@@ -38,7 +38,6 @@ class DesiredIngestion:
         for hook_req in self.hook_requests:
             await strategy.run_hook(hook_req)
 
-
     def can_perform_ingest(self):
         # We can do the main part of the ingest if the source node is valid.
         # If it's not valid, it's only an error when there are relationships we are
