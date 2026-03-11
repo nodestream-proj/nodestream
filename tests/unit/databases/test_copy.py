@@ -1,13 +1,17 @@
 from copy import deepcopy
+from unittest.mock import AsyncMock
 
 import pytest
-from hamcrest import assert_that, has_length
+from hamcrest import assert_that, equal_to, has_length
 
 from nodestream.databases.copy import (
     ConcurrentCopier,
     Copier,
 )
 from nodestream.model import Node, Relationship, RelationshipWithNodes
+from nodestream.pipeline.object_storage import ObjectStore
+from nodestream.pipeline.progress_reporter import PipelineProgressReporter
+from nodestream.pipeline.step import StepContext
 from nodestream.schema import Adjacency, AdjacencyCardinality, Cardinality
 
 
@@ -38,6 +42,94 @@ async def async_generator(*items):
         yield item
 
 
+def _make_step_context():
+    """Build a lightweight StepContext backed by a null ObjectStore."""
+    return StepContext("test", 0, PipelineProgressReporter(), ObjectStore.null())
+
+
+@pytest.mark.asyncio
+async def test_start_sorts_node_types_descending_by_count(subject):
+    """start() should reorder node_types so the largest types come first."""
+    subject.type_retriever.preview_node_count = AsyncMock(
+        side_effect=lambda t: {"Person": 50, "Address": 200}[t]
+    )
+    subject.type_retriever.preview_relationship_count = AsyncMock(
+        side_effect=lambda t: {"KNOWS": 10, "LIVES_AT": 30}[t]
+    )
+
+    await subject.start(_make_step_context())
+
+    assert_that(subject.node_types, equal_to(["Address", "Person"]))
+    assert_that(subject.relationship_types, equal_to(["LIVES_AT", "KNOWS"]))
+
+
+@pytest.mark.asyncio
+async def test_start_persists_counts_for_logging(subject):
+    """start() should store preview counts as instance state."""
+    subject.type_retriever.preview_node_count = AsyncMock(
+        side_effect=lambda t: {"Person": 100, "Address": 50}[t]
+    )
+    subject.type_retriever.preview_relationship_count = AsyncMock(
+        side_effect=lambda t: {"KNOWS": 75, "LIVES_AT": 25}[t]
+    )
+
+    await subject.start(_make_step_context())
+
+    assert subject._node_counts == {"Person": 100, "Address": 50}
+    assert subject._relationship_counts == {"KNOWS": 75, "LIVES_AT": 25}
+
+
+@pytest.mark.asyncio
+async def test_extract_records_respects_start_sort_order(subject, mocker):
+    """extract_records should iterate types in the order established by start()."""
+    # Make Address larger so it sorts first after start().
+    subject.type_retriever.preview_node_count = AsyncMock(
+        side_effect=lambda t: {"Person": 10, "Address": 500}[t]
+    )
+    subject.type_retriever.preview_relationship_count = AsyncMock(
+        side_effect=lambda t: {"KNOWS": 5, "LIVES_AT": 100}[t]
+    )
+    await subject.start(_make_step_context())
+
+    # Now set up the generators in the *sorted* order (Address first, Person second).
+    addresses = async_generator(Node("Address", {"street": "123 Main St"}))
+    people = async_generator(Node("Person", {"name": "Bob"}))
+    lives_at_rels = async_generator(
+        RelationshipWithNodes(
+            Node("Person", {"name": "Bob"}),
+            Node("Address", {"street": "123 Main St"}),
+            Relationship("LIVES_AT", {"since": 2010}),
+        ),
+    )
+    knows_rels = async_generator(
+        RelationshipWithNodes(
+            Node("Person", {"name": "Bob"}),
+            Node("Person", {"name": "Alice"}),
+            Relationship("KNOWS", {"since": 2010}),
+        ),
+    )
+
+    subject.convert_node_to_ingest = mocker.Mock(side_effect=lambda n: ("node", n.type))
+    subject.convert_relationship_to_ingest = mocker.Mock(
+        side_effect=lambda r: ("rel", r.relationship.type)
+    )
+    # Side effects are consumed in call order — Address first, then Person.
+    subject.type_retriever.get_nodes_of_type.side_effect = [addresses, people]
+    subject.type_retriever.get_relationships_of_type_between.side_effect = [
+        lives_at_rels,
+        knows_rels,
+    ]
+
+    records = [record async for record in subject.extract_records()]
+
+    assert_that(records, has_length(4))
+    # Verify the ordering: Address nodes come before Person nodes.
+    assert records[0] == ("node", "Address")
+    assert records[1] == ("node", "Person")
+    assert records[2] == ("rel", "LIVES_AT")
+    assert records[3] == ("rel", "KNOWS")
+
+
 @pytest.mark.asyncio
 async def test_extract_records(subject, mocker):
     people = async_generator(
@@ -50,26 +142,26 @@ async def test_extract_records(subject, mocker):
     )
     knows_rels = async_generator(
         RelationshipWithNodes(
-            Relationship("KNOWS", {"since": 2010}),
             Node("Person", {"name": "Bob"}),
             Node("Person", {"name": "Alice"}),
+            Relationship("KNOWS", {"since": 2010}),
         ),
         RelationshipWithNodes(
-            Relationship("KNOWS", {"since": 2015}),
             Node("Person", {"name": "Alice"}),
             Node("Person", {"name": "Bob"}),
+            Relationship("KNOWS", {"since": 2015}),
         ),
     )
     lives_at_rels = async_generator(
         RelationshipWithNodes(
-            Relationship("LIVES_AT", {"since": 2010}),
             Node("Person", {"name": "Bob"}),
             Node("Address", {"street": "123 Main St"}),
+            Relationship("LIVES_AT", {"since": 2010}),
         ),
         RelationshipWithNodes(
-            Relationship("LIVES_AT", {"since": 2015}),
             Node("Person", {"name": "Alice"}),
             Node("Address", {"street": "456 Main St"}),
+            Relationship("LIVES_AT", {"since": 2015}),
         ),
     )
 
@@ -152,16 +244,16 @@ async def test_concurrent_copier_extract_records(concurrent_subject, mocker):
     )
     knows_rels = async_generator(
         RelationshipWithNodes(
-            Relationship("KNOWS", {"since": 2010}),
             Node("Person", {"name": "Bob"}),
             Node("Person", {"name": "Alice"}),
+            Relationship("KNOWS", {"since": 2010}),
         ),
     )
     lives_at_rels = async_generator(
         RelationshipWithNodes(
-            Relationship("LIVES_AT", {"since": 2010}),
             Node("Person", {"name": "Bob"}),
             Node("Address", {"street": "123 Main St"}),
+            Relationship("LIVES_AT", {"since": 2010}),
         ),
     )
 
@@ -193,6 +285,26 @@ async def test_concurrent_copier_no_types(mocker, basic_schema):
     copier = ConcurrentCopier(mocker.Mock(), schema, [], [], concurrency_limit=5)
     records = [record async for record in copier.extract_records()]
     assert records == []
+
+
+@pytest.mark.asyncio
+async def test_concurrent_copier_propagates_producer_error(mocker, basic_schema):
+    """If a producer raises, the error should propagate instead of hanging."""
+    schema = _build_schema_with_adjacencies(basic_schema)
+    copier = ConcurrentCopier(
+        mocker.Mock(), schema, ["Person"], [], concurrency_limit=2
+    )
+
+    async def failing_generator(*_):
+        yield Node("Person", {"name": "Bob"})
+        raise RuntimeError("database went away")
+
+    copier.convert_node_to_ingest = mocker.Mock()
+    copier.type_retriever.get_nodes_of_type.side_effect = [failing_generator()]
+
+    with pytest.raises(RuntimeError, match="database went away"):
+        async for _ in copier.extract_records():
+            pass
 
 
 def test_copier_create_sequential(mocker, basic_schema):

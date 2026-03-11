@@ -1,7 +1,7 @@
 import asyncio
 from abc import ABC, abstractmethod
 from logging import getLogger
-from typing import AsyncGenerator, Coroutine, Dict, List
+from typing import AsyncGenerator, Coroutine, Dict, List, Optional
 
 from ..metrics import Metric, Metrics
 from ..model import Node, RelationshipWithNodes
@@ -58,8 +58,6 @@ class Copier(Extractor):
         self._node_counts: Dict[str, int] = {}
         self._relationship_counts: Dict[str, int] = {}
 
-    # -- Factory --------------------------------------------------------------
-
     @classmethod
     def create(
         cls,
@@ -68,7 +66,7 @@ class Copier(Extractor):
         node_types: List[str],
         relationship_types: List[str],
         concurrency_limit: int = 1,
-        orchestrator_queue_size: int | None = None,
+        orchestrator_queue_size: Optional[int] = None,
     ) -> "Copier":
         if concurrency_limit > 1:
             return ConcurrentCopier(
@@ -81,8 +79,6 @@ class Copier(Extractor):
             )
         return cls(type_retriever, schema, node_types, relationship_types)
 
-    # -- Histogram & sorting --------------------------------------------------
-
     async def start(self, context: StepContext):
         await super().start(context)
 
@@ -92,9 +88,9 @@ class Copier(Extractor):
                 node_type
             )
         for relationship_type in self.relationship_types:
-            self._relationship_counts[relationship_type] = (
-                await self.type_retriever.preview_relationship_count(relationship_type)
-            )
+            self._relationship_counts[
+                relationship_type
+            ] = await self.type_retriever.preview_relationship_count(relationship_type)
 
         self.node_types.sort(key=lambda t: self._node_counts[t], reverse=True)
         self.relationship_types.sort(
@@ -151,10 +147,14 @@ class Copier(Extractor):
                 ):
                     yield self.convert_relationship_to_ingest(relationship)
 
-    # -- Ingest conversion ----------------------------------------------------
-
     def reorganize_node_key_properties(self, node: Node):
-        """Move key fields from properties into key_values for ingestion."""
+        """Move key fields from properties into key_values for ingestion.
+
+        The type retriever returns all properties in a flat dict. The ingest
+        pipeline expects key fields to be separated from regular properties so
+        that the database connector can build the correct MERGE clause. We
+        relocate them here rather than pushing that concern into every connector.
+        """
         node_type_definition = self.schema.get_node_type_by_name(node.type)
         if node_type_definition is None:
             return
@@ -187,7 +187,7 @@ class ConcurrentCopier(Copier):
         node_types_to_copy: List[str],
         relationship_types_to_copy: List[str],
         concurrency_limit: int = 10,
-        orchestrator_queue_size: int | None = None,
+        orchestrator_queue_size: Optional[int] = None,
     ) -> None:
         super().__init__(
             type_retriever, schema, node_types_to_copy, relationship_types_to_copy
@@ -243,22 +243,28 @@ class ConcurrentCopier(Copier):
                 await asyncio.gather(*(run_with_limit(c) for c in coroutines))
 
         async def orchestrate() -> None:
-            # All nodes first, then all relationships.
-            await run_bounded(
-                [produce_nodes(node_type) for node_type in self.node_types]
-            )
-
-            all_adjacencies: List[Adjacency] = []
-            for relationship_type in self.relationship_types:
-                all_adjacencies.extend(
-                    self.schema.get_adjacencies_by_relationship_type(relationship_type)
+            try:
+                # All nodes first, then all relationships.
+                await run_bounded(
+                    [produce_nodes(node_type) for node_type in self.node_types]
                 )
-            await run_bounded(
-                [produce_relationships(adjacency) for adjacency in all_adjacencies]
-            )
-            await queue.put(DoneObject)
+
+                all_adjacencies: List[Adjacency] = []
+                for relationship_type in self.relationship_types:
+                    all_adjacencies.extend(
+                        self.schema.get_adjacencies_by_relationship_type(
+                            relationship_type
+                        )
+                    )
+                await run_bounded(
+                    [produce_relationships(adjacency) for adjacency in all_adjacencies]
+                )
+            finally:
+                # Always signal the consumer so it never hangs, even on error.
+                await queue.put(DoneObject)
 
         orchestrator_task = asyncio.create_task(orchestrate())
+        orchestrator_error = None
         try:
             while True:
                 message = await queue.get()
@@ -267,4 +273,12 @@ class ConcurrentCopier(Copier):
                 Metrics.get().decrement(ORCHESTRATOR_QUEUE)
                 yield message
         finally:
-            await orchestrator_task
+            # Wait for the orchestrator to finish and capture any error.
+            try:
+                await orchestrator_task
+            except Exception as exc:
+                orchestrator_error = exc
+
+        # Re-raise the orchestrator error after the generator has cleaned up.
+        if orchestrator_error is not None:
+            raise orchestrator_error

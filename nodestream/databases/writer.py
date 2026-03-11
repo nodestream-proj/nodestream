@@ -1,4 +1,5 @@
 import asyncio
+from collections import deque
 from logging import getLogger
 from typing import Callable, Set
 
@@ -123,7 +124,7 @@ class ConcurrentGraphDatabaseWriter(GraphDatabaseWriter):
         # Track in-flight flush tasks so we can drain them on finish.
         self.pending_flush_tasks: Set[asyncio.Task] = set()
         # Collect errors from background flushes to re-raise on the main path.
-        self.flush_errors: list = []
+        self.flush_errors: deque = deque()
 
         Metrics.get().set_value(WRITER_ACTIVE_FLUSH_LANES, 0)
 
@@ -179,7 +180,7 @@ class ConcurrentGraphDatabaseWriter(GraphDatabaseWriter):
 
     def _raise_if_flush_errors(self):
         if self.flush_errors:
-            raise self.flush_errors.pop(0)
+            raise self.flush_errors.popleft()
 
     def _report_active_lanes(self):
         occupied = self.max_flush_lanes - self.flush_lane_semaphore._value  # type: ignore[attr-defined]

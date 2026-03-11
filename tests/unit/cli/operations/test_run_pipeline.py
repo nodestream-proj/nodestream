@@ -197,6 +197,7 @@ def test_spinner_progress_callback(mocker):
     mock_metrics = mocker.Mock()
     spinner.progress_callback(1000, mock_metrics)
     spinner.progress.set_message.assert_called_once()
+    mock_metrics.tick.assert_called_once()
 
 
 def test_spinner_error_condition(mocker):
@@ -207,6 +208,7 @@ def test_spinner_error_condition(mocker):
     mock_metrics = mocker.Mock()
     with pytest.raises(Exception):
         spinner.on_finish(mock_metrics)
+    mock_metrics.tick.assert_called_once()
 
 
 @pytest.mark.parametrize(

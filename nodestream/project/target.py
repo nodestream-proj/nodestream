@@ -1,11 +1,8 @@
-import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict
 
 from ..file_io import LazyLoadedArgument
 from ..schema.migrations import Migrator
-
-logger = logging.getLogger(__name__)
 
 WRITER_ARGUMENTS = (
     "batch_size",
@@ -47,11 +44,6 @@ class Target:
         from ..databases import DatabaseConnector
 
         config = {**self.resolved_connector_config, **overrides}
-        logger.info(
-            "Effective connector config for target '%s': %s",
-            self.name,
-            config,
-        )
         return DatabaseConnector.from_database_args(**config)
 
     def make_writer(self, connector_overrides=None, **writer_overrides):

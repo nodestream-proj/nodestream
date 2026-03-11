@@ -111,31 +111,34 @@ class RunPipeline(Operation):
             progress_reporter=self.create_progress_reporter(command, pipeline.name),
         )
 
-    def get_progress_indicator(
-        self, command: NodestreamCommand, pipeline_name: str
-    ) -> "ProgressIndicator":
-        if command.has_json_logging_set:
-            return JsonProgressIndicator(command, pipeline_name)
-
-        return SpinnerProgressIndicator(command, pipeline_name)
-
     def create_progress_reporter(
         self, command: NodestreamCommand, pipeline_name: str
     ) -> PipelineProgressReporter:
-        indicator = self.get_progress_indicator(command, pipeline_name)
-        metrics_interval_in_seconds = (
-            float(command.option("metrics-interval-in-seconds"))
-            if command.option("metrics-interval-in-seconds")
-            else None
-        )
-        return PipelineProgressReporter(
-            reporting_frequency=int(command.option("reporting-frequency")),
-            metrics_interval_in_seconds=metrics_interval_in_seconds,
-            callback=indicator.progress_callback,
-            on_start_callback=indicator.on_start,
-            on_finish_callback=indicator.on_finish,
-            on_fatal_error_callback=indicator.on_fatal_error,
-        )
+        return create_progress_reporter(command, pipeline_name)
+
+
+def create_progress_reporter(
+    command: NodestreamCommand, pipeline_name: str
+) -> PipelineProgressReporter:
+    """Build a PipelineProgressReporter wired to the appropriate indicator."""
+    if command.has_json_logging_set:
+        indicator = JsonProgressIndicator(command, pipeline_name)
+    else:
+        indicator = SpinnerProgressIndicator(command, pipeline_name)
+
+    metrics_interval_in_seconds = (
+        float(command.option("metrics-interval-in-seconds"))
+        if command.option("metrics-interval-in-seconds")
+        else None
+    )
+    return PipelineProgressReporter(
+        reporting_frequency=int(command.option("reporting-frequency")),
+        metrics_interval_in_seconds=metrics_interval_in_seconds,
+        callback=indicator.progress_callback,
+        on_start_callback=indicator.on_start,
+        on_finish_callback=indicator.on_finish,
+        on_fatal_error_callback=indicator.on_fatal_error,
+    )
 
 
 class ProgressIndicator:

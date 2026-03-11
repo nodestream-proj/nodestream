@@ -3,7 +3,6 @@ from typing import Dict, List
 from cleo.helpers import option
 
 from ...metrics import Metrics
-from ...pipeline import PipelineProgressReporter
 from ...project import Project, Target
 from ...schema import GraphObjectSchema
 from ..operations import (
@@ -12,10 +11,7 @@ from ..operations import (
     InitializeProject,
     RunCopy,
 )
-from ..operations.run_pipeline import (
-    JsonProgressIndicator,
-    SpinnerProgressIndicator,
-)
+from ..operations.run_pipeline import create_progress_reporter
 from .nodestream_command import NodestreamCommand
 from .shared_options import JSON_OPTION, PROJECT_FILE_OPTION, PROMETHEUS_OPTIONS
 
@@ -130,14 +126,15 @@ class Copy(NodestreamCommand):
             self.line(f"<info>To: {to_target.name}</info>")
             self.line(f"<info>Node Types: {', '.join(node_types)}</info>")
             self.line(f"<info>Relationship Types: {', '.join(rel_types)}</info>")
-            self.line(f"<info>Batch Size: {batch_size}</info>")
-            self.line(f"<info>Step Outbox Size: {step_outbox_size}</info>")
-            self.line(f"<info>Flush Concurrency: {flush_concurrency}</info>")
+            if concurrency_limit > 1:
+                self.line(f"<info>Concurrency Limit: {concurrency_limit}</info>")
+            if flush_concurrency > 1:
+                self.line(f"<info>Flush Concurrency: {flush_concurrency}</info>")
             if connector_overrides:
                 self.line(f"<info>Connector Overrides: {connector_overrides}</info>")
             if retriever_overrides:
                 self.line(f"<info>Retriever Options: {retriever_overrides}</info>")
-            reporter = self.create_progress_reporter()
+            reporter = create_progress_reporter(self, "copy")
             await self.run_operation(
                 RunCopy(
                     from_target=from_target,
@@ -174,27 +171,6 @@ class Copy(NodestreamCommand):
                         pass
             overrides[key] = value
         return overrides
-
-    def create_progress_reporter(self) -> PipelineProgressReporter:
-        if self.has_json_logging_set:
-            indicator = JsonProgressIndicator(self, "copy")
-        else:
-            indicator = SpinnerProgressIndicator(self, "copy")
-
-        metrics_interval_in_seconds = (
-            float(self.option("metrics-interval-in-seconds"))
-            if self.option("metrics-interval-in-seconds")
-            else None
-        )
-
-        return PipelineProgressReporter(
-            reporting_frequency=int(self.option("reporting-frequency")),
-            metrics_interval_in_seconds=metrics_interval_in_seconds,
-            callback=indicator.progress_callback,
-            on_start_callback=indicator.on_start,
-            on_finish_callback=indicator.on_finish,
-            on_fatal_error_callback=indicator.on_fatal_error,
-        )
 
     def get_taget_from_user(self, project: Project, action: str) -> Target:
         # If the user has specified the target in the options, we don't need to prompt

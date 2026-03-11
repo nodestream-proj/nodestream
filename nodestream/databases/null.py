@@ -1,4 +1,4 @@
-from typing import Any, AsyncGenerator, Coroutine, Iterable
+from typing import AsyncGenerator, Iterable
 
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from ..schema.migrations import Migrator
@@ -47,10 +47,10 @@ class NullQueryExecutor(QueryExecutor):
 
 
 class NullRetriver(TypeRetriever):
-    async def preview_node_count(self, _: str) -> Coroutine[int, Any, Any]:
+    async def preview_node_count(self, _: str) -> int:
         return 0
 
-    async def preview_relationship_count(self, _: str) -> Coroutine[int, Any, Any]:
+    async def preview_relationship_count(self, _: str) -> int:
         return 0
 
     def get_nodes_of_type(self, _: str) -> AsyncGenerator[Node, None]:
@@ -71,7 +71,7 @@ class NullConnector(DatabaseConnector, alias="null"):
     def __init__(self, **_) -> None:
         pass
 
-    def make_migrator(self) -> TypeRetriever:
+    def make_migrator(self) -> Migrator:
         return NullMigrator()
 
     def make_query_executor(self) -> QueryExecutor:
