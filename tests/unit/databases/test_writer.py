@@ -5,7 +5,6 @@ import pytest
 
 from nodestream.databases import ConcurrentGraphDatabaseWriter, GraphDatabaseWriter
 
-
 # ---------------------------------------------------------------------------
 # GraphDatabaseWriter (base class)
 # ---------------------------------------------------------------------------
