@@ -239,3 +239,65 @@ def test_console_metric_handler_discharge_with_accumulate_and_decrement(mocker):
     # Accumulating metric should be reset to 0, non-accumulating should remain
     assert handler.metrics[accumulating_metric] == 10
     assert handler.metrics[non_accumulating_metric] == 3
+
+
+def test_null_metric_handler_set_value():
+    handler = NullMetricHandler()
+    # Should not raise — it's a no-op.
+    handler.set_value(RECORDS, 42)
+
+
+def test_console_metric_handler_set_value(mocker):
+    mock_command = mocker.Mock()
+    handler = ConsoleMetricHandler(mock_command)
+    metric = Metric("gauge_metric", accumulate=False)
+    handler.set_value(metric, 99)
+    assert handler.metrics[metric] == 99
+    # Overwrite with a new value.
+    handler.set_value(metric, 0)
+    assert handler.metrics[metric] == 0
+
+
+def test_json_log_metric_handler_set_value():
+    handler = JsonLogMetricHandler()
+    metric = Metric("gauge_metric", accumulate=False)
+    handler.set_value(metric, 42)
+    assert handler.metrics[metric] == 42
+
+
+def test_aggregate_handler_set_value(mocker):
+    mock_handler1 = mocker.Mock()
+    mock_handler2 = mocker.Mock()
+    handler = AggregateHandler([mock_handler1, mock_handler2])
+    metric = Metric("gauge_metric", accumulate=False)
+    handler.set_value(metric, 7)
+    mock_handler1.set_value.assert_called_once_with(metric, 7)
+    mock_handler2.set_value.assert_called_once_with(metric, 7)
+
+
+def test_prometheus_metric_handler_set_value(mocker):
+    mock_start_http_server = mocker.patch("nodestream.metrics.start_http_server")
+    mock_start_http_server.return_value = (mocker.Mock(), mocker.Mock())
+    handler = PrometheusMetricHandler()
+    handler.start()
+    metric = Metric("prom_gauge", "Prometheus gauge test")
+    handler.set_value(metric, 55)
+    # The gauge should have been set.
+    assert metric in handler.instruments_by_metric
+    handler.stop()
+
+
+def test_metrics_set_value(mocker):
+    """Metrics.set_value delegates to the handler."""
+    handler = mocker.Mock()
+    with Metrics.capture(handler) as metrics:
+        metrics.set_value(RECORDS, 42)
+    handler.set_value.assert_called_once_with(RECORDS, 42)
+
+
+def test_metric_set_value_on_handler(mocker):
+    """Metric.set_value delegates to handler.set_value."""
+    handler = mocker.Mock()
+    metric = RECORDS
+    metric.set_value(10, handler)
+    handler.set_value.assert_called_once_with(metric, 10)

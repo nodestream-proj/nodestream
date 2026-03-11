@@ -13,7 +13,7 @@ from ..file_io import (
 from .argument_resolvers import set_config
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
-from .object_storage import NullObjectStore, ObjectStore
+from .object_storage import NamespacedObjectStore, NullObjectStore, ObjectStore
 from .pipeline import Pipeline
 from .scope_config import ScopeConfig
 from .step import Step
@@ -181,7 +181,10 @@ class PipelineFile:
         init_args.object_store = init_args.object_store.namespaced(
             self.file_path.stem + "-" + self.file_sha_256()
         )
-        if isinstance(init_args.object_store, NullObjectStore):
+        inner_store = init_args.object_store
+        if isinstance(inner_store, NamespacedObjectStore):
+            inner_store = inner_store.store
+        if isinstance(inner_store, NullObjectStore):
             self.logger.info("Using null ObjectStore. No persistence is configured.")
         contents = self.get_contents()
         return contents.initialize_with_arguments(init_args)

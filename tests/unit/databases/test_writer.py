@@ -158,3 +158,61 @@ async def test_base_writer_from_connector(mocker):
     )
 
     assert type(writer) is GraphDatabaseWriter
+
+
+@pytest.mark.asyncio
+async def test_from_file_data_returns_concurrent_writer(mocker):
+    """from_file_data with flush_concurrency > 1 should return ConcurrentGraphDatabaseWriter."""
+    mock_connector = mocker.Mock()
+    mock_executor = mocker.Mock()
+    mock_connector.get_query_executor.return_value = mock_executor
+    mocker.patch(
+        "nodestream.databases.writer.DatabaseConnector.from_database_args",
+        return_value=mock_connector,
+    )
+
+    writer = GraphDatabaseWriter.from_file_data(
+        database="null",
+        flush_concurrency=2,
+    )
+
+    assert isinstance(writer, ConcurrentGraphDatabaseWriter)
+    assert writer.max_flush_lanes == 2
+
+
+@pytest.mark.asyncio
+async def test_from_file_data_returns_base_writer(mocker):
+    """from_file_data with flush_concurrency=1 should return plain GraphDatabaseWriter."""
+    mock_connector = mocker.Mock()
+    mock_executor = mocker.Mock()
+    mock_connector.get_query_executor.return_value = mock_executor
+    mocker.patch(
+        "nodestream.databases.writer.DatabaseConnector.from_database_args",
+        return_value=mock_connector,
+    )
+
+    writer = GraphDatabaseWriter.from_file_data(
+        database="null",
+        flush_concurrency=1,
+    )
+
+    assert type(writer) is GraphDatabaseWriter
+
+
+@pytest.mark.asyncio
+async def test_concurrent_writer_strategy_factory_creates_new_strategies(mocker):
+    """The strategy_factory from from_connector should produce new strategy instances."""
+    mock_connector = mocker.Mock()
+    mock_executor = mocker.Mock()
+    mock_connector.get_query_executor.return_value = mock_executor
+
+    writer = GraphDatabaseWriter.from_connector(
+        connector=mock_connector,
+        flush_concurrency=2,
+    )
+
+    assert isinstance(writer, ConcurrentGraphDatabaseWriter)
+    # The factory should produce new strategy objects each time.
+    s1 = writer.strategy_factory()
+    s2 = writer.strategy_factory()
+    assert s1 is not s2
