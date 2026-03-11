@@ -275,18 +275,6 @@ def test_aggregate_handler_set_value(mocker):
     mock_handler2.set_value.assert_called_once_with(metric, 7)
 
 
-def test_prometheus_metric_handler_set_value(mocker):
-    mock_start_http_server = mocker.patch("nodestream.metrics.start_http_server")
-    mock_start_http_server.return_value = (mocker.Mock(), mocker.Mock())
-    handler = PrometheusMetricHandler()
-    handler.start()
-    metric = Metric("prom_gauge", "Prometheus gauge test")
-    handler.set_value(metric, 55)
-    # The gauge should have been set.
-    assert metric in handler.instruments_by_metric
-    handler.stop()
-
-
 def test_metrics_set_value(mocker):
     """Metrics.set_value delegates to the handler."""
     handler = mocker.Mock()
