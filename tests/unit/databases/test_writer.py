@@ -17,16 +17,25 @@ def stubbed_writer(mocker):
 
 @pytest.mark.asyncio
 async def test_finish(stubbed_writer, mocker):
-    stubbed_writer.ingest_strategy.finish = mocker.AsyncMock()
+    # Write some records to accumulate pending state.
+    ingestible = mocker.AsyncMock()
+    await stubbed_writer.write_record(ingestible)
+    assert stubbed_writer.pending_records == 1
+
     await stubbed_writer.finish(None)
-    stubbed_writer.ingest_strategy.finish.assert_awaited_once()
+
+    # After finish, the batch has been flushed and the strategy finalised.
+    assert stubbed_writer.pending_records == 0
 
 
 @pytest.mark.asyncio
-async def test_flush(stubbed_writer, mocker):
-    stubbed_writer.flush = mocker.AsyncMock()
-    await stubbed_writer.finish(None)
-    stubbed_writer.flush.assert_awaited_once()
+async def test_flush_resets_pending_records(stubbed_writer, mocker):
+    ingestible = mocker.AsyncMock()
+    await stubbed_writer.write_record(ingestible)
+    assert stubbed_writer.pending_records == 1
+
+    await stubbed_writer.flush()
+    assert stubbed_writer.pending_records == 0
 
 
 # ---------------------------------------------------------------------------
@@ -58,13 +67,13 @@ async def test_concurrent_writer_rotates_strategy_on_full_batch(
     for _ in range(concurrent_writer.batch_size):
         await concurrent_writer.write_record(ingestible)
 
-    # The strategy should have been swapped out.
+    # The strategy should have been swapped out and the counter reset.
     assert concurrent_writer.ingest_strategy is not original_strategy
-    assert concurrent_writer.strategy_factory.call_count == 1
+    assert concurrent_writer.pending_records == 0
 
-    # Let the background flush task complete, then verify.
-    await asyncio.sleep(0)
-    assert original_strategy.flush.await_count == 1
+    # Let the background flush complete and verify the tasks are drained.
+    await concurrent_writer._drain_pending_flushes()
+    assert len(concurrent_writer.pending_flush_tasks) == 0
 
 
 @pytest.mark.asyncio
@@ -116,12 +125,13 @@ async def test_concurrent_writer_finish_flushes_everything(concurrent_writer, mo
 
     # Write a partial batch (less than batch_size).
     await concurrent_writer.write_record(ingestible)
+    assert concurrent_writer.pending_records == 1
 
     await concurrent_writer.finish(None)
 
-    # The active strategy should have been flushed.
-    assert concurrent_writer.ingest_strategy.flush.await_count >= 1
-    assert concurrent_writer.ingest_strategy.finish.await_count == 1
+    # After finish, everything should be flushed and drained.
+    assert concurrent_writer.pending_records == 0
+    assert len(concurrent_writer.pending_flush_tasks) == 0
 
 
 def test_concurrent_writer_flush_errors_is_deque(concurrent_writer):

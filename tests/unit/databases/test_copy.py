@@ -80,6 +80,41 @@ async def test_start_persists_counts_for_logging(subject):
 
 
 @pytest.mark.asyncio
+async def test_start_logs_histogram(subject, mocker):
+    """start() should log a histogram of type counts in sorted order."""
+    subject.type_retriever.preview_node_count = AsyncMock(
+        side_effect=lambda t: {"Person": 10, "Address": 200}[t]
+    )
+    subject.type_retriever.preview_relationship_count = AsyncMock(
+        side_effect=lambda t: {"KNOWS": 5, "LIVES_AT": 100}[t]
+    )
+    mock_logger = mocker.patch.object(subject, "logger")
+
+    await subject.start(_make_step_context())
+
+    # Build the rendered log messages by applying %-formatting to each call.
+    rendered = []
+    for call in mock_logger.info.call_args_list:
+        fmt = call.args[0]
+        args = call.args[1:]
+        rendered.append(fmt % args if args else fmt)
+
+    # Verify the histogram section headers.
+    assert any("Node type histogram" in msg for msg in rendered)
+    assert any("Relationship type histogram" in msg for msg in rendered)
+
+    # Verify individual type counts appear (sorted: Address before Person).
+    assert any("Address" in msg and "200" in msg for msg in rendered)
+    assert any("Person" in msg and "10" in msg for msg in rendered)
+    assert any("LIVES_AT" in msg and "100" in msg for msg in rendered)
+    assert any("KNOWS" in msg and "5" in msg for msg in rendered)
+
+    # Verify totals.
+    assert any("Total nodes: 210" in msg for msg in rendered)
+    assert any("Total relationships: 105" in msg for msg in rendered)
+
+
+@pytest.mark.asyncio
 async def test_extract_records_respects_start_sort_order(subject, mocker):
     """extract_records should iterate types in the order established by start()."""
     # Make Address larger so it sorts first after start().
@@ -132,6 +167,15 @@ async def test_extract_records_respects_start_sort_order(subject, mocker):
 
 @pytest.mark.asyncio
 async def test_extract_records(subject, mocker):
+    # Initialize via start() so sorting and histogram logging are exercised.
+    subject.type_retriever.preview_node_count = AsyncMock(
+        side_effect=lambda t: {"Person": 2, "Address": 2}[t]
+    )
+    subject.type_retriever.preview_relationship_count = AsyncMock(
+        side_effect=lambda t: {"KNOWS": 2, "LIVES_AT": 2}[t]
+    )
+    await subject.start(_make_step_context())
+
     people = async_generator(
         Node("Person", {"name": "Bob"}),
         Node("Person", {"name": "Alice"}),
@@ -165,8 +209,14 @@ async def test_extract_records(subject, mocker):
         ),
     )
 
-    subject.convert_node_to_ingest = mocker.Mock()
-    subject.convert_relationship_to_ingest = mocker.Mock()
+    # Tagging lambdas: convert_* returns a tagged tuple carrying the actual data,
+    # so we can assert on real content rather than mock call counts.
+    subject.convert_node_to_ingest = mocker.Mock(side_effect=lambda n: ("node", n.type))
+    subject.convert_relationship_to_ingest = mocker.Mock(
+        side_effect=lambda r: ("rel", r.relationship.type)
+    )
+    # After start() with equal counts, order is stable (Person before Address,
+    # KNOWS before LIVES_AT — the original insertion order).
     subject.type_retriever.get_nodes_of_type.side_effect = [people, addresses]
     subject.type_retriever.get_relationships_of_type_between.side_effect = [
         knows_rels,
@@ -175,9 +225,17 @@ async def test_extract_records(subject, mocker):
 
     records = [record async for record in subject.extract_records()]
 
-    # 4 nodes + 4 relationships
+    # 4 nodes + 4 relationships = 8 tagged records.
     assert_that(records, has_length(8))
-    assert subject.type_retriever.get_relationships_of_type_between.call_count == 2
+    # Verify actual content: nodes come first (by type), then relationships.
+    assert records[0] == ("node", "Person")
+    assert records[1] == ("node", "Person")
+    assert records[2] == ("node", "Address")
+    assert records[3] == ("node", "Address")
+    assert records[4] == ("rel", "KNOWS")
+    assert records[5] == ("rel", "KNOWS")
+    assert records[6] == ("rel", "LIVES_AT")
+    assert records[7] == ("rel", "LIVES_AT")
 
 
 def test_convert_node_to_ingest(subject):
@@ -234,6 +292,15 @@ def concurrent_subject(mocker, basic_schema):
 @pytest.mark.asyncio
 async def test_concurrent_copier_extract_records(concurrent_subject, mocker):
     """All node types are fetched first, then all relationship types."""
+    # Initialize via start() so sorting and histogram logging are exercised.
+    concurrent_subject.type_retriever.preview_node_count = AsyncMock(
+        side_effect=lambda t: {"Person": 2, "Address": 2}[t]
+    )
+    concurrent_subject.type_retriever.preview_relationship_count = AsyncMock(
+        side_effect=lambda t: {"KNOWS": 1, "LIVES_AT": 1}[t]
+    )
+    await concurrent_subject.start(_make_step_context())
+
     people = async_generator(
         Node("Person", {"name": "Bob"}),
         Node("Person", {"name": "Alice"}),
@@ -257,8 +324,13 @@ async def test_concurrent_copier_extract_records(concurrent_subject, mocker):
         ),
     )
 
-    concurrent_subject.convert_node_to_ingest = mocker.Mock()
-    concurrent_subject.convert_relationship_to_ingest = mocker.Mock()
+    # Tagging lambdas to carry actual data through the pipeline.
+    concurrent_subject.convert_node_to_ingest = mocker.Mock(
+        side_effect=lambda n: ("node", n.type)
+    )
+    concurrent_subject.convert_relationship_to_ingest = mocker.Mock(
+        side_effect=lambda r: ("rel", r.relationship.type)
+    )
     concurrent_subject.type_retriever.get_nodes_of_type.side_effect = [
         people,
         addresses,
@@ -270,12 +342,16 @@ async def test_concurrent_copier_extract_records(concurrent_subject, mocker):
 
     records = [record async for record in concurrent_subject.extract_records()]
 
-    # 4 nodes + 2 relationships = 6 records total
+    # 4 nodes + 2 relationships = 6 tagged records.
     assert_that(records, has_length(6))
-    assert (
-        concurrent_subject.type_retriever.get_relationships_of_type_between.call_count
-        == 2
-    )
+    # Nodes come first (4), then relationships (2) — order within a group may
+    # vary due to concurrency, so use sets for the group checks.
+    node_records = [r for r in records if r[0] == "node"]
+    rel_records = [r for r in records if r[0] == "rel"]
+    assert len(node_records) == 4
+    assert {r[1] for r in node_records} == {"Person", "Address"}
+    assert len(rel_records) == 2
+    assert {r[1] for r in rel_records} == {"KNOWS", "LIVES_AT"}
 
 
 @pytest.mark.asyncio
