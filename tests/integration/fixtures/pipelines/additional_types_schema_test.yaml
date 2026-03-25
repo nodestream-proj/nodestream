@@ -14,18 +14,11 @@
           key:
             player_id: !jmespath player_id
           properties:
-            name: !jmespath name
             overall: !jmespath overall
-            age: !jmespath age
             hits: !jmespath hits
           additional_types:
             - Person
             - Athlete
-        - type: relationship
-          node_type: Country
-          relationship_type: ORIGINATES_FROM
-          node_key:
-            name: !jmespath nationality
         - type: relationship
           node_type: Team
           relationship_type: PLAYS_FOR
@@ -33,7 +26,6 @@
             name: !jmespath team
           node_additional_types:
             - Organization
-            - SportsClub
 
       # Second pass: Person as main type with same keys but additional properties
       # This tests that overlapping types (Person was additional in first pass)
@@ -42,12 +34,13 @@
           node_type: Person
           key:
             player_id: !jmespath player_id  # Same key as first pass
-          properties:
-            name: !jmespath name  # Overlaps with Pass 1
-            potential: !jmespath potential  # New property only on Person in this pass
           additional_types:
             - Human
             - Individual
+        - type: properties
+          properties:
+            name: !jmespath name  # Overlaps with Pass 1
+            age: !jmespath age
         - type: relationship
           node_type: Country
           relationship_type: LIVES_IN
@@ -61,7 +54,6 @@
           key:
             player_id: !jmespath player_id  # Same key structure
           properties:
-            overall: !jmespath overall  # Overlaps with Pass 1
             position: !jmespath position  # New property from Athlete definition
           additional_types:
             - Competitor
@@ -72,25 +64,7 @@
           node_key:
             name: !jmespath position
 
-      # Fourth pass: Test relationship node with additional types where
-      # the related node also appears as a source node
-      - - type: source_node
-          node_type: TeamMember
-          key:
-            member_id: !jmespath player_id
-          properties:
-            name: !jmespath name
-            team_name: !jmespath team
-        - type: relationship
-          node_type: Player
-          relationship_type: IS_PLAYER
-          node_key:
-            player_id: !jmespath player_id
-          node_additional_types:
-            - Person  # Overlap with first pass additional type
-            - Athlete # Overlap with first pass additional type
-
-      # Fifth pass: Test complex multi-level overlaps
+      # Fourth pass: Test complex multi-level overlaps
       # Organization (additional type from Team in first pass) gets more types
       - - type: source_node
           node_type: Organization

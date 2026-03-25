@@ -1,15 +1,27 @@
+from copy import deepcopy
+
 import pytest
 from hamcrest import assert_that, has_length
 
 from nodestream.databases.copy import Copier
 from nodestream.model import Node, Relationship, RelationshipWithNodes
+from nodestream.schema import Adjacency, AdjacencyCardinality, Cardinality
 
 
 @pytest.fixture
 def subject(mocker, basic_schema):
-    return Copier(
-        mocker.Mock(), basic_schema, ["Person", "Address"], ["KNOWS", "LIVES_AT"]
+    # Use a schema that declares the adjacencies we expect to copy so that the
+    # copier always exercises the schema-driven relationship path.
+    schema = deepcopy(basic_schema)
+    schema.add_adjacency(
+        Adjacency("Person", "Person", "KNOWS"),
+        AdjacencyCardinality(Cardinality.SINGLE, Cardinality.MANY),
     )
+    schema.add_adjacency(
+        Adjacency("Person", "Address", "LIVES_AT"),
+        AdjacencyCardinality(Cardinality.SINGLE, Cardinality.MANY),
+    )
+    return Copier(mocker.Mock(), schema, ["Person", "Address"], ["KNOWS", "LIVES_AT"])
 
 
 async def async_generator(*items):
@@ -55,15 +67,16 @@ async def test_extract_records(subject, mocker):
     subject.convert_node_to_ingest = mocker.Mock()
     subject.convert_relationship_to_ingest = mocker.Mock()
     subject.type_retriever.get_nodes_of_type.side_effect = [people, addresses]
-    subject.type_retriever.get_relationships_of_type.side_effect = [
+    subject.type_retriever.get_relationships_of_type_between.side_effect = [
         knows_rels,
         lives_at_rels,
     ]
 
     records = [record async for record in subject.extract_records()]
+
+    # 4 nodes + 4 relationships
     assert_that(records, has_length(8))
-    subject.convert_node_to_ingest.call_count == 4
-    subject.convert_relationship_to_ingest.call_count == 4
+    assert subject.type_retriever.get_relationships_of_type_between.call_count == 2
 
 
 def test_convert_node_to_ingest(subject):
@@ -71,6 +84,23 @@ def test_convert_node_to_ingest(subject):
     output_node = Node("Person", key_values={"name": "bob"}, properties={"age": 30})
     ingest = subject.convert_node_to_ingest(input_node)
     assert ingest == output_node.into_ingest()
+
+
+def test_convert_node_to_ingest_with_unknown_type_does_not_error(subject):
+    """reorganize_node_key_properties should be a no-op when the type is unknown."""
+    # Use a node type that is not present in the basic_schema fixture.
+    input_node = Node("UnknownType", properties={"name": "bob"})
+    # This should not raise, and key_values should remain empty.
+    ingest = subject.convert_node_to_ingest(input_node)
+    assert ingest.source.key_values == {}
+
+
+def test_convert_node_to_ingest_with_none_type_does_not_error(subject):
+    """reorganize_node_key_properties should be a no-op when the node type is None."""
+    input_node = Node(type=None, properties={"name": "bob"})
+    ingest = subject.convert_node_to_ingest(input_node)
+    # When type is None, get_node_type_by_name returns None and the method returns early.
+    assert ingest.source.key_values == {}
 
 
 def test_convert_relationship_to_ingest(subject):

@@ -50,6 +50,11 @@ class NullRetriver(TypeRetriever):
     def get_nodes_of_type(self, _: str) -> AsyncGenerator[Node, None]:
         return empty_async_generator()
 
+    def get_relationships_of_type_between(
+        self, __: str, ___: str, ____: str
+    ) -> AsyncGenerator[RelationshipWithNodes, None]:
+        return empty_async_generator()
+
     def get_relationships_of_type(
         self, _: str
     ) -> AsyncGenerator[RelationshipWithNodes, None]:

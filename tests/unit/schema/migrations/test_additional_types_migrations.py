@@ -42,7 +42,7 @@ def subject(empty_migration_graph, tmp_path):
 def schema_with_additional_types():
     """A schema with a source node that has additional types."""
     schema = Schema()
-    coordinator = SchemaExpansionCoordinator(schema)
+    coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
 
     # Create source node with additional types
     interpretation = SourceNodeInterpretation(
@@ -63,7 +63,7 @@ def schema_with_additional_types():
 def schema_with_relationship_additional_types():
     """A schema with relationships involving additional types."""
     schema = Schema()
-    coordinator = SchemaExpansionCoordinator(schema)
+    coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
 
     # Source node with additional types
     source_interpretation = SourceNodeInterpretation(
@@ -203,7 +203,7 @@ async def test_migration_merges_overlapping_additional_types(subject):
     """Test that migrations handle types that appear both as main and additional types."""
     # Start with Player -> Person (additional)
     schema1 = Schema()
-    coord1 = SchemaExpansionCoordinator(schema1)
+    coord1 = SchemaExpansionCoordinator(schema1, include_additional_types=True)
 
     source1 = SourceNodeInterpretation(
         node_type="Player",
@@ -216,7 +216,7 @@ async def test_migration_merges_overlapping_additional_types(subject):
 
     # Now Person becomes main type with additional properties
     schema2 = Schema()
-    coord2 = SchemaExpansionCoordinator(schema2)
+    coord2 = SchemaExpansionCoordinator(schema2, include_additional_types=True)
 
     source1_copy = SourceNodeInterpretation(
         node_type="Player",
@@ -255,7 +255,7 @@ async def test_migration_merges_overlapping_additional_types(subject):
 async def test_migration_with_multiple_passes(subject):
     """Test migration with complex multi-pass additional types scenario."""
     schema = Schema()
-    coordinator = SchemaExpansionCoordinator(schema)
+    coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
 
     # Pass 1: Player with Person and Athlete as additional
     pass1 = SourceNodeInterpretation(
