@@ -2,6 +2,7 @@ import asyncio
 from logging import getLogger
 from typing import Any, AsyncGenerator, Iterable, Optional
 
+
 from nodestream.pipeline.extractors.queues.extractor import QueueConnector
 
 from ..credential_utils import AwsClientFactory
