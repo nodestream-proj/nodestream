@@ -6,6 +6,7 @@ from nodestream.interpreting.interpretations.relationship_interpretation import 
     InvalidKeyLengthError,
     RelationshipInterpretation,
 )
+from nodestream.model import RelationshipCreationRule
 from nodestream.schema import Cardinality
 
 from ...stubs import StubbedValueProvider
@@ -336,6 +337,32 @@ def test_relationship_interpretation_with_properties_from_value_provider(blank_c
     assert_that(
         blank_context.desired_ingest.relationships[0].relationship.properties,
         has_entries({"prop": "value"}),
+    )
+
+
+def test_relationship_interpretation_creation_rule_wired_through(blank_context):
+    RelationshipInterpretation(
+        node_type="Test",
+        relationship_type="IS_TEST",
+        node_key={"hello": "world"},
+        relationship_key={"reason": "works_with"},
+        relationship_creation_rule="MERGE_KEY",
+    ).interpret(blank_context)
+    assert_that(
+        blank_context.desired_ingest.relationships[0].relationship_creation_rule,
+        equal_to(RelationshipCreationRule.MERGE_KEY),
+    )
+
+
+def test_relationship_interpretation_defaults_to_eager_creation_rule(blank_context):
+    RelationshipInterpretation(
+        node_type="Test",
+        relationship_type="IS_TEST",
+        node_key={"hello": "world"},
+    ).interpret(blank_context)
+    assert_that(
+        blank_context.desired_ingest.relationships[0].relationship_creation_rule,
+        equal_to(RelationshipCreationRule.EAGER),
     )
 
 
