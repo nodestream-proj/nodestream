@@ -1,4 +1,3 @@
-import asyncio
 from dataclasses import asdict, dataclass, field
 from logging import getLogger
 from typing import TYPE_CHECKING, List, Tuple
@@ -29,17 +28,15 @@ class DesiredIngestion:
         await strategy.ingest_source_node(self.source, self.source_node_creation_rule)
 
     async def ingest_relationships(self, strategy: "IngestionStrategy"):
-        await asyncio.gather(
-            *(
-                strategy.ingest_relationship(relationship)
-                for relationship in self.relationships
-            )
-        )
+        # Sequential to avoid yielding back to an async extractor between each
+        # relationship; the strategy methods are synchronous buffer operations so
+        # running them serially is cheaper than the gather() scheduling overhead.
+        for relationship in self.relationships:
+            await strategy.ingest_relationship(relationship)
 
     async def run_ingest_hooks(self, strategy: "IngestionStrategy"):
-        await asyncio.gather(
-            *(strategy.run_hook(hook_req) for hook_req in self.hook_requests)
-        )
+        for hook_req in self.hook_requests:
+            await strategy.run_hook(hook_req)
 
     def can_perform_ingest(self):
         # We can do the main part of the ingest if the source node is valid.

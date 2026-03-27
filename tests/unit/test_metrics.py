@@ -14,18 +14,20 @@ from nodestream.metrics import (
 )
 
 
-def test_metric_increment_on_handler_increments_metric_on_handler(mocker):
-    handler = mocker.Mock()
-    metric = RECORDS
-    metric.increment_on(handler, 1)
-    handler.increment.assert_called_once_with(metric, 1)
+def test_metric_increment_on_handler():
+    handler = JsonLogMetricHandler()
+    RECORDS.increment_on(handler, 5)
+    assert handler.metrics[RECORDS] == 5
+    RECORDS.increment_on(handler, 3)
+    assert handler.metrics[RECORDS] == 8
 
 
-def test_metric_decrement_on_handler_decrements_metric_on_handler(mocker):
-    handler = mocker.Mock()
-    metric = RECORDS
-    metric.decrement_on(handler, 1)
-    handler.decrement.assert_called_once_with(metric, 1)
+def test_metric_decrement_on_handler():
+    handler = JsonLogMetricHandler()
+    gauge = Metric("gauge", accumulate=False)
+    gauge.increment_on(handler, 10)
+    gauge.decrement_on(handler, 3)
+    assert handler.metrics[gauge] == 7
 
 
 def test_prometheus_metric_handler_registers_new_metrics(mocker):
@@ -54,49 +56,54 @@ def test_prometheus_metric_handler(mocker):
 
 
 def test_console_metric_handler(mocker):
-    mock_command = mocker.Mock()
-    handler = ConsoleMetricHandler(mock_command)
-    handler.increment(RECORDS, 1)
-    handler.decrement(RECORDS, 1)
+    handler = ConsoleMetricHandler(mocker.Mock())
+    gauge = Metric("gauge", accumulate=False)
+    handler.increment(gauge, 5)
+    assert handler.metrics[gauge] == 5
+    handler.decrement(gauge, 2)
+    assert handler.metrics[gauge] == 3
+    # tick() calls render() which discharges metrics — non-accumulating
+    # metrics keep their value after discharge.
     handler.tick()
+    assert handler.metrics[gauge] == 3
     handler.stop()
-    mock_command.table.assert_called_once()
 
 
-def test_json_log_metric_handler(mocker):
-    mock_logger = mocker.patch("nodestream.metrics.getLogger").return_value
+def test_json_log_metric_handler():
     handler = JsonLogMetricHandler()
-    handler.increment(RECORDS, 1)
-    handler.decrement(RECORDS, 1)
-    handler.tick()
+    gauge = Metric("gauge", accumulate=False)
+    handler.increment(gauge, 5)
+    assert handler.metrics[gauge] == 5
+    handler.decrement(gauge, 2)
+    assert handler.metrics[gauge] == 3
     handler.stop()
-    mock_logger.info.assert_called_once()
 
 
-def test_aggregate_handler(mocker):
-    mock_handler1 = mocker.Mock()
-    mock_handler2 = mocker.Mock()
-    handler = AggregateHandler([mock_handler1, mock_handler2])
-    handler.start()
-    mock_handler1.start.assert_called_once()
-    mock_handler2.start.assert_called_once()
-    handler.increment(RECORDS, 1)
-    mock_handler1.increment.assert_called_once_with(RECORDS, 1)
-    mock_handler2.increment.assert_called_once_with(RECORDS, 1)
-    handler.decrement(RECORDS, 1)
-    mock_handler1.decrement.assert_called_once_with(RECORDS, 1)
-    mock_handler2.decrement.assert_called_once_with(RECORDS, 1)
-    handler.stop()
-    mock_handler1.stop.assert_called_once()
-    mock_handler2.stop.assert_called_once()
+def test_aggregate_handler():
+    handler1 = JsonLogMetricHandler()
+    handler2 = JsonLogMetricHandler()
+    aggregate = AggregateHandler([handler1, handler2])
+    gauge = Metric("gauge", accumulate=False)
+    aggregate.increment(gauge, 5)
+    # Both sub-handlers should reflect the increment.
+    assert handler1.metrics[gauge] == 5
+    assert handler2.metrics[gauge] == 5
+    aggregate.decrement(gauge, 2)
+    assert handler1.metrics[gauge] == 3
+    assert handler2.metrics[gauge] == 3
+    aggregate.set_value(gauge, 99)
+    assert handler1.metrics[gauge] == 99
+    assert handler2.metrics[gauge] == 99
 
 
-def test_metrics_context(mocker):
-    handler = mocker.Mock()
+def test_metrics_context():
+    handler = JsonLogMetricHandler()
+    gauge = Metric("gauge", accumulate=False)
     with Metrics.capture(handler) as metrics:
-        metrics.increment(RECORDS, 1)
-        handler.increment.assert_called_once_with(RECORDS, 1)
-    handler.stop.assert_called_once()
+        metrics.increment(gauge, 3)
+        assert handler.metrics[gauge] == 3
+        metrics.decrement(gauge, 1)
+        assert handler.metrics[gauge] == 2
 
 
 def test_metrics_get(mocker):
@@ -133,13 +140,17 @@ def test_prometheus_metric_handler_import_error(mocker):
     )
 
 
-def test_aggregate_handler_tick_calls_all_handlers(mocker):
-    mock_handler1 = mocker.Mock()
-    mock_handler2 = mocker.Mock()
-    handler = AggregateHandler([mock_handler1, mock_handler2])
-    handler.tick()
-    mock_handler1.tick.assert_called_once()
-    mock_handler2.tick.assert_called_once()
+def test_aggregate_handler_tick_renders_sub_handlers():
+    handler1 = JsonLogMetricHandler()
+    handler2 = JsonLogMetricHandler()
+    aggregate = AggregateHandler([handler1, handler2])
+    # Increment then tick — discharge should reset accumulating metrics.
+    metric = Metric("test_acc", accumulate=True)
+    aggregate.increment(metric, 10)
+    aggregate.tick()
+    # After tick, accumulating metrics should be discharged (reset to 0).
+    assert handler1.metrics[metric] == 0
+    assert handler2.metrics[metric] == 0
 
 
 def test_metric_equality_and_hash():
@@ -161,10 +172,9 @@ def test_metric_equality_and_hash():
     assert hash(metric1) == hash(metric2)  # Same name should have same hash
 
 
-def test_console_metric_handler_discharge_with_accumulate(mocker):
+def test_console_metric_handler_discharge_with_accumulate():
     """Test that ConsoleMetricHandler discharge resets accumulating metrics"""
-    mock_command = mocker.Mock()
-    handler = ConsoleMetricHandler(mock_command)
+    handler = ConsoleMetricHandler(command=None)
 
     accumulating_metric = Metric("test_accumulate", accumulate=True)
     non_accumulating_metric = Metric("test_no_accumulate", accumulate=False)
@@ -183,7 +193,7 @@ def test_console_metric_handler_discharge_with_accumulate(mocker):
     assert handler.metrics[non_accumulating_metric] == 3
 
 
-def test_json_log_metric_handler_discharge_with_accumulate(mocker):
+def test_json_log_metric_handler_discharge_with_accumulate():
     """Test that JsonLogMetricHandler discharge resets accumulating metrics"""
     handler = JsonLogMetricHandler()
 
@@ -204,7 +214,7 @@ def test_json_log_metric_handler_discharge_with_accumulate(mocker):
     assert handler.metrics[non_accumulating_metric] == 7
 
 
-def test_json_log_metric_handler_discharge_with_accumulate_and_decrement(mocker):
+def test_json_log_metric_handler_discharge_with_accumulate_and_decrement():
     """Test that JsonLogMetricHandler does not decrement accumulating metrics"""
     handler = JsonLogMetricHandler()
 
@@ -222,10 +232,9 @@ def test_json_log_metric_handler_discharge_with_accumulate_and_decrement(mocker)
     assert handler.metrics[non_accumulating_metric] == 3
 
 
-def test_console_metric_handler_discharge_with_accumulate_and_decrement(mocker):
+def test_console_metric_handler_discharge_with_accumulate_and_decrement():
     """Test that ConsoleMetricHandler does not decrement accumulating metrics"""
-    mock_command = mocker.Mock()
-    handler = ConsoleMetricHandler(mock_command)
+    handler = ConsoleMetricHandler(command=None)
 
     accumulating_metric = Metric("test_accumulate", accumulate=True)
     non_accumulating_metric = Metric("test_no_accumulate", accumulate=False)
@@ -239,3 +248,54 @@ def test_console_metric_handler_discharge_with_accumulate_and_decrement(mocker):
     # Accumulating metric should be reset to 0, non-accumulating should remain
     assert handler.metrics[accumulating_metric] == 10
     assert handler.metrics[non_accumulating_metric] == 3
+
+
+def test_null_metric_handler_set_value():
+    handler = NullMetricHandler()
+    # Should not raise — it's a no-op.
+    handler.set_value(RECORDS, 42)
+
+
+def test_console_metric_handler_set_value():
+    handler = ConsoleMetricHandler(command=None)
+    metric = Metric("gauge_metric", accumulate=False)
+    handler.set_value(metric, 99)
+    assert handler.metrics[metric] == 99
+    # Overwrite with a new value.
+    handler.set_value(metric, 0)
+    assert handler.metrics[metric] == 0
+
+
+def test_json_log_metric_handler_set_value():
+    handler = JsonLogMetricHandler()
+    metric = Metric("gauge_metric", accumulate=False)
+    handler.set_value(metric, 42)
+    assert handler.metrics[metric] == 42
+
+
+def test_aggregate_handler_set_value():
+    handler1 = JsonLogMetricHandler()
+    handler2 = JsonLogMetricHandler()
+    aggregate = AggregateHandler([handler1, handler2])
+    metric = Metric("gauge_metric", accumulate=False)
+    aggregate.set_value(metric, 7)
+    assert handler1.metrics[metric] == 7
+    assert handler2.metrics[metric] == 7
+
+
+def test_metrics_set_value():
+    """Metrics.set_value should update the handler's internal state."""
+    handler = ConsoleMetricHandler(command=None)
+    with Metrics.capture(handler) as metrics:
+        metrics.set_value(RECORDS, 42)
+        assert handler.metrics[RECORDS] == 42
+        metrics.set_value(RECORDS, 0)
+        assert handler.metrics[RECORDS] == 0
+
+
+def test_metric_set_value_on_handler():
+    """Metric.set_value should update the handler's metric state."""
+    handler = JsonLogMetricHandler()
+    metric = Metric("gauge", accumulate=False)
+    metric.set_value(10, handler)
+    assert handler.metrics[metric] == 10

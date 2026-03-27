@@ -47,6 +47,12 @@ class NullQueryExecutor(QueryExecutor):
 
 
 class NullRetriver(TypeRetriever):
+    async def preview_node_count(self, _: str) -> int:
+        return 0
+
+    async def preview_relationship_count(self, _: str) -> int:
+        return 0
+
     def get_nodes_of_type(self, _: str) -> AsyncGenerator[Node, None]:
         return empty_async_generator()
 
@@ -65,11 +71,11 @@ class NullConnector(DatabaseConnector, alias="null"):
     def __init__(self, **_) -> None:
         pass
 
-    def make_migrator(self) -> TypeRetriever:
+    def make_migrator(self) -> Migrator:
         return NullMigrator()
 
     def make_query_executor(self) -> QueryExecutor:
         return NullQueryExecutor()
 
-    def make_type_retriever(self) -> TypeRetriever:
+    def make_type_retriever(self, **kwargs) -> TypeRetriever:
         return NullRetriver()
