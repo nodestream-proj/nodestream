@@ -2,7 +2,7 @@ from cleo.helpers import option
 
 from ..operations import ExecuteMigrations
 from .nodestream_command import NodestreamCommand
-from .shared_options import PROJECT_FILE_OPTION, TARGETS_OPTION
+from .shared_options import JSON_OPTION, PROJECT_FILE_OPTION, TARGETS_OPTION
 
 
 class RunMigrations(NodestreamCommand):
@@ -12,6 +12,7 @@ class RunMigrations(NodestreamCommand):
         PROJECT_FILE_OPTION,
         TARGETS_OPTION,
         option("all-targets", "a", "Run migrations on all targets", flag=True),
+        JSON_OPTION,
     ]
 
     async def handle_async(self):

@@ -39,5 +39,34 @@ async def test_retriever_get_nodes_of_type(retriver):
 
 @pytest.mark.asyncio
 async def test_retriever_get_relationships_of_type(retriver):
-    results = [r async for r in retriver.get_relationships_of_type("IS_FOO")]
+    results = [
+        r
+        async for r in retriver.get_relationships_of_type_between(
+            "Person", "Person", "KNOWS"
+        )
+    ]
     assert_that(results, empty())
+
+
+@pytest.mark.asyncio
+async def test_retriever_preview_node_count(retriver):
+    count = await retriver.preview_node_count("Person")
+    assert count == 0
+
+
+@pytest.mark.asyncio
+async def test_retriever_preview_relationship_count(retriver):
+    count = await retriver.preview_relationship_count("KNOWS")
+    assert count == 0
+
+
+def test_make_type_retriever_accepts_kwargs(connector):
+    """make_type_retriever should accept and ignore arbitrary kwargs."""
+    retriever = connector.make_type_retriever(limit=500, sample_ratio=50)
+    assert_that(retriever, instance_of(NullRetriver))
+
+
+def test_connector_get_type_retriever_forwards_kwargs(connector):
+    """get_type_retriever should forward kwargs to make_type_retriever."""
+    retriever = connector.get_type_retriever(limit=100, extra_param="value")
+    assert_that(retriever, instance_of(NullRetriver))

@@ -24,6 +24,10 @@ class Metric:
         """Decrement this metric on the given handler."""
         handler.decrement(self, value)
 
+    def set_value(self, value: Number, handler: "MetricHandler"):
+        """Set this metric on the given handler."""
+        handler.set_value(self, value)
+
     def register(self, handler: "MetricHandler"):
         handler.increment(self, 0)
         return self
@@ -70,6 +74,9 @@ class MetricHandler(ABC):
     def decrement(self, metric: Metric, value: Number): ...
 
     @abstractmethod
+    def set_value(self, metric: Metric, value: Number): ...
+
+    @abstractmethod
     def tick(self): ...
 
 
@@ -80,6 +87,9 @@ class NullMetricHandler(MetricHandler):
         pass
 
     def decrement(self, _: Metric, __: Number):
+        pass
+
+    def set_value(self, _: Metric, __: Number):
         pass
 
     def tick(self):
@@ -174,6 +184,9 @@ try:
         def decrement(self, metric: Metric, value: Number):
             self.get_gauge(metric).dec(value)
 
+        def set_value(self, metric: Metric, value: Number):
+            self.get_gauge(metric).set(value)
+
         def tick(self):
             pass
 
@@ -192,6 +205,9 @@ except ImportError:
             pass
 
         def decrement(self, metric: Metric, value: Number):
+            pass
+
+        def set_value(self, metric: Metric, value: Number):
             pass
 
         def tick(self):
@@ -216,6 +232,9 @@ class ConsoleMetricHandler(MetricHandler):
     def decrement(self, metric: Metric, value: Number):
         if not metric.accumulate:
             self.metrics[metric] = self.metrics.get(metric, 0) - value
+
+    def set_value(self, metric: Metric, value: Number):
+        self.metrics[metric] = value
 
     def discharge(self) -> dict[Metric, Number]:
         metrics = {}
@@ -261,6 +280,9 @@ class JsonLogMetricHandler(MetricHandler):
 
         return metrics
 
+    def set_value(self, metric: Metric, value: Number):
+        self.metrics[metric] = value
+
     def render(self):
         metrics = self.discharge()
         self.logger.info(
@@ -297,6 +319,10 @@ class AggregateHandler(MetricHandler):
         for handler in self.handlers:
             handler.decrement(metric, value)
 
+    def set_value(self, metric: Metric, value: Number):
+        for handler in self.handlers:
+            handler.set_value(metric, value)
+
     def tick(self):
         for handler in self.handlers:
             handler.tick()
@@ -323,6 +349,9 @@ class Metrics:
 
     def decrement(self, metric: Metric, value: Number = 1):
         metric.decrement_on(self.handler, value)
+
+    def set_value(self, metric: Metric, value: Number):
+        metric.set_value(value, self.handler)
 
     def tick(self):
         self.handler.tick()

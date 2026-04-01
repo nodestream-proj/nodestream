@@ -1,3 +1,4 @@
+import time
 from logging import getLogger
 from typing import Iterable, Optional
 
@@ -110,31 +111,34 @@ class RunPipeline(Operation):
             progress_reporter=self.create_progress_reporter(command, pipeline.name),
         )
 
-    def get_progress_indicator(
-        self, command: NodestreamCommand, pipeline_name: str
-    ) -> "ProgressIndicator":
-        if command.has_json_logging_set:
-            return JsonProgressIndicator(command, pipeline_name)
-
-        return SpinnerProgressIndicator(command, pipeline_name)
-
     def create_progress_reporter(
         self, command: NodestreamCommand, pipeline_name: str
     ) -> PipelineProgressReporter:
-        indicator = self.get_progress_indicator(command, pipeline_name)
-        metrics_interval_in_seconds = (
-            float(command.option("metrics-interval-in-seconds"))
-            if command.option("metrics-interval-in-seconds")
-            else None
-        )
-        return PipelineProgressReporter(
-            reporting_frequency=int(command.option("reporting-frequency")),
-            metrics_interval_in_seconds=metrics_interval_in_seconds,
-            callback=indicator.progress_callback,
-            on_start_callback=indicator.on_start,
-            on_finish_callback=indicator.on_finish,
-            on_fatal_error_callback=indicator.on_fatal_error,
-        )
+        return create_progress_reporter(command, pipeline_name)
+
+
+def create_progress_reporter(
+    command: NodestreamCommand, pipeline_name: str
+) -> PipelineProgressReporter:
+    """Build a PipelineProgressReporter wired to the appropriate indicator."""
+    if command.has_json_logging_set:
+        indicator = JsonProgressIndicator(command, pipeline_name)
+    else:
+        indicator = SpinnerProgressIndicator(command, pipeline_name)
+
+    metrics_interval_in_seconds = (
+        float(command.option("metrics-interval-in-seconds"))
+        if command.option("metrics-interval-in-seconds")
+        else None
+    )
+    return PipelineProgressReporter(
+        reporting_frequency=int(command.option("reporting-frequency")),
+        metrics_interval_in_seconds=metrics_interval_in_seconds,
+        callback=indicator.progress_callback,
+        on_start_callback=indicator.on_start,
+        on_finish_callback=indicator.on_finish,
+        on_fatal_error_callback=indicator.on_fatal_error,
+    )
 
 
 class ProgressIndicator:
@@ -162,19 +166,28 @@ class SpinnerProgressIndicator(ProgressIndicator):
     def __init__(self, command: NodestreamCommand, pipeline_name: str) -> None:
         super().__init__(command, pipeline_name)
         self.exception = None
+        self._start_time: float = 0.0
 
     def on_start(self):
+        self._start_time = time.monotonic()
         self.progress = self.command.progress_indicator()
         self.progress.start(f"Running pipeline: '{self.pipeline_name}'")
 
     def progress_callback(self, index, metrics: Metrics):
+        elapsed = time.monotonic() - self._start_time
+        rps = index / elapsed if elapsed > 0 else 0
         self.progress.set_message(
-            f"Currently processing record at index: <info>{index}</info>"
+            f"Record <info>{index}</info>  "
+            f"elapsed <info>{elapsed:.1f}s</info>  "
+            f"<info>{rps:.0f}</info> rec/s"
         )
         metrics.tick()
 
     def on_finish(self, metrics: Metrics):
-        self.progress.finish(f"Finished running pipeline: '{self.pipeline_name}'")
+        elapsed = time.monotonic() - self._start_time
+        self.progress.finish(
+            f"Finished running pipeline: '{self.pipeline_name}' in {elapsed:.1f}s"
+        )
         metrics.tick()
         if self.exception:
             raise self.exception
@@ -191,16 +204,31 @@ class JsonProgressIndicator(ProgressIndicator):
         super().__init__(command, pipeline_name)
         self.logger = getLogger()
         self.exception = None
+        self._start_time: float = 0.0
 
     def on_start(self):
+        self._start_time = time.monotonic()
         self.logger.info("Starting Pipeline")
 
     def progress_callback(self, index, metrics: Metrics):
-        self.logger.info("Processing Record", extra={"index": index})
+        elapsed = time.monotonic() - self._start_time
+        rps = index / elapsed if elapsed > 0 else 0
+        self.logger.info(
+            "Processing Record",
+            extra={
+                "index": index,
+                "elapsed_seconds": round(elapsed, 1),
+                "records_per_second": round(rps, 1),
+            },
+        )
         metrics.tick()
 
     def on_finish(self, metrics: Metrics):
-        self.logger.info("Pipeline Completed")
+        elapsed = time.monotonic() - self._start_time
+        self.logger.info(
+            "Pipeline Completed",
+            extra={"elapsed_seconds": round(elapsed, 1)},
+        )
         metrics.tick()
         if self.exception:
             raise self.exception

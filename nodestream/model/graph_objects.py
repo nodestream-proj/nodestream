@@ -224,7 +224,7 @@ class RelationshipWithNodes(DeduplicatableObject):
             self.relationship,
             outbound=True,
             node_creation_rule=NodeCreationRule.MATCH_ONLY,
-            relationship_creation_rule=RelationshipCreationRule.CREATE,
+            relationship_creation_rule=RelationshipCreationRule.EAGER,
         )
         return ingest
 

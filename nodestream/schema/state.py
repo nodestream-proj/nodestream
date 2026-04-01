@@ -478,6 +478,15 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
     def adjacencies(self) -> Iterable[Adjacency]:
         return self.cardinalities.keys()
 
+    def get_adjacencies_by_relationship_type(
+        self, relationship_type: str
+    ) -> Iterable[Adjacency]:
+        return (
+            adjacency
+            for adjacency in self.adjacencies
+            if adjacency.relationship_type == relationship_type
+        )
+
     def put_node_type(self, node_type: GraphObjectSchema):
         """Add a node type to the schema.
 
@@ -531,7 +540,9 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
             self.type_schemas[key] = GraphObjectSchema(name)
         return self.type_schemas[key]
 
-    def get_node_type_by_name(self, node_type_name: str) -> GraphObjectSchema:
+    def get_node_type_by_name(
+        self, node_type_name: str | None
+    ) -> Optional[GraphObjectSchema]:
         """Get a node type by name.
 
         If the node type does not exist, a new node type will be created.
@@ -542,6 +553,8 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
         Returns:
             The node type.
         """
+        if node_type_name is None:
+            return None
         return self.get_by_type_and_object_type(GraphObjectType.NODE, node_type_name)
 
     def get_relationship_type_by_name(
@@ -677,13 +690,22 @@ class UnboundAdjacency:
     from_cardinality: Cardinality
     to_cardinality: Cardinality
 
-    def bind(self, schema: Schema, aliases: LayeredDict[str, str]):
+    def bind(
+        self, schema: Schema, aliases: LayeredDict[str, str]
+    ) -> tuple[Adjacency, AdjacencyCardinality]:
         from_type = aliases.get(self.from_type_or_alias, self.from_type_or_alias)
         to_type = aliases.get(self.to_type_or_alias, self.to_type_or_alias)
-        schema.add_adjacency(
-            Adjacency(from_type, to_type, self.relationship_type),
-            AdjacencyCardinality(self.from_cardinality, self.to_cardinality),
+        adjacency = Adjacency(
+            from_node_type=from_type,
+            to_node_type=to_type,
+            relationship_type=self.relationship_type,
         )
+        cardinality = AdjacencyCardinality(
+            self.from_cardinality,
+            self.to_cardinality,
+        )
+        schema.add_adjacency(adjacency, cardinality)
+        return adjacency, cardinality
 
 
 @dataclass(slots=True, frozen=True)
@@ -703,7 +725,9 @@ class SchemaExpansionCoordinator:
         default_factory=LayeredList
     )
     # Maps node types to their additional types for relationship expansion
-    additional_types_map: Dict[str, Tuple[str, ...]] = field(default_factory=dict)
+    additional_types_map: LayeredDict[str, Tuple[str, ...]] = field(
+        default_factory=LayeredDict
+    )
 
     def on_node_schema(
         self,
@@ -814,11 +838,13 @@ class SchemaExpansionCoordinator:
         self.unbound_adjacencies.increment_context_level()
         self.unbound_aliases.increment_context_level()
         self.aliases.increment_context_level()
+        self.additional_types_map.increment_context_level()
 
     def decrement_context_level(self):
         self.unbound_adjacencies.decrement_context_level()
         self.unbound_aliases.decrement_context_level()
         self.aliases.decrement_context_level()
+        self.additional_types_map.decrement_context_level()
 
     def register_additional_types(
         self, main_type: str, additional_types: Tuple[str, ...]
@@ -832,19 +858,66 @@ class SchemaExpansionCoordinator:
             main_type: The main node type.
             additional_types: The additional types associated with the main type.
         """
-        if additional_types:
-            self.additional_types_map[main_type] = additional_types
+        if additional_types and self.include_additional_types:
+            # Merge with any existing additional types for this main_type in the
+            # current context level so that multiple registrations in the same
+            # context accumulate rather than overwrite. Preserve a stable
+            # insertion order to keep schema expansion deterministic.
+            existing = self.additional_types_map.get(main_type, tuple())
+            merged = existing + tuple(t for t in additional_types if t not in existing)
+            self.additional_types_map[main_type] = merged
+
+    def expand_additional_types(
+        self,
+        base_type: str,
+        additional_types: Tuple[str, ...],
+        fn: Callable[[GraphObjectSchema], None],
+    ) -> None:
+        """Expand and register additional types for a base node type.
+
+        When `include_additional_types` is enabled, this helper will:
+
+        - Invoke `fn` for each additional type's node schema, so that the
+          additional types share the same structural definition as the base.
+        - Register the additional types so that adjacencies and alias-level
+          properties are also expanded to them during `clear_aliases`.
+        """
+        if not additional_types or not self.include_additional_types:
+            return
+
+        for additional_type in additional_types:
+            self.on_node_schema(fn, node_type=additional_type)
+
+        self.register_additional_types(base_type, additional_types)
 
     def clear_aliases(self):
-        for unbound_adjacency in self.unbound_adjacencies:
-            unbound_adjacency.bind(self.schema, self.aliases)
+        # First, bind all unbound adjacencies for this context into concrete
+        # adjacencies on the underlying schema, keeping track of exactly which
+        # adjacencies were created as part of this pass.
+        base_adjacencies = self._bind_unbound_adjacencies()
 
         if not self.include_additional_types:
             return
 
+        # Then duplicate those adjacencies and any alias-level properties for
+        # additional types registered in this context.
+        self._expand_adjacencies_for_additional_types(base_adjacencies)
+        self._expand_properties_for_additional_types()
+
+    def _bind_unbound_adjacencies(
+        self,
+    ) -> list[tuple[Adjacency, AdjacencyCardinality]]:
+        base_adjacencies: list[tuple[Adjacency, AdjacencyCardinality]] = []
+        for unbound_adjacency in self.unbound_adjacencies:
+            base_adjacencies.append(unbound_adjacency.bind(self.schema, self.aliases))
+        return base_adjacencies
+
+    def _expand_adjacencies_for_additional_types(
+        self, base_adjacencies: list[tuple[Adjacency, AdjacencyCardinality]]
+    ) -> None:
         # Create duplicate adjacencies for additional types
-        adjacencies_to_add = []
-        for adjacency, cardinality in list(self.schema.cardinalities.items()):
+        adjacencies_to_add: list[tuple[Adjacency, AdjacencyCardinality]] = []
+        for adjacency, cardinality in base_adjacencies:
             from_types = [adjacency.from_node_type]
             to_types = [adjacency.to_node_type]
 
@@ -873,9 +946,31 @@ class SchemaExpansionCoordinator:
                     )
                     adjacencies_to_add.append((new_adjacency, cardinality))
 
-        # Add all the new adjacencies
         for adjacency, cardinality in adjacencies_to_add:
             self.schema.add_adjacency(adjacency, cardinality)
+
+    def _expand_properties_for_additional_types(self) -> None:
+        """Propagate alias-level properties to additional types in this context.
+
+        Properties defined via `properties` interpretations are accumulated on
+        aliases (for example, the `source_node` alias). When we register
+        additional types for a base node type, those alias-level properties
+        should also be applied to the additional types, but only within the
+        current schema-expansion context.
+        """
+        for alias, base_type in self.aliases.effective_items.items():
+            alias_schema = self.unbound_aliases.get(alias, None)
+            if alias_schema is None:
+                continue
+
+            additional_types = self.additional_types_map.get(base_type, tuple())
+            if not additional_types:
+                continue
+
+            for additional_type in additional_types:
+                target_schema = self.schema.get_node_type_by_name(additional_type)
+                for property_name, metadata in alias_schema.properties.items():
+                    target_schema.add_property(property_name, metadata)
 
 
 class ExpandsSchema:

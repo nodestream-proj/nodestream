@@ -90,3 +90,21 @@ def test_object_store_namespaced():
         pipeline.object_store.namespace.prefix,
         contains_string("simple_pipeline"),
     )
+
+
+def test_null_object_store_log_message(caplog):
+    """Loading a pipeline with default (null) ObjectStore should log a message."""
+    import logging
+
+    file_path = Path("tests/unit/pipeline/fixtures/simple_pipeline.yaml")
+    file_loader = PipelineFile(file_path)
+    with caplog.at_level(logging.INFO):
+        file_loader.load_pipeline()
+    assert any("null ObjectStore" in msg for msg in caplog.messages)
+
+
+def test_load_pipeline_for_introspection():
+    file_path = Path("tests/unit/pipeline/fixtures/simple_pipeline.yaml")
+    file_loader = PipelineFile(file_path)
+    pipeline = file_loader.load_pipeline_for_introspection()
+    assert_that(pipeline.steps, has_length(2))
