@@ -19,6 +19,10 @@ QUEUE_CONNECTOR_SUBCLASS_REGISTRY = SubclassRegistry()
 class QueueConnector(Pluggable, ABC):
     entrypoint_name = "queue_connectors"
 
+    @classmethod
+    def from_file_data(cls, *args, **kwargs):
+        return cls(*args, **kwargs)
+
     @abstractmethod
     async def poll(self) -> Iterable[Any]:
         raise NotImplementedError
@@ -41,7 +45,7 @@ class QueueExtractor(Extractor):
         connector_cls = QUEUE_CONNECTOR_SUBCLASS_REGISTRY.get(connector)
         return cls(
             record_format=object_format_cls(),
-            connector=connector_cls(**connector_args),
+            connector=connector_cls.from_file_data(**connector_args),
         )
 
     def __init__(

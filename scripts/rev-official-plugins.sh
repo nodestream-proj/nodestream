@@ -2,46 +2,106 @@
 
 set -e
 
-CURRENT_VERSION=#(poetry version -s)
+CURRENT_VERSION=$(poetry version -s)
 
-# Move up to the directory for the organization.
-cd .. 
+# Discover all plugin repos matching the nodestream-plugin-* prefix
+PLUGINS=(../nodestream-plugin-*)
 
-for plugin in $(ls | grep nodestream-plugin); do
-    cd $plugin
+for plugin_path in "${PLUGINS[@]}"; do
+    # Skip if the glob didn't match anything or entry isn't a directory
+    [ -d "$plugin_path" ] || continue
 
-    # Validate that the working directory is clean.
-    if [ -n "$(git status --porcelain)" ]; then
-        echo "Working directory is not clean."
-        exit 1
+    plugin=$(basename "$plugin_path")
+    cd "$plugin_path"
+
+    # Determine the default branch for this repository (prefer main, then master).
+    if git rev-parse --verify main >/dev/null 2>&1; then
+        DEFAULT_BRANCH=main
+    elif git rev-parse --verify master >/dev/null 2>&1; then
+        DEFAULT_BRANCH=master
+    else
+        DEFAULT_BRANCH=$(git branch --show-current)
     fi
 
-    # Validate that we are on the main branch.
-    if [ "$(git branch --show-current)" != "main" ]; then
-        echo "Not on main branch."
-        exit 1
+    echo "Stashing changes for $plugin"
+    git stash || true
+    git checkout "$DEFAULT_BRANCH"
+
+    # Keep pulls simple: only fast-forward. If we can't, skip this plugin and move on.
+    if ! git pull --ff-only origin "$DEFAULT_BRANCH"; then
+        echo "Cannot fast-forward $DEFAULT_BRANCH for $plugin; skipping this plugin."
+        cd - >/dev/null
+        continue
     fi
 
-    # Create a branch for the release.
-    git checkout -b "release-$CURRENT_VERSION"
+    # Checkout the release branch or create it if it doesn't exist.
+    if git show-ref --verify --quiet "refs/heads/release-$CURRENT_VERSION"; then
+        echo "Checking out existing local release-$CURRENT_VERSION"
+        git checkout "release-$CURRENT_VERSION"
+    elif git ls-remote --heads origin | grep -q "refs/heads/release-$CURRENT_VERSION"; then
+        echo "Creating local tracking branch release-$CURRENT_VERSION from origin"
+        git checkout -b "release-$CURRENT_VERSION" "origin/release-$CURRENT_VERSION"
+    else
+        echo "Creating new release-$CURRENT_VERSION from $DEFAULT_BRANCH"
+        git checkout -b "release-$CURRENT_VERSION" "$DEFAULT_BRANCH"
+    fi
+
     echo "Updating $plugin"
 
-    # Update the version number in the pyproject.toml file.
-    poetry version "$CURRENT_VERSION"
-    poetry add nodestream@^$CURRENT_VERSION
+    # Try multiple Python versions for this plugin's Poetry environment.
+    PYTHON_CANDIDATES=("3.13" "3.12" "3.11")
+    UPDATE_SUCCEEDED=false
 
-    # Commit the changes to the branch.
-    git add pyproject.toml
-    git commit -m "Release $CURRENT_VERSION"
-    
-    # Tag the commit with the version number.
-    git tag "$CURRENT_VERSION"
-    
-    # Push the branch and tag to the remote repository.
-    git push origin "release-$CURRENT_VERSION"
-    git push origin "$CURRENT_VERSION"
+    for PY_VER in "${PYTHON_CANDIDATES[@]}"; do
+        echo "Attempting update for $plugin using Python $PY_VER"
 
-    # Reset our state.
-    git checkout main
-    cd ..
+        # Try to switch Poetry's virtualenv to the requested Python version.
+        # If this fails (Python not installed), just try the next version.
+        if ! poetry env use "$PY_VER" >/dev/null 2>&1; then
+            echo "Python $PY_VER not available for $plugin; trying next version."
+            continue
+        fi
+
+        # Reset any partial changes before retrying with a new Python.
+        git restore pyproject.toml poetry.lock 2>/dev/null || true
+
+        # Update the version number in the pyproject.toml file.
+        if ! poetry version "$CURRENT_VERSION"; then
+            echo "Failed to bump version for $plugin with Python $PY_VER; trying next version."
+            continue
+        fi
+
+        # Attempt to update the nodestream dependency.
+        if poetry add "nodestream@^$CURRENT_VERSION"; then
+            UPDATE_SUCCEEDED=true
+            break
+        else
+            echo "Poetry dependency update failed for $plugin with Python $PY_VER; trying next version."
+        fi
+    done
+
+    if [ "$UPDATE_SUCCEEDED" = false ]; then
+        echo "All Python versions failed for $plugin; reverting and skipping this plugin."
+        git restore pyproject.toml poetry.lock 2>/dev/null || true
+        git checkout "$DEFAULT_BRANCH"
+        cd - >/dev/null
+        continue
+    fi
+
+    # Only commit/tag/push if there are actual changes.
+    if ! git diff --quiet; then
+        git add -A
+        git commit -m "Release $CURRENT_VERSION"
+        
+        # Tag the commit with the version number, forcing update if the tag exists.
+        git tag --force "$CURRENT_VERSION"
+        
+        git push origin "release-$CURRENT_VERSION"
+        git push origin "$CURRENT_VERSION"
+    else
+        echo "No changes to commit for $plugin; skipping commit, tag, and push."
+    fi
+
+    git checkout "$DEFAULT_BRANCH"
+    cd - >/dev/null
 done

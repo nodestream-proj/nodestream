@@ -1,0 +1,164 @@
+
+
+type Athlete @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    player_id: String
+
+    position: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    competesAtPosition: Position
+        @relationship(type: "COMPETES_AT", direction: OUT, properties: "CompetesAt")
+    
+
+}
+
+type Country @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    personLivesIn: [Person!]!
+        @relationship(type: "LIVES_IN", direction: IN, properties: "LivesIn")
+    
+
+    
+    organizationBasedIn: [Organization!]!
+        @relationship(type: "BASED_IN", direction: IN, properties: "BasedIn")
+    
+
+    # Outbound Relationships
+
+}
+
+type Organization @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    country: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    basedInCountry: Country
+        @relationship(type: "BASED_IN", direction: OUT, properties: "BasedIn")
+    
+
+}
+
+type Person @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    age: String
+
+    player_id: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    livesInCountry: Country
+        @relationship(type: "LIVES_IN", direction: OUT, properties: "LivesIn")
+    
+
+}
+
+type Player @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    player_id: String
+
+    overall: String
+
+    hits: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    # Outbound Relationships
+
+    
+    playsForTeam: Team
+        @relationship(type: "PLAYS_FOR", direction: OUT, properties: "PlaysFor")
+    
+
+}
+
+type Position @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    athleteCompetesAt: [Athlete!]!
+        @relationship(type: "COMPETES_AT", direction: IN, properties: "CompetesAt")
+    
+
+    # Outbound Relationships
+
+}
+
+type Team @exclude(operations: [CREATE, DELETE, UPDATE]) @queryOptions(limit: {default: 10})  {
+    # Node Properties
+
+    name: String
+
+    last_ingested_at: DateTime
+
+    # Inbound Relationships
+
+    
+    playerPlaysFor: [Player!]!
+        @relationship(type: "PLAYS_FOR", direction: IN, properties: "PlaysFor")
+    
+
+    # Outbound Relationships
+
+}
+interface PlaysFor @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface LivesIn @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface CompetesAt @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
+interface BasedIn @relationshipProperties {
+
+    last_ingested_at: DateTime
+
+}
