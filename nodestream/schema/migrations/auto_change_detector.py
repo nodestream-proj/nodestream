@@ -521,22 +521,36 @@ class AutoChangeDetector:
     def detect_node_index_changes(self):
         for pair in self.get_node_pairs(ignore_created_and_deleted=False):
             deleted_indexes, added_indexes = pair.get_index_drift()
-            self.deleted_node_property_indexes.update(
-                (pair.to_type.name, idx) for idx in deleted_indexes
-            )
-            self.added_node_property_indexes.update(
-                (pair.to_type.name, idx) for idx in added_indexes
-            )
+            # A missing from_type is represented by a sentinel with name="".
+            # Dropping an index from a type that didn't exist is nonsensical —
+            # skip deletions for newly created types (no prior state to drop from).
+            if pair.from_type.name:
+                self.deleted_node_property_indexes.update(
+                    (pair.to_type.name, idx) for idx in deleted_indexes
+                )
+            # A missing to_type means the type is being dropped; its indexes
+            # vanish with it, so skip additions for deleted types.
+            if pair.to_type.name:
+                self.added_node_property_indexes.update(
+                    (pair.to_type.name, idx) for idx in added_indexes
+                )
 
     def detect_relationship_index_changes(self):
         for pair in self.get_relationship_pairs(ignore_created_and_deleted=False):
             deleted_indexes, added_indexes = pair.get_index_drift()
-            self.deleted_relationship_property_indexes.update(
-                (pair.to_type.name, idx) for idx in deleted_indexes
-            )
-            self.added_relationship_property_indexes.update(
-                (pair.to_type.name, idx) for idx in added_indexes
-            )
+            # A missing from_type is represented by a sentinel with name="".
+            # Dropping an index from a type that didn't exist is nonsensical —
+            # skip deletions for newly created types (no prior state to drop from).
+            if pair.from_type.name:
+                self.deleted_relationship_property_indexes.update(
+                    (pair.to_type.name, idx) for idx in deleted_indexes
+                )
+            # A missing to_type means the type is being dropped; its indexes
+            # vanish with it, so skip additions for deleted types.
+            if pair.to_type.name:
+                self.added_relationship_property_indexes.update(
+                    (pair.to_type.name, idx) for idx in added_indexes
+                )
 
     def get_node_pairs(
         self, ignore_created_and_deleted: bool = True
