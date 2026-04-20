@@ -22,29 +22,29 @@ clean-test:
 .PHONY: clean
 clean: clean-pyc clean-test
 
-venv: poetry.lock
-	poetry install --all-extras
+venv: uv.lock
+	uv sync
 
 .PHONY: format
 format: venv
-	poetry run black nodestream tests
-	poetry run isort nodestream tests
-	poetry run ruff check nodestream tests --fix
+	uv run black nodestream tests
+	uv run isort nodestream tests
+	uv run ruff check nodestream tests --fix
 
 .PHONY: lint
 lint: venv
-	poetry run black nodestream tests --check
-	poetry run ruff check nodestream tests
-	poetry run isort nodestream tests --check-only
+	uv run black nodestream tests --check
+	uv run ruff check nodestream tests
+	uv run isort nodestream tests --check-only
 
 .PHONY: test-unit
 test-unit: venv
-	poetry run pytest -m "not e2e"
+	uv run pytest -m "not e2e"
 
 .PHONY: test-e2e
 test-e2e: venv
-	poetry run pytest -m "e2e"
+	uv run pytest -m "e2e"
 
 .PHONY: snapshot
 snapshot: venv
-	poetry run pytest --snapshot-update
+	uv run pytest --snapshot-update
