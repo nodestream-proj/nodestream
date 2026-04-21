@@ -253,6 +253,20 @@ def test_project_from_file():
     )
 
 
+def test_project_from_file_with_additional_types_flag():
+    file_name = Path(
+        "tests/unit/project/fixtures/simple_project_with_additional_types.yaml"
+    )
+    result: Project = Project.read_from_file(file_name)
+
+    # Ensure the flag is loaded from YAML
+    assert_that(result.include_additional_types, equal_to(True))
+
+    file_data = result.to_file_data()
+    # And that it round-trips through to_file_data
+    assert_that(file_data.get("include_additional_types"), equal_to(True))
+
+
 def test_project_from_file_missing_file():
     file_name = Path("tests/unit/project/fixtures/missing_project.yaml")
     with pytest.raises(FileNotFoundError):
@@ -296,6 +310,23 @@ def test_get_schema_with_overrides(project, mocker):
     project.make_schema.return_value.merge.assert_called_once_with(
         Schema.read_from_file.return_value
     )
+
+
+def test_get_schema_passes_include_additional_types_flag(mocker):
+    project = Project(scopes_by_name={}, plugins_by_name={}, targets_by_name={})
+    project.include_additional_types = True
+
+    # Patch the coordinator used by ExpandsSchema.make_schema so we can
+    # assert how it is constructed when get_schema is invoked.
+    coordinator_cls = mocker.patch(
+        "nodestream.schema.state.SchemaExpansionCoordinator", autospec=True
+    )
+
+    project.get_schema()
+
+    coordinator_cls.assert_called_once()
+    _, kwargs = coordinator_cls.call_args
+    assert_that(kwargs["include_additional_types"], equal_to(True))
 
 
 @pytest.mark.asyncio

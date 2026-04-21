@@ -42,9 +42,10 @@ def test_make_migrator_with_writer_args(mocker):
 
 def test_target_make_type_retriever(mocker):
     target = Target("test", {"a": "b"})
-    mock_retriever = mocker.patch("nodestream.databases.DatabaseConnector")
+    mock_connector = mocker.patch("nodestream.databases.DatabaseConnector")
     target.make_type_retriever()
-    mock_retriever.from_database_args.assert_called_once_with(a="b")
+    mock_connector.from_database_args.assert_called_once_with(a="b")
+    mock_connector.from_database_args.return_value.make_type_retriever.assert_called_once_with()
 
 
 def test_target_resolves_lazy_tags(mocker):

@@ -63,8 +63,9 @@ async def test_pipeline_interpretation_snapshot(
     snapshot.snapshot_dir = "tests/integration/snapshots"
     pipeline_file = get_pipeline_fixture_file_by_name(pipeline_name)
     definition = PipelineDefinition.from_path(pipeline_file)
+    results = await drive_definition_to_completion(definition)
     results_as_json = json.dumps(
-        [asdict(r) for r in (await drive_definition_to_completion(definition))],
+        [asdict(r) for r in results],
         default=set_default,
         indent=4,
         sort_keys=True,
@@ -78,6 +79,10 @@ async def test_pipeline_interpretation_snapshot(
 @pytest.mark.parametrize(
     "pipeline_name,format",
     [
+        # This list is intended to cover every pipeline fixture in
+        # tests/integration/fixtures/pipelines without additional-type expansion.
+        ("additional_types_schema_test.yaml", "plain"),
+        ("additional_types_schema_test.yaml", "graphql"),
         ("fifa_2021_player_data.yaml", "plain"),
         ("fifa_2021_player_data.yaml", "graphql"),
         ("airports.yaml", "plain"),
@@ -90,12 +95,49 @@ async def test_pipeline_interpretation_snapshot(
         ("multiple_passes.yaml", "graphql"),
     ],
 )
-async def test_pipeline_schema_inference(pipeline_name, format, snapshot):
+async def test_pipeline_schema_inference_without_additional_types(
+    pipeline_name, format, snapshot
+):
     printer = SchemaPrinter.from_name(format)
     definition = PipelineDefinition.from_path(
         get_pipeline_fixture_file_by_name(pipeline_name)
     )
-    result = printer.print_schema_to_string(definition.make_schema())
+    # Baseline: schema generation without additional label expansion.
+    result = printer.print_schema_to_string(
+        definition.make_schema(include_additional_types=False)
+    )
     snapshot.snapshot_dir = "tests/integration/snapshots"
     snapshot_file = f"schema_snapshot_{pipeline_name}_{format}.txt"
+    snapshot.assert_match(result, snapshot_file)
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "pipeline_name,format",
+    [
+        ("additional_types_schema_test.yaml", "plain"),
+        ("additional_types_schema_test.yaml", "graphql"),
+    ],
+)
+async def test_pipeline_schema_inference_with_additional_types_expansion(
+    pipeline_name, format, snapshot
+):
+    """Schema inference for pipelines where additional label expansion is enabled.
+
+    This test only covers the expanded case; the non-expanded behavior and
+    snapshots are validated by `test_pipeline_schema_inference_without_additional_types`.
+    """
+    printer = SchemaPrinter.from_name(format)
+    definition = PipelineDefinition.from_path(
+        get_pipeline_fixture_file_by_name(pipeline_name)
+    )
+
+    # With additional label expansion enabled.
+    result = printer.print_schema_to_string(
+        definition.make_schema(include_additional_types=True)
+    )
+
+    snapshot.snapshot_dir = "tests/integration/snapshots"
+    snapshot_file = f"schema_snapshot_{pipeline_name}_{format}_with_expansion.txt"
     snapshot.assert_match(result, snapshot_file)

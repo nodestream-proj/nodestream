@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from cleo.helpers import option
 
@@ -11,6 +11,7 @@ from ..operations import (
     InitializeProject,
     RunCopy,
 )
+from ..operations.run_pipeline import create_progress_reporter
 from .nodestream_command import NodestreamCommand
 from .shared_options import JSON_OPTION, PROJECT_FILE_OPTION, PROMETHEUS_OPTIONS
 
@@ -40,6 +41,55 @@ class Copy(NodestreamCommand):
             flag=False,
             multiple=True,
         ),
+        option(
+            "concurrency-limit",
+            "c",
+            "Number of concurrent copy workers (1 = sequential)",
+            default=1,
+            flag=False,
+        ),
+        option(
+            "batch-size",
+            description="Number of records per writer batch",
+            default=1000,
+            flag=False,
+        ),
+        option(
+            "step-outbox-size",
+            description="Buffer size between pipeline steps",
+            default=10000,
+            flag=False,
+        ),
+        option(
+            "flush-concurrency",
+            description="Number of concurrent flush lanes in the writer",
+            default=1,
+            flag=False,
+        ),
+        option(
+            "connector-option",
+            description="key=value connector override (repeatable)",
+            flag=False,
+            multiple=True,
+        ),
+        option(
+            "reporting-frequency",
+            description="How often to report progress (every N records)",
+            default=1000,
+            flag=False,
+        ),
+        option(
+            "metrics-interval-in-seconds",
+            description="Time interval to report metrics in seconds",
+            default=None,
+            flag=False,
+        ),
+        option(
+            "retriever-option",
+            description="key=value type retriever parameter (repeatable, e.g. limit=1000)",
+            flag=False,
+            multiple=True,
+        ),
         *PROMETHEUS_OPTIONS,
     ]
 
@@ -52,13 +102,22 @@ class Copy(NodestreamCommand):
             try:
                 from_target = self.get_taget_from_user(project, "from")
                 to_target = self.get_taget_from_user(project, "to")
-                schema = project.get_schema()
+                # For copy operations we intentionally build a schema *without*
+                # expanding additional types so that we only copy the concrete
+                # node / relationship types declared in pipelines.
+                schema = project.make_schema(include_additional_types=False)
                 all_node_types = schema.nodes
                 all_rel_types = schema.relationships
                 node_types = self.get_type_selection_from_user(all_node_types, "node")
                 rel_types = self.get_type_selection_from_user(
                     all_rel_types, "relationship"
                 )
+                concurrency_limit = int(self.option("concurrency-limit"))
+                batch_size = int(self.option("batch-size"))
+                step_outbox_size = int(self.option("step-outbox-size"))
+                flush_concurrency = int(self.option("flush-concurrency"))
+                connector_overrides = self.parse_key_value_options("connector-option")
+                retriever_overrides = self.parse_key_value_options("retriever-option")
             except UnknownTargetError:
                 return 1
 
@@ -67,10 +126,52 @@ class Copy(NodestreamCommand):
             self.line(f"<info>To: {to_target.name}</info>")
             self.line(f"<info>Node Types: {', '.join(node_types)}</info>")
             self.line(f"<info>Relationship Types: {', '.join(rel_types)}</info>")
+            if concurrency_limit > 1:
+                self.line(f"<info>Concurrency Limit: {concurrency_limit}</info>")
+            if flush_concurrency > 1:
+                self.line(f"<info>Flush Concurrency: {flush_concurrency}</info>")
+            if connector_overrides:
+                self.line(f"<info>Connector Overrides: {connector_overrides}</info>")
+            if retriever_overrides:
+                self.line(f"<info>Retriever Options: {retriever_overrides}</info>")
+            reporter = create_progress_reporter(self, "copy")
             await self.run_operation(
-                RunCopy(from_target, to_target, project, node_types, rel_types)
+                RunCopy(
+                    from_target=from_target,
+                    to_target=to_target,
+                    schema=schema,
+                    node_types=node_types,
+                    relationship_types=rel_types,
+                    concurrency_limit=concurrency_limit,
+                    progress_reporter=reporter,
+                    batch_size=batch_size,
+                    step_outbox_size=step_outbox_size,
+                    flush_concurrency=flush_concurrency,
+                    connector_overrides=connector_overrides,
+                    retriever_overrides=retriever_overrides,
+                )
             )
         return 0
+
+    def parse_key_value_options(self, option_name: str) -> Dict[str, object]:
+        raw = self.option(option_name) or []
+        overrides: Dict[str, object] = {}
+        for item in raw:
+            key, _, value = item.partition("=")
+            if value.lower() == "true":
+                value = True
+            elif value.lower() == "false":
+                value = False
+            else:
+                try:
+                    value = int(value)
+                except ValueError:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        pass
+            overrides[key] = value
+        return overrides
 
     def get_taget_from_user(self, project: Project, action: str) -> Target:
         # If the user has specified the target in the options, we don't need to prompt

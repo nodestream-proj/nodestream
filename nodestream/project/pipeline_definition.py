@@ -162,7 +162,7 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
         self.file_path.unlink(missing_ok=missing_ok)
 
     def initialize_for_introspection(self) -> Pipeline:
-        return self.initialize(PipelineInitializationArguments.for_introspection())
+        return PipelineFile(self.file_path).load_pipeline_for_introspection()
 
     def expand_schema(self, coordinator: SchemaExpansionCoordinator):
         with coordinator.pipeline_context(self.name):

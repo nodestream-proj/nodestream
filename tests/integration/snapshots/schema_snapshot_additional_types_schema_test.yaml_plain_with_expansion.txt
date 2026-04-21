@@ -1,0 +1,65 @@
+[RELATIONSHIP] PLAYS_FOR:
+  last_ingested_at: DATETIME
+[NODE] Team:
+  name: STRING
+  last_ingested_at: DATETIME
+[NODE] Organization:
+  name: STRING
+  last_ingested_at: DATETIME
+  country: STRING
+[NODE] Player:
+  player_id: STRING
+  overall: STRING
+  hits: STRING
+  last_ingested_at: DATETIME
+[NODE] Person:
+  player_id: STRING
+  overall: STRING
+  hits: STRING
+  last_ingested_at: DATETIME
+  name: STRING
+  age: STRING
+[NODE] Athlete:
+  player_id: STRING
+  overall: STRING
+  hits: STRING
+  last_ingested_at: DATETIME
+  position: STRING
+[RELATIONSHIP] LIVES_IN:
+  last_ingested_at: DATETIME
+[NODE] Country:
+  name: STRING
+  last_ingested_at: DATETIME
+[NODE] Human:
+  player_id: STRING
+  last_ingested_at: DATETIME
+  name: STRING
+  age: STRING
+[NODE] Individual:
+  player_id: STRING
+  last_ingested_at: DATETIME
+  name: STRING
+  age: STRING
+[RELATIONSHIP] COMPETES_AT:
+  last_ingested_at: DATETIME
+[NODE] Position:
+  name: STRING
+  last_ingested_at: DATETIME
+[NODE] Competitor:
+  player_id: STRING
+  position: STRING
+  last_ingested_at: DATETIME
+[NODE] SportsPerson:
+  player_id: STRING
+  position: STRING
+  last_ingested_at: DATETIME
+[RELATIONSHIP] BASED_IN:
+  last_ingested_at: DATETIME
+[NODE] Entity:
+  name: STRING
+  country: STRING
+  last_ingested_at: DATETIME
+[NODE] LegalEntity:
+  name: STRING
+  country: STRING
+  last_ingested_at: DATETIME

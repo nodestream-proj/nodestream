@@ -222,9 +222,19 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
             )
 
         if self.node_type.is_static:
+            # Always expand the schema for the main related node type.
             coordinator.on_node_schema(
                 self.expand_related_node_schema,
                 node_type=self.node_type.value,
+            )
+
+            # Delegate additional-type expansion to the coordinator so that the
+            # decision about whether to include additional types in the schema
+            # is centralized there.
+            coordinator.expand_additional_types(
+                base_type=self.node_type.value,
+                additional_types=self.node_additional_types,
+                fn=self.expand_related_node_schema,
             )
 
         if self.relationship_type.is_static and self.node_type.is_static:

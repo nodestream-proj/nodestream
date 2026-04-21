@@ -1,0 +1,16 @@
+scopes:
+  perpetual:
+    annotations:
+      concurrency: 1
+    pipelines:
+      - "tests/unit/project/fixtures/pipelines/pipeline_one.yaml"
+
+storage:
+  stores:
+    - name: local
+      type: local
+      path: ./objects
+      hmac_key: Ol75IHrhU3VTgSvW/h9T2w==
+
+include_additional_types: true
+

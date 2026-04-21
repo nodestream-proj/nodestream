@@ -271,10 +271,10 @@ def test_json_progress_indicator(mocker):
     indicator.logger.info = mocker.Mock()
     indicator.on_start()
     indicator.on_finish(Metrics())
-    assert indicator.logger.info.call_args_list == [
-        mocker.call("Starting Pipeline"),
-        mocker.call("Pipeline Completed"),
-    ]
+    calls = indicator.logger.info.call_args_list
+    assert calls[0] == mocker.call("Starting Pipeline")
+    assert calls[1][0][0] == "Pipeline Completed"
+    assert "elapsed_seconds" in calls[1][1]["extra"]
 
 
 def test_json_progress_indicator_on_fatal_error(mocker):
@@ -290,10 +290,14 @@ def test_json_progress_indicator_on_fatal_error(mocker):
 def test_json_progress_indicator_on_progress(mocker):
     indicator = JsonProgressIndicator(mocker.Mock(), "pipeline_name")
     indicator.logger.info = mocker.Mock()
+    indicator.on_start()  # sets _start_time
+    indicator.logger.info.reset_mock()
     indicator.progress_callback(1000, Metrics())
-    indicator.logger.info.assert_called_once_with(
-        "Processing Record", extra={"index": 1000}
-    )
+    call_args = indicator.logger.info.call_args
+    assert call_args[0][0] == "Processing Record"
+    assert call_args[1]["extra"]["index"] == 1000
+    assert "elapsed_seconds" in call_args[1]["extra"]
+    assert "records_per_second" in call_args[1]["extra"]
 
 
 def test_json_progress_indicator_on_finish_with_exception(mocker):
@@ -307,5 +311,7 @@ def test_json_progress_indicator_on_finish_with_exception(mocker):
     indicator.logger.error.assert_called_once_with(
         "Pipeline Failed", exc_info=exception
     )
-    indicator.logger.info.assert_called_once_with("Pipeline Completed")
+    call_args = indicator.logger.info.call_args
+    assert call_args[0][0] == "Pipeline Completed"
+    assert "elapsed_seconds" in call_args[1]["extra"]
     assert indicator.exception is exception

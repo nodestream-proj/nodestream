@@ -30,6 +30,7 @@ class QueryExecutorWithStatistics(QueryExecutor):
             self.node_metric_by_type[node_type] = Metric(
                 f"nodes_upserted_by_type_{node_type}",
                 f"Number of nodes upserted by type {node_type}",
+                accumulate=True,
             )
         return self.node_metric_by_type[node_type]
 
@@ -39,6 +40,7 @@ class QueryExecutorWithStatistics(QueryExecutor):
             self.relationship_metric_by_relationship_type[relationship_type] = Metric(
                 f"relationships_upserted_by_relationship_type_{relationship_type}",
                 f"Number of relationships upserted by relationship type {relationship_type}",
+                accumulate=True,
             )
         return self.relationship_metric_by_relationship_type[relationship_type]
 
@@ -51,7 +53,8 @@ class QueryExecutorWithStatistics(QueryExecutor):
         node_type_counts: dict[str, int] = {}
         total_nodes = 0
         for node in nodes:
-            node_type_counts[node.type] = node_type_counts.get(node.type, 0) + 1
+            node_type = node.type or "unknown"
+            node_type_counts[node_type] = node_type_counts.get(node_type, 0) + 1
             total_nodes += 1
 
         # Increment metrics in bulk

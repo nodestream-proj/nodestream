@@ -1,0 +1,83 @@
+- implementation: nodestream.pipeline.extractors.files:FileExtractor
+  factory: local
+  arguments:
+    globs:
+      - tests/data/fifa_2021_player_data.csv
+
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      # First pass: Player with Person and Athlete as additional types
+      # This establishes the base schema with player_id as the key
+      - - type: source_node
+          node_type: Player
+          key:
+            player_id: !jmespath player_id
+          properties:
+            overall: !jmespath overall
+            hits: !jmespath hits
+          additional_types:
+            - Person
+            - Athlete
+        - type: relationship
+          node_type: Team
+          relationship_type: PLAYS_FOR
+          node_key:
+            name: !jmespath team
+          node_additional_types:
+            - Organization
+
+      # Second pass: Person as main type with same keys but additional properties
+      # This tests that overlapping types (Person was additional in first pass)
+      # merge correctly with consistent keys
+      - - type: source_node
+          node_type: Person
+          key:
+            player_id: !jmespath player_id  # Same key as first pass
+          additional_types:
+            - Human
+            - Individual
+        - type: properties
+          properties:
+            name: !jmespath name  # Overlaps with Pass 1
+            age: !jmespath age
+        - type: relationship
+          node_type: Country
+          relationship_type: LIVES_IN
+          node_key:
+            name: !jmespath nationality
+
+      # Third pass: Athlete as main type with consistent keys
+      # Tests another overlap (Athlete was additional in first pass)
+      - - type: source_node
+          node_type: Athlete
+          key:
+            player_id: !jmespath player_id  # Same key structure
+          properties:
+            position: !jmespath position  # New property from Athlete definition
+          additional_types:
+            - Competitor
+            - SportsPerson
+        - type: relationship
+          node_type: Position
+          relationship_type: COMPETES_AT
+          node_key:
+            name: !jmespath position
+
+      # Fourth pass: Test complex multi-level overlaps
+      # Organization (additional type from Team in first pass) gets more types
+      - - type: source_node
+          node_type: Organization
+          key:
+            name: !jmespath team
+          properties:
+            country: !jmespath nationality
+          additional_types:
+            - Entity
+            - LegalEntity
+        - type: relationship
+          node_type: Country
+          relationship_type: BASED_IN
+          node_key:
+            name: !jmespath nationality
+
