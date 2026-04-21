@@ -130,6 +130,7 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
         "flush-concurrency": "1",
         "connector-option": [],
         "retriever-option": [],
+        "shard-size": None,
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
     }
@@ -184,6 +185,7 @@ async def test_handle_async_with_non_default_options(
         "flush-concurrency": "3",
         "connector-option": ["uri=bolt://remote:7687"],
         "retriever-option": ["limit=500", "sample_ratio=50"],
+        "shard-size": None,
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
     }

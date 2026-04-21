@@ -25,6 +25,7 @@ class RunCopy(Operation):
         flush_concurrency: int = 1,
         connector_overrides: Optional[Dict[str, object]] = None,
         retriever_overrides: Optional[Dict[str, object]] = None,
+        shard_size: Optional[int] = None,
     ) -> None:
         self.from_target = from_target
         self.to_target = to_target
@@ -38,6 +39,7 @@ class RunCopy(Operation):
         self.flush_concurrency = flush_concurrency
         self.connector_overrides = connector_overrides or {}
         self.retriever_overrides = retriever_overrides or {}
+        self.shard_size = shard_size
 
     async def perform(self, command: NodestreamCommand):
         pipeline = self.build_pipeline()
@@ -60,6 +62,7 @@ class RunCopy(Operation):
             self.relationship_types,
             concurrency_limit=self.concurrency_limit,
             orchestrator_queue_size=self.step_outbox_size,
+            shard_size=self.shard_size,
         )
 
     def build_writer(self) -> GraphDatabaseWriter:

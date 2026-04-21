@@ -90,6 +90,17 @@ class Copy(NodestreamCommand):
             flag=False,
             multiple=True,
         ),
+        option(
+            "shard-size",
+            description=(
+                "Split each type into fixed-size shards of this many records, "
+                "interleaved across types for sustained concurrency. "
+                "Requires the type retriever to support sharding. "
+                "Disabled when not set."
+            ),
+            default=None,
+            flag=False,
+        ),
         *PROMETHEUS_OPTIONS,
     ]
 
@@ -118,6 +129,8 @@ class Copy(NodestreamCommand):
                 flush_concurrency = int(self.option("flush-concurrency"))
                 connector_overrides = self.parse_key_value_options("connector-option")
                 retriever_overrides = self.parse_key_value_options("retriever-option")
+                shard_size_raw = self.option("shard-size")
+                shard_size = int(shard_size_raw) if shard_size_raw is not None else None
             except UnknownTargetError:
                 return 1
 
@@ -134,6 +147,8 @@ class Copy(NodestreamCommand):
                 self.line(f"<info>Connector Overrides: {connector_overrides}</info>")
             if retriever_overrides:
                 self.line(f"<info>Retriever Options: {retriever_overrides}</info>")
+            if shard_size is not None:
+                self.line(f"<info>Shard Size: {shard_size}</info>")
             reporter = create_progress_reporter(self, "copy")
             await self.run_operation(
                 RunCopy(
@@ -149,6 +164,7 @@ class Copy(NodestreamCommand):
                     flush_concurrency=flush_concurrency,
                     connector_overrides=connector_overrides,
                     retriever_overrides=retriever_overrides,
+                    shard_size=shard_size,
                 )
             )
         return 0
