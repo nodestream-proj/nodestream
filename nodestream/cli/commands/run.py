@@ -83,3 +83,4 @@ class Run(NodestreamCommand):
             project = await self.run_operation(InitializeProject())
             await self.auto_migrate_targets_if_needed(project)
             await self.run_operation(RunPipeline(project))
+        return 0

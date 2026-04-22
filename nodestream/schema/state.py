@@ -6,7 +6,12 @@ from typing import Callable, Dict, Iterable, Optional, Set, Tuple
 
 from nodestream.utils import LayeredDict, LayeredList
 
-from ..file_io import LoadsFromYaml, LoadsFromYamlFile, SavesToYaml, SavesToYamlFile
+from ..file_io import (
+    LoadsFromYaml,
+    LoadsFromYamlFile,
+    SavesToYaml,
+    WritesToYamlToStdout,
+)
 
 
 class GraphObjectType(str, Enum):
@@ -380,13 +385,38 @@ class AdjacencyCardinality:
 
     def to_file_data(self):
         return {
-            "from_side_cardinality": self.from_side_cardinality,
-            "to_side_cardinality": self.to_side_cardinality,
+            "from_side_cardinality": self.from_side_cardinality.value,
+            "to_side_cardinality": self.to_side_cardinality.value,
         }
 
 
+@dataclass(slots=True)
+class SchemaProvenance:
+    """Tracks which pipelines contributed to each schema type."""
+
+    by_type: Dict[Tuple[GraphObjectType, str], Set[str]] = field(default_factory=dict)
+
+    def record(
+        self,
+        object_type: GraphObjectType,
+        name: str,
+        pipeline_name: str,
+    ):
+        key = (object_type, name)
+        if key not in self.by_type:
+            self.by_type[key] = set()
+        self.by_type[key].add(pipeline_name)
+
+    def get_pipelines_for(
+        self,
+        object_type: GraphObjectType,
+        name: str,
+    ) -> Set[str]:
+        return self.by_type.get((object_type, name), set())
+
+
 @dataclass(slots=True, frozen=True)
-class Schema(SavesToYamlFile, LoadsFromYamlFile):
+class Schema(WritesToYamlToStdout, LoadsFromYamlFile):
     """A schema for a database."""
 
     type_schemas: Dict[Tuple[GraphObjectType, str], GraphObjectSchema] = field(
@@ -617,10 +647,10 @@ class Schema(SavesToYamlFile, LoadsFromYamlFile):
             other: The other schema.
         """
         self.cardinalities.update(other.cardinalities)
-        all_types = set(self.type_schemas).union(set(other.type_schemas))
-        for obj_type, type in all_types:
-            us = self.get_by_type_and_object_type(obj_type, type)
-            them = other.get_by_type_and_object_type(obj_type, type)
+        all_types = set(self.type_schemas).union(other.type_schemas)
+        for object_type, name in all_types:
+            us = self.get_by_type_and_object_type(object_type, name)
+            them = other.get_by_type_and_object_type(object_type, name)
             us.merge(them)
 
     def has_node_of_type(self, node_type_name: str) -> bool:
@@ -708,7 +738,7 @@ class UnboundAdjacency:
         return adjacency, cardinality
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True)
 class SchemaExpansionCoordinator:
     """A coordinator for expanding a schema."""
 
@@ -724,10 +754,21 @@ class SchemaExpansionCoordinator:
     unbound_adjacencies: LayeredList[UnboundAdjacency] = field(
         default_factory=LayeredList
     )
+    provenance: SchemaProvenance = field(default_factory=SchemaProvenance)
+    _current_pipeline: Optional[str] = None
     # Maps node types to their additional types for relationship expansion
     additional_types_map: LayeredDict[str, Tuple[str, ...]] = field(
         default_factory=LayeredDict
     )
+
+    @contextmanager
+    def pipeline_context(self, pipeline_name: Optional[str]):
+        previous = self._current_pipeline
+        self._current_pipeline = pipeline_name
+        try:
+            yield
+        finally:
+            self._current_pipeline = previous
 
     def on_node_schema(
         self,
@@ -751,8 +792,8 @@ class SchemaExpansionCoordinator:
             alias: The alias.
         """
         # If both the node_type_name and alias are provided, we are "concreting"
-        # the node type name. This means that we are binding the alias(if it exists)
-        # to the node type name.
+        # the node type name. This means that we are binding the alias(if it
+        # exists) to the node type name.
         if node_type and alias:
             node_schema = self.schema.get_node_type_by_name(node_type)
             unbound = self.unbound_aliases.get(alias, GraphObjectSchema(node_type))
@@ -761,8 +802,16 @@ class SchemaExpansionCoordinator:
             self.aliases[alias] = node_type
             fn(node_schema)
 
-        # If both the property_list and alias are provided, we are adding properties to the existing
-        # object for the alias. We also save this in the unbound aliases to be contextualized.
+            if self._current_pipeline:
+                self.provenance.record(
+                    GraphObjectType.NODE,
+                    node_schema.name,
+                    self._current_pipeline,
+                )
+
+        # If both the property_list and alias are provided, we are adding
+        # properties to the existing object for the alias. We also save this in
+        # the unbound aliases to be contextualized.
         elif property_list and alias:
             unbound = self.unbound_aliases.get(alias, GraphObjectSchema(alias))
             unbound.properties.update(
@@ -771,11 +820,18 @@ class SchemaExpansionCoordinator:
             self.unbound_aliases[alias] = unbound
             fn(unbound)
 
-        # If only the node_type_name is provided, we are not messing with the alias at all.
-        # We are just calling the function on the node type name.
+        # If only the node_type_name is provided, we are not messing with the
+        # alias at all. We are just calling the function on the node type name.
         elif node_type:
             node_schema = self.schema.get_node_type_by_name(node_type)
             fn(node_schema)
+
+            if self._current_pipeline:
+                self.provenance.record(
+                    GraphObjectType.NODE,
+                    node_schema.name,
+                    self._current_pipeline,
+                )
 
     def on_relationship_schema(
         self,
@@ -783,7 +839,17 @@ class SchemaExpansionCoordinator:
         relationship_type: str,
     ):
         """Calls a Function to modify the specified relationship schema."""
-        fn(self.schema.get_relationship_type_by_name(relationship_type))
+        relationship_schema = self.schema.get_relationship_type_by_name(
+            relationship_type
+        )
+        fn(relationship_schema)
+
+        if self._current_pipeline:
+            self.provenance.record(
+                GraphObjectType.RELATIONSHIP,
+                relationship_schema.name,
+                self._current_pipeline,
+            )
 
     def connect(
         self,
@@ -817,7 +883,7 @@ class SchemaExpansionCoordinator:
         self.unbound_adjacencies.append(unbound)
 
     """
-        For child expanders, this method is called to maintain the context layer. 
+        For child expanders, this method is called to maintain the context layer.
     """
 
     @contextmanager

@@ -14,8 +14,10 @@ from ..pipeline import Step
 from ..pipeline.object_storage import ObjectStore
 from ..pluggable import Pluggable
 from ..schema import (
+    Adjacency,
     ExpandsSchema,
     ExpandsSchemaFromChildren,
+    GraphObjectType,
     Schema,
     SchemaExpansionCoordinator,
 )
@@ -368,21 +370,109 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
 
         return schema
 
+    def _expand_schema_for_scopes(
+        self, scope_name: Optional[str]
+    ) -> SchemaExpansionCoordinator:
+        """Expand schema for the given scope(s) and return the coordinator.
+
+        This helper is shared by the various *explain* helpers so they can
+        inspect both provenance and adjacencies using a single expansion pass.
+        """
+        coordinator = SchemaExpansionCoordinator(Schema())
+
+        scopes: Iterable[PipelineScope] = self.get_scopes_by_name(scope_name)
+
+        for scope in scopes:
+            for pipeline in scope.pipelines_by_name.values():
+                pipeline.expand_schema(coordinator)
+
+        # Resolve any alias-based adjacencies (e.g. source_node -> related node)
+        # into concrete node-type adjacencies on the coordinator's schema.
+        coordinator.clear_aliases()
+
+        return coordinator
+
+    def _explain_type(
+        self,
+        object_type: GraphObjectType,
+        name: str,
+        scope_name: Optional[str],
+    ) -> List[str]:
+        """Return pipeline names that contribute to the given schema object."""
+        coordinator = self._expand_schema_for_scopes(scope_name)
+
+        return sorted(
+            coordinator.provenance.get_pipelines_for(
+                object_type=object_type,
+                name=name,
+            )
+        )
+
+    def explain_node_type(
+        self, node_type_name: str, scope_name: Optional[str] = None
+    ) -> List[str]:
+        """Return pipeline names that contribute to the given node type.
+
+        If ``scope_name`` is provided, only pipelines in that scope are
+        considered. Otherwise, all scopes are considered.
+        """
+        return self._explain_type(
+            object_type=GraphObjectType.NODE,
+            name=node_type_name,
+            scope_name=scope_name,
+        )
+
+    def explain_relationship_type(
+        self, relationship_type_name: str, scope_name: Optional[str] = None
+    ) -> List[str]:
+        """Return pipeline names for the given relationship type.
+
+        If ``scope_name`` is provided, only pipelines in that scope are
+        considered. Otherwise, all scopes are considered.
+        """
+        return self._explain_type(
+            object_type=GraphObjectType.RELATIONSHIP,
+            name=relationship_type_name,
+            scope_name=scope_name,
+        )
+
+    def explain_relationship_adjacencies(
+        self, relationship_type_name: str, scope_name: Optional[str] = None
+    ) -> List[Adjacency]:
+        """Return adjacencies for the given relationship type.
+
+        This inspects the expanded schema to discover which node types are
+        connected by the given relationship type. The result is a list of
+        :class:`Adjacency` objects with concrete node type names (aliases such
+        as ``source_node`` have already been resolved by the time adjacencies
+        are bound).
+        """
+        coordinator = self._expand_schema_for_scopes(scope_name)
+        schema = coordinator.schema
+
+        return sorted(
+            (
+                a
+                for a in schema.adjacencies
+                if a.relationship_type == relationship_type_name
+            ),
+            key=lambda a: (a.from_node_type, a.to_node_type),
+        )
+
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return self.scopes_by_name.values()
 
     def dig_for_step_of_type(
         self, step_type: Type[T]
     ) -> Iterable[Tuple[PipelineDefinition, int, T]]:
-        """Yields all steps of the given type in the project.
-
-        Yields tuples of (pipeline_definition, step_index, step).
+        """Yield all steps of the given type in the project.
 
         Args:
-            step_type (Type[T]): The type of step to look for.
+            step_type: The concrete step class to search for.
 
         Yields:
-            Tuple[PipelineDefinition, int, T]: The steps of the given type and their locations.
+            Tuples of ``(pipeline_definition, step_index, step)`` describing
+            each matching step and where it appears.
         """
         for scope in self.scopes_by_name.values():
             for pipeline_definition in scope.pipelines_by_name.values():
@@ -401,11 +491,12 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
 class ProjectPlugin(Pluggable):
     """A plugin that can be used to modify a project.
 
-    Plugins are used to add functionality to projects. They are typically used to add new pipeline scopes
-    or to modify existing scopes and pipelines. Plugins are activated when a project is loaded from disk.
+    Plugins extend projects by adding or modifying pipeline scopes and
+    definitions. They are activated when a project is loaded from disk.
 
-    Plugins are registered by subclassing `ProjectPlugin` and implementing the `activate` method.
-    Additionally, they must be use the `entry_points` mechanism to register themselves as a plugin.
+    To register a plugin, subclass :class:`ProjectPlugin`, implement the
+    ``activate`` method, and use the ``entry_points`` mechanism to expose it
+    under the ``projects`` group.
     """
 
     entrypoint_name = "projects"
@@ -421,35 +512,39 @@ class ProjectPlugin(Pluggable):
 
     @classmethod
     def execute_before_project_load(cls, project_file: Path):
-        """Executes the `before_project_load` method on all registered plugins."""
+        """Invoke :meth:`before_project_load` on all registered plugins."""
+
         for plugin in cls.all_active():
             plugin.before_project_load(project_file)
 
     @classmethod
     def execute_after_project_load(cls, project: Project):
-        """Executes the `after_project_load` method on all registered plugins."""
+        """Invoke :meth:`after_project_load` on all registered plugins."""
+
         for plugin in cls.all_active():
             plugin.after_project_load(project)
 
     @classmethod
     def execute_activate(cls, project: Project):
-        """Executes the `activate` method on all registered plugins."""
+        """Invoke :meth:`activate` on all registered plugins."""
+
         for plugin in cls.all_active():
             plugin.activate(project)
 
     def before_project_load(self, project_file: Path):
-        """Called before a project is loaded from disk."""
-        pass
+        """Hook called before a project is loaded from disk.
+
+        Subclasses may override this to inspect or validate the project file
+        before it is parsed.
+        """
 
     def after_project_load(self, project: Project):
-        """Called after a project is loaded from disk and after each plugin is activated."""
-        pass
+        """Hook called after a project is loaded and plugins are activated."""
 
     def activate(self, project: Project):
-        """Called when a project is loaded from disk.
+        """Hook used to modify a project after it has been loaded.
 
-        This is where the plugin should modify the project. For example, a plugin might add a new scope
-        or modify an existing scope. The plugin should not modify the project file on disk. Instead, it
-        should modify the project object in memory.
+        This is where a plugin should add or adjust scopes and pipelines. The
+        plugin should not modify the project file on disk, only the in-memory
+        :class:`Project` instance.
         """
-        pass

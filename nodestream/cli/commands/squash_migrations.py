@@ -29,3 +29,4 @@ class SquashMigration(NodestreamCommand):
             to_migration_name,
         )
         await self.run_operation(operation)
+        return 0

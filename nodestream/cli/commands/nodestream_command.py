@@ -26,7 +26,8 @@ class NodestreamCommand(Command, Pluggable):
 
     async def run_operation(self, operation: "Operation"):
         self.line(
-            f"<info>Running: {operation.name}</info>", verbosity=Verbosity.VERBOSE
+            f"<info>Running: {operation.name}</info>",
+            verbosity=Verbosity.VERBOSE,
         )
         return await operation.perform(self)
 

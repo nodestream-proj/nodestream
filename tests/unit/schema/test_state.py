@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 import pytest
+import yaml
 from hamcrest import assert_that, equal_to, has_key, not_
 
 from nodestream.schema import (
@@ -148,6 +149,25 @@ def test_overlapping_property_definitions(basic_schema):
     property_defintion = person.properties["name"]
     assert_that(property_defintion.is_key, equal_to(True))
     assert_that(property_defintion.is_indexed, equal_to(True))
+
+
+def test_schema_to_yaml_stdout_uses_validated_data(basic_schema, capsys):
+    # When we render to a YAML string and print it to stdout, it should be valid
+    # according to the schema and round-trip via validate_and_load.
+    yaml_str = basic_schema.to_yaml_string()
+    print(yaml_str, end="")
+    captured = capsys.readouterr()
+    rebuilt = Schema.validate_and_load(yaml.safe_load(captured.out))
+    assert_that(rebuilt.nodes_by_name, equal_to(basic_schema.nodes_by_name))
+
+
+def test_schema_write_to_stdout_uses_default_print(basic_schema, capsys):
+    # When we call write_to_stdout, it should delegate to print (or the given
+    # print_fn) with a YAML string that can be round-tripped via validate_and_load.
+    basic_schema.write_to_stdout()
+    captured = capsys.readouterr()
+    rebuilt = Schema.validate_and_load(yaml.safe_load(captured.out))
+    assert_that(rebuilt.nodes_by_name, equal_to(basic_schema.nodes_by_name))
 
 
 def test_register_additional_types_with_include_additional_types_false():

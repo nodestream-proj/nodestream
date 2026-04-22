@@ -14,7 +14,11 @@ class PrintSchema(NodestreamCommand):
     options = [
         PROJECT_FILE_OPTION,
         option(
-            "format", "f", "Format to print the schema in", default="plain", flag=False
+            "format",
+            "f",
+            "Format to print the schema in",
+            default="plain",
+            flag=False,
         ),
         option(
             "overrides",
@@ -43,3 +47,4 @@ class PrintSchema(NodestreamCommand):
                 pipeline_names=self.argument("pipelines"),
             )
         )
+        return 0

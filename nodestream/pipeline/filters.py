@@ -110,8 +110,8 @@ class RegexMatcher:
 
     def __init__(
         self,
-        value_provider: StaticValueOrValueProvider,
-        regex: StaticValueOrValueProvider,
+        value_provider: ValueProvider,
+        regex: str,
         include: bool,
         normalization: Dict[str, Any],
     ) -> None:
@@ -341,6 +341,17 @@ try:
         async def filter_record(self, record):
             self.mode = self.mode.inform_mode_change()
             return self.mode.should_filter(record)
+
+    __all__ = [
+        "SchemaEnforcementMode",
+        "Schema",
+        "SchemaBuilder",
+        "FetchSchema",
+        "InferSchema",
+        "EnforceSchema",
+        "WarnSchema",
+        "SchemaEnforcer",
+    ]
 
 except ImportError:
 

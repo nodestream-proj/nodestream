@@ -119,7 +119,7 @@ class Copy(NodestreamCommand):
                 connector_overrides = self.parse_key_value_options("connector-option")
                 retriever_overrides = self.parse_key_value_options("retriever-option")
             except UnknownTargetError:
-                return
+                return 1
 
             self.line("Starting to Copy:")
             self.line(f"<info>From: {from_target.name}</info>")
@@ -151,6 +151,7 @@ class Copy(NodestreamCommand):
                     retriever_overrides=retriever_overrides,
                 )
             )
+        return 0
 
     def parse_key_value_options(self, option_name: str) -> Dict[str, object]:
         raw = self.option(option_name) or []

@@ -1,5 +1,6 @@
 from .audit_command import AuditCommand
 from .copy import Copy
+from .explain_schema import ExplainSchema
 from .make_migrations import MakeMigration
 from .new import New
 from .nodestream_command import NodestreamCommand
@@ -15,6 +16,7 @@ from .squash_migrations import SquashMigration
 __all__ = (
     "AuditCommand",
     "Copy",
+    "ExplainSchema",
     "MakeMigration",
     "New",
     "NodestreamCommand",

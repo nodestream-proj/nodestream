@@ -25,3 +25,4 @@ class Remove(NodestreamCommand):
         )
         await self.run_operation(remove)
         await self.run_operation(CommitProjectToDisk(project, self.get_project_path()))
+        return 0
