@@ -88,9 +88,9 @@ class Copier(Extractor):
                 node_type
             )
         for relationship_type in self.relationship_types:
-            self._relationship_counts[relationship_type] = (
-                await self.type_retriever.preview_relationship_count(relationship_type)
-            )
+            self._relationship_counts[
+                relationship_type
+            ] = await self.type_retriever.preview_relationship_count(relationship_type)
 
         self.node_types.sort(key=lambda t: self._node_counts[t], reverse=True)
         self.relationship_types.sort(

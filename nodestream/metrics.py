@@ -126,7 +126,6 @@ STEPS_RUNNING = Metric(
 
 
 try:
-
     from prometheus_client import REGISTRY, Gauge, start_http_server
 
     class PrometheusMetricHandler(MetricHandler):

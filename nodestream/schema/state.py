@@ -981,7 +981,10 @@ class SchemaExpansionCoordinator:
             )
             for from_type in from_types:
                 for to_type in to_types:
-                    if (from_type, to_type) == (adjacency.from_node_type, adjacency.to_node_type):
+                    if (from_type, to_type) == (
+                        adjacency.from_node_type,
+                        adjacency.to_node_type,
+                    ):
                         continue
                     self.schema.add_adjacency(
                         Adjacency(from_type, to_type, adjacency.relationship_type),

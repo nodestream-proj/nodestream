@@ -31,7 +31,7 @@ def test_basic_schema_to_and_from_file(basic_schema):
                 adjacency in rebuilt_schema.cardinalities
                 and rebuilt_schema.cardinalities[adjacency] == cardinality
             )
-            for adjacency, cardinality, in basic_schema.cardinalities.items()
+            for adjacency, cardinality in basic_schema.cardinalities.items()
         )
     )
 
@@ -208,7 +208,7 @@ def test_clear_aliases_with_include_additional_types_true():
     )
 
 
-def testbind_unbound_adjacencies_uses_aliases_and_updates_schema():
+def test_bind_unbound_adjacencies_uses_aliases_and_updates_schema():
     """bind_unbound_adjacencies should bind via aliases and mutate schema.cardinalities."""
     schema = Schema()
     coordinator = SchemaExpansionCoordinator(schema)
@@ -238,7 +238,7 @@ def testbind_unbound_adjacencies_uses_aliases_and_updates_schema():
     assert_that(schema.cardinalities[adjacency], equal_to(cardinality))
 
 
-def testexpand_adjacencies_for_additional_types_duplicates_edges():
+def test_expand_adjacencies_for_additional_types_duplicates_edges():
     """expand_adjacencies_for_additional_types should create edges for additional types."""
     schema = Schema()
     coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
@@ -260,7 +260,7 @@ def testexpand_adjacencies_for_additional_types_duplicates_edges():
     assert_that(expected.issubset(adjacency_pairs), equal_to(True))
 
 
-def testexpand_properties_for_additional_types_propagates_alias_properties():
+def test_expand_properties_for_additional_types_propagates_alias_properties():
     """Alias-level properties should be applied to additional types for the base type."""
     schema = Schema()
     coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
@@ -294,7 +294,7 @@ def testexpand_properties_for_additional_types_propagates_alias_properties():
     assert_that("alias_prop" in athlete_schema.properties, equal_to(True))
 
 
-def testexpand_properties_for_additional_types_skips_when_no_additional_types():
+def test_expand_properties_for_additional_types_skips_when_no_additional_types():
     """Alias-level properties should not be applied when there are no additional types."""
     schema = Schema()
     coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)

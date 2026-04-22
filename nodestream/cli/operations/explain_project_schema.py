@@ -37,12 +37,20 @@ class ExplainProjectSchema(Operation):
             return matching
 
         node_pipelines = (
-            set(self.project.explain_node_type(self.node_type_name, scope_name=self.scope))
+            set(
+                self.project.explain_node_type(
+                    self.node_type_name, scope_name=self.scope
+                )
+            )
             if self.node_type_name
             else None
         )
         relationship_pipelines = (
-            set(self.project.explain_relationship_type(self.relationship_type_name, scope_name=self.scope))
+            set(
+                self.project.explain_relationship_type(
+                    self.relationship_type_name, scope_name=self.scope
+                )
+            )
             if self.relationship_type_name
             else None
         )
@@ -63,7 +71,10 @@ class ExplainProjectSchema(Operation):
             (scope_name, pipeline)
             for scope_name, pipeline in matching
             if (node_pipelines is None or pipeline.name in node_pipelines)
-            and (relationship_pipelines is None or pipeline.name in relationship_pipelines)
+            and (
+                relationship_pipelines is None
+                or pipeline.name in relationship_pipelines
+            )
         ]
 
     def scope_fragment(self) -> str:

@@ -18,7 +18,7 @@ class ExplainSchema(NodestreamCommand):
         ),
         argument(
             "name",
-            ("The node or relationship type name when using positional " "KIND/NAME."),
+            ("The node or relationship type name when using positional KIND/NAME."),
             optional=True,
         ),
     ]
@@ -51,7 +51,7 @@ class ExplainSchema(NodestreamCommand):
         ),
     ]
 
-    def _get_positional_kind_and_name(self) -> Optional[tuple[str, str]]:
+    def get_positional_kind_and_name(self) -> Optional[tuple[str, str]]:
         """Return (kind, name) when using the positional KIND/NAME interface.
 
         This mode requires both positional arguments to be provided and no
@@ -69,7 +69,7 @@ class ExplainSchema(NodestreamCommand):
 
         return kind, type_name
 
-    def _resolve_type_args(
+    def resolve_type_args(
         self,
     ) -> tuple[Optional[str], Optional[str], Optional[str]]:
         """Resolve node/relationship arguments from positional or options.
@@ -80,7 +80,7 @@ class ExplainSchema(NodestreamCommand):
             return a non-zero exit code.
         """
 
-        kind_and_name = self._get_positional_kind_and_name()
+        kind_and_name = self.get_positional_kind_and_name()
         if kind_and_name is not None:
             kind, type_name = kind_and_name
 
@@ -115,7 +115,7 @@ class ExplainSchema(NodestreamCommand):
         project = await self.run_operation(InitializeProject())
         scope = self.option("scope")
 
-        node_type_name, relationship_type_name, error = self._resolve_type_args()
+        node_type_name, relationship_type_name, error = self.resolve_type_args()
         if error is not None:
             self.line_error(error)
             return 1

@@ -29,4 +29,4 @@ class NormalizerValueProvider(ValueProvider):
         )
 
     def __str__(self):
-        return f"NormalizerValueProvider: { {'using': self.using, 'data': str(self.data) } }"
+        return f"NormalizerValueProvider: { {'using': self.using, 'data': str(self.data)} }"

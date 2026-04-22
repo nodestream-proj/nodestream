@@ -49,9 +49,7 @@ PROMETHEUS_ADDRESS_OPTION = option(
 
 PROMETHEUS_CERTFILE_OPTION = option(
     "prometheus-certfile",
-    description=(
-        "The path to the certificate file for the Prometheus " "metrics server"
-    ),
+    description=("The path to the certificate file for the Prometheus metrics server"),
     flag=False,
 )
 
