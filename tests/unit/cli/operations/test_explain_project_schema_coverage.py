@@ -67,7 +67,7 @@ async def test_explain_project_schema_node_and_relationship_with_matches(
     command.table.assert_called_once()
 
 
-def test_get_filtered_pipelines_filters_by_node_pipelines(mocker):
+def testget_filtered_pipelines_filters_by_node_pipelines(mocker):
     project = mocker.Mock()
     scope = mocker.Mock()
     scope.name = "default"
@@ -91,12 +91,12 @@ def test_get_filtered_pipelines_filters_by_node_pipelines(mocker):
         scope=None,
     )
 
-    filtered = list(operation._get_filtered_pipelines())
+    filtered = list(operation.get_filtered_pipelines())
 
     assert_that(filtered, equal_to([(scope.name, pipeline_in)]))
 
 
-def test_get_filtered_pipelines_filters_by_relationship_pipelines(mocker):
+def testget_filtered_pipelines_filters_by_relationship_pipelines(mocker):
     project = mocker.Mock()
     scope = mocker.Mock()
     scope.name = "default"
@@ -120,7 +120,7 @@ def test_get_filtered_pipelines_filters_by_relationship_pipelines(mocker):
         scope=None,
     )
 
-    filtered = list(operation._get_filtered_pipelines())
+    filtered = list(operation.get_filtered_pipelines())
 
     assert_that(filtered, equal_to([(scope.name, pipeline_in)]))
 

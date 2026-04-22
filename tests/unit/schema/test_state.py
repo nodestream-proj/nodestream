@@ -208,8 +208,8 @@ def test_clear_aliases_with_include_additional_types_true():
     )
 
 
-def test_bind_unbound_adjacencies_uses_aliases_and_updates_schema():
-    """_bind_unbound_adjacencies should bind via aliases and mutate schema.cardinalities."""
+def testbind_unbound_adjacencies_uses_aliases_and_updates_schema():
+    """bind_unbound_adjacencies should bind via aliases and mutate schema.cardinalities."""
     schema = Schema()
     coordinator = SchemaExpansionCoordinator(schema)
 
@@ -226,7 +226,7 @@ def test_bind_unbound_adjacencies_uses_aliases_and_updates_schema():
     )
     coordinator.unbound_adjacencies.append(unbound)
 
-    base_adjacencies = coordinator._bind_unbound_adjacencies()
+    base_adjacencies = coordinator.bind_unbound_adjacencies()
 
     # We should have exactly one bound adjacency with the alias resolved.
     assert_that(len(base_adjacencies), equal_to(1))
@@ -238,8 +238,8 @@ def test_bind_unbound_adjacencies_uses_aliases_and_updates_schema():
     assert_that(schema.cardinalities[adjacency], equal_to(cardinality))
 
 
-def test_expand_adjacencies_for_additional_types_duplicates_edges():
-    """_expand_adjacencies_for_additional_types should create edges for additional types."""
+def testexpand_adjacencies_for_additional_types_duplicates_edges():
+    """expand_adjacencies_for_additional_types should create edges for additional types."""
     schema = Schema()
     coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
 
@@ -250,7 +250,7 @@ def test_expand_adjacencies_for_additional_types_duplicates_edges():
     # Register additional types for Player in the current context.
     coordinator.additional_types_map["Player"] = ("Person", "Athlete")
 
-    coordinator._expand_adjacencies_for_additional_types([(base_adj, base_card)])
+    coordinator.expand_adjacencies_for_additional_types([(base_adj, base_card)])
 
     adjacency_pairs = {
         (adj.from_node_type, adj.to_node_type) for adj in schema.adjacencies
@@ -260,7 +260,7 @@ def test_expand_adjacencies_for_additional_types_duplicates_edges():
     assert_that(expected.issubset(adjacency_pairs), equal_to(True))
 
 
-def test_expand_properties_for_additional_types_propagates_alias_properties():
+def testexpand_properties_for_additional_types_propagates_alias_properties():
     """Alias-level properties should be applied to additional types for the base type."""
     schema = Schema()
     coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
@@ -285,7 +285,7 @@ def test_expand_properties_for_additional_types_propagates_alias_properties():
     # Register additional types for Player in this context.
     coordinator.additional_types_map["Player"] = ("Person", "Athlete")
 
-    coordinator._expand_properties_for_additional_types()
+    coordinator.expand_properties_for_additional_types()
 
     person_schema = schema.get_node_type_by_name("Person")
     athlete_schema = schema.get_node_type_by_name("Athlete")
@@ -294,7 +294,7 @@ def test_expand_properties_for_additional_types_propagates_alias_properties():
     assert_that("alias_prop" in athlete_schema.properties, equal_to(True))
 
 
-def test_expand_properties_for_additional_types_skips_when_no_additional_types():
+def testexpand_properties_for_additional_types_skips_when_no_additional_types():
     """Alias-level properties should not be applied when there are no additional types."""
     schema = Schema()
     coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
@@ -312,7 +312,7 @@ def test_expand_properties_for_additional_types_skips_when_no_additional_types()
     coordinator.unbound_aliases["source_node"] = alias_schema
 
     # Do NOT register any additional types for Player.
-    coordinator._expand_properties_for_additional_types()
+    coordinator.expand_properties_for_additional_types()
 
     other_schema = schema.get_node_type_by_name("Other")
     assert_that("alias_prop" in other_schema.properties, equal_to(False))

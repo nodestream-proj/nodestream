@@ -19,7 +19,7 @@ class ExplainProjectSchema(Operation):
         self.relationship_type_name = relationship_type_name
         self.scope = scope
 
-    def _get_matching_pipelines(self) -> Iterable[Tuple[str, PipelineDefinition]]:
+    def get_matching_pipelines(self) -> Iterable[Tuple[str, PipelineDefinition]]:
         if self.scope:
             scope = self.project.scopes_by_name.get(self.scope)
             scopes = [scope] if scope else []
@@ -30,8 +30,8 @@ class ExplainProjectSchema(Operation):
             for pipeline in scope.pipelines_by_name.values():
                 yield scope.name, pipeline
 
-    def _get_filtered_pipelines(self) -> Iterable[Tuple[str, PipelineDefinition]]:
-        matching = list(self._get_matching_pipelines())
+    def get_filtered_pipelines(self) -> Iterable[Tuple[str, PipelineDefinition]]:
+        matching = list(self.get_matching_pipelines())
 
         if not self.node_type_name and not self.relationship_type_name:
             return matching
@@ -66,13 +66,13 @@ class ExplainProjectSchema(Operation):
             and (relationship_pipelines is None or pipeline.name in relationship_pipelines)
         ]
 
-    def _scope_fragment(self) -> str:
+    def scope_fragment(self) -> str:
         """Return a human-friendly clause describing the active scope filter."""
         return f" in scope '{self.scope}'" if self.scope else " across all scopes"
 
-    def _no_pipelines_message(self) -> str:
+    def no_pipelines_message(self) -> str:
         """Return the message to use when no matching pipelines are found."""
-        scope_fragment = self._scope_fragment()
+        scope_fragment = self.scope_fragment()
 
         if self.node_type_name and self.relationship_type_name:
             return (
@@ -98,7 +98,7 @@ class ExplainProjectSchema(Operation):
 
         return "No pipelines found." + scope_fragment + "."
 
-    def _header_message(self) -> str:
+    def header_message(self) -> str:
         """Return the header line describing what the table will show."""
         headers_context = []
         if self.node_type_name:
@@ -111,15 +111,15 @@ class ExplainProjectSchema(Operation):
         else:
             types_fragment = "all types"
 
-        scope_fragment = self._scope_fragment()
+        scope_fragment = self.scope_fragment()
         return f"Pipelines contributing to {types_fragment}{scope_fragment}:"
 
     async def perform(self, command: NodestreamCommand):
-        matching = list(self._get_filtered_pipelines())
+        matching = list(self.get_filtered_pipelines())
 
         if not matching:
-            command.line(self._no_pipelines_message())
+            command.line(self.no_pipelines_message())
             return
 
-        command.line(self._header_message())
+        command.line(self.header_message())
         TableOutputFormat(command).output(matching)

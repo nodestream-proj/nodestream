@@ -956,20 +956,20 @@ class SchemaExpansionCoordinator:
         # First, bind all unbound adjacencies for this context into concrete
         # adjacencies on the underlying schema, keeping track of exactly which
         # adjacencies were created as part of this pass.
-        base_adjacencies = self._bind_unbound_adjacencies()
+        base_adjacencies = self.bind_unbound_adjacencies()
 
         if not self.include_additional_types:
             return
 
         # Then duplicate those adjacencies and any alias-level properties for
         # additional types registered in this context.
-        self._expand_adjacencies_for_additional_types(base_adjacencies)
-        self._expand_properties_for_additional_types()
+        self.expand_adjacencies_for_additional_types(base_adjacencies)
+        self.expand_properties_for_additional_types()
 
-    def _bind_unbound_adjacencies(self) -> list[tuple[Adjacency, AdjacencyCardinality]]:
+    def bind_unbound_adjacencies(self) -> list[tuple[Adjacency, AdjacencyCardinality]]:
         return [u.bind(self.schema, self.aliases) for u in self.unbound_adjacencies]
 
-    def _expand_adjacencies_for_additional_types(
+    def expand_adjacencies_for_additional_types(
         self, base_adjacencies: list[tuple[Adjacency, AdjacencyCardinality]]
     ) -> None:
         for adjacency, cardinality in base_adjacencies:
@@ -988,7 +988,7 @@ class SchemaExpansionCoordinator:
                         cardinality,
                     )
 
-    def _expand_properties_for_additional_types(self) -> None:
+    def expand_properties_for_additional_types(self) -> None:
         for alias, base_type in self.aliases.effective_items.items():
             if alias_schema := self.unbound_aliases.get(alias, None):
                 for additional_type in self.additional_types_map.get(base_type, ()):
