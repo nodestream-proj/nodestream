@@ -31,80 +31,39 @@ class ExplainProjectSchema(Operation):
                 yield scope.name, pipeline
 
     def _get_filtered_pipelines(self) -> Iterable[Tuple[str, PipelineDefinition]]:
-        """Return pipelines filtered by node/relationship provenance.
-
-        The filtering honours the optional ``node_type_name`` and
-        ``relationship_type_name`` attributes, and when both are provided it also
-        enforces that the requested node type is an endpoint of the requested
-        relationship type in the expanded schema.
-        """
         matching = list(self._get_matching_pipelines())
 
         if not self.node_type_name and not self.relationship_type_name:
             return matching
 
-        if not matching:
-            return []
+        node_pipelines = (
+            set(self.project.explain_node_type(self.node_type_name, scope_name=self.scope))
+            if self.node_type_name
+            else None
+        )
+        relationship_pipelines = (
+            set(self.project.explain_relationship_type(self.relationship_type_name, scope_name=self.scope))
+            if self.relationship_type_name
+            else None
+        )
 
-        node_pipelines = None
-        relationship_pipelines = None
-
-        if self.node_type_name:
-            node_pipelines = set(
-                self.project.explain_node_type(
-                    self.node_type_name,
-                    scope_name=self.scope,
-                )
-            )
-
-        if self.relationship_type_name:
-            relationship_pipelines = set(
-                self.project.explain_relationship_type(
-                    self.relationship_type_name,
-                    scope_name=self.scope,
-                )
-            )
-
-        # If both a node and relationship type are provided, additionally ensure
-        # that the requested node type is actually one of the endpoints of the
-        # requested relationship type in the expanded schema. This uses
-        # relationship adjacencies derived from pipeline interpretations such as
-        # ``source_node`` and ``relationship``.
-        endpoint_node_types = None
         if self.node_type_name and self.relationship_type_name:
             adjacencies = self.project.explain_relationship_adjacencies(
-                self.relationship_type_name,
-                scope_name=self.scope,
+                self.relationship_type_name, scope_name=self.scope
             )
             endpoint_node_types = {
                 node_type
                 for adjacency in adjacencies
                 for node_type in (adjacency.from_node_type, adjacency.to_node_type)
             }
-
             if self.node_type_name not in endpoint_node_types:
-                # The requested node type is not connected by this relationship in
-                # the schema, so there can be no matching pipelines.
                 return []
-
-        def _include(scope_name: str, pipeline: PipelineDefinition) -> bool:
-            name = pipeline.name
-
-            if node_pipelines is not None and name not in node_pipelines:
-                return False
-
-            if (
-                relationship_pipelines is not None
-                and name not in relationship_pipelines
-            ):
-                return False
-
-            return True
 
         return [
             (scope_name, pipeline)
             for scope_name, pipeline in matching
-            if _include(scope_name, pipeline)
+            if (node_pipelines is None or pipeline.name in node_pipelines)
+            and (relationship_pipelines is None or pipeline.name in relationship_pipelines)
         ]
 
     def _scope_fragment(self) -> str:
