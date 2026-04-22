@@ -20,20 +20,13 @@ class ExplainProjectSchema(Operation):
         self.scope = scope
 
     def _get_matching_pipelines(self) -> Iterable[Tuple[str, PipelineDefinition]]:
-        """Yield (scope_name, pipeline) pairs matching the requested scope.
-
-        When ``self.scope`` is ``None``, all scopes are considered; otherwise we
-        only consider the named scope (if present).
-        """
         if self.scope:
-            scopes = [self.project.scopes_by_name.get(self.scope)]
+            scope = self.project.scopes_by_name.get(self.scope)
+            scopes = [scope] if scope else []
         else:
             scopes = self.project.scopes_by_name.values()
 
         for scope in scopes:
-            if scope is None:
-                continue
-
             for pipeline in scope.pipelines_by_name.values():
                 yield scope.name, pipeline
 
