@@ -241,33 +241,26 @@ class ConcurrentCopier(Copier):
         still running their later shards, smaller types already have slots to
         fill.  Types with no key field fall back to a single full-type coroutine.
         """
-        # Build per-type shard lists: [(node_type, shard_offset, shard_limit), ...]
+        # Build per-type shard lists: [(node_type, key_field, shard_offset, shard_limit), ...]
+        # key_field may be None — the retriever falls back to elementId ordering in that case.
         per_type_shards: List[List[tuple]] = []
         for node_type in self.node_types:
             count = self._node_counts.get(node_type, 0)
             key_field = self._get_node_key_field(node_type)
-            if key_field is None:
-                # No key — single coroutine covering the whole type.
-                per_type_shards.append([(node_type, None, None, None)])
-            else:
-                shards = self.type_retriever.compute_shards(count, self.shard_size)
-                per_type_shards.append(
-                    [(node_type, key_field, off, lim) for off, lim in shards]
-                )
+            shards = self.type_retriever.compute_shards(count, self.shard_size)
+            per_type_shards.append(
+                [(node_type, key_field, off, lim) for off, lim in shards]
+            )
 
         async def produce_node_shard(
             node_type: str,
             key_field: Optional[str],
-            shard_offset: Optional[int],
-            shard_limit: Optional[int],
+            shard_offset: int,
+            shard_limit: int,
         ) -> None:
-            if key_field is None:
-                gen = self.type_retriever.get_nodes_of_type(node_type)
-            else:
-                gen = self.type_retriever.get_nodes_of_type_shard(
-                    node_type, key_field, shard_offset, shard_limit
-                )
-            async for node in gen:
+            async for node in self.type_retriever.get_nodes_of_type_shard(
+                node_type, key_field, shard_offset, shard_limit
+            ):
                 Metrics.get().increment(ORCHESTRATOR_QUEUE)
                 await queue.put(self.convert_node_to_ingest(node))
 
@@ -289,40 +282,32 @@ class ConcurrentCopier(Copier):
         self, queue: asyncio.Queue, all_adjacencies: List[Adjacency]
     ) -> List[Coroutine]:
         """Return one coroutine per (adjacency, shard) pair, interleaved."""
+        # key_field may be None — the retriever falls back to elementId ordering in that case.
         per_adjacency_shards: List[List[tuple]] = []
         for adjacency in all_adjacencies:
             count = self._relationship_counts.get(adjacency.relationship_type, 0)
             key_field = self._get_relationship_key_field(adjacency.relationship_type)
-            if key_field is None:
-                per_adjacency_shards.append([(adjacency, None, None, None)])
-            else:
-                shards = self.type_retriever.compute_shards(count, self.shard_size)
-                per_adjacency_shards.append(
-                    [(adjacency, key_field, off, lim) for off, lim in shards]
-                )
+            shards = self.type_retriever.compute_shards(count, self.shard_size)
+            per_adjacency_shards.append(
+                [(adjacency, key_field, off, lim) for off, lim in shards]
+            )
 
         async def produce_relationship_shard(
             adjacency: Adjacency,
             key_field: Optional[str],
-            shard_offset: Optional[int],
-            shard_limit: Optional[int],
+            shard_offset: int,
+            shard_limit: int,
         ) -> None:
-            if key_field is None:
-                gen = self.type_retriever.get_relationships_of_type_between(
-                    adjacency.from_node_type,
-                    adjacency.to_node_type,
-                    adjacency.relationship_type,
-                )
-            else:
-                gen = self.type_retriever.get_relationships_of_type_between_shard(
-                    adjacency.from_node_type,
-                    adjacency.to_node_type,
-                    adjacency.relationship_type,
-                    key_field,
-                    shard_offset,
-                    shard_limit,
-                )
-            async for relationship in gen:
+            async for (
+                relationship
+            ) in self.type_retriever.get_relationships_of_type_between_shard(
+                adjacency.from_node_type,
+                adjacency.to_node_type,
+                adjacency.relationship_type,
+                key_field,
+                shard_offset,
+                shard_limit,
+            ):
                 Metrics.get().increment(ORCHESTRATOR_QUEUE)
                 await queue.put(self.convert_relationship_to_ingest(relationship))
 
