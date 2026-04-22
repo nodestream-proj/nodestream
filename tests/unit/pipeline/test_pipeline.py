@@ -871,7 +871,7 @@ async def test_pipeline_cancels_blocking_extractor_on_fatal_error(mocker):
 
         async def process_record(self, record, context):
             raise RuntimeError("fatal writer error")
-            yield  # noqa: unreachable — makes this an async generator
+            yield  # noqa: F701
 
     fatal_errors = []
 

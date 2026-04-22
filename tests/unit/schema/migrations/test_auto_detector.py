@@ -612,7 +612,9 @@ async def test_creating_indexed_relationship_type_does_not_produce_spurious_drop
 
     # Add a new relationship type with an additional index.
     await memory_migrator.execute_operation(
-        CreateRelationshipType(name="NEW_REL", keys=set(), properties={"last_ingested_at"})
+        CreateRelationshipType(
+            name="NEW_REL", keys=set(), properties={"last_ingested_at"}
+        )
     )
     await memory_migrator.execute_operation(
         AddAdditionalRelationshipPropertyIndex(
