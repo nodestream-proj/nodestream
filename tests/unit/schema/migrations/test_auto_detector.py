@@ -594,6 +594,75 @@ class MoveRelationshipPropertyToKey(Scenario):
         )
 
 
+@pytest.mark.asyncio
+async def test_creating_indexed_relationship_type_does_not_produce_spurious_drop_index():
+    """Regression test: adding a new relationship type with an additional index must not
+    also emit a DropAdditionalRelationshipPropertyIndex for an empty-string type name.
+
+    Root cause: TypePairing replaces a missing from_type with GraphObjectSchema(name="").
+    When detect_relationship_index_changes iterates pairs with ignore_created_and_deleted=False,
+    newly created types have from_type.name == "" (the sentinel). The index diff between
+    that sentinel (which has no indexed properties) and the real to_type was producing a
+    spurious ("", "last_ingested_at") entry in deleted_relationship_property_indexes.
+    """
+    memory_migrator = InMemoryMigrator()
+    input = ScenarioMigratorInput()
+
+    from_state = StaticStateProvider(deepcopy(memory_migrator.schema))
+
+    # Add a new relationship type with an additional index.
+    await memory_migrator.execute_operation(
+        CreateRelationshipType(name="NEW_REL", keys=set(), properties={"last_ingested_at"})
+    )
+    await memory_migrator.execute_operation(
+        AddAdditionalRelationshipPropertyIndex(
+            relationship_type="NEW_REL", field_name="last_ingested_at"
+        )
+    )
+
+    to_state = StaticStateProvider(memory_migrator.schema)
+    detector = AutoChangeDetector(input, from_state, to_state)
+    detections = await detector.detect_changes()
+
+    operation_types = [type(op) for op in detections]
+    assert DropAdditionalRelationshipPropertyIndex not in operation_types, (
+        "Creating a new indexed relationship type must not produce a spurious "
+        "DropAdditionalRelationshipPropertyIndex for an empty-string type name"
+    )
+
+
+@pytest.mark.asyncio
+async def test_creating_indexed_node_type_does_not_produce_spurious_drop_index():
+    """Regression test: same sentinel bug for node types.
+
+    Adding a new node type with an additional index must not emit a
+    DropAdditionalNodePropertyIndex for an empty-string type name.
+    """
+    memory_migrator = InMemoryMigrator()
+    input = ScenarioMigratorInput()
+
+    from_state = StaticStateProvider(deepcopy(memory_migrator.schema))
+
+    await memory_migrator.execute_operation(
+        CreateNodeType(name="NewNode", keys={"id"}, properties={"last_ingested_at"})
+    )
+    await memory_migrator.execute_operation(
+        AddAdditionalNodePropertyIndex(
+            node_type="NewNode", field_name="last_ingested_at"
+        )
+    )
+
+    to_state = StaticStateProvider(memory_migrator.schema)
+    detector = AutoChangeDetector(input, from_state, to_state)
+    detections = await detector.detect_changes()
+
+    operation_types = [type(op) for op in detections]
+    assert DropAdditionalNodePropertyIndex not in operation_types, (
+        "Creating a new indexed node type must not produce a spurious "
+        "DropAdditionalNodePropertyIndex for an empty-string type name"
+    )
+
+
 ALL_PERMUTABLE_SCENARIOS = [
     AddedNodeType,
     DroppedNodeType,
