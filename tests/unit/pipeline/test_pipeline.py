@@ -831,3 +831,171 @@ async def test_pipeline_on_start_callback_called_before_step_operations(
     start_idx = call_order.index("on_start_callback")
     step_idx = call_order.index("step_start")
     assert start_idx < step_idx
+
+
+@pytest.mark.asyncio
+async def test_pipeline_cancels_blocking_extractor_on_fatal_error(mocker):
+    """Regression test for the zombie pipeline bug.
+
+    When a downstream step raises a fatal error that causes on_finish_callback
+    to re-raise, Pipeline.run() must cancel any sibling tasks that are still
+    running (e.g. an extractor blocked indefinitely) and re-raise the exception,
+    so the process exits cleanly rather than hanging as a zombie.
+
+    Before the fix, Pipeline.run() used a bare asyncio.gather() which does not
+    cancel sibling tasks when one raises — leaving blocking tasks alive after
+    the pipeline output executor had already failed.
+    """
+    import asyncio
+
+    from nodestream.pipeline.object_storage import NullObjectStore
+    from nodestream.pipeline.step import Step
+
+    block_event = asyncio.Event()  # never set — simulates a blocking poll
+
+    class BlockingExtractor(Step):
+        """Emits one record, then blocks until cancelled — like a Kafka consumer."""
+
+        async def emit_outstanding_records(self, context):
+            yield {"data": "record"}
+            # Block indefinitely; only exits via CancelledError when task is cancelled.
+            await block_event.wait()
+
+        async def process_record(self, record, context):
+            # Extractors don't consume input; this is unreachable.
+            return
+            yield
+
+    class FatalWriterStep(Step):
+        """Raises a fatal error on the first record received."""
+
+        async def process_record(self, record, context):
+            raise RuntimeError("fatal writer error")
+            yield  # noqa: unreachable — makes this an async generator
+
+    fatal_errors = []
+
+    def on_fatal_error(exc):
+        fatal_errors.append(exc)
+
+    def on_finish(metrics):
+        if fatal_errors:
+            raise fatal_errors[0]
+
+    reporter = PipelineProgressReporter(
+        on_fatal_error_callback=on_fatal_error,
+        on_finish_callback=on_finish,
+        logger=mocker.Mock(),
+    )
+
+    pipeline = Pipeline(
+        (BlockingExtractor(), FatalWriterStep()),
+        step_outbox_size=10,
+        object_store=NullObjectStore(),
+    )
+
+    tasks_before = set(asyncio.all_tasks())
+
+    with pytest.raises(RuntimeError, match="fatal writer error"):
+        await pipeline.run(reporter)
+
+    # No tasks spawned during pipeline.run() should still be running.
+    leaked = asyncio.all_tasks() - tasks_before - {asyncio.current_task()}
+    for t in leaked:
+        t.cancel()
+    if leaked:
+        await asyncio.gather(*leaked, return_exceptions=True)
+
+    assert not leaked, (
+        f"ZOMBIE: {len(leaked)} task(s) still running after Pipeline.run() raised. "
+        "The blocking extractor was not cancelled — process would hang indefinitely."
+    )
+
+
+@pytest.mark.asyncio
+async def test_pipeline_fatal_error_drains_completed_steps_before_cancellation(mocker):
+    """Verify that steps which finish normally still run finish() after a fatal error.
+
+    The channel-based drain (DoneObject signaling) happens inside each step's
+    state machine — StopStepExecution calls output.done() and step.finish()
+    cooperatively before the task exits. The task-level cancellation in
+    Pipeline.run() only fires after on_finish_callback re-raises, by which
+    point any step that processed its last record has already transitioned
+    through StopStepExecution and called finish().
+
+    This test asserts that:
+    - The fatal error is raised from Pipeline.run()
+    - The writer step (which hit the fatal error) still called finish()
+      via StopStepExecution — the graceful drain happened
+    - The blocking extractor was cancelled and did NOT call finish()
+      (it was stuck in emit_outstanding_records and never reached StopStepExecution)
+    """
+    import asyncio
+
+    from nodestream.pipeline.object_storage import NullObjectStore
+    from nodestream.pipeline.step import Step
+
+    block_event = asyncio.Event()  # never set — simulates a blocking Kafka poll
+    finish_calls = []
+
+    class BlockingExtractor(Step):
+        """Emits one record then blocks forever — simulates a Kafka consumer."""
+
+        async def emit_outstanding_records(self, context):
+            yield {"data": "record"}
+            await block_event.wait()  # blocks until cancelled
+
+        async def process_record(self, record, context):
+            return
+            yield
+
+        async def finish(self, context):
+            finish_calls.append("extractor")
+
+    class FatalWriterStep(Step):
+        """Raises on the first record, then completes StopStepExecution normally."""
+
+        async def process_record(self, record, context):
+            raise RuntimeError("fatal writer error")
+            yield
+
+        async def finish(self, context):
+            finish_calls.append("writer")
+
+    fatal_errors = []
+
+    def on_fatal_error(exc):
+        fatal_errors.append(exc)
+
+    def on_finish(metrics):
+        if fatal_errors:
+            raise fatal_errors[0]
+
+    reporter = PipelineProgressReporter(
+        on_fatal_error_callback=on_fatal_error,
+        on_finish_callback=on_finish,
+        logger=mocker.Mock(),
+    )
+
+    pipeline = Pipeline(
+        (BlockingExtractor(), FatalWriterStep()),
+        step_outbox_size=10,
+        object_store=NullObjectStore(),
+    )
+
+    with pytest.raises(RuntimeError, match="fatal writer error"):
+        await pipeline.run(reporter)
+
+    # The writer hit a fatal error but still transitioned through StopStepExecution,
+    # which calls finish() as part of the graceful drain — this must have run.
+    assert "writer" in finish_calls, (
+        "FatalWriterStep.finish() was not called — the graceful drain via "
+        "StopStepExecution did not complete before the fatal error propagated."
+    )
+
+    # The extractor was stuck in emit_outstanding_records and was cancelled before
+    # it ever reached StopStepExecution, so finish() must NOT have been called.
+    assert "extractor" not in finish_calls, (
+        "BlockingExtractor.finish() was called — expected it to be cancelled "
+        "mid-flight in emit_outstanding_records, never reaching StopStepExecution."
+    )

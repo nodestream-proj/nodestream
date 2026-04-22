@@ -525,6 +525,17 @@ class Pipeline(ExpandsSchemaFromChildren):
         await current_output.done()
 
         # Run the pipeline by running all the steps and the pipeline output
-        # concurrently. This will block until all steps are finished.
-        # Wait for all the executors to finish.
-        await gather(*(create_task(executor.run()) for executor in executors))
+        # concurrently. If any executor raises (e.g. on_finish_callback re-raises
+        # a fatal writer error), cancel the remaining tasks so that blocking
+        # extractors (e.g. a StreamExtractor polling Kafka forever) don't keep
+        # the process alive as a zombie after the pipeline has already failed.
+        tasks = [create_task(executor.run()) for executor in executors]
+        try:
+            await gather(*tasks)
+        except Exception:
+            for task in tasks:
+                task.cancel()
+            # Wait for all tasks to acknowledge cancellation before re-raising,
+            # so the event loop is clean when the caller handles the exception.
+            await gather(*tasks, return_exceptions=True)
+            raise
