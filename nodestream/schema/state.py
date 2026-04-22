@@ -889,16 +889,12 @@ class SchemaExpansionCoordinator:
     @contextmanager
     def aquire_context(self, should_be_distinct: bool):
         if should_be_distinct:
-            try:
-                self.increment_context_level()
-                yield
-            finally:
+            self.increment_context_level()
+        try:
+            yield
+        finally:
+            if should_be_distinct:
                 self.decrement_context_level()
-        else:
-            try:
-                yield
-            finally:
-                pass
 
     def increment_context_level(self):
         self.unbound_adjacencies.increment_context_level()
@@ -970,73 +966,35 @@ class SchemaExpansionCoordinator:
         self._expand_adjacencies_for_additional_types(base_adjacencies)
         self._expand_properties_for_additional_types()
 
-    def _bind_unbound_adjacencies(
-        self,
-    ) -> list[tuple[Adjacency, AdjacencyCardinality]]:
-        base_adjacencies: list[tuple[Adjacency, AdjacencyCardinality]] = []
-        for unbound_adjacency in self.unbound_adjacencies:
-            base_adjacencies.append(unbound_adjacency.bind(self.schema, self.aliases))
-        return base_adjacencies
+    def _bind_unbound_adjacencies(self) -> list[tuple[Adjacency, AdjacencyCardinality]]:
+        return [u.bind(self.schema, self.aliases) for u in self.unbound_adjacencies]
 
     def _expand_adjacencies_for_additional_types(
         self, base_adjacencies: list[tuple[Adjacency, AdjacencyCardinality]]
     ) -> None:
-        # Create duplicate adjacencies for additional types
-        adjacencies_to_add: list[tuple[Adjacency, AdjacencyCardinality]] = []
         for adjacency, cardinality in base_adjacencies:
-            from_types = [adjacency.from_node_type]
-            to_types = [adjacency.to_node_type]
-
-            # Add additional types for from_node_type
-            if adjacency.from_node_type in self.additional_types_map:
-                from_types.extend(self.additional_types_map[adjacency.from_node_type])
-
-            # Add additional types for to_node_type
-            if adjacency.to_node_type in self.additional_types_map:
-                to_types.extend(self.additional_types_map[adjacency.to_node_type])
-
-            # Create adjacencies for all combinations (excluding the original)
+            from_types = [adjacency.from_node_type] + list(
+                self.additional_types_map.get(adjacency.from_node_type, ())
+            )
+            to_types = [adjacency.to_node_type] + list(
+                self.additional_types_map.get(adjacency.to_node_type, ())
+            )
             for from_type in from_types:
                 for to_type in to_types:
-                    # Skip the original adjacency (already exists)
-                    if (
-                        from_type == adjacency.from_node_type
-                        and to_type == adjacency.to_node_type
-                    ):
+                    if (from_type, to_type) == (adjacency.from_node_type, adjacency.to_node_type):
                         continue
-
-                    new_adjacency = Adjacency(
-                        from_node_type=from_type,
-                        to_node_type=to_type,
-                        relationship_type=adjacency.relationship_type,
+                    self.schema.add_adjacency(
+                        Adjacency(from_type, to_type, adjacency.relationship_type),
+                        cardinality,
                     )
-                    adjacencies_to_add.append((new_adjacency, cardinality))
-
-        for adjacency, cardinality in adjacencies_to_add:
-            self.schema.add_adjacency(adjacency, cardinality)
 
     def _expand_properties_for_additional_types(self) -> None:
-        """Propagate alias-level properties to additional types in this context.
-
-        Properties defined via `properties` interpretations are accumulated on
-        aliases (for example, the `source_node` alias). When we register
-        additional types for a base node type, those alias-level properties
-        should also be applied to the additional types, but only within the
-        current schema-expansion context.
-        """
         for alias, base_type in self.aliases.effective_items.items():
-            alias_schema = self.unbound_aliases.get(alias, None)
-            if alias_schema is None:
-                continue
-
-            additional_types = self.additional_types_map.get(base_type, tuple())
-            if not additional_types:
-                continue
-
-            for additional_type in additional_types:
-                target_schema = self.schema.get_node_type_by_name(additional_type)
-                for property_name, metadata in alias_schema.properties.items():
-                    target_schema.add_property(property_name, metadata)
+            if alias_schema := self.unbound_aliases.get(alias, None):
+                for additional_type in self.additional_types_map.get(base_type, ()):
+                    target_schema = self.schema.get_node_type_by_name(additional_type)
+                    for prop, metadata in alias_schema.properties.items():
+                        target_schema.add_property(prop, metadata)
 
 
 class ExpandsSchema:
