@@ -892,7 +892,7 @@ class SchemaExpansionCoordinator:
     """
 
     @contextmanager
-    def aquire_context(self, should_be_distinct: bool):
+    def acquire_context(self, should_be_distinct: bool):
         if should_be_distinct:
             self.increment_context_level()
         try:
@@ -1077,5 +1077,5 @@ class ExpandsSchemaFromChildren(ExpandsSchema, ABC):
             The expanded schema.
         """
         for child_expander in self.get_child_expanders():
-            with coordinator.aquire_context(self.should_be_distinct):
+            with coordinator.acquire_context(self.should_be_distinct):
                 child_expander.expand_schema(coordinator)
