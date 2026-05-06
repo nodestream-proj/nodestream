@@ -107,7 +107,7 @@ class ExplainProjectSchema(Operation):
                 f"'{self.relationship_type_name}'" + scope_fragment + "."
             )
 
-        return "No pipelines found." + scope_fragment + "."
+        return "No pipelines found" + scope_fragment + "."
 
     def header_message(self) -> str:
         """Return the header line describing what the table will show."""

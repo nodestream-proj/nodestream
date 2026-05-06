@@ -738,6 +738,11 @@ class UnboundAdjacency:
         return adjacency, cardinality
 
 
+# NOTE: frozen=True was intentionally removed from this dataclass.  The
+# pipeline_context() context manager must be able to mutate _current_pipeline
+# at runtime to track which pipeline is currently being expanded.  A frozen
+# dataclass would raise a FrozenInstanceError on that assignment, so mutability
+# is required here.
 @dataclass(slots=True)
 class SchemaExpansionCoordinator:
     """A coordinator for expanding a schema."""
@@ -967,7 +972,25 @@ class SchemaExpansionCoordinator:
         self.expand_properties_for_additional_types()
 
     def bind_unbound_adjacencies(self) -> list[tuple[Adjacency, AdjacencyCardinality]]:
-        return [u.bind(self.schema, self.aliases) for u in self.unbound_adjacencies]
+        return [
+            unbound_adjacency.bind(self.schema, self.aliases)
+            for unbound_adjacency in self.unbound_adjacencies
+        ]
+
+    def _add_adjacency_for_type_pair(
+        self,
+        adjacency: Adjacency,
+        cardinality: AdjacencyCardinality,
+        from_type: str,
+        to_type: str,
+    ) -> None:
+        """Add a new adjacency for a derived type pair, skipping the original pair."""
+        if (from_type, to_type) == (adjacency.from_node_type, adjacency.to_node_type):
+            return
+        self.schema.add_adjacency(
+            Adjacency(from_type, to_type, adjacency.relationship_type),
+            cardinality,
+        )
 
     def expand_adjacencies_for_additional_types(
         self, base_adjacencies: list[tuple[Adjacency, AdjacencyCardinality]]
@@ -981,14 +1004,8 @@ class SchemaExpansionCoordinator:
             )
             for from_type in from_types:
                 for to_type in to_types:
-                    if (from_type, to_type) == (
-                        adjacency.from_node_type,
-                        adjacency.to_node_type,
-                    ):
-                        continue
-                    self.schema.add_adjacency(
-                        Adjacency(from_type, to_type, adjacency.relationship_type),
-                        cardinality,
+                    self._add_adjacency_for_type_pair(
+                        adjacency, cardinality, from_type, to_type
                     )
 
     def expand_properties_for_additional_types(self) -> None:
@@ -996,8 +1013,8 @@ class SchemaExpansionCoordinator:
             if alias_schema := self.unbound_aliases.get(alias, None):
                 for additional_type in self.additional_types_map.get(base_type, ()):
                     target_schema = self.schema.get_node_type_by_name(additional_type)
-                    for prop, metadata in alias_schema.properties.items():
-                        target_schema.add_property(prop, metadata)
+                    for property_name, metadata in alias_schema.properties.items():
+                        target_schema.add_property(property_name, metadata)
 
 
 class ExpandsSchema:

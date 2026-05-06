@@ -143,4 +143,4 @@ async def test_explain_project_schema_no_filters_with_missing_scope(mocker):
 
     await operation.perform(command)
 
-    command.line.assert_called_once_with("No pipelines found. in scope 'missing'.")
+    command.line.assert_called_once_with("No pipelines found in scope 'missing'.")
