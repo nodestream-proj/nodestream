@@ -961,38 +961,23 @@ class SchemaExpansionCoordinator:
         # First, bind all unbound adjacencies for this context into concrete
         # adjacencies on the underlying schema, keeping track of exactly which
         # adjacencies were created as part of this pass.
-        base_adjacencies = self.bind_unbound_adjacencies()
+        base_adjacencies = self._bind_unbound_adjacencies()
 
         if not self.include_additional_types:
             return
 
         # Then duplicate those adjacencies and any alias-level properties for
         # additional types registered in this context.
-        self.expand_adjacencies_for_additional_types(base_adjacencies)
-        self.expand_properties_for_additional_types()
+        self._expand_adjacencies_for_additional_types(base_adjacencies)
+        self._expand_properties_for_additional_types()
 
-    def bind_unbound_adjacencies(self) -> list[tuple[Adjacency, AdjacencyCardinality]]:
+    def _bind_unbound_adjacencies(self) -> list[tuple[Adjacency, AdjacencyCardinality]]:
         return [
             unbound_adjacency.bind(self.schema, self.aliases)
             for unbound_adjacency in self.unbound_adjacencies
         ]
 
-    def _add_adjacency_for_type_pair(
-        self,
-        adjacency: Adjacency,
-        cardinality: AdjacencyCardinality,
-        from_type: str,
-        to_type: str,
-    ) -> None:
-        """Add a new adjacency for a derived type pair, skipping the original pair."""
-        if (from_type, to_type) == (adjacency.from_node_type, adjacency.to_node_type):
-            return
-        self.schema.add_adjacency(
-            Adjacency(from_type, to_type, adjacency.relationship_type),
-            cardinality,
-        )
-
-    def expand_adjacencies_for_additional_types(
+    def _expand_adjacencies_for_additional_types(
         self, base_adjacencies: list[tuple[Adjacency, AdjacencyCardinality]]
     ) -> None:
         for adjacency, cardinality in base_adjacencies:
@@ -1004,11 +989,17 @@ class SchemaExpansionCoordinator:
             )
             for from_type in from_types:
                 for to_type in to_types:
-                    self._add_adjacency_for_type_pair(
-                        adjacency, cardinality, from_type, to_type
+                    if (from_type, to_type) == (
+                        adjacency.from_node_type,
+                        adjacency.to_node_type,
+                    ):
+                        continue
+                    self.schema.add_adjacency(
+                        Adjacency(from_type, to_type, adjacency.relationship_type),
+                        cardinality,
                     )
 
-    def expand_properties_for_additional_types(self) -> None:
+    def _expand_properties_for_additional_types(self) -> None:
         for alias, base_type in self.aliases.effective_items.items():
             if alias_schema := self.unbound_aliases.get(alias, None):
                 for additional_type in self.additional_types_map.get(base_type, ()):

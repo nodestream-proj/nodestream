@@ -226,7 +226,7 @@ def test_bind_unbound_adjacencies_uses_aliases_and_updates_schema():
     )
     coordinator.unbound_adjacencies.append(unbound)
 
-    base_adjacencies = coordinator.bind_unbound_adjacencies()
+    base_adjacencies = coordinator._bind_unbound_adjacencies()
 
     # We should have exactly one bound adjacency with the alias resolved.
     assert_that(len(base_adjacencies), equal_to(1))
@@ -250,7 +250,7 @@ def test_expand_adjacencies_for_additional_types_duplicates_edges():
     # Register additional types for Player in the current context.
     coordinator.additional_types_map["Player"] = ("Person", "Athlete")
 
-    coordinator.expand_adjacencies_for_additional_types([(base_adj, base_card)])
+    coordinator._expand_adjacencies_for_additional_types([(base_adj, base_card)])
 
     adjacency_pairs = {
         (adj.from_node_type, adj.to_node_type) for adj in schema.adjacencies
@@ -285,7 +285,7 @@ def test_expand_properties_for_additional_types_propagates_alias_properties():
     # Register additional types for Player in this context.
     coordinator.additional_types_map["Player"] = ("Person", "Athlete")
 
-    coordinator.expand_properties_for_additional_types()
+    coordinator._expand_properties_for_additional_types()
 
     person_schema = schema.get_node_type_by_name("Person")
     athlete_schema = schema.get_node_type_by_name("Athlete")
@@ -312,7 +312,7 @@ def test_expand_properties_for_additional_types_skips_when_no_additional_types()
     coordinator.unbound_aliases["source_node"] = alias_schema
 
     # Do NOT register any additional types for Player.
-    coordinator.expand_properties_for_additional_types()
+    coordinator._expand_properties_for_additional_types()
 
     other_schema = schema.get_node_type_by_name("Other")
     assert_that("alias_prop" in other_schema.properties, equal_to(False))
