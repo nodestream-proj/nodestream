@@ -196,6 +196,53 @@ def test_from_path():
     assert_that(result.file_path, equal_to(path))
 
 
+def test_pipeline_definition_initialize_for_schema_collection(mocker):
+    mocked_load = mocker.patch(
+        "nodestream.pipeline.pipeline_file_loader.PipelineFile.load_pipeline_for_schema_collection"
+    )
+    subject = PipelineDefinition(
+        "test", "tests/unit/project/fixtures/simple_pipeline.yaml"
+    )
+    subject.initialize_for_schema_collection()
+    mocked_load.assert_called_once()
+
+
+def test_pipeline_definition_expand_schema_uses_schema_collection(mocker):
+    mocked_pipeline = mocker.MagicMock()
+    mocker.patch(
+        "nodestream.project.pipeline_definition.PipelineDefinition.initialize_for_schema_collection",
+        return_value=mocked_pipeline,
+    )
+    coordinator = mocker.MagicMock()
+    coordinator.pipeline_context.return_value = mocker.MagicMock(
+        __enter__=mocker.MagicMock(return_value=None),
+        __exit__=mocker.MagicMock(return_value=False),
+    )
+    subject = PipelineDefinition(
+        "test", "tests/unit/project/fixtures/simple_pipeline.yaml"
+    )
+    subject.expand_schema(coordinator)
+    mocked_pipeline.expand_schema.assert_called_once_with(coordinator)
+
+
+def test_pipeline_definition_expand_schema_with_introspection(mocker):
+    mocked_pipeline = mocker.MagicMock()
+    mocker.patch(
+        "nodestream.project.pipeline_definition.PipelineDefinition.initialize_for_introspection",
+        return_value=mocked_pipeline,
+    )
+    coordinator = mocker.MagicMock()
+    coordinator.pipeline_context.return_value = mocker.MagicMock(
+        __enter__=mocker.MagicMock(return_value=None),
+        __exit__=mocker.MagicMock(return_value=False),
+    )
+    subject = PipelineDefinition(
+        "test", "tests/unit/project/fixtures/simple_pipeline.yaml"
+    )
+    subject.expand_schema_with_introspection(coordinator)
+    mocked_pipeline.expand_schema.assert_called_once_with(coordinator)
+
+
 def test_effective_annotation_prioritizes_self():
     pipeline_configuration = PipelineConfiguration(
         targets=[],

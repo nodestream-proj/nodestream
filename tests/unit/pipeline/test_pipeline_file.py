@@ -108,3 +108,41 @@ def test_load_pipeline_for_introspection():
     file_loader = PipelineFile(file_path)
     pipeline = file_loader.load_pipeline_for_introspection()
     assert_that(pipeline.steps, has_length(2))
+
+
+def test_init_args_for_schema_collection():
+    init_args = PipelineInitializationArguments.for_schema_collection()
+    assert_that(init_args.schema_only, equal_to(True))
+    assert_that(init_args.annotations, equal_to(["introspection"]))
+
+
+def test_step_definition_expands_schema_true():
+    # InterpretationPass implements ExpandsSchema
+    definition = StepDefinition(
+        implementation_path="nodestream.interpreting.interpretation_passes:InterpretationPass"
+    )
+    assert_that(definition.expands_schema(), equal_to(True))
+
+
+def test_step_definition_expands_schema_false():
+    # PassStep does not implement ExpandsSchema
+    definition = StepDefinition(implementation_path="nodestream.pipeline.step:PassStep")
+    assert_that(definition.expands_schema(), equal_to(False))
+
+
+def test_schema_only_filters_non_schema_steps():
+    # simple_pipeline has only PassStep steps, none implement ExpandsSchema
+    init_args = PipelineInitializationArguments.for_schema_collection()
+    file_contents = PipelineFileContents.read_from_file(
+        Path("tests/unit/pipeline/fixtures/simple_pipeline.yaml")
+    )
+    loaded_pipeline = file_contents.initialize_with_arguments(init_args)
+    assert_that(loaded_pipeline.steps, has_length(0))
+
+
+def test_load_pipeline_for_schema_collection():
+    file_path = Path("tests/unit/pipeline/fixtures/simple_pipeline.yaml")
+    file_loader = PipelineFile(file_path)
+    # simple_pipeline has no ExpandsSchema steps — should load 0 steps
+    pipeline = file_loader.load_pipeline_for_schema_collection()
+    assert_that(pipeline.steps, has_length(0))
