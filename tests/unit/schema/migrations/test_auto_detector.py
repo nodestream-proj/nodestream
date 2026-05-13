@@ -665,6 +665,81 @@ async def test_creating_indexed_node_type_does_not_produce_spurious_drop_index()
     )
 
 
+@pytest.mark.asyncio
+async def test_deleting_indexed_node_type_emits_drop_index_with_correct_type_name():
+    """Regression test: deleting a node type with an additional index must emit
+    DropAdditionalNodePropertyIndex with the original type name, not an empty string.
+
+    Root cause: _apply_index_drift used pair.to_type.name (the sentinel, name="") as the
+    key in the deleted branch instead of pair.from_type.name (the original type name).
+    """
+    memory_migrator = InMemoryMigrator()
+    input = ScenarioMigratorInput()
+
+    await memory_migrator.execute_operation(
+        CreateNodeType(name="OldNode", keys={"id"}, properties={"email"})
+    )
+    await memory_migrator.execute_operation(
+        AddAdditionalNodePropertyIndex(node_type="OldNode", field_name="email")
+    )
+
+    from_state = StaticStateProvider(deepcopy(memory_migrator.schema))
+
+    await memory_migrator.execute_operation(DropNodeType(name="OldNode"))
+
+    to_state = StaticStateProvider(memory_migrator.schema)
+    detector = AutoChangeDetector(input, from_state, to_state)
+    detections = await detector.detect_changes()
+
+    drop_index_ops = [
+        op for op in detections if isinstance(op, DropAdditionalNodePropertyIndex)
+    ]
+    assert any(op.node_type == "OldNode" for op in drop_index_ops), (
+        "Deleting an indexed node type must emit DropAdditionalNodePropertyIndex "
+        "with the original type name, not an empty string"
+    )
+    assert not any(op.node_type == "" for op in drop_index_ops), (
+        "DropAdditionalNodePropertyIndex must never be emitted with an empty type name"
+    )
+
+
+@pytest.mark.asyncio
+async def test_deleting_indexed_relationship_type_emits_drop_index_with_correct_type_name():
+    """Regression test: same fix for relationship types."""
+    memory_migrator = InMemoryMigrator()
+    input = ScenarioMigratorInput()
+
+    await memory_migrator.execute_operation(
+        CreateRelationshipType(name="OLD_REL", keys=set(), properties={"email"})
+    )
+    await memory_migrator.execute_operation(
+        AddAdditionalRelationshipPropertyIndex(
+            relationship_type="OLD_REL", field_name="email"
+        )
+    )
+
+    from_state = StaticStateProvider(deepcopy(memory_migrator.schema))
+
+    await memory_migrator.execute_operation(DropRelationshipType(name="OLD_REL"))
+
+    to_state = StaticStateProvider(memory_migrator.schema)
+    detector = AutoChangeDetector(input, from_state, to_state)
+    detections = await detector.detect_changes()
+
+    drop_index_ops = [
+        op
+        for op in detections
+        if isinstance(op, DropAdditionalRelationshipPropertyIndex)
+    ]
+    assert any(op.relationship_type == "OLD_REL" for op in drop_index_ops), (
+        "Deleting an indexed relationship type must emit DropAdditionalRelationshipPropertyIndex "
+        "with the original type name, not an empty string"
+    )
+    assert not any(op.relationship_type == "" for op in drop_index_ops), (
+        "DropAdditionalRelationshipPropertyIndex must never be emitted with an empty type name"
+    )
+
+
 ALL_PERMUTABLE_SCENARIOS = [
     AddedNodeType,
     DroppedNodeType,

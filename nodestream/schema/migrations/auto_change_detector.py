@@ -533,7 +533,7 @@ class AutoChangeDetector:
         deleted_indexes, added_indexes = pair.get_index_drift()
         if pair.from_type.name:
             deleted_index_set.update(
-                (pair.to_type.name, index) for index in deleted_indexes
+                (pair.from_type.name, index) for index in deleted_indexes
             )
         if pair.to_type.name:
             added_index_set.update(
