@@ -1069,8 +1069,6 @@ async def test_pipeline_external_cancellation_still_cancels_sibling_tasks(mocker
 @pytest.mark.asyncio
 async def test_pipeline_logs_secondary_exceptions_during_cleanup(mocker):
     """Secondary exceptions from sibling tasks during cleanup must be logged, not silently dropped."""
-    import asyncio
-
     from nodestream.pipeline.object_storage import NullObjectStore
     from nodestream.pipeline.step import Step
 
