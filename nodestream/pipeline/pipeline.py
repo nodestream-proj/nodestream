@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import asyncio
 from asyncio import create_task, gather
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -532,10 +533,24 @@ class Pipeline(ExpandsSchemaFromChildren):
         tasks = [create_task(executor.run()) for executor in executors]
         try:
             await gather(*tasks)
-        except Exception:
+        except BaseException:
             for task in tasks:
                 task.cancel()
-            # Wait for all tasks to acknowledge cancellation before re-raising,
-            # so the event loop is clean when the caller handles the exception.
-            await gather(*tasks, return_exceptions=True)
+            # Wait for all tasks to acknowledge cancellation before re-raising.
+            # Timeout prevents a misbehaving task from hanging the cleanup indefinitely.
+            # Secondary exceptions from sibling tasks are logged so they aren't silently dropped.
+            try:
+                results = await asyncio.wait_for(
+                    gather(*tasks, return_exceptions=True), timeout=30
+                )
+                for result in results:
+                    if isinstance(result, Exception):
+                        reporter.logger.warning(
+                            "Secondary exception during pipeline cancellation cleanup",
+                            exc_info=result,
+                        )
+            except TimeoutError:
+                reporter.logger.warning(
+                    "Pipeline cleanup timed out after 30s — some tasks may not have acknowledged cancellation"
+                )
             raise
