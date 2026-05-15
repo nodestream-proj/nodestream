@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import asyncio
+from abc import ABC, abstractmethod
 from asyncio import create_task, gather
 from dataclasses import dataclass, field
 from enum import Enum, auto
