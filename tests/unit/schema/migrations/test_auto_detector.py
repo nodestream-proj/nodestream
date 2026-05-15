@@ -698,9 +698,9 @@ async def test_deleting_indexed_node_type_emits_drop_index_with_correct_type_nam
         "Deleting an indexed node type must emit DropAdditionalNodePropertyIndex "
         "with the original type name, not an empty string"
     )
-    assert not any(op.node_type == "" for op in drop_index_ops), (
-        "DropAdditionalNodePropertyIndex must never be emitted with an empty type name"
-    )
+    assert not any(
+        op.node_type == "" for op in drop_index_ops
+    ), "DropAdditionalNodePropertyIndex must never be emitted with an empty type name"
 
 
 @pytest.mark.asyncio
@@ -735,9 +735,9 @@ async def test_deleting_indexed_relationship_type_emits_drop_index_with_correct_
         "Deleting an indexed relationship type must emit DropAdditionalRelationshipPropertyIndex "
         "with the original type name, not an empty string"
     )
-    assert not any(op.relationship_type == "" for op in drop_index_ops), (
-        "DropAdditionalRelationshipPropertyIndex must never be emitted with an empty type name"
-    )
+    assert not any(
+        op.relationship_type == "" for op in drop_index_ops
+    ), "DropAdditionalRelationshipPropertyIndex must never be emitted with an empty type name"
 
 
 ALL_PERMUTABLE_SCENARIOS = [
