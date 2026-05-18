@@ -32,32 +32,15 @@ def test_make_retriever(connector):
 
 
 @pytest.mark.asyncio
-async def test_retriever_get_nodes_of_type(retriver):
-    results = [r async for r in retriver.get_nodes_of_type("Foo")]
+async def test_retriever_fetch_nodes(retriver):
+    results = [r async for r in retriver.fetch_nodes(None)]
     assert_that(results, empty())
 
 
 @pytest.mark.asyncio
-async def test_retriever_get_relationships_of_type(retriver):
-    results = [
-        r
-        async for r in retriver.get_relationships_of_type_between(
-            "Person", "Person", "KNOWS"
-        )
-    ]
+async def test_retriever_fetch_relationships(retriver):
+    results = [r async for r in retriver.fetch_relationships(None)]
     assert_that(results, empty())
-
-
-@pytest.mark.asyncio
-async def test_retriever_preview_node_count(retriver):
-    count = await retriver.preview_node_count("Person")
-    assert count == 0
-
-
-@pytest.mark.asyncio
-async def test_retriever_preview_relationship_count(retriver):
-    count = await retriver.preview_relationship_count("KNOWS")
-    assert count == 0
 
 
 def test_make_type_retriever_accepts_kwargs(connector):

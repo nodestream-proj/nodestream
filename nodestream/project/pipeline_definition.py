@@ -164,6 +164,16 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
     def initialize_for_introspection(self) -> Pipeline:
         return PipelineFile(self.file_path).load_pipeline_for_introspection()
 
+    def initialize_for_schema_collection(self) -> Pipeline:
+        return PipelineFile(self.file_path).load_pipeline_for_schema_collection()
+
     def expand_schema(self, coordinator: SchemaExpansionCoordinator):
         with coordinator.pipeline_context(self.name):
             self.initialize_for_introspection().expand_schema(coordinator)
+
+    def expand_schema_for_copy(self, coordinator: SchemaExpansionCoordinator):
+        try:
+            with coordinator.pipeline_context(self.name):
+                self.initialize_for_schema_collection().expand_schema(coordinator)
+        except Exception:
+            pass

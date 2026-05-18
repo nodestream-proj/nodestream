@@ -218,13 +218,16 @@ class RelationshipWithNodes(DeduplicatableObject):
     def into_ingest(self) -> "DesiredIngestion":
         from .desired_ingestion import DesiredIngestion
 
-        ingest = DesiredIngestion(source=self.from_node)
+        ingest = DesiredIngestion(
+            source=self.from_node,
+            source_node_creation_rule=self.from_side_node_creation_rule,
+        )
         ingest.add_relationship(
             self.to_node,
             self.relationship,
             outbound=True,
-            node_creation_rule=NodeCreationRule.MATCH_ONLY,
-            relationship_creation_rule=RelationshipCreationRule.EAGER,
+            node_creation_rule=self.to_side_node_creation_rule,
+            relationship_creation_rule=self.relationship_creation_rule,
         )
         return ingest
 

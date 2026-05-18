@@ -14,6 +14,7 @@ from .argument_resolvers import set_config
 from .class_loader import ClassLoader
 from .normalizers import Normalizer
 from .object_storage import NamespacedObjectStore, NullObjectStore, ObjectStore
+from ..schema import ExpandsSchema
 from .pipeline import Pipeline
 from .scope_config import ScopeConfig
 from .step import Step
@@ -54,10 +55,20 @@ class PipelineInitializationArguments:
     extra_steps: Optional[List[Step]] = None
     effective_config_values: Optional[ScopeConfig] = None
     object_store: ObjectStore = field(default_factory=ObjectStore.null)
+    schema_only: bool = False
 
     @classmethod
     def for_introspection(cls):
-        return cls(annotations=["introspection"])
+        return cls(annotations=["introspection"], schema_only=True)
+
+    @classmethod
+    def for_schema_collection(cls):
+        """Load all pipelines (no annotation filter) but only instantiate ExpandsSchema steps.
+
+        Used by make_schema during copy operations where we need the full type/adjacency
+        graph regardless of which environment annotation (live, test, etc.) a pipeline has.
+        """
+        return cls(schema_only=True)
 
     @classmethod
     def for_testing(cls):
@@ -113,6 +124,15 @@ class StepDefinition(LoadsFromYaml):
 
         return bool(self.annotations.intersection(user_annotations))
 
+    def expands_schema(self) -> bool:
+        """Return True if the step class implements ExpandsSchema, without instantiating it."""
+        from .class_loader import find_class
+        try:
+            cls = find_class(self.implementation_path)
+            return issubclass(cls, ExpandsSchema)
+        except Exception:
+            return False
+
     def load_step(self) -> Step:
         arguments = LazyLoadedArgument.resolve_if_needed(self.arguments)
         return ClassLoader.instance(Step).load_class(
@@ -146,11 +166,17 @@ class PipelineFileContents(LoadsFromYamlFile):
 
     def initialize_with_arguments(self, init_args: PipelineInitializationArguments):
         with set_config(init_args.effective_config_values):
-            steps_defined_in_file = [
-                step_definition.load_step()
-                for step_definition in self.step_definitions
-                if step_definition.should_be_loaded(init_args.annotations)
-            ]
+            steps_defined_in_file = []
+            for step_definition in self.step_definitions:
+                if not step_definition.should_be_loaded(init_args.annotations):
+                    continue
+                if init_args.schema_only and not step_definition.expands_schema():
+                    continue
+                try:
+                    steps_defined_in_file.append(step_definition.load_step())
+                except Exception:
+                    if not init_args.schema_only:
+                        raise
             steps = steps_defined_in_file + (init_args.extra_steps or [])
         return Pipeline(
             steps,
@@ -191,6 +217,11 @@ class PipelineFile:
 
     def load_pipeline_for_introspection(self) -> Pipeline:
         initialization_arguments = PipelineInitializationArguments.for_introspection()
+        contents = self.get_contents()
+        return contents.initialize_with_arguments(initialization_arguments)
+
+    def load_pipeline_for_schema_collection(self) -> Pipeline:
+        initialization_arguments = PipelineInitializationArguments.for_schema_collection()
         contents = self.get_contents()
         return contents.initialize_with_arguments(initialization_arguments)
 

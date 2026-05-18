@@ -46,25 +46,18 @@ class NullQueryExecutor(QueryExecutor):
         pass
 
 
-class NullRetriver(TypeRetriever):
-    async def preview_node_count(self, _: str) -> int:
-        return 0
+class NullRetriever(TypeRetriever):
+    async def fetch_nodes(self, schema) -> AsyncGenerator[Node, None]:
+        return
+        yield  # pragma: no cover — makes this an async generator
 
-    async def preview_relationship_count(self, _: str) -> int:
-        return 0
+    async def fetch_relationships(self, schema) -> AsyncGenerator[RelationshipWithNodes, None]:
+        return
+        yield  # pragma: no cover — makes this an async generator
 
-    def get_nodes_of_type(self, _: str) -> AsyncGenerator[Node, None]:
-        return empty_async_generator()
 
-    def get_relationships_of_type_between(
-        self, __: str, ___: str, ____: str
-    ) -> AsyncGenerator[RelationshipWithNodes, None]:
-        return empty_async_generator()
-
-    def get_relationships_of_type(
-        self, _: str
-    ) -> AsyncGenerator[RelationshipWithNodes, None]:
-        return empty_async_generator()
+# Backwards-compatible alias for any external code still referencing the old name.
+NullRetriver = NullRetriever
 
 
 class NullConnector(DatabaseConnector, alias="null"):
@@ -78,4 +71,4 @@ class NullConnector(DatabaseConnector, alias="null"):
         return NullQueryExecutor()
 
     def make_type_retriever(self, **kwargs) -> TypeRetriever:
-        return NullRetriver()
+        return NullRetriever()
