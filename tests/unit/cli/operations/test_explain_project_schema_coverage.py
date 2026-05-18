@@ -91,7 +91,7 @@ def test_get_filtered_pipelines_filters_by_node_pipelines(mocker):
         scope=None,
     )
 
-    filtered = list(operation._get_filtered_pipelines())
+    filtered = list(operation.get_filtered_pipelines())
 
     assert_that(filtered, equal_to([(scope.name, pipeline_in)]))
 
@@ -120,7 +120,7 @@ def test_get_filtered_pipelines_filters_by_relationship_pipelines(mocker):
         scope=None,
     )
 
-    filtered = list(operation._get_filtered_pipelines())
+    filtered = list(operation.get_filtered_pipelines())
 
     assert_that(filtered, equal_to([(scope.name, pipeline_in)]))
 
@@ -143,4 +143,4 @@ async def test_explain_project_schema_no_filters_with_missing_scope(mocker):
 
     await operation.perform(command)
 
-    command.line.assert_called_once_with("No pipelines found. in scope 'missing'.")
+    command.line.assert_called_once_with("No pipelines found in scope 'missing'.")

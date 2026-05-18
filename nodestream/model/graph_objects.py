@@ -178,7 +178,7 @@ class Relationship(DeduplicatableObject):
         self.properties.update(other.properties)
 
     def get_dedup_key(self) -> tuple:
-        return tuple(sorted(self.key_values.values()))
+        return tuple(sorted(self.key_values.items()))
 
 
 @dataclass(slots=True)

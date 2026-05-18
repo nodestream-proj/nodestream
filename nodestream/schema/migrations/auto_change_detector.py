@@ -518,24 +518,42 @@ class AutoChangeDetector:
             for old, new in renamed_properties:
                 self.renamed_relationship_properties.add((pair.to_type.name, old, new))
 
-    def detect_node_index_changes(self):
-        for pair in self.get_node_pairs(ignore_created_and_deleted=False):
-            deleted_indexes, added_indexes = pair.get_index_drift()
-            self.deleted_node_property_indexes.update(
-                (pair.to_type.name, idx) for idx in deleted_indexes
+    def _apply_index_drift(
+        self,
+        pair: TypePairing,
+        deleted_index_set: set,
+        added_index_set: set,
+    ) -> None:
+        """Apply index drift from a type pair into the given tracking sets.
+
+        A sentinel from_type (name="") means the type is newly created — there
+        is no prior state to drop indexes from. A sentinel to_type means the
+        type is being deleted — its indexes vanish with it, so no additions.
+        """
+        deleted_indexes, added_indexes = pair.get_index_drift()
+        if pair.from_type.name:
+            deleted_index_set.update(
+                (pair.from_type.name, index) for index in deleted_indexes
             )
-            self.added_node_property_indexes.update(
-                (pair.to_type.name, idx) for idx in added_indexes
+        if pair.to_type.name:
+            added_index_set.update(
+                (pair.to_type.name, index) for index in added_indexes
             )
 
-    def detect_relationship_index_changes(self):
-        for pair in self.get_relationship_pairs(ignore_created_and_deleted=False):
-            deleted_indexes, added_indexes = pair.get_index_drift()
-            self.deleted_relationship_property_indexes.update(
-                (pair.to_type.name, idx) for idx in deleted_indexes
+    def detect_node_index_changes(self) -> None:
+        for pair in self.get_node_pairs(ignore_created_and_deleted=False):
+            self._apply_index_drift(
+                pair,
+                self.deleted_node_property_indexes,
+                self.added_node_property_indexes,
             )
-            self.added_relationship_property_indexes.update(
-                (pair.to_type.name, idx) for idx in added_indexes
+
+    def detect_relationship_index_changes(self) -> None:
+        for pair in self.get_relationship_pairs(ignore_created_and_deleted=False):
+            self._apply_index_drift(
+                pair,
+                self.deleted_relationship_property_indexes,
+                self.added_relationship_property_indexes,
             )
 
     def get_node_pairs(

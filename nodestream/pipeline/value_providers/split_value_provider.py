@@ -32,4 +32,4 @@ class SplitValueProvider(ValueProvider):
         )
 
     def __str__(self):
-        return f"SplitValueProvider: { {'delimiter': self.delimiter, 'data': str(self.data) } }"
+        return f"SplitValueProvider: { {'delimiter': self.delimiter, 'data': str(self.data)} }"

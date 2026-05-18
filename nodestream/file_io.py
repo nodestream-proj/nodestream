@@ -105,7 +105,7 @@ class SavesToYamlFile(SavesToYaml):
         """
         return SafeDumper
 
-    def _validated_file_data(self) -> Any:
+    def validated_file_data(self) -> Any:
         """Return this object serialised as validated YAML-safe data."""
         file_data = self.to_file_data()
         return self.describe_yaml_schema().validate(file_data)
@@ -121,7 +121,7 @@ class SavesToYamlFile(SavesToYaml):
         Returns:
             None
         """
-        validated_file_data = self._validated_file_data()
+        validated_file_data = self.validated_file_data()
         file_path.parent.mkdir(parents=True, exist_ok=True)
         with file_path.open("w") as f:
             dump(
@@ -138,7 +138,7 @@ class WritesToYamlToStdout(SavesToYamlFile):
 
     def to_yaml_string(self) -> str:
         """Render this object as a YAML string using the configured dumper."""
-        validated_file_data = self._validated_file_data()
+        validated_file_data = self.validated_file_data()
         return dump(
             validated_file_data,
             Dumper=self.get_dumper(),

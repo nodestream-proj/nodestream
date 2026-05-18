@@ -370,7 +370,7 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
 
         return schema
 
-    def _expand_schema_for_scopes(
+    def expand_schema_for_scopes(
         self, scope_name: Optional[str]
     ) -> SchemaExpansionCoordinator:
         """Expand schema for the given scope(s) and return the coordinator.
@@ -392,14 +392,14 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
 
         return coordinator
 
-    def _explain_type(
+    def explain_type(
         self,
         object_type: GraphObjectType,
         name: str,
         scope_name: Optional[str],
     ) -> List[str]:
         """Return pipeline names that contribute to the given schema object."""
-        coordinator = self._expand_schema_for_scopes(scope_name)
+        coordinator = self.expand_schema_for_scopes(scope_name)
 
         return sorted(
             coordinator.provenance.get_pipelines_for(
@@ -416,7 +416,7 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         If ``scope_name`` is provided, only pipelines in that scope are
         considered. Otherwise, all scopes are considered.
         """
-        return self._explain_type(
+        return self.explain_type(
             object_type=GraphObjectType.NODE,
             name=node_type_name,
             scope_name=scope_name,
@@ -430,7 +430,7 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         If ``scope_name`` is provided, only pipelines in that scope are
         considered. Otherwise, all scopes are considered.
         """
-        return self._explain_type(
+        return self.explain_type(
             object_type=GraphObjectType.RELATIONSHIP,
             name=relationship_type_name,
             scope_name=scope_name,
@@ -447,7 +447,7 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
         as ``source_node`` have already been resolved by the time adjacencies
         are bound).
         """
-        coordinator = self._expand_schema_for_scopes(scope_name)
+        coordinator = self.expand_schema_for_scopes(scope_name)
         schema = coordinator.schema
 
         return sorted(

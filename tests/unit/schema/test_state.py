@@ -15,6 +15,7 @@ from nodestream.schema import (
     SchemaExpansionCoordinator,
     UnboundAdjacency,
 )
+from nodestream.schema.state import GraphObjectType, SchemaProvenance
 
 
 def test_basic_schema_to_and_from_file(basic_schema):
@@ -31,7 +32,7 @@ def test_basic_schema_to_and_from_file(basic_schema):
                 adjacency in rebuilt_schema.cardinalities
                 and rebuilt_schema.cardinalities[adjacency] == cardinality
             )
-            for adjacency, cardinality, in basic_schema.cardinalities.items()
+            for adjacency, cardinality in basic_schema.cardinalities.items()
         )
     )
 
@@ -209,7 +210,7 @@ def test_clear_aliases_with_include_additional_types_true():
 
 
 def test_bind_unbound_adjacencies_uses_aliases_and_updates_schema():
-    """_bind_unbound_adjacencies should bind via aliases and mutate schema.cardinalities."""
+    """bind_unbound_adjacencies should bind via aliases and mutate schema.cardinalities."""
     schema = Schema()
     coordinator = SchemaExpansionCoordinator(schema)
 
@@ -239,7 +240,7 @@ def test_bind_unbound_adjacencies_uses_aliases_and_updates_schema():
 
 
 def test_expand_adjacencies_for_additional_types_duplicates_edges():
-    """_expand_adjacencies_for_additional_types should create edges for additional types."""
+    """expand_adjacencies_for_additional_types should create edges for additional types."""
     schema = Schema()
     coordinator = SchemaExpansionCoordinator(schema, include_additional_types=True)
 
@@ -325,3 +326,37 @@ def test_get_node_type_by_name_none_returns_none_and_does_not_mutate_schema():
     assert_that(result, equal_to(None))
     # No types should have been added as a side effect.
     assert_that(list(schema.nodes_by_name.keys()), equal_to([]))
+
+
+def test_schema_provenance_record_and_retrieve():
+    provenance = SchemaProvenance()
+    provenance.record(GraphObjectType.NODE, "Person", "pipeline_a")
+    provenance.record(GraphObjectType.NODE, "Person", "pipeline_b")
+    result = provenance.get_pipelines_for(GraphObjectType.NODE, "Person")
+    assert_that(result, equal_to({"pipeline_a", "pipeline_b"}))
+
+
+def test_schema_provenance_get_missing_returns_empty_set():
+    provenance = SchemaProvenance()
+    result = provenance.get_pipelines_for(GraphObjectType.NODE, "Missing")
+    assert_that(result, equal_to(set()))
+
+
+def test_pipeline_context_sets_and_restores_current_pipeline():
+    schema = Schema()
+    coordinator = SchemaExpansionCoordinator(schema)
+    assert coordinator._current_pipeline is None
+    with coordinator.pipeline_context("my_pipeline"):
+        assert coordinator._current_pipeline == "my_pipeline"
+    assert coordinator._current_pipeline is None
+
+
+def test_pipeline_context_restores_on_exception():
+    schema = Schema()
+    coordinator = SchemaExpansionCoordinator(schema)
+    try:
+        with coordinator.pipeline_context("my_pipeline"):
+            raise ValueError("boom")
+    except ValueError:
+        pass
+    assert coordinator._current_pipeline is None

@@ -1,11 +1,14 @@
 import os.path
 from dataclasses import dataclass, field
+from logging import getLogger
 from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
 from ..file_io import LoadsFromYaml, SavesToYaml
 from ..pipeline import Pipeline, PipelineFile, PipelineInitializationArguments
 from ..schema import ExpandsSchema, SchemaExpansionCoordinator
+
+logger = getLogger(__name__)
 
 
 def get_default_name(file_path: Path) -> str:
@@ -165,9 +168,17 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
         return PipelineFile(self.file_path).load_pipeline_for_introspection()
 
     def initialize_for_schema_collection(self) -> Pipeline:
+        """Load only schema-expanding steps, skipping those that require credentials."""
         return PipelineFile(self.file_path).load_pipeline_for_schema_collection()
 
-    def expand_schema(self, coordinator: SchemaExpansionCoordinator):
+    def expand_schema(self, coordinator: SchemaExpansionCoordinator) -> None:
+        with coordinator.pipeline_context(self.name):
+            self.initialize_for_schema_collection().expand_schema(coordinator)
+
+    def expand_schema_with_introspection(
+        self, coordinator: SchemaExpansionCoordinator
+    ) -> None:
+        """Expand schema using full introspection — requires a complete environment."""
         with coordinator.pipeline_context(self.name):
             self.initialize_for_introspection().expand_schema(coordinator)
 

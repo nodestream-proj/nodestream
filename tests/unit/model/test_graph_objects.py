@@ -126,3 +126,19 @@ def test_get_dedup_key(keys, expected):
 
     other = Node("Person", keys)
     assert_that(node.get_dedup_key(), equal_to(other.get_dedup_key()))
+
+
+def test_relationship_get_dedup_key_includes_property_names():
+    # Two relationships with different key property names but the same value
+    # must produce different dedup keys so they are not falsely collapsed
+    # within a batch. Previously get_dedup_key() used .values() only, meaning
+    # {reason: 'foo'} and {source: 'foo'} would collide on ('foo',).
+    rel_reason = Relationship("KNOWS", {"reason": "foo"})
+    rel_source = Relationship("KNOWS", {"source": "foo"})
+    assert_that(rel_reason.get_dedup_key(), not_(equal_to(rel_source.get_dedup_key())))
+
+
+def test_relationship_get_dedup_key_same_keys_and_values_are_equal():
+    rel_a = Relationship("KNOWS", {"reason": "foo"})
+    rel_b = Relationship("KNOWS", {"reason": "foo"})
+    assert_that(rel_a.get_dedup_key(), equal_to(rel_b.get_dedup_key()))

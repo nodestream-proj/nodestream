@@ -14,4 +14,5 @@ class NodeCreationRule(str, Enum):
 
 class RelationshipCreationRule(str, Enum):
     EAGER = "EAGER"
+    MERGE_KEY = "MERGE_KEY"
     CREATE = "CREATE"

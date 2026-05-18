@@ -10,8 +10,9 @@ from ..file_io import (
     LoadsFromYaml,
     LoadsFromYamlFile,
 )
+from ..schema import ExpandsSchema
 from .argument_resolvers import set_config
-from .class_loader import ClassLoader
+from .class_loader import ClassLoader, find_class
 from .normalizers import Normalizer
 from .object_storage import NamespacedObjectStore, NullObjectStore, ObjectStore
 from ..schema import ExpandsSchema
@@ -58,20 +59,20 @@ class PipelineInitializationArguments:
     schema_only: bool = False
 
     @classmethod
-    def for_introspection(cls):
+    def for_introspection(cls) -> "PipelineInitializationArguments":
         return cls(annotations=["introspection"], schema_only=True)
 
     @classmethod
-    def for_schema_collection(cls):
-        """Load all pipelines (no annotation filter) but only instantiate ExpandsSchema steps.
+    def for_schema_collection(cls) -> "PipelineInitializationArguments":
+        """Return arguments suitable for schema-only collection.
 
-        Used by make_schema during copy operations where we need the full type/adjacency
-        graph regardless of which environment annotation (live, test, etc.) a pipeline has.
+        Only steps that implement ExpandsSchema will be instantiated, avoiding
+        steps that require external credentials or a full runtime environment.
         """
-        return cls(schema_only=True)
+        return cls(annotations=["introspection"], schema_only=True)
 
     @classmethod
-    def for_testing(cls):
+    def for_testing(cls) -> "PipelineInitializationArguments":
         return cls(annotations=["test"])
 
 
@@ -125,13 +126,13 @@ class StepDefinition(LoadsFromYaml):
         return bool(self.annotations.intersection(user_annotations))
 
     def expands_schema(self) -> bool:
-        """Return True if the step class implements ExpandsSchema, without instantiating it."""
-        from .class_loader import find_class
-        try:
-            cls = find_class(self.implementation_path)
-            return issubclass(cls, ExpandsSchema)
-        except Exception:
-            return False
+        """Return True if the step class implements ExpandsSchema.
+
+        Resolves the class by import path without instantiating it, so this
+        is safe to call in a credential-free schema-collection context.
+        """
+        resolved_class = find_class(self.implementation_path)
+        return issubclass(resolved_class, ExpandsSchema)
 
     def load_step(self) -> Step:
         arguments = LazyLoadedArgument.resolve_if_needed(self.arguments)
@@ -221,7 +222,10 @@ class PipelineFile:
         return contents.initialize_with_arguments(initialization_arguments)
 
     def load_pipeline_for_schema_collection(self) -> Pipeline:
-        initialization_arguments = PipelineInitializationArguments.for_schema_collection()
+        """Load only schema-expanding steps, skipping those that require credentials."""
+        initialization_arguments = (
+            PipelineInitializationArguments.for_schema_collection()
+        )
         contents = self.get_contents()
         return contents.initialize_with_arguments(initialization_arguments)
 

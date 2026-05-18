@@ -69,7 +69,7 @@ def s3_client():
 
 
 def _csv_file(i: int) -> bytes:
-    return f"column1,column2\nvalue{i},value{i+10}".encode("utf-8")
+    return f"column1,column2\nvalue{i},value{i + 10}".encode("utf-8")
 
 
 def _json_file(i: int):
@@ -176,10 +176,10 @@ def add_double_compressed_json_objects(
 
 @pytest.mark.asyncio
 async def test_s3_extractor_properly_loads_csv_files(s3_client):
-
     add_csv_objects(s3_client)
     expected_results = [
-        {"column1": f"value{i}", "column2": f"value{i+10}"} for i in range(NUM_OBJECTS)
+        {"column1": f"value{i}", "column2": f"value{i + 10}"}
+        for i in range(NUM_OBJECTS)
     ]
     subject = FileExtractor.s3(bucket=BUCKET_NAME, prefix=PREFIX)
     results = [result async for result in subject.extract_records()]
@@ -189,7 +189,6 @@ async def test_s3_extractor_properly_loads_csv_files(s3_client):
 
 @pytest.mark.asyncio
 async def test_s3_extractor_properly_loads_jsonl_files(s3_client):
-
     add_jsonl_objects(s3_client, 1)
 
     subject = FileExtractor.s3(bucket=BUCKET_NAME, prefix=PREFIX)
@@ -500,7 +499,6 @@ async def test_s3_should_filter_by_suffix_and_process_by_object_format(
 
 @pytest.mark.asyncio
 async def test_s3_recursive_after_suffix_filter(s3_client):
-
     _put_all(
         s3_client,
         [

@@ -115,6 +115,35 @@ def test_debounced_relationships_with_different_match_strategies():
     assert_that(result[1][1], has_length(1))
 
 
+def test_debounced_relationships_with_different_rel_key_names_are_not_collapsed():
+    # Regression test: two relationships between the same nodes with different
+    # relationship key property *names* but the same *value* must not be
+    # collapsed into one. Previously Relationship.get_dedup_key() used
+    # .values() only, so {reason: 'foo'} and {source: 'foo'} both hashed to
+    # ('foo',) and one write was silently dropped within the batch.
+    debouncer = OperationDebouncer()
+    from_node = Node("NodeType", {"id": "1"})
+    to_node = Node("NodeType", {"id": "2"})
+    rel1 = RelationshipWithNodes(
+        from_node=from_node,
+        to_node=to_node,
+        relationship=Relationship("REL_TYPE", {"reason": "foo"}),
+    )
+    rel2 = RelationshipWithNodes(
+        from_node=from_node,
+        to_node=to_node,
+        relationship=Relationship("REL_TYPE", {"source": "foo"}),
+    )
+    debouncer.debounce_relationship(rel1)
+    debouncer.debounce_relationship(rel2)
+
+    result = list(debouncer.drain_relationship_groups())
+
+    assert_that(result, has_length(2))
+    assert_that(result[0][1], has_length(1))
+    assert_that(result[1][1], has_length(1))
+
+
 def test_debounced_relationships_with_different_match_strategies_eager_does_not_dup():
     debouncer = OperationDebouncer()
     rel1 = RelationshipWithNodes(
