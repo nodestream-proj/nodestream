@@ -9,7 +9,8 @@ async def test_handle_async(mocker):
     run = Run()
     run.option = mocker.Mock(return_value=False)
     run.run_operation = mocker.AsyncMock()
-    await run.handle_async()
+    result = await run.handle_async()
+    assert_that(result, equal_to(0))
     assert_that(run.run_operation.await_count, equal_to(4))
 
 

@@ -105,6 +105,11 @@ class SavesToYamlFile(SavesToYaml):
         """
         return SafeDumper
 
+    def validated_file_data(self) -> Any:
+        """Return this object serialised as validated YAML-safe data."""
+        file_data = self.to_file_data()
+        return self.describe_yaml_schema().validate(file_data)
+
     def write_to_file(self, file_path: Path):
         """Write this object to a YAML file.
 
@@ -116,8 +121,7 @@ class SavesToYamlFile(SavesToYaml):
         Returns:
             None
         """
-        file_data = self.to_file_data()
-        validated_file_data = self.describe_yaml_schema().validate(file_data)
+        validated_file_data = self.validated_file_data()
         file_path.parent.mkdir(parents=True, exist_ok=True)
         with file_path.open("w") as f:
             dump(
@@ -127,6 +131,29 @@ class SavesToYamlFile(SavesToYaml):
                 indent=2,
                 sort_keys=True,
             )
+
+
+class WritesToYamlToStdout(SavesToYamlFile):
+    """A mixin for classes that can be written as YAML to stdout."""
+
+    def to_yaml_string(self) -> str:
+        """Render this object as a YAML string using the configured dumper."""
+        validated_file_data = self.validated_file_data()
+        return dump(
+            validated_file_data,
+            Dumper=self.get_dumper(),
+            indent=2,
+            sort_keys=True,
+        )
+
+    def write_to_stdout(self, print_fn=print):
+        """Write this object as YAML to the given print function.
+
+        The default behavior uses the built-in :func:`print`, but callers can
+        supply any callable that accepts a single string argument (for example,
+        a CLI command's ``write`` method).
+        """
+        print_fn(self.to_yaml_string())
 
 
 # This approach is inspired by https://death.andgravity.com/any-yaml

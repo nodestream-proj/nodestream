@@ -13,7 +13,8 @@ async def test_handle_async(mocker):
     rows = [["1", "12", "good"]]
     show.generate_output_table = mocker.AsyncMock(return_value=(header, rows))
     show.table = mocker.Mock()
-    await show.handle_async()
+    result = await show.handle_async()
+    assert_that(result, equal_to(0))
     show.table.assert_called_once_with(header, rows)
     show.table.return_value.render.assert_called_once()
 

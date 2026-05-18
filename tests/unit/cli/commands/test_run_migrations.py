@@ -12,7 +12,8 @@ async def test_handle_async(mocker, project_with_default_scope):
     run_migration.run_operation = mocker.AsyncMock()
     run_migration.get_project = mocker.Mock(return_value=project_with_default_scope)
     project_with_default_scope.get_target_by_name = mocker.Mock()
-    await run_migration.handle_async()
+    result = await run_migration.handle_async()
+    assert_that(result, equal_to(0))
     assert_that(run_migration.run_operation.await_count, equal_to(2))
 
 
@@ -22,7 +23,8 @@ async def test_handle_async_no_targets(mocker, project_with_default_scope):
     run_migration.info = mocker.Mock()
     run_migration.option = mocker.Mock(side_effect=[None, False, []])
     run_migration.get_project = mocker.Mock(return_value=project_with_default_scope)
-    await run_migration.handle_async()
+    result = await run_migration.handle_async()
+    assert_that(result, equal_to(0))
     run_migration.info.assert_called_once_with("No targets specified, nothing to do.")
 
 
@@ -34,5 +36,6 @@ async def test_handle_async_all_targets(mocker, project_with_default_scope):
     run_migration.run_operation = mocker.AsyncMock()
     run_migration.get_project = mocker.Mock(return_value=project_with_default_scope)
     project_with_default_scope.targets_by_name = {"t1": None, "t2": None}
-    await run_migration.handle_async()
+    result = await run_migration.handle_async()
+    assert_that(result, equal_to(0))
     assert_that(run_migration.run_operation.await_count, equal_to(2))

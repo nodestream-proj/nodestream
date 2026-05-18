@@ -51,7 +51,7 @@ class StringFormattingValueProvider(ValueProvider):
         return [value] if value else []
 
     def __str__(self):
-        return f"StringFormattingValueProvider: { {'format': str(self.fmt), 'subs': str(self.subs) } }"
+        return f"StringFormattingValueProvider: { {'format': str(self.fmt), 'subs': str(self.subs)} }"
 
 
 SafeDumper.add_representer(

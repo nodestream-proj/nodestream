@@ -8,6 +8,26 @@ from .object_storage import ObjectStore
 from .step import PassStep, Step, StepContext
 from .value_providers import ProviderContext, StaticValueOrValueProvider, ValueProvider
 
+# Always export these names; the genson/jsonschema-dependent classes are only
+# available when the `validation` extra is installed, but the names must exist
+# at module level regardless so that importers can reference them safely.
+__all__ = [
+    "Filter",
+    "ValueMatcher",
+    "ValuesMatchPossibilitiesFilter",
+    "ExcludeWhenValuesMatchPossibilities",
+    "RegexMatcher",
+    "ValueMatchesRegexFilter",
+    "SchemaEnforcementMode",
+    "Schema",
+    "SchemaBuilder",
+    "FetchSchema",
+    "InferSchema",
+    "EnforceSchema",
+    "WarnSchema",
+    "SchemaEnforcer",
+]
+
 
 class Filter(Step):
     """A `Filter` takes a given record and evaluates whether or not it should continue downstream.
@@ -110,8 +130,8 @@ class RegexMatcher:
 
     def __init__(
         self,
-        value_provider: StaticValueOrValueProvider,
-        regex: StaticValueOrValueProvider,
+        value_provider: ValueProvider,
+        regex: str,
         include: bool,
         normalization: Dict[str, Any],
     ) -> None:

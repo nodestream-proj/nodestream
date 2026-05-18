@@ -2,7 +2,13 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, Optional, Tuple
 
 from ...compat import deprecated_arugment
-from ...model import Node, NodeCreationRule, PropertySet, Relationship
+from ...model import (
+    Node,
+    NodeCreationRule,
+    PropertySet,
+    Relationship,
+    RelationshipCreationRule,
+)
 from ...pipeline.normalizers import LowercaseStrings
 from ...pipeline.value_providers import (
     ProviderContext,
@@ -83,6 +89,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         "cardinality",
         "outbound",
         "node_creation_rule",
+        "relationship_creation_rule",
         "decomposer",
         "node_type",
         "relationship_type",
@@ -112,6 +119,7 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         iterate_on: Optional[ValueProvider] = None,
         cardinality: str = "SINGLE",
         node_creation_rule: Optional[str] = None,
+        relationship_creation_rule: Optional[str] = None,
         key_normalization: Optional[Dict[str, Any]] = None,
         properties_normalization: Optional[Dict[str, Any]] = None,
         node_additional_types: Optional[Iterable[str]] = None,
@@ -123,6 +131,9 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         self.outbound = outbound
         self.node_creation_rule = NodeCreationRule(
             node_creation_rule or NodeCreationRule.EAGER.value
+        )
+        self.relationship_creation_rule = RelationshipCreationRule(
+            relationship_creation_rule or RelationshipCreationRule.EAGER.value
         )
         self.decomposer = RecordDecomposer.from_iteration_arguments(iterate_on)
         self.node_type = ValueProvider.guarantee_value_provider(node_type)
@@ -157,7 +168,11 @@ class RelationshipInterpretation(Interpretation, alias="relationship"):
         for sub_context in self.decomposer.decompose_record(context):
             for relationship, related_node in self.find_matches(sub_context):
                 context.desired_ingest.add_relationship(
-                    related_node, relationship, self.outbound, self.node_creation_rule
+                    related_node,
+                    relationship,
+                    self.outbound,
+                    self.node_creation_rule,
+                    self.relationship_creation_rule,
                 )
 
     def find_relationship(self, context: ProviderContext) -> Relationship:

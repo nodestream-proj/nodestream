@@ -12,3 +12,4 @@ class Show(NodestreamCommand):
         project = await self.run_operation(InitializeProject())
         use_json = self.has_json_logging_set
         await self.run_operation(ShowPipelines(project, self.scope, use_json))
+        return 0

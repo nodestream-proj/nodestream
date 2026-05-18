@@ -14,7 +14,6 @@ SCOPE_NAME_OPTION = option(
 
 JSON_OPTION = option("json", "j", "Log output in JSON", flag=True)
 
-
 PIPELINE_ARGUMENT = argument("pipeline", "the name of the pipeline")
 MANY_PIPELINES_ARGUMENT = argument(
     "pipelines", "the names of the pipelines", multiple=True, optional=True
@@ -50,7 +49,7 @@ PROMETHEUS_ADDRESS_OPTION = option(
 
 PROMETHEUS_CERTFILE_OPTION = option(
     "prometheus-certfile",
-    description="The path to the certificate file for the Prometheus metrics server",
+    description=("The path to the certificate file for the Prometheus metrics server"),
     flag=False,
 )
 
