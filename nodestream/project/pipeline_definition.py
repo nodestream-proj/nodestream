@@ -187,4 +187,8 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
             with coordinator.pipeline_context(self.name):
                 self.initialize_for_schema_collection().expand_schema(coordinator)
         except Exception:
-            pass
+            logger.warning(
+                "Schema collection failed for pipeline '%s'; skipping.",
+                self.name,
+                exc_info=True,
+            )
