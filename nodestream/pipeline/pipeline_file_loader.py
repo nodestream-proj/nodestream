@@ -15,7 +15,6 @@ from .argument_resolvers import set_config
 from .class_loader import ClassLoader, find_class
 from .normalizers import Normalizer
 from .object_storage import NamespacedObjectStore, NullObjectStore, ObjectStore
-from ..schema import ExpandsSchema
 from .pipeline import Pipeline
 from .scope_config import ScopeConfig
 from .step import Step

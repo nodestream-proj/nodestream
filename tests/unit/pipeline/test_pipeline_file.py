@@ -14,7 +14,6 @@ from nodestream.pipeline.pipeline_file_loader import (
     StepDefinition,
 )
 from nodestream.pipeline.step import PassStep
-from nodestream.schema import ExpandsSchema
 
 
 def test_basic_file_load():
@@ -132,9 +131,9 @@ def test_load_pipeline_for_introspection_only_loads_schema_steps():
         pipeline = file_loader.load_pipeline_for_introspection()
 
     # Only the Interpreter should have been instantiated
-    assert loaded_impls == ["nodestream.interpreting:Interpreter"], (
-        f"Expected only Interpreter to be loaded, got: {loaded_impls}"
-    )
+    assert loaded_impls == [
+        "nodestream.interpreting:Interpreter"
+    ], f"Expected only Interpreter to be loaded, got: {loaded_impls}"
     assert_that(pipeline.steps, has_length(1))
     assert_that(pipeline.steps[0], instance_of(Interpreter))
 

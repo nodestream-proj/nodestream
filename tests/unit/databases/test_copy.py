@@ -2,7 +2,7 @@ from copy import deepcopy
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from hamcrest import assert_that, equal_to, has_length
+from hamcrest import assert_that, has_length
 
 from nodestream.databases.copy import (
     ConcurrentCopier,
@@ -35,7 +35,9 @@ async def _empty_async_gen():
     yield  # pragma: no cover
 
 
-def _make_mock_retriever(mocker, node_types=None, relationship_types=None, concurrency_limit=1):
+def _make_mock_retriever(
+    mocker, node_types=None, relationship_types=None, concurrency_limit=1
+):
     """Build a mock TypeRetriever with the new ABC interface wired up."""
     retriever = mocker.Mock()
     histogram = TypeHistogram(
@@ -108,7 +110,9 @@ def test_histogram_log(mocker):
 @pytest.mark.asyncio
 async def test_start_delegates_histogram_to_retriever(subject):
     """start() should call build_histogram on the retriever and log it."""
-    histogram = TypeHistogram({"Person": 50, "Address": 200}, {"KNOWS": 10, "LIVES_AT": 30})
+    histogram = TypeHistogram(
+        {"Person": 50, "Address": 200}, {"KNOWS": 10, "LIVES_AT": 30}
+    )
     subject.type_retriever.build_histogram = AsyncMock(return_value=histogram)
 
     await subject.start(_make_step_context())
@@ -118,7 +122,9 @@ async def test_start_delegates_histogram_to_retriever(subject):
 
 @pytest.mark.asyncio
 async def test_start_logs_histogram(subject, mocker):
-    histogram = TypeHistogram({"Person": 10, "Address": 200}, {"KNOWS": 5, "LIVES_AT": 100})
+    histogram = TypeHistogram(
+        {"Person": 10, "Address": 200}, {"KNOWS": 5, "LIVES_AT": 100}
+    )
     subject.type_retriever.build_histogram = AsyncMock(return_value=histogram)
     mock_logger = mocker.patch.object(subject, "logger")
 

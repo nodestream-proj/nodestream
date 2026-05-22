@@ -138,7 +138,9 @@ class Copy(NodestreamCommand):
                     # For copy operations we intentionally build a schema *without*
                     # expanding additional types so that we only copy the concrete
                     # node / relationship types declared in pipelines.
-                    schema = project.make_schema_for_copy(include_additional_types=False)
+                    schema = project.make_schema_for_copy(
+                        include_additional_types=False
+                    )
                     all_node_types = schema.nodes
                     all_rel_types = schema.relationships
                 else:
@@ -147,7 +149,9 @@ class Copy(NodestreamCommand):
                     all_rel_types = []
 
                 node_types = self.get_type_selection_from_user(all_node_types, "node")
-                rel_types = self.get_type_selection_from_user(all_rel_types, "relationship")
+                rel_types = self.get_type_selection_from_user(
+                    all_rel_types, "relationship"
+                )
                 batch_size = int(self.option("batch-size"))
                 step_outbox_size = int(self.option("step-outbox-size"))
                 flush_concurrency = int(self.option("flush-concurrency"))
@@ -161,7 +165,9 @@ class Copy(NodestreamCommand):
                 # they understand and ignore the rest — no plugin-specific kwargs
                 # leak from core into the retriever contract.
                 retriever_overrides.setdefault("concurrency_limit", concurrency_limit)
-                retriever_overrides.setdefault("orchestrator_queue_size", step_outbox_size)
+                retriever_overrides.setdefault(
+                    "orchestrator_queue_size", step_outbox_size
+                )
                 retriever_overrides.setdefault("relationships_only", relationships_only)
                 if shard_size is not None:
                     retriever_overrides.setdefault("shard_size", shard_size)

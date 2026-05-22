@@ -51,7 +51,9 @@ class NullRetriever(TypeRetriever):
         return
         yield  # pragma: no cover — makes this an async generator
 
-    async def fetch_relationships(self, schema) -> AsyncGenerator[RelationshipWithNodes, None]:
+    async def fetch_relationships(
+        self, schema
+    ) -> AsyncGenerator[RelationshipWithNodes, None]:
         return
         yield  # pragma: no cover — makes this an async generator
 

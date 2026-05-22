@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from logging import Logger, getLogger
-from typing import AsyncGenerator, Dict, List, Optional
+from typing import AsyncGenerator, Dict, List
 
 from ..metrics import Metric, Metrics
 from ..model import Node, RelationshipWithNodes
@@ -12,10 +12,14 @@ from ..pipeline.step import StepContext
 from ..schema import Schema
 
 ORCHESTRATOR_NODE_QUEUE = Metric(
-    "orchestrator_node_queue", "Number of nodes in the orchestrator node queue", accumulate=False
+    "orchestrator_node_queue",
+    "Number of nodes in the orchestrator node queue",
+    accumulate=False,
 )
 ORCHESTRATOR_REL_QUEUE = Metric(
-    "orchestrator_rel_queue", "Number of relationships in the orchestrator relationship queue", accumulate=False
+    "orchestrator_rel_queue",
+    "Number of relationships in the orchestrator relationship queue",
+    accumulate=False,
 )
 ACTIVE_QUERIES = Metric(
     "active_queries",
@@ -175,9 +179,13 @@ class Copier(Extractor):
 
         # --- nodes first (skipped when relationships_only=True) ---
         if not self.type_retriever.relationships_only:
-            self.logger.info("Node fetch started, concurrency_limit=%d", concurrency_limit)
-            nodes_gen = (self.convert_node_to_ingest(n)
-                         async for n in self.type_retriever.fetch_nodes(self.schema))
+            self.logger.info(
+                "Node fetch started, concurrency_limit=%d", concurrency_limit
+            )
+            nodes_gen = (
+                self.convert_node_to_ingest(n)
+                async for n in self.type_retriever.fetch_nodes(self.schema)
+            )
             node_task = asyncio.create_task(
                 _fill_queue(nodes_gen, node_queue, ORCHESTRATOR_NODE_QUEUE)
             )
@@ -197,8 +205,10 @@ class Copier(Extractor):
         self.logger.info(
             "Relationship fetch started, concurrency_limit=%d", concurrency_limit
         )
-        rels_gen = (self.convert_relationship_to_ingest(r)
-                    async for r in self.type_retriever.fetch_relationships(self.schema))
+        rels_gen = (
+            self.convert_relationship_to_ingest(r)
+            async for r in self.type_retriever.fetch_relationships(self.schema)
+        )
         rel_task = asyncio.create_task(
             _fill_queue(rels_gen, rel_queue, ORCHESTRATOR_REL_QUEUE)
         )
