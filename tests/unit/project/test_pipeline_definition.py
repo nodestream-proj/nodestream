@@ -258,3 +258,43 @@ def test_effective_annotation_prioritizes_self():
         "key": "value",
         "other_key": "arbitrary_value",
     }
+
+
+def test_expand_schema_for_copy_logs_warning_on_failure(mocker):
+    """expand_schema_for_copy swallows exceptions and logs a warning."""
+    coordinator = mocker.Mock()
+    subject = PipelineDefinition(
+        "test", "tests/unit/project/fixtures/simple_pipeline.yaml"
+    )
+    subject.initialize_for_schema_collection = mocker.Mock(
+        side_effect=RuntimeError("collection failed")
+    )
+    mock_logger = mocker.Mock()
+    mocker.patch("nodestream.project.pipeline_definition.logger", mock_logger)
+    subject.expand_schema_for_copy(coordinator)
+    mock_logger.warning.assert_called_once()
+    assert "test" in mock_logger.warning.call_args[0][1]
+
+
+def test_expand_schema_for_copy_happy_path(mocker):
+    """expand_schema_for_copy calls initialize_for_schema_collection and expand_schema."""
+    coordinator = mocker.MagicMock()
+    subject = PipelineDefinition(
+        "test", "tests/unit/project/fixtures/simple_pipeline.yaml"
+    )
+    mock_pipeline = mocker.Mock()
+    subject.initialize_for_schema_collection = mocker.Mock(return_value=mock_pipeline)
+    subject.expand_schema_for_copy(coordinator)
+    mock_pipeline.expand_schema.assert_called_once_with(coordinator)
+
+
+def test_expand_schema_calls_initialize_for_schema_collection(mocker):
+    """expand_schema calls initialize_for_schema_collection and expand_schema."""
+    coordinator = mocker.MagicMock()
+    subject = PipelineDefinition(
+        "test", "tests/unit/project/fixtures/simple_pipeline.yaml"
+    )
+    mock_pipeline = mocker.Mock()
+    subject.initialize_for_schema_collection = mocker.Mock(return_value=mock_pipeline)
+    subject.expand_schema(coordinator)
+    mock_pipeline.expand_schema.assert_called_once_with(coordinator)

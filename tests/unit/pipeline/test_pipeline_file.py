@@ -197,3 +197,58 @@ def test_load_pipeline_for_schema_collection():
     # simple_pipeline has no ExpandsSchema steps — should load 0 steps
     pipeline = file_loader.load_pipeline_for_schema_collection()
     assert_that(pipeline.steps, has_length(0))
+
+
+def test_schema_only_silently_skips_failed_step_load():
+    """When schema_only=True and a step fails to load, the error is swallowed."""
+    from unittest.mock import patch
+
+    from nodestream.pipeline.pipeline_file_loader import (
+        PipelineFileContents,
+        PipelineInitializationArguments,
+        StepDefinition,
+    )
+
+    defn = StepDefinition(
+        implementation_path="nodestream.interpreting:Interpreter",
+        annotations=set(),
+        arguments={},
+    )
+    contents = PipelineFileContents([defn])
+    init_args = PipelineInitializationArguments.for_schema_collection()
+
+    with (
+        patch.object(StepDefinition, "expands_schema", return_value=True),
+        patch.object(
+            StepDefinition, "load_step", side_effect=RuntimeError("load failed")
+        ),
+    ):
+        pipeline = contents.initialize_with_arguments(init_args)
+
+    # Error is swallowed in schema_only mode — pipeline has no steps
+    assert_that(pipeline.steps, has_length(0))
+
+
+def test_non_schema_only_reraises_failed_step_load():
+    """When schema_only=False and a step fails to load, the error is re-raised."""
+    from unittest.mock import patch
+
+    from nodestream.pipeline.pipeline_file_loader import (
+        PipelineFileContents,
+        PipelineInitializationArguments,
+        StepDefinition,
+    )
+
+    defn = StepDefinition(
+        implementation_path="nodestream.interpreting:Interpreter",
+        annotations=set(),
+        arguments={},
+    )
+    contents = PipelineFileContents([defn])
+    init_args = PipelineInitializationArguments(annotations=[], schema_only=False)
+
+    with patch.object(
+        StepDefinition, "load_step", side_effect=RuntimeError("load failed")
+    ):
+        with pytest.raises(RuntimeError, match="load failed"):
+            contents.initialize_with_arguments(init_args)
