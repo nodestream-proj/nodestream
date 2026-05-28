@@ -222,7 +222,9 @@ async def test_handle_async_with_non_default_options(
     assert any("Retriever Options" in s for s in printed)
 
 
-def _make_handle_async_setup(copy_command, mocker, project, basic_schema, option_values):
+def _make_handle_async_setup(
+    copy_command, mocker, project, basic_schema, option_values
+):
     """Shared wiring for handle_async tests."""
     project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
     copy_command.line = mocker.Mock()
@@ -245,7 +247,9 @@ def _make_handle_async_setup(copy_command, mocker, project, basic_schema, option
 
 
 @pytest.mark.asyncio
-async def test_handle_async_with_shard_size(copy_command, mocker, basic_schema, project):
+async def test_handle_async_with_shard_size(
+    copy_command, mocker, basic_schema, project
+):
     """shard-size option is forwarded into retriever_overrides and printed."""
     option_values = {
         "all": False,
