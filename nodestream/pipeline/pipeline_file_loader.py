@@ -130,8 +130,11 @@ class StepDefinition(LoadsFromYaml):
         Resolves the class by import path without instantiating it, so this
         is safe to call in a credential-free schema-collection context.
         """
-        resolved_class = find_class(self.implementation_path)
-        return issubclass(resolved_class, ExpandsSchema)
+        try:
+            resolved_class = find_class(self.implementation_path)
+            return issubclass(resolved_class, ExpandsSchema)
+        except Exception:
+            return False
 
     def load_step(self) -> Step:
         arguments = LazyLoadedArgument.resolve_if_needed(self.arguments)

@@ -111,7 +111,7 @@ async def test_handle_async_unknown_target_error(copy_command, mocker):
 
 @pytest.mark.asyncio
 async def test_handle_async(copy_command, mocker, basic_schema, project):
-    project.make_schema = mocker.Mock(return_value=basic_schema)
+    project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
     copy_command.line = mocker.Mock()
     copy_command.run_operation = mocker.AsyncMock(
         side_effect=[None, None, project, None]
@@ -124,6 +124,9 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
     )
 
     option_values = {
+        "all": False,
+        "node": [],
+        "relationship": [],
         "concurrency-limit": "1",
         "batch-size": "1000",
         "step-outbox-size": "10000",
@@ -131,6 +134,7 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
         "connector-option": [],
         "retriever-option": [],
         "shard-size": None,
+        "relationships-only": False,
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
     }
@@ -155,10 +159,9 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
     assert run_copy_op.node_types == ["Person", "Organization"]
     assert run_copy_op.relationship_types == ["BEST_FRIEND_OF", "HAS_EMPLOYEE"]
     assert run_copy_op.batch_size == 1000
-    assert run_copy_op.concurrency_limit == 1
     assert run_copy_op.flush_concurrency == 1
     assert run_copy_op.connector_overrides == {}
-    assert run_copy_op.retriever_overrides == {}
+    assert run_copy_op.retriever_overrides.get("concurrency_limit") == 1
 
 
 @pytest.mark.asyncio
@@ -166,7 +169,7 @@ async def test_handle_async_with_non_default_options(
     copy_command, mocker, basic_schema, project
 ):
     """Conditional output lines should fire when concurrency/overrides are non-default."""
-    project.make_schema = mocker.Mock(return_value=basic_schema)
+    project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
     copy_command.line = mocker.Mock()
     copy_command.run_operation = mocker.AsyncMock(
         side_effect=[None, None, project, None]
@@ -179,6 +182,9 @@ async def test_handle_async_with_non_default_options(
     )
 
     option_values = {
+        "all": False,
+        "node": [],
+        "relationship": [],
         "concurrency-limit": "4",
         "batch-size": "1000",
         "step-outbox-size": "10000",
@@ -186,6 +192,7 @@ async def test_handle_async_with_non_default_options(
         "connector-option": ["uri=bolt://remote:7687"],
         "retriever-option": ["limit=500", "sample_ratio=50"],
         "shard-size": None,
+        "relationships-only": False,
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
     }
@@ -201,10 +208,11 @@ async def test_handle_async_with_non_default_options(
 
     run_copy_op = copy_command.run_operation.call_args_list[-1].args[0]
     assert isinstance(run_copy_op, RunCopy)
-    assert run_copy_op.concurrency_limit == 4
     assert run_copy_op.flush_concurrency == 3
     assert run_copy_op.connector_overrides == {"uri": "bolt://remote:7687"}
-    assert run_copy_op.retriever_overrides == {"limit": 500, "sample_ratio": 50}
+    assert run_copy_op.retriever_overrides.get("concurrency_limit") == 4
+    assert run_copy_op.retriever_overrides.get("limit") == 500
+    assert run_copy_op.retriever_overrides.get("sample_ratio") == 50
 
     # Verify the conditional output lines were printed.
     printed = [str(c) for c in copy_command.line.call_args_list]
