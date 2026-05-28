@@ -78,11 +78,15 @@ class TypeRetriever(ABC):
     including one that is fully sequential (the default).
     """
 
-    # Subclasses set these to opt into the concurrent consumer loop in Copier.
-    concurrency_limit: int = 1
-    orchestrator_queue_size: int = 0
-
-    relationships_only: bool = False
+    def __init__(
+        self,
+        concurrency_limit: int = 1,
+        orchestrator_queue_size: int = 0,
+        relationships_only: bool = False,
+    ) -> None:
+        self.concurrency_limit = concurrency_limit
+        self.orchestrator_queue_size = orchestrator_queue_size
+        self.relationships_only = relationships_only
 
     @abstractmethod
     async def fetch_nodes(self, schema: Schema) -> AsyncGenerator[Node, None]:
@@ -161,7 +165,7 @@ class Copier(Extractor):
         node_queue: asyncio.Queue = asyncio.Queue(maxsize=queue_size)
         rel_queue: asyncio.Queue = asyncio.Queue(maxsize=queue_size)
 
-        async def _fill_queue(generator, queue, queue_metric) -> None:
+        async def fill_queue(generator, queue, queue_metric) -> None:
             try:
                 async for record in generator:
                     Metrics.get().increment(queue_metric)
@@ -169,7 +173,7 @@ class Copier(Extractor):
             finally:
                 await queue.put(DoneObject)
 
-        async def _drain_queue(queue, queue_metric):
+        async def drain_queue(queue, queue_metric):
             while True:
                 message = await queue.get()
                 if message is DoneObject:
@@ -187,11 +191,11 @@ class Copier(Extractor):
                 async for n in self.type_retriever.fetch_nodes(self.schema)
             )
             node_task = asyncio.create_task(
-                _fill_queue(nodes_gen, node_queue, ORCHESTRATOR_NODE_QUEUE)
+                fill_queue(nodes_gen, node_queue, ORCHESTRATOR_NODE_QUEUE)
             )
             node_error = None
             try:
-                async for record in _drain_queue(node_queue, ORCHESTRATOR_NODE_QUEUE):
+                async for record in drain_queue(node_queue, ORCHESTRATOR_NODE_QUEUE):
                     yield record
             finally:
                 try:
@@ -210,11 +214,11 @@ class Copier(Extractor):
             async for r in self.type_retriever.fetch_relationships(self.schema)
         )
         rel_task = asyncio.create_task(
-            _fill_queue(rels_gen, rel_queue, ORCHESTRATOR_REL_QUEUE)
+            fill_queue(rels_gen, rel_queue, ORCHESTRATOR_REL_QUEUE)
         )
         rel_error = None
         try:
-            async for record in _drain_queue(rel_queue, ORCHESTRATOR_REL_QUEUE):
+            async for record in drain_queue(rel_queue, ORCHESTRATOR_REL_QUEUE):
                 yield record
         finally:
             try:
