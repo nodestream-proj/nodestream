@@ -222,6 +222,124 @@ async def test_handle_async_with_non_default_options(
     assert any("Retriever Options" in s for s in printed)
 
 
+def _make_handle_async_setup(copy_command, mocker, project, basic_schema, option_values):
+    """Shared wiring for handle_async tests."""
+    project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
+    copy_command.line = mocker.Mock()
+    copy_command.run_operation = mocker.AsyncMock(
+        side_effect=[None, None, project, None]
+    )
+    copy_command.get_taget_from_user = mocker.Mock(
+        side_effect=[project.targets_by_name["test"], project.targets_by_name["test2"]]
+    )
+    copy_command.get_type_selection_from_user = mocker.Mock(
+        side_effect=[["Person"], ["BEST_FRIEND_OF"]]
+    )
+    copy_command.option = mocker.Mock(side_effect=lambda name: option_values[name])
+    mocker.patch.object(
+        type(copy_command),
+        "has_json_logging_set",
+        new_callable=mocker.PropertyMock,
+        return_value=False,
+    )
+
+
+@pytest.mark.asyncio
+async def test_handle_async_with_shard_size(copy_command, mocker, basic_schema, project):
+    """shard-size option is forwarded into retriever_overrides and printed."""
+    option_values = {
+        "all": False,
+        "node": [],
+        "relationship": [],
+        "concurrency-limit": "1",
+        "batch-size": "1000",
+        "step-outbox-size": "10000",
+        "flush-concurrency": "1",
+        "connector-option": [],
+        "retriever-option": [],
+        "shard-size": "5000",
+        "relationships-only": False,
+        "reporting-frequency": "1000",
+        "metrics-interval-in-seconds": None,
+    }
+    _make_handle_async_setup(copy_command, mocker, project, basic_schema, option_values)
+    await copy_command.handle_async()
+    run_copy_op = copy_command.run_operation.call_args_list[-1].args[0]
+    assert run_copy_op.retriever_overrides.get("shard_size") == 5000
+    printed = [str(c) for c in copy_command.line.call_args_list]
+    assert any("Shard Size" in s for s in printed)
+
+
+@pytest.mark.asyncio
+async def test_handle_async_with_relationships_only(
+    copy_command, mocker, basic_schema, project
+):
+    """relationships_only=True prints the mode line and skips the node types line."""
+    option_values = {
+        "all": False,
+        "node": [],
+        "relationship": [],
+        "concurrency-limit": "1",
+        "batch-size": "1000",
+        "step-outbox-size": "10000",
+        "flush-concurrency": "1",
+        "connector-option": [],
+        "retriever-option": [],
+        "shard-size": None,
+        "relationships-only": True,
+        "reporting-frequency": "1000",
+        "metrics-interval-in-seconds": None,
+    }
+    _make_handle_async_setup(copy_command, mocker, project, basic_schema, option_values)
+    await copy_command.handle_async()
+    printed = [str(c) for c in copy_command.line.call_args_list]
+    assert any("relationships only" in s for s in printed)
+    assert not any("Node Types" in s for s in printed)
+
+
+@pytest.mark.asyncio
+async def test_handle_async_with_explicit_types_skips_schema(
+    copy_command, mocker, basic_schema, project
+):
+    """Providing explicit --node/--relationship without --all skips schema loading."""
+    option_values = {
+        "all": False,
+        "node": ["Person"],
+        "relationship": ["KNOWS"],
+        "concurrency-limit": "1",
+        "batch-size": "1000",
+        "step-outbox-size": "10000",
+        "flush-concurrency": "1",
+        "connector-option": [],
+        "retriever-option": [],
+        "shard-size": None,
+        "relationships-only": False,
+        "reporting-frequency": "1000",
+        "metrics-interval-in-seconds": None,
+    }
+    project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
+    copy_command.line = mocker.Mock()
+    copy_command.run_operation = mocker.AsyncMock(
+        side_effect=[None, None, project, None]
+    )
+    copy_command.get_taget_from_user = mocker.Mock(
+        side_effect=[project.targets_by_name["test"], project.targets_by_name["test2"]]
+    )
+    copy_command.get_type_selection_from_user = mocker.Mock(
+        side_effect=[["Person"], ["KNOWS"]]
+    )
+    copy_command.option = mocker.Mock(side_effect=lambda name: option_values[name])
+    mocker.patch.object(
+        type(copy_command),
+        "has_json_logging_set",
+        new_callable=mocker.PropertyMock,
+        return_value=False,
+    )
+    await copy_command.handle_async()
+    # Schema was not loaded from project since explicit types were provided
+    project.make_schema_for_copy.assert_not_called()
+
+
 def test_parse_key_value_options_int(copy_command, mocker):
     copy_command.option = mocker.Mock(return_value=["limit=1000"])
     result = copy_command.parse_key_value_options("retriever-option")

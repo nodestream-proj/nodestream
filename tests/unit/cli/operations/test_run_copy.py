@@ -82,3 +82,29 @@ async def test_perform(subject, mocker):
     # Verify run was awaited with a proper progress reporter.
     reporter_arg = pipeline.run.await_args[1]["reporter"]
     assert isinstance(reporter_arg, PipelineProgressReporter)
+
+
+@pytest.mark.asyncio
+async def test_build_copier_uses_build_schema_from_db_when_schema_has_no_nodes(
+    mocker, basic_schema
+):
+    """When schema has no node types, build_schema_from_db is called on the retriever."""
+    from nodestream.schema.state import Schema
+
+    from_target = mocker.Mock()
+    to_target = mocker.Mock()
+    empty_schema = Schema()
+
+    retriever = mocker.Mock()
+    retriever.build_schema_from_db = mocker.AsyncMock(return_value=basic_schema)
+    from_target.make_type_retriever.return_value = retriever
+
+    op = RunCopy(
+        from_target=from_target,
+        to_target=to_target,
+        schema=empty_schema,
+        node_types=["Person"],
+        relationship_types=["KNOWS"],
+    )
+    await op.build_copier()
+    retriever.build_schema_from_db.assert_called_once_with(["Person"], ["KNOWS"])

@@ -305,3 +305,133 @@ async def test_concurrent_copier_propagates_producer_error(mocker, basic_schema)
 def test_copier_is_single_class(mocker, basic_schema):
     """Copier and ConcurrentCopier are the same class; mode is retriever-driven."""
     assert ConcurrentCopier is Copier
+
+
+def test_type_histogram_empty():
+    h = TypeHistogram.empty()
+    assert h.node_counts == {}
+    assert h.relationship_counts == {}
+
+
+@pytest.mark.asyncio
+async def test_type_retriever_build_histogram_default(mocker, basic_schema):
+    """Default build_histogram returns an empty TypeHistogram."""
+    from nodestream.databases.copy import TypeRetriever
+
+    class MinimalRetriever(TypeRetriever):
+        async def fetch_nodes(self, schema):
+            return
+            yield  # pragma: no cover
+
+        async def fetch_relationships(self, schema):
+            return
+            yield  # pragma: no cover
+
+    retriever = MinimalRetriever()
+    histogram = await retriever.build_histogram(basic_schema)
+    assert isinstance(histogram, TypeHistogram)
+    assert histogram.node_counts == {}
+    assert histogram.relationship_counts == {}
+
+
+@pytest.mark.asyncio
+async def test_extract_sequential_relationships_only(mocker, basic_schema):
+    """_extract_sequential skips nodes when relationships_only=True."""
+    schema = _build_schema_with_adjacencies(basic_schema)
+    retriever = _make_mock_retriever(
+        mocker, relationship_types=["KNOWS"], concurrency_limit=1
+    )
+    retriever.relationships_only = True
+
+    rel = RelationshipWithNodes(
+        Node("Person", {"name": "A"}),
+        Node("Person", {"name": "B"}),
+        Relationship("KNOWS", {}),
+    )
+
+    async def rel_gen(schema):
+        yield rel
+
+    retriever.fetch_relationships = rel_gen
+    copier = Copier(retriever, schema)
+    records = [r async for r in copier.extract_records()]
+    # Only relationship records, no nodes
+    assert len(records) == 1
+    retriever.fetch_nodes.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_concurrent_copier_relationships_only(mocker, basic_schema):
+    """Concurrent path skips node queue entirely when relationships_only=True."""
+    schema = _build_schema_with_adjacencies(basic_schema)
+    retriever = _make_mock_retriever(
+        mocker, relationship_types=["KNOWS"], concurrency_limit=4
+    )
+    retriever.relationships_only = True
+
+    rel = RelationshipWithNodes(
+        Node("Person", {"name": "A"}),
+        Node("Person", {"name": "B"}),
+        Relationship("KNOWS", {}),
+    )
+
+    async def rel_gen(schema):
+        yield rel
+
+    retriever.fetch_relationships = rel_gen
+    copier = Copier(retriever, schema)
+    records = [r async for r in copier.extract_records()]
+    assert len(records) == 1
+    retriever.fetch_nodes.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_concurrent_copier_yields_nodes_and_rels(mocker, basic_schema):
+    """Concurrent path yields both node and relationship records."""
+    schema = _build_schema_with_adjacencies(basic_schema)
+    retriever = _make_mock_retriever(
+        mocker,
+        node_types=["Person"],
+        relationship_types=["KNOWS"],
+        concurrency_limit=4,
+    )
+
+    node = Node("Person", {"name": "Alice"})
+    rel = RelationshipWithNodes(
+        Node("Person", {"name": "A"}),
+        Node("Person", {"name": "B"}),
+        Relationship("KNOWS", {}),
+    )
+
+    async def node_gen(schema):
+        yield node
+
+    async def rel_gen(schema):
+        yield rel
+
+    retriever.fetch_nodes = node_gen
+    retriever.fetch_relationships = rel_gen
+    copier = Copier(retriever, schema)
+    copier.convert_node_to_ingest = lambda n: ("node", n.type)
+    copier.convert_relationship_to_ingest = lambda r: ("rel", r.relationship.type)
+    records = [r async for r in copier.extract_records()]
+    assert ("node", "Person") in records
+    assert ("rel", "KNOWS") in records
+
+
+@pytest.mark.asyncio
+async def test_concurrent_copier_propagates_rel_producer_error(mocker, basic_schema):
+    """If fetch_relationships raises, the error propagates out of extract_records."""
+    schema = _build_schema_with_adjacencies(basic_schema)
+    retriever = _make_mock_retriever(mocker, concurrency_limit=2)
+    retriever.relationships_only = True
+
+    async def failing_rels(schema):
+        raise RuntimeError("rel fetch failed")
+        yield  # pragma: no cover
+
+    retriever.fetch_relationships = failing_rels
+    copier = Copier(retriever, schema)
+    with pytest.raises(RuntimeError, match="rel fetch failed"):
+        async for _ in copier.extract_records():
+            pass
