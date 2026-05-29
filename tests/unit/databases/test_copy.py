@@ -45,8 +45,8 @@ def _make_mock_retriever(
         relationship_counts={t: 0 for t in (relationship_types or [])},
     )
     retriever.build_histogram = AsyncMock(return_value=histogram)
-    retriever.fetch_nodes = MagicMock(return_value=_empty_async_gen())
-    retriever.fetch_relationships = MagicMock(return_value=_empty_async_gen())
+    retriever.fetchNodes = MagicMock(return_value=_empty_async_gen())
+    retriever.fetchRelationships = MagicMock(return_value=_empty_async_gen())
     retriever.concurrency_limit = concurrency_limit
     retriever.orchestrator_queue_size = 0
     retriever.relationships_only = False
@@ -171,18 +171,18 @@ async def test_extract_records(subject, mocker):
         ),
     )
 
-    async def mock_fetch_nodes(schema):
+    async def mockFetchNodes(schema):
         async for n in people:
             yield n
         async for n in addresses:
             yield n
 
-    async def mock_fetch_relationships(schema):
+    async def mockFetchRelationships(schema):
         async for r in knows_rels:
             yield r
 
-    subject.type_retriever.fetch_nodes = mock_fetch_nodes
-    subject.type_retriever.fetch_relationships = mock_fetch_relationships
+    subject.type_retriever.fetchNodes = mockFetchNodes
+    subject.type_retriever.fetchRelationships = mockFetchRelationships
     subject.convert_node_to_ingest = mocker.Mock(side_effect=lambda n: ("node", n.type))
     subject.convert_relationship_to_ingest = mocker.Mock(
         side_effect=lambda r: ("rel", r.relationship.type)
@@ -265,8 +265,8 @@ async def test_concurrent_copier_nodes_before_relationships(concurrent_subject, 
         return
         yield  # pragma: no cover
 
-    concurrent_subject.type_retriever.fetch_nodes = node_gen
-    concurrent_subject.type_retriever.fetch_relationships = rel_gen
+    concurrent_subject.type_retriever.fetchNodes = node_gen
+    concurrent_subject.type_retriever.fetchRelationships = rel_gen
 
     async for _ in concurrent_subject.extract_records():
         pass
@@ -294,7 +294,7 @@ async def test_concurrent_copier_propagates_producer_error(mocker, basic_schema)
         raise RuntimeError("database went away")
         yield  # pragma: no cover
 
-    retriever.fetch_nodes = failing_nodes
+    retriever.fetchNodes = failing_nodes
 
     copier = Copier(retriever, schema)
     with pytest.raises(RuntimeError, match="database went away"):
@@ -319,11 +319,11 @@ async def test_type_retriever_build_histogram_default(mocker, basic_schema):
     from nodestream.databases.copy import TypeRetriever
 
     class MinimalRetriever(TypeRetriever):
-        async def fetch_nodes(self, schema):
+        async def fetchNodes(self, schema):
             return
             yield  # pragma: no cover
 
-        async def fetch_relationships(self, schema):
+        async def fetchRelationships(self, schema):
             return
             yield  # pragma: no cover
 
@@ -352,12 +352,12 @@ async def test_extract_sequential_relationships_only(mocker, basic_schema):
     async def rel_gen(schema):
         yield rel
 
-    retriever.fetch_relationships = rel_gen
+    retriever.fetchRelationships = rel_gen
     copier = Copier(retriever, schema)
     records = [r async for r in copier.extract_records()]
     # Only relationship records, no nodes
     assert len(records) == 1
-    retriever.fetch_nodes.assert_not_called()
+    retriever.fetchNodes.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -378,11 +378,11 @@ async def test_concurrent_copier_relationships_only(mocker, basic_schema):
     async def rel_gen(schema):
         yield rel
 
-    retriever.fetch_relationships = rel_gen
+    retriever.fetchRelationships = rel_gen
     copier = Copier(retriever, schema)
     records = [r async for r in copier.extract_records()]
     assert len(records) == 1
-    retriever.fetch_nodes.assert_not_called()
+    retriever.fetchNodes.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -409,8 +409,8 @@ async def test_concurrent_copier_yields_nodes_and_rels(mocker, basic_schema):
     async def rel_gen(schema):
         yield rel
 
-    retriever.fetch_nodes = node_gen
-    retriever.fetch_relationships = rel_gen
+    retriever.fetchNodes = node_gen
+    retriever.fetchRelationships = rel_gen
     copier = Copier(retriever, schema)
     copier.convert_node_to_ingest = lambda n: ("node", n.type)
     copier.convert_relationship_to_ingest = lambda r: ("rel", r.relationship.type)
@@ -430,7 +430,7 @@ async def test_concurrent_copier_propagates_rel_producer_error(mocker, basic_sch
         raise RuntimeError("rel fetch failed")
         yield  # pragma: no cover
 
-    retriever.fetch_relationships = failing_rels
+    retriever.fetchRelationships = failing_rels
     copier = Copier(retriever, schema)
     with pytest.raises(RuntimeError, match="rel fetch failed"):
         async for _ in copier.extract_records():
