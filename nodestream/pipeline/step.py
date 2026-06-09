@@ -12,7 +12,7 @@ class StepContext:
     and report and perist information about the state of the pipeline.
     """
 
-    __slots__ = ("reporter", "index", "name", "object_store")
+    __slots__ = ("reporter", "index", "name", "object_store", "cancellation_cause")
 
     def __init__(
         self,
@@ -25,6 +25,7 @@ class StepContext:
         self.reporter = reporter
         self.index = index
         self.object_store = object_store
+        self.cancellation_cause: Optional[BaseException] = None
 
     @property
     def pipeline_encountered_fatal_error(self) -> bool:

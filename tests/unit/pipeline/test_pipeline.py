@@ -993,11 +993,12 @@ async def test_pipeline_fatal_error_drains_completed_steps_before_cancellation(m
         "StopStepExecution did not complete before the fatal error propagated."
     )
 
-    # The extractor was stuck in emit_outstanding_records and was cancelled before
-    # it ever reached StopStepExecution, so finish() must NOT have been called.
-    assert "extractor" not in finish_calls, (
-        "BlockingExtractor.finish() was called — expected it to be cancelled "
-        "mid-flight in emit_outstanding_records, never reaching StopStepExecution."
+    # The extractor was cancelled mid-flight in emit_outstanding_records, but
+    # finish() must still be called so that resources (e.g. Neo4j driver threads)
+    # are properly cleaned up — that's the whole point of this fix.
+    assert "extractor" in finish_calls, (
+        "BlockingExtractor.finish() was not called after cancellation — "
+        "resource cleanup (e.g. closing Neo4j driver background threads) would be skipped."
     )
 
 

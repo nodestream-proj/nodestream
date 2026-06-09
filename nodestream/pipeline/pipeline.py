@@ -249,8 +249,16 @@ class ProcessRecordsState(StepExecutionState):
         # If we get an exception, we need to stop processing records by
         # transitioning to the stop state. Because this is part of the core
         # execution of the step, we consider this a fatal error.
-        except Exception as e:
-            self.context.report_error("Error processing record", e, fatal=True)
+        # BaseException (including CancelledError) is caught so that step.finish()
+        # is always called — e.g. to close Neo4j driver threads on cancellation.
+        except BaseException as e:
+            if not isinstance(e, Exception):
+                # CancelledError / KeyboardInterrupt: not a pipeline error, but
+                # we still need to run finish() for resource cleanup. Store it
+                # so StopStepExecution can re-raise it after finish() completes.
+                self.context.cancellation_cause = e
+            else:
+                self.context.report_error("Error processing record", e, fatal=True)
             return self.make_state(StopStepExecution)
 
         # If we have gotten here, then we have processed all of our input
@@ -289,12 +297,17 @@ class EmitOutstandingRecordsState(StepExecutionState):
         # If we get an exception, we will report it as fatal as steps
         # processing outstanding records is part of the core execution
         # of the step.
-        except Exception as e:
-            self.context.report_error(
-                "Error emitting outstanding records",
-                e,
-                fatal=True,
-            )
+        # BaseException (including CancelledError) is caught so that step.finish()
+        # is always called — e.g. to close Neo4j driver threads on cancellation.
+        except BaseException as e:
+            if not isinstance(e, Exception):
+                self.context.cancellation_cause = e
+            else:
+                self.context.report_error(
+                    "Error emitting outstanding records",
+                    e,
+                    fatal=True,
+                )
 
         # We are doing to transition to the stop state regardless of what
         # happened to get us here.
@@ -330,6 +343,13 @@ class StopStepExecution(StepExecutionState):
 
         # We are done regarless of what happens. There is no next state.
         Metrics.get().decrement(STEPS_RUNNING)
+
+        # If a prior state caught a CancelledError (or other BaseException) to
+        # allow finish() to run, re-raise it now so the executor task is
+        # properly cancelled and the event loop knows this task is done.
+        if isinstance(self.context.cancellation_cause, BaseException):
+            raise self.context.cancellation_cause
+
         return None
 
 
@@ -530,11 +550,20 @@ class Pipeline(ExpandsSchemaFromChildren):
         # a fatal writer error), cancel the remaining tasks so that blocking
         # extractors (e.g. a StreamExtractor polling Kafka forever) don't keep
         # the process alive as a zombie after the pipeline has already failed.
+        # executors[0] is always the pipeline_output executor (see comment above).
+        # Step executors occupy indices 1+.
         tasks = [create_task(executor.run()) for executor in executors]
+        pipeline_output_task = tasks[0]
+        step_tasks = tasks[1:]
         try:
             await gather(*tasks)
         except BaseException:
-            for task in tasks:
+            # Cancel only step executor tasks. The pipeline_output task must be
+            # allowed to finish so that on_finish_callback (which logs "Pipeline
+            # Completed", emits the Metrics Report, and re-raises any stored fatal
+            # error) always runs. Its input channel is already closed by the time
+            # any step raises, so it will drain and finish on its own.
+            for task in step_tasks:
                 task.cancel()
             # Wait for all tasks to acknowledge cancellation before re-raising.
             # Timeout prevents a misbehaving task from hanging the cleanup indefinitely.
