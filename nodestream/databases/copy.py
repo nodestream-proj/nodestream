@@ -102,7 +102,7 @@ class TypeRetriever(ABC):
         return TypeHistogram.empty()
 
 
-class FetchOrchestrator(ABC):
+class ExtractionOrchestrator(ABC):
     """Controls how the Copier drives fetchNodes and fetchRelationships.
 
     Selected once at Copier construction time based on the retriever's
@@ -119,7 +119,7 @@ class FetchOrchestrator(ABC):
     ) -> AsyncGenerator[Any, None]: ...
 
 
-class SequentialFetchOrchestrator(FetchOrchestrator):
+class SequentialExtractionOrchestrator(ExtractionOrchestrator):
     def __init__(self, includeNodes: bool) -> None:
         self.includeNodes = includeNodes
 
@@ -137,7 +137,7 @@ class SequentialFetchOrchestrator(FetchOrchestrator):
             yield convertRelationship(relationship)
 
 
-class ConcurrentFetchOrchestrator(FetchOrchestrator):
+class ConcurrentExtractionOrchestrator(ExtractionOrchestrator):
     """Producer/consumer orchestrator with separate node and relationship queues.
 
     The node queue is fully produced and drained before the relationship queue
@@ -213,11 +213,11 @@ class ConcurrentFetchOrchestrator(FetchOrchestrator):
             raise relationshipError
 
 
-def buildFetchOrchestrator(retriever: TypeRetriever) -> FetchOrchestrator:
+def buildExtractionOrchestrator(retriever: TypeRetriever) -> ExtractionOrchestrator:
     includeNodes = not retriever.relationships_only
     if retriever.concurrency_limit > 1:
-        return ConcurrentFetchOrchestrator(includeNodes=includeNodes)
-    return SequentialFetchOrchestrator(includeNodes=includeNodes)
+        return ConcurrentExtractionOrchestrator(includeNodes=includeNodes)
+    return SequentialExtractionOrchestrator(includeNodes=includeNodes)
 
 
 class Copier(Extractor):
@@ -236,7 +236,7 @@ class Copier(Extractor):
         self.type_retriever = type_retriever
         self.schema = schema
         self.logger = getLogger(__name__)
-        self.orchestrator = buildFetchOrchestrator(type_retriever)
+        self.orchestrator = buildExtractionOrchestrator(type_retriever)
 
     async def start(self, context: StepContext):
         await super().start(context)

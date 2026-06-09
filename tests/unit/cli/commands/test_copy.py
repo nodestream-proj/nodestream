@@ -50,17 +50,17 @@ def test_get_target_from_user_from_option_unknown_target(copy_command, project, 
     copy_command.line_error.assert_called_once_with("Unknown target: unknown")
 
 
-def test_get_type_selection_from_user_from_option(copy_command, mocker, basic_schema):
+def test_resolve_type_filter_from_option(copy_command, mocker, basic_schema):
     copy_command.option = mocker.Mock(side_effect=[False, ["Person"]])
-    types = copy_command.get_type_selection_from_user(basic_schema.nodes, "node")
+    types = copy_command.resolve_type_filter(basic_schema.nodes, "node")
     assert_that(types, equal_to(["Person"]))
     copy_command.option.assert_called_with("node")
 
 
-def test_get_type_selection_from_user_from_prompt(copy_command, mocker, basic_schema):
+def test_resolve_type_filter_from_prompt(copy_command, mocker, basic_schema):
     copy_command.option = mocker.Mock(side_effect=[False, None])
     copy_command.choice = mocker.Mock(return_value=["Person"])
-    types = copy_command.get_type_selection_from_user(basic_schema.nodes, "node")
+    types = copy_command.resolve_type_filter(basic_schema.nodes, "node")
     assert_that(types, equal_to(["Person"]))
     copy_command.option.assert_called_with("node")
     copy_command.choice.assert_called_with(
@@ -70,22 +70,20 @@ def test_get_type_selection_from_user_from_prompt(copy_command, mocker, basic_sc
     )
 
 
-def test_get_type_selection_from_user_from_all_flag(copy_command, mocker, basic_schema):
+def test_resolve_type_filter_from_all_flag(copy_command, mocker, basic_schema):
     copy_command.option = mocker.Mock(return_value=True)
-    types = copy_command.get_type_selection_from_user(basic_schema.nodes, "node")
+    types = copy_command.resolve_type_filter(basic_schema.nodes, "node")
     assert_that(types, equal_to(["Person", "Organization"]))
     copy_command.option.assert_called_once_with("all")
 
 
-def test_get_type_selection_from_user_from_option_unknown_type(
-    copy_command, mocker, basic_schema
-):
+def test_resolve_type_filter_unknown_type(copy_command, mocker, basic_schema):
     copy_command.line_error = mocker.Mock()
     with pytest.raises(UnknownTargetError):
         copy_command.option = mocker.Mock(side_effect=[False, ["Unknown"]])
-        copy_command.get_type_selection_from_user(basic_schema.nodes, "node")
+        copy_command.resolve_type_filter(basic_schema.nodes, "node")
     copy_command.line_error.assert_called_once_with(
-        "Unknown node type: Unknown. Valid options are: Person, Organization"
+        "Unknown node type(s): Unknown. Valid options are: Person, Organization"
     )
 
 
@@ -112,14 +110,13 @@ async def test_handle_async_unknown_target_error(copy_command, mocker):
 @pytest.mark.asyncio
 async def test_handle_async(copy_command, mocker, basic_schema, project):
     project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
-    copy_command.line = mocker.Mock()
     copy_command.run_operation = mocker.AsyncMock(
         side_effect=[None, None, project, None]
     )
     copy_command.get_taget_from_user = mocker.Mock(
         side_effect=[project.targets_by_name["test"], project.targets_by_name["test2"]]
     )
-    copy_command.get_type_selection_from_user = mocker.Mock(
+    copy_command.resolve_type_filter = mocker.Mock(
         side_effect=[["Person", "Organization"], ["BEST_FRIEND_OF", "HAS_EMPLOYEE"]]
     )
 
@@ -168,16 +165,15 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
 async def test_handle_async_with_non_default_options(
     copy_command, mocker, basic_schema, project
 ):
-    """Conditional output lines should fire when concurrency/overrides are non-default."""
+    """Non-default concurrency/overrides are forwarded into the RunCopy operation."""
     project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
-    copy_command.line = mocker.Mock()
     copy_command.run_operation = mocker.AsyncMock(
         side_effect=[None, None, project, None]
     )
     copy_command.get_taget_from_user = mocker.Mock(
         side_effect=[project.targets_by_name["test"], project.targets_by_name["test2"]]
     )
-    copy_command.get_type_selection_from_user = mocker.Mock(
+    copy_command.resolve_type_filter = mocker.Mock(
         side_effect=[["Person", "Organization"], ["BEST_FRIEND_OF"]]
     )
 
@@ -214,27 +210,19 @@ async def test_handle_async_with_non_default_options(
     assert run_copy_op.retriever_overrides.get("limit") == 500
     assert run_copy_op.retriever_overrides.get("sample_ratio") == 50
 
-    # Verify the conditional output lines were printed.
-    printed = [str(c) for c in copy_command.line.call_args_list]
-    assert any("Concurrency Limit" in s for s in printed)
-    assert any("Flush Concurrency" in s for s in printed)
-    assert any("Connector Overrides" in s for s in printed)
-    assert any("Retriever Options" in s for s in printed)
-
 
 def _make_handle_async_setup(
     copy_command, mocker, project, basic_schema, option_values
 ):
     """Shared wiring for handle_async tests."""
     project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
-    copy_command.line = mocker.Mock()
     copy_command.run_operation = mocker.AsyncMock(
         side_effect=[None, None, project, None]
     )
     copy_command.get_taget_from_user = mocker.Mock(
         side_effect=[project.targets_by_name["test"], project.targets_by_name["test2"]]
     )
-    copy_command.get_type_selection_from_user = mocker.Mock(
+    copy_command.resolve_type_filter = mocker.Mock(
         side_effect=[["Person"], ["BEST_FRIEND_OF"]]
     )
     copy_command.option = mocker.Mock(side_effect=lambda name: option_values[name])
@@ -250,7 +238,7 @@ def _make_handle_async_setup(
 async def test_handle_async_with_shard_size(
     copy_command, mocker, basic_schema, project
 ):
-    """shard-size option is forwarded into retriever_overrides and printed."""
+    """shard-size option is forwarded into retriever_overrides."""
     option_values = {
         "all": False,
         "node": [],
@@ -270,15 +258,13 @@ async def test_handle_async_with_shard_size(
     await copy_command.handle_async()
     run_copy_op = copy_command.run_operation.call_args_list[-1].args[0]
     assert run_copy_op.retriever_overrides.get("shard_size") == 5000
-    printed = [str(c) for c in copy_command.line.call_args_list]
-    assert any("Shard Size" in s for s in printed)
 
 
 @pytest.mark.asyncio
 async def test_handle_async_with_relationships_only(
     copy_command, mocker, basic_schema, project
 ):
-    """relationships_only=True prints the mode line and skips the node types line."""
+    """relationships_only=True is forwarded into retriever_overrides."""
     option_values = {
         "all": False,
         "node": [],
@@ -296,16 +282,15 @@ async def test_handle_async_with_relationships_only(
     }
     _make_handle_async_setup(copy_command, mocker, project, basic_schema, option_values)
     await copy_command.handle_async()
-    printed = [str(c) for c in copy_command.line.call_args_list]
-    assert any("relationships only" in s for s in printed)
-    assert not any("Node Types" in s for s in printed)
+    run_copy_op = copy_command.run_operation.call_args_list[-1].args[0]
+    assert run_copy_op.retriever_overrides.get("relationships_only") is True
 
 
 @pytest.mark.asyncio
-async def test_handle_async_with_explicit_types_skips_schema(
+async def test_handle_async_always_loads_schema(
     copy_command, mocker, basic_schema, project
 ):
-    """Providing explicit --node/--relationship without --all skips schema loading."""
+    """Schema is always loaded, even when explicit --node/--relationship are provided."""
     option_values = {
         "all": False,
         "node": ["Person"],
@@ -322,16 +307,13 @@ async def test_handle_async_with_explicit_types_skips_schema(
         "metrics-interval-in-seconds": None,
     }
     project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
-    copy_command.line = mocker.Mock()
     copy_command.run_operation = mocker.AsyncMock(
         side_effect=[None, None, project, None]
     )
     copy_command.get_taget_from_user = mocker.Mock(
         side_effect=[project.targets_by_name["test"], project.targets_by_name["test2"]]
     )
-    copy_command.get_type_selection_from_user = mocker.Mock(
-        side_effect=[["Person"], ["KNOWS"]]
-    )
+    copy_command.resolve_type_filter = mocker.Mock(side_effect=[["Person"], ["KNOWS"]])
     copy_command.option = mocker.Mock(side_effect=lambda name: option_values[name])
     mocker.patch.object(
         type(copy_command),
@@ -340,8 +322,7 @@ async def test_handle_async_with_explicit_types_skips_schema(
         return_value=False,
     )
     await copy_command.handle_async()
-    # Schema was not loaded from project since explicit types were provided
-    project.make_schema_for_copy.assert_not_called()
+    project.make_schema_for_copy.assert_called_once()
 
 
 def test_parse_key_value_options_int(copy_command, mocker):

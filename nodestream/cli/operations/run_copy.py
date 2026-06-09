@@ -38,11 +38,10 @@ class RunCopy(Operation):
         self.retriever_overrides = retriever_overrides or {}
 
     async def perform(self, command: NodestreamCommand):
-        pipeline = await self.build_pipeline()
-        await pipeline.run(reporter=self.progress_reporter)
+        await self.build_pipeline().run(reporter=self.progress_reporter)
 
-    async def build_pipeline(self) -> Pipeline:
-        copier = await self.build_copier()
+    def build_pipeline(self) -> Pipeline:
+        copier = self.build_copier()
         writer = self.build_writer()
         return Pipeline(
             (copier, writer),
@@ -50,20 +49,13 @@ class RunCopy(Operation):
             object_store=ObjectStore.null(),
         )
 
-    async def build_copier(self) -> Copier:
+    def build_copier(self) -> Copier:
         retriever = self.from_target.make_type_retriever(
             node_types=self.node_types,
             relationship_types=self.relationship_types,
             **self.retriever_overrides,
         )
-        schema = self.schema
-        # If the schema has no node types defined (skipped for performance), infer
-        # key fields and adjacency patterns from the live source database.
-        if not list(schema.nodes) and hasattr(retriever, "build_schema_from_db"):
-            schema = await retriever.build_schema_from_db(
-                self.node_types, self.relationship_types
-            )
-        return Copier(retriever, schema)
+        return Copier(retriever, self.schema)
 
     def build_writer(self) -> GraphDatabaseWriter:
         return self.to_target.make_writer(

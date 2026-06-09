@@ -1,10 +1,11 @@
+from logging import getLogger
 from typing import Dict, List
 
 from cleo.helpers import option
 
 from ...metrics import Metrics
 from ...project import Project, Target
-from ...schema import GraphObjectSchema, Schema
+from ...schema import GraphObjectSchema
 from ..operations import (
     InitializeLogger,
     InitializeMetricsHandler,
@@ -14,6 +15,8 @@ from ..operations import (
 from ..operations.run_pipeline import create_progress_reporter
 from .nodestream_command import NodestreamCommand
 from .shared_options import JSON_OPTION, PROJECT_FILE_OPTION, PROMETHEUS_OPTIONS
+
+logger = getLogger(__name__)
 
 
 class UnknownTargetError(Exception):
@@ -124,42 +127,45 @@ class Copy(NodestreamCommand):
                 from_target = self.get_taget_from_user(project, "from")
                 to_target = self.get_taget_from_user(project, "to")
                 relationships_only = bool(self.option("relationships-only"))
-                use_all = self.option("all")
+
+                # Always build the schema so type filters can be validated
+                # against it and the retriever has full type metadata.
+                schema = project.make_schema_for_copy(include_additional_types=False)
+                node_types = self.resolve_type_filter(schema.nodes, "node")
+
+                # When node types are explicitly filtered (not --all and not
+                # interactive-all), narrow relationships to those whose
+                # adjacency involves at least one selected node type — unless
+                # the user also provided explicit --relationship filters.
                 explicit_nodes = self.option("node")
-                explicit_rels = self.option("relationship")
-
-                # Only load the schema when we actually need it: --all requires
-                # enumeration, and explicit types with no --all need validation.
-                # When both --node and --relationship are provided without --all
-                # we skip schema loading entirely (avoids instantiating pipeline
-                # steps like Athena extractors that need external credentials).
-                needs_schema = use_all or not (explicit_nodes or explicit_rels)
-                if needs_schema:
-                    # For copy operations we intentionally build a schema *without*
-                    # expanding additional types so that we only copy the concrete
-                    # node / relationship types declared in pipelines.
-                    schema = project.make_schema_for_copy(
-                        include_additional_types=False
-                    )
-                    all_node_types = schema.nodes
-                    all_rel_types = schema.relationships
+                if (
+                    explicit_nodes
+                    and not self.option("relationship")
+                    and not self.option("all")
+                ):
+                    node_set = set(node_types)
+                    rel_types = [
+                        adj.relationship_type
+                        for adj in schema.adjacencies
+                        if adj.from_node_type in node_set
+                        or adj.to_node_type in node_set
+                    ]
+                    # deduplicate while preserving order
+                    seen: set = set()
+                    rel_types = [r for r in rel_types if not (r in seen or seen.add(r))]
                 else:
-                    schema = Schema()
-                    all_node_types = []
-                    all_rel_types = []
+                    rel_types = self.resolve_type_filter(
+                        schema.relationships, "relationship"
+                    )
 
-                node_types = self.get_type_selection_from_user(all_node_types, "node")
-                rel_types = self.get_type_selection_from_user(
-                    all_rel_types, "relationship"
-                )
                 batch_size = int(self.option("batch-size"))
                 step_outbox_size = int(self.option("step-outbox-size"))
                 flush_concurrency = int(self.option("flush-concurrency"))
-                connector_overrides = self.parse_key_value_options("connector-option")
-                retriever_overrides = self.parse_key_value_options("retriever-option")
                 concurrency_limit = int(self.option("concurrency-limit"))
                 shard_size_raw = self.option("shard-size")
-                shard_size = int(shard_size_raw) if shard_size_raw is not None else None
+                connector_overrides = self.parse_key_value_options("connector-option")
+                retriever_overrides = self.parse_key_value_options("retriever-option")
+
                 # Merge CLI-level retriever knobs into retriever_overrides so that
                 # make_type_retriever receives a single flat dict. Plugins pop what
                 # they understand and ignore the rest — no plugin-specific kwargs
@@ -169,29 +175,23 @@ class Copy(NodestreamCommand):
                     "orchestrator_queue_size", step_outbox_size
                 )
                 retriever_overrides.setdefault("relationships_only", relationships_only)
-                if shard_size is not None:
-                    retriever_overrides.setdefault("shard_size", shard_size)
+                if shard_size_raw is not None:
+                    retriever_overrides.setdefault("shard_size", int(shard_size_raw))
             except UnknownTargetError:
                 return 1
 
-            self.line("Starting to Copy:")
-            self.line(f"<info>From: {from_target.name}</info>")
-            self.line(f"<info>To: {to_target.name}</info>")
-            if relationships_only:
-                self.line("<info>Mode: relationships only (nodes skipped)</info>")
-            else:
-                self.line(f"<info>Node Types: {', '.join(node_types)}</info>")
-            self.line(f"<info>Relationship Types: {', '.join(rel_types)}</info>")
-            if concurrency_limit > 1:
-                self.line(f"<info>Concurrency Limit: {concurrency_limit}</info>")
-            if flush_concurrency > 1:
-                self.line(f"<info>Flush Concurrency: {flush_concurrency}</info>")
-            if connector_overrides:
-                self.line(f"<info>Connector Overrides: {connector_overrides}</info>")
-            if retriever_overrides:
-                self.line(f"<info>Retriever Options: {retriever_overrides}</info>")
-            if shard_size is not None:
-                self.line(f"<info>Shard Size: {shard_size}</info>")
+            logger.info(
+                "Starting copy",
+                extra={
+                    "from": from_target.name,
+                    "to": to_target.name,
+                    "relationships_only": relationships_only,
+                    "node_types": node_types,
+                    "relationship_types": rel_types,
+                    "retriever_overrides": retriever_overrides,
+                    "connector_overrides": connector_overrides,
+                },
+            )
             reporter = create_progress_reporter(self, "copy")
             await self.run_operation(
                 RunCopy(
@@ -245,36 +245,33 @@ class Copy(NodestreamCommand):
             self.line_error(f"Unknown target: {choice}")
             raise UnknownTargetError
 
-    def get_type_selection_from_user(
-        self, types: List[GraphObjectSchema], type_name: str
+    def resolve_type_filter(
+        self, schema_types: List[GraphObjectSchema], type_name: str
     ) -> List[str]:
-        choices = [str(t.name) for t in types]
+        """Return the list of type names to copy for this kind (node/relationship).
 
-        # If the user has specified the --all flag, we don't need to prompt them for
-        # anything. We can just return all the types.
+        --all (default): all types from schema.
+        explicit --node/--relationship flags: validate against schema and use as filter.
+        Neither flag set interactively: prompt user to select from schema types.
+        """
+        all_names = [str(t.name) for t in schema_types]
+
         if self.option("all"):
-            return choices
+            return all_names
 
-        # If the user has specified type(s) in the options, we don't need to prompt
-        # them for anything. We can just return the type they specified. If they
-        # specified an unknown type, we should error out — but only when we have
-        # a schema to validate against (choices is non-empty).
-        selections_from_options = self.option(type_name)
-        if selections_from_options:
-            if choices:
-                for selection in selections_from_options:
-                    if selection not in choices:
-                        self.line_error(
-                            f"Unknown {type_name} type: {selection}. "
-                            f"Valid options are: {', '.join(choices)}"
-                        )
-                        raise UnknownTargetError
-            return selections_from_options
+        explicit = self.option(type_name)
+        if explicit:
+            unknown = [t for t in explicit if t not in all_names]
+            if unknown:
+                self.line_error(
+                    f"Unknown {type_name} type(s): {', '.join(unknown)}. "
+                    f"Valid options are: {', '.join(all_names)}"
+                )
+                raise UnknownTargetError
+            return list(explicit)
 
-        # If the user has not specified the type(s) in the options, we need to prompt
-        # them for the type(s). We can just return the type they specified.
         return self.choice(
             f"Which {type_name} types would you like to copy? (You can select multiple by separating them with a comma)",
-            choices,
+            all_names,
             multiple=True,
         )
