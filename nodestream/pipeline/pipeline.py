@@ -324,6 +324,12 @@ class StopStepExecution(StepExecutionState):
 
     async def execute_until_state_change(self) -> Optional[StepExecutionState]:
         try:
+            # Run finish() before signaling downstream. This ensures that any
+            # metrics accumulated during finish() (e.g. NODES_UPSERTED from a
+            # final flush) are recorded before pipeline_output calls
+            # on_finish_callback to emit the Metrics Report.
+            await self.step.finish(self.context)
+
             # Closing the output channel will signal to any downstream steps
             # that we are done processing records and that there nothing left
             # to wait for. Similarly, we mark the input as done to signal
@@ -331,9 +337,6 @@ class StopStepExecution(StepExecutionState):
             # that producing more records is futile.
             await self.output.done()
             self.input.done()
-
-            # Steps may need to do some finalization work when they are done.
-            await self.step.finish(self.context)
 
         # In the event of a failure closing out a step, we will report it as a
         # non-fatal error because all core work has been accomplished. Resource
@@ -417,6 +420,11 @@ class PipelineOutputStopState(PipelineOutputState):
     This is the state that the pipeline output is in when it is stopping. This
     is the final state that the pipeline output will be in. Once it transitions
     to this state, it will not transition to any other state and end execution.
+
+    By the time this state is entered, the upstream step has already called
+    step.finish() then output.done() (StopStepExecution runs finish before
+    signaling downstream). All metrics accumulated during finish/flush are
+    therefore already recorded when on_finish_callback is called here.
     """
 
     async def execute_until_state_change(self) -> Optional[ExecutionState]:
@@ -445,7 +453,9 @@ class Executor:
 
     @classmethod
     def pipeline_output(
-        cls, input: StepInput, reporter: PipelineProgressReporter
+        cls,
+        input: StepInput,
+        reporter: PipelineProgressReporter,
     ) -> "Executor":
         return cls(PipelineOutputStartState(input, reporter, Metrics.get()))
 
@@ -556,21 +566,24 @@ class Pipeline(ExpandsSchemaFromChildren):
         pipeline_output_task = tasks[0]
         step_tasks = tasks[1:]
         try:
+            # Run all tasks concurrently.
+            # StopStepExecution calls step.finish() before output.done(), so by
+            # the time pipeline_output receives DoneObject and calls
+            # on_finish_callback, all metrics from finish/flush are accumulated.
+            # If on_finish_callback re-raises a stored fatal error, gather raises
+            # and we cancel any remaining blocking step tasks (e.g. Kafka consumers).
             await gather(*tasks)
         except BaseException:
-            # Cancel only step executor tasks. The pipeline_output task must be
-            # allowed to finish so that on_finish_callback (which logs "Pipeline
-            # Completed", emits the Metrics Report, and re-raises any stored fatal
-            # error) always runs. Its input channel is already closed by the time
-            # any step raises, so it will drain and finish on its own.
+            # Cancel only step executor tasks. pipeline_output_task has already
+            # raised from on_finish_callback and does not need cancellation.
             for task in step_tasks:
                 task.cancel()
-            # Wait for all tasks to acknowledge cancellation before re-raising.
-            # Timeout prevents a misbehaving task from hanging the cleanup indefinitely.
-            # Secondary exceptions from sibling tasks are logged so they aren't silently dropped.
+            # Wait for step tasks to acknowledge cancellation.
+            # Timeout prevents a misbehaving task from hanging indefinitely.
+            # Secondary exceptions are logged so they aren't silently dropped.
             try:
                 results = await asyncio.wait_for(
-                    gather(*tasks, return_exceptions=True), timeout=30
+                    gather(*step_tasks, return_exceptions=True), timeout=30
                 )
                 for result in results:
                     if isinstance(result, Exception):

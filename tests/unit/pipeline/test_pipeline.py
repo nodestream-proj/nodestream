@@ -1,3 +1,4 @@
+import asyncio
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -743,24 +744,31 @@ async def test_pipeline_output_on_finish_callback_exceptions_not_swallowed(
     point).'
     """
 
+    from nodestream.pipeline.object_storage import NullObjectStore
+    from nodestream.pipeline.step import Step
+
     def on_finish_callback(metrics):
         raise ValueError("CLI status code exception")
 
-    input_mock = mocker.Mock(StepInput)
-    # No records to process
-    input_mock.get = mocker.AsyncMock(return_value=None)
+    class NoOpStep(Step):
+        async def emit_outstanding_records(self, context):
+            return
+            yield
 
-    executor = Executor.pipeline_output(
-        input_mock,
-        PipelineProgressReporter(
-            on_finish_callback=on_finish_callback,
-            logger=mocker.Mock(),
-        ),
+    pipeline = Pipeline(
+        steps=(NoOpStep(),),
+        step_outbox_size=10,
+        object_store=NullObjectStore(),
     )
 
-    # The exception should propagate up and not be caught
+    reporter = PipelineProgressReporter(
+        on_finish_callback=on_finish_callback,
+        logger=mocker.Mock(),
+    )
+
+    # The exception should propagate up from Pipeline.run() and not be caught
     with pytest.raises(ValueError, match="CLI status code exception"):
-        await executor.run()
+        await pipeline.run(reporter)
 
 
 @pytest.mark.asyncio
