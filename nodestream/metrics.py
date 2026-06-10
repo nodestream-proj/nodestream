@@ -123,6 +123,11 @@ INGEST_HOOKS_EXECUTED = Metric(
 STEPS_RUNNING = Metric(
     "steps_running", "Number of steps currently running in the pipeline"
 )
+RECORDS_WRITTEN = Metric(
+    "records_written",
+    "Number of records written by writer steps across all writer implementations",
+    accumulate=True,
+)
 
 
 try:
