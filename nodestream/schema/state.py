@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, Iterable, Optional, Set, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 from nodestream.utils import LayeredDict, LayeredList
 
@@ -680,14 +680,14 @@ class Schema(WritesToYamlToStdout, LoadsFromYamlFile):
 
     def filtered(
         self,
-        node_filter: Optional[Set[str]] = None,
-        relationship_filter: Optional[Set[str]] = None,
+        node_filter: Optional[List[str]] = None,
+        relationship_filter: Optional[List[str]] = None,
     ) -> "Schema":
         """Return a new Schema restricted to the specified types.
 
         Rules:
-        - If node_filter is None, all node types are included.
-        - If relationship_filter is None, all relationship types are included.
+        - If node_filter is None or [], all node types are included.
+        - If relationship_filter is None or [], all relationship types are included.
         - An adjacency is included only when its relationship_type passes the
           relationship_filter AND at least one of its endpoints passes the
           node_filter.
@@ -699,13 +699,13 @@ class Schema(WritesToYamlToStdout, LoadsFromYamlFile):
 
         # Determine which nodes to seed from the explicit filter.
         included_nodes: Set[str] = (
-            set(node_filter) if node_filter is not None else {n.name for n in self.nodes}
+            set(node_filter) if node_filter else {n.name for n in self.nodes}
         )
 
         # Determine which relationship types are allowed.
         included_rels: Set[str] = (
             set(relationship_filter)
-            if relationship_filter is not None
+            if relationship_filter
             else {r.name for r in self.relationships}
         )
 

@@ -60,7 +60,7 @@ def test_apply_schema_filter_no_filters_returns_full_schema(
 ):
     copy_command.option = mocker.Mock(side_effect=lambda name: [] if name in ("node", "relationship") else None)
     result = copy_command.apply_schema_filter(basic_schema)
-    assert result is basic_schema
+    assert {n.name for n in result.nodes} == {n.name for n in basic_schema.nodes}
 
 
 def test_apply_schema_filter_node_filter(copy_command, mocker, basic_schema):

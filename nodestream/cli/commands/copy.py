@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Dict, Optional, Set
+from typing import Dict
 
 from cleo.helpers import option
 
@@ -185,28 +185,22 @@ class Copy(NodestreamCommand):
         --relationship X Y: all adjacencies of type X or Y (and their endpoint nodes),
                             restricted to nodes in --node if also provided.
         """
-        node_filter: Optional[Set[str]] = None
-        rel_filter: Optional[Set[str]] = None
+        node_filter = []
+        rel_filter = []
 
-        explicit_nodes = self.option("node")
-        explicit_rels = self.option("relationship")
+        all_node_names = {n.name for n in schema.nodes}
+        for n in self.option("node") or []:
+            if n in all_node_names:
+                node_filter.append(n)
+            else:
+                logger.warning("Unknown node type %r — skipping", n)
 
-        if explicit_nodes:
-            all_node_names = {n.name for n in schema.nodes}
-            unknown = [n for n in explicit_nodes if n not in all_node_names]
-            for u in unknown:
-                logger.warning("Unknown node type %r — skipping", u)
-            node_filter = {n for n in explicit_nodes if n in all_node_names}
-
-        if explicit_rels:
-            all_rel_names = {r.name for r in schema.relationships}
-            unknown = [r for r in explicit_rels if r not in all_rel_names]
-            for u in unknown:
-                logger.warning("Unknown relationship type %r — skipping", u)
-            rel_filter = {r for r in explicit_rels if r in all_rel_names}
-
-        if node_filter is None and rel_filter is None:
-            return schema
+        all_rel_names = {r.name for r in schema.relationships}
+        for r in self.option("relationship") or []:
+            if r in all_rel_names:
+                rel_filter.append(r)
+            else:
+                logger.warning("Unknown relationship type %r — skipping", r)
 
         return schema.filtered(node_filter=node_filter, relationship_filter=rel_filter)
 
