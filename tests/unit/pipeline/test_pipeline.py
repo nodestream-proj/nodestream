@@ -16,7 +16,6 @@ from nodestream.pipeline.pipeline import (
     RecordContext,
     StartStepState,
     StepExecutionState,
-    StepInput,
     StopStepExecution,
 )
 from nodestream.pipeline.progress_reporter import PipelineProgressReporter
@@ -854,7 +853,6 @@ async def test_pipeline_cancels_blocking_extractor_on_fatal_error(mocker):
     cancel sibling tasks when one raises — leaving blocking tasks alive after
     the pipeline output executor had already failed.
     """
-    import asyncio
 
     from nodestream.pipeline.object_storage import NullObjectStore
     from nodestream.pipeline.step import Step
@@ -938,7 +936,6 @@ async def test_pipeline_fatal_error_drains_completed_steps_before_cancellation(m
     - The blocking extractor was cancelled and did NOT call finish()
       (it was stuck in emit_outstanding_records and never reached StopStepExecution)
     """
-    import asyncio
 
     from nodestream.pipeline.object_storage import NullObjectStore
     from nodestream.pipeline.step import Step
@@ -1019,7 +1016,6 @@ async def test_pipeline_external_cancellation_still_cancels_sibling_tasks(mocker
     blocking sibling tasks alive as zombies even when the pipeline task itself was
     cancelled from outside.
     """
-    import asyncio
 
     from nodestream.pipeline.object_storage import NullObjectStore
     from nodestream.pipeline.step import Step
