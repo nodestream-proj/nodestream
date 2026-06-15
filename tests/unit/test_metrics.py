@@ -52,6 +52,7 @@ def test_prometheus_metric_handler(mocker):
     mock_start_http_server.assert_called_once()
     handler.increment(RECORDS, 1)
     handler.decrement(RECORDS, 1)
+    handler.set_value(RECORDS, 42)
     handler.stop()
 
 
