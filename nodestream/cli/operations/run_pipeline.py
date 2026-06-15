@@ -188,7 +188,6 @@ class SpinnerProgressIndicator(ProgressIndicator):
         self.progress.finish(
             f"Finished running pipeline: '{self.pipeline_name}' in {elapsed:.1f}s"
         )
-        metrics.tick()
         if self.exception:
             raise self.exception
 
@@ -229,7 +228,6 @@ class JsonProgressIndicator(ProgressIndicator):
             "Pipeline Completed",
             extra={"elapsed_seconds": round(elapsed, 1)},
         )
-        metrics.tick()
         if self.exception:
             raise self.exception
 

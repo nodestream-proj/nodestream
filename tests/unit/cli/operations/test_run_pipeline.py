@@ -208,7 +208,7 @@ def test_spinner_error_condition(mocker):
     mock_metrics = mocker.Mock()
     with pytest.raises(Exception):
         spinner.on_finish(mock_metrics)
-    mock_metrics.tick.assert_called_once()
+    mock_metrics.stop.assert_not_called()
 
 
 @pytest.mark.parametrize(
