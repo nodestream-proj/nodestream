@@ -5,15 +5,14 @@ from logging import Logger, getLogger
 from typing import AsyncGenerator, Dict, List
 
 from ..metrics import Metric, Metrics
-from ..model import Node, RelationshipWithNodes
 from ..pipeline import Extractor
 from ..pipeline.channel import DoneObject
 from ..pipeline.step import StepContext
 from ..schema import Schema
 
-ORCHESTRATOR_REL_QUEUE = Metric(
-    "orchestrator_rel_queue",
-    "Number of relationships in the orchestrator relationship queue",
+ORCHESTRATOR_QUEUE = Metric(
+    "orchestrator_queue",
+    "Number of extractor jobs pending in the copier queue",
     accumulate=False,
 )
 ACTIVE_QUERIES = Metric(
@@ -57,12 +56,11 @@ class TypeHistogram:
 class TypeRetriever(ABC):
     """Abstract base for retrieving graph objects from a source database.
 
-    The retriever owns schema, type decomposition, shard splitting, and
-    histogram computation. Schema is a constructor argument — the retriever
-    uses it internally; callers never pass it at fetch time.
-
-    node_only=True: fetch only nodes (fetchRelationships is never called).
-    node_only=False (default): adjacency extraction — nodes then relationships.
+    The retriever owns schema, type decomposition, shard splitting, histogram
+    computation, and node_only policy. It exposes two async generators of
+    Extractor objects — one for node shards, one for relationship shards.
+    The Copier drives those extractors concurrently without knowing about
+    types, shards, or node_only.
     """
 
     def __init__(
@@ -70,23 +68,22 @@ class TypeRetriever(ABC):
         schema: Schema,
         concurrency_limit: int = 1,
         orchestrator_queue_size: int = 0,
-        node_only: bool = False,
     ) -> None:
         self.schema = schema
         self.concurrency_limit = concurrency_limit
         self.orchestrator_queue_size = orchestrator_queue_size
-        self.node_only = node_only
 
     @abstractmethod
-    async def fetchNodes(self) -> AsyncGenerator[Node, None]:
-        """Yield all nodes that should be copied, across all types."""
+    async def fetchNodeExtractors(self) -> AsyncGenerator[Extractor, None]:
+        """Yield one Extractor per node shard/type to be copied."""
         raise NotImplementedError
 
     @abstractmethod
-    async def fetchRelationships(
-        self,
-    ) -> AsyncGenerator[RelationshipWithNodes, None]:
-        """Yield all relationships that should be copied, across all types."""
+    async def fetchRelationshipExtractors(self) -> AsyncGenerator[Extractor, None]:
+        """Yield one Extractor per relationship shard/type to be copied.
+
+        Yield nothing when node_only=True.
+        """
         raise NotImplementedError
 
     async def build_histogram(self) -> TypeHistogram:
@@ -99,14 +96,12 @@ class TypeRetriever(ABC):
 
 
 class Copier(Extractor):
-    """Copies nodes and/or relationships from a source via a TypeRetriever.
+    """Copies nodes and relationships from a source via a TypeRetriever.
 
-    node_only=True  → yields nodes only (fetchRelationships never called).
-    node_only=False → yields adjacencies via a producer/consumer queue;
-                      RelationshipWithNodes carries both endpoints so no
-                      separate node fetch is needed. The queue is unbounded
-                      when orchestrator_queue_size=0, making it effectively
-                      sequential for concurrency_limit=1.
+    Pulls Extractor objects from fetchNodeExtractors() then
+    fetchRelationshipExtractors() and runs them concurrently up to
+    concurrency_limit via a producer/consumer queue. No branching on
+    types, shards, or node_only — all of that lives in the TypeRetriever.
     """
 
     def __init__(self, type_retriever: TypeRetriever) -> None:
@@ -119,41 +114,49 @@ class Copier(Extractor):
         histogram.log(self.logger)
 
     async def extract_records(self):
-        if self.type_retriever.node_only:
-            async for node in self.type_retriever.fetchNodes():
-                yield self.convert_node_to_ingest(node)
-            return
-
         queueSize = self.type_retriever.orchestrator_queue_size
+        semaphore = asyncio.Semaphore(self.type_retriever.concurrency_limit)
+        recordQueue: asyncio.Queue = asyncio.Queue(maxsize=queueSize)
 
-        async def fillQueue(queue) -> None:
+        async def runExtractor(extractor: Extractor) -> None:
+            async with semaphore:
+                Metrics.get().increment(ACTIVE_QUERIES)
+                try:
+                    async for record in extractor.extract_records():
+                        await recordQueue.put(record)
+                finally:
+                    Metrics.get().decrement(ACTIVE_QUERIES)
+
+        async def produceAll() -> None:
+            tasks = []
             try:
-                async for relationship in self.type_retriever.fetchRelationships():
-                    Metrics.get().increment(ORCHESTRATOR_REL_QUEUE)
-                    await queue.put(self.convert_relationship_to_ingest(relationship))
+                async for extractor in self.type_retriever.fetchNodeExtractors():
+                    tasks.append(asyncio.create_task(runExtractor(extractor)))
+                async for extractor in self.type_retriever.fetchRelationshipExtractors():
+                    tasks.append(asyncio.create_task(runExtractor(extractor)))
+                await asyncio.gather(*tasks)
             finally:
-                await queue.put(DoneObject)
+                await recordQueue.put(DoneObject)
 
-        queue: asyncio.Queue = asyncio.Queue(maxsize=queueSize)
-        task = asyncio.create_task(fillQueue(queue))
-        taskError = None
+        producerTask = asyncio.create_task(produceAll())
+        producerError = None
         try:
             while True:
-                record = await queue.get()
+                record = await recordQueue.get()
                 if record is DoneObject:
                     break
-                Metrics.get().decrement(ORCHESTRATOR_REL_QUEUE)
                 yield record
         finally:
             try:
-                await task
+                await producerTask
             except Exception as exc:
-                taskError = exc
-        if taskError is not None:
-            raise taskError
+                producerError = exc
+        if producerError is not None:
+            raise producerError
 
-    def reorganize_node_key_properties(self, node: Node):
+    def reorganize_node_key_properties(self, node):
         """Move key fields from properties into key_values for ingestion."""
+        from ..model import Node
         nodeTypeDefinition = self.type_retriever.schema.get_node_type_by_name(node.type)
         if nodeTypeDefinition is None:
             return
@@ -161,15 +164,14 @@ class Copier(Extractor):
             if keyName in node.properties:
                 node.key_values[keyName] = node.properties.pop(keyName)
 
-    def convert_node_to_ingest(self, node: Node):
+    def convert_node_to_ingest(self, node):
         self.reorganize_node_key_properties(node)
         return node.into_ingest()
 
-    def convert_relationship_to_ingest(self, relationship: RelationshipWithNodes):
+    def convert_relationship_to_ingest(self, relationship):
         self.reorganize_node_key_properties(relationship.from_node)
         self.reorganize_node_key_properties(relationship.to_node)
         return relationship.into_ingest()
 
 
-# Backwards-compatible alias
 ConcurrentCopier = Copier

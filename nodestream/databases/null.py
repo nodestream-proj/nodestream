@@ -51,13 +51,13 @@ class NullRetriever(TypeRetriever):
         from ..schema.state import Schema
         super().__init__(schema=Schema())
 
-    async def fetchNodes(self) -> AsyncGenerator[Node, None]:
+    async def fetchNodeExtractors(self):
         return
-        yield  # pragma: no cover — makes this an async generator
+        yield  # pragma: no cover
 
-    async def fetchRelationships(self) -> AsyncGenerator[RelationshipWithNodes, None]:
+    async def fetchRelationshipExtractors(self):
         return
-        yield  # pragma: no cover — makes this an async generator
+        yield  # pragma: no cover
 
 
 # Backwards-compatible alias for any external code still referencing the old name.
