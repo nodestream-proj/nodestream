@@ -1,11 +1,11 @@
 from logging import getLogger
-from typing import Dict, List
+from typing import Dict, Optional, Set
 
 from cleo.helpers import option
 
 from ...metrics import Metrics
 from ...project import Project, Target
-from ...schema import GraphObjectSchema
+from ...schema import Schema
 from ..operations import (
     InitializeLogger,
     InitializeMetricsHandler,
@@ -31,16 +31,15 @@ class Copy(NodestreamCommand):
         JSON_OPTION,
         option("from", "f", "The target to copy from", flag=False),
         option("to", "t", "The target to copy to", flag=False),
-        option("all", "a", "Copy all node and relationship types", flag=True),
         option(
             "node",
-            description="Specify a node type to copy",
+            description="Filter to these node types (omit for all)",
             flag=False,
             multiple=True,
         ),
         option(
             "relationship",
-            description="Specify a relationship type to copy",
+            description="Filter to these relationship types (omit for all)",
             flag=False,
             multiple=True,
         ),
@@ -126,35 +125,10 @@ class Copy(NodestreamCommand):
                 to_target = self.get_taget_from_user(project, "to")
                 node_only = bool(self.option("node-only"))
 
-                # Always build the schema so type filters can be validated
-                # against it and the retriever has full type metadata.
-                schema = project.make_schema_for_copy(include_additional_types=False)
-                node_types = self.resolve_type_filter(schema.nodes, "node")
-
-                # When node types are explicitly filtered (not --all and not
-                # interactive-all), narrow relationships to those whose
-                # adjacency involves at least one selected node type — unless
-                # the user also provided explicit --relationship filters.
-                explicit_nodes = self.option("node")
-                if (
-                    explicit_nodes
-                    and not self.option("relationship")
-                    and not self.option("all")
-                ):
-                    node_set = set(node_types)
-                    rel_types = [
-                        adj.relationship_type
-                        for adj in schema.adjacencies
-                        if adj.from_node_type in node_set
-                        or adj.to_node_type in node_set
-                    ]
-                    # deduplicate while preserving order
-                    seen: set = set()
-                    rel_types = [r for r in rel_types if not (r in seen or seen.add(r))]
-                else:
-                    rel_types = self.resolve_type_filter(
-                        schema.relationships, "relationship"
-                    )
+                full_schema = project.make_schema_for_copy(
+                    include_additional_types=False
+                )
+                schema = self.apply_schema_filter(full_schema)
 
                 batch_size = int(self.option("batch-size"))
                 step_outbox_size = int(self.option("step-outbox-size"))
@@ -164,10 +138,6 @@ class Copy(NodestreamCommand):
                 connector_overrides = self.parse_key_value_options("connector-option")
                 retriever_overrides = self.parse_key_value_options("retriever-option")
 
-                # Merge CLI-level retriever knobs into retriever_overrides so that
-                # make_type_retriever receives a single flat dict. Plugins pop what
-                # they understand and ignore the rest — no plugin-specific kwargs
-                # leak from core into the retriever contract.
                 retriever_overrides.setdefault("concurrency_limit", concurrency_limit)
                 retriever_overrides.setdefault(
                     "orchestrator_queue_size", step_outbox_size
@@ -184,8 +154,8 @@ class Copy(NodestreamCommand):
                     "from": from_target.name,
                     "to": to_target.name,
                     "node_only": node_only,
-                    "node_types": node_types,
-                    "relationship_types": rel_types,
+                    "node_types": [n.name for n in schema.nodes],
+                    "relationship_types": [r.name for r in schema.relationships],
                     "retriever_overrides": retriever_overrides,
                     "connector_overrides": connector_overrides,
                 },
@@ -196,8 +166,6 @@ class Copy(NodestreamCommand):
                     from_target=from_target,
                     to_target=to_target,
                     schema=schema,
-                    node_types=node_types,
-                    relationship_types=rel_types,
                     progress_reporter=reporter,
                     batch_size=batch_size,
                     step_outbox_size=step_outbox_size,
@@ -207,6 +175,48 @@ class Copy(NodestreamCommand):
                 )
             )
         return 0
+
+    def apply_schema_filter(self, schema: Schema) -> Schema:
+        """Return a filtered schema based on --node and --relationship flags.
+
+        No flags: full schema (all nodes + all adjacencies).
+        --node A B: nodes A and B plus all adjacencies touching either,
+                    restricted by --relationship if also provided.
+        --relationship X Y: all adjacencies of type X or Y (and their endpoint nodes),
+                            restricted to nodes in --node if also provided.
+        """
+        node_filter: Optional[Set[str]] = None
+        rel_filter: Optional[Set[str]] = None
+
+        explicit_nodes = self.option("node")
+        explicit_rels = self.option("relationship")
+
+        if explicit_nodes:
+            all_node_names = {n.name for n in schema.nodes}
+            unknown = [n for n in explicit_nodes if n not in all_node_names]
+            if unknown:
+                self.line_error(
+                    f"Unknown node type(s): {', '.join(unknown)}. "
+                    f"Valid options are: {', '.join(sorted(all_node_names))}"
+                )
+                raise UnknownTargetError
+            node_filter = set(explicit_nodes)
+
+        if explicit_rels:
+            all_rel_names = {r.name for r in schema.relationships}
+            unknown = [r for r in explicit_rels if r not in all_rel_names]
+            if unknown:
+                self.line_error(
+                    f"Unknown relationship type(s): {', '.join(unknown)}. "
+                    f"Valid options are: {', '.join(sorted(all_rel_names))}"
+                )
+                raise UnknownTargetError
+            rel_filter = set(explicit_rels)
+
+        if node_filter is None and rel_filter is None:
+            return schema
+
+        return schema.filtered(node_filter=node_filter, relationship_filter=rel_filter)
 
     def parse_key_value_options(self, option_name: str) -> Dict[str, object]:
         raw = self.option(option_name) or []
@@ -229,47 +239,13 @@ class Copy(NodestreamCommand):
         return overrides
 
     def get_taget_from_user(self, project: Project, action: str) -> Target:
-        # If the user has specified the target in the options, we don't need to prompt
-        # them for anything. We can just use the target they specified.
         if (choice := self.option(action)) is None:
             prompt = f"Which target would you like to copy {action}?"
             choices = [t for t in project.targets_by_name.keys()]
             choice = self.choice(prompt, choices)
 
-        # If the target they specified is unknown, we should error out.
         try:
             return project.get_target_by_name(choice)
         except ValueError:
             self.line_error(f"Unknown target: {choice}")
             raise UnknownTargetError
-
-    def resolve_type_filter(
-        self, schema_types: List[GraphObjectSchema], type_name: str
-    ) -> List[str]:
-        """Return the list of type names to copy for this kind (node/relationship).
-
-        --all (default): all types from schema.
-        explicit --node/--relationship flags: validate against schema and use as filter.
-        Neither flag set interactively: prompt user to select from schema types.
-        """
-        all_names = [str(t.name) for t in schema_types]
-
-        if self.option("all"):
-            return all_names
-
-        explicit = self.option(type_name)
-        if explicit:
-            unknown = [t for t in explicit if t not in all_names]
-            if unknown:
-                self.line_error(
-                    f"Unknown {type_name} type(s): {', '.join(unknown)}. "
-                    f"Valid options are: {', '.join(all_names)}"
-                )
-                raise UnknownTargetError
-            return list(explicit)
-
-        return self.choice(
-            f"Which {type_name} types would you like to copy? (You can select multiple by separating them with a comma)",
-            all_names,
-            multiple=True,
-        )

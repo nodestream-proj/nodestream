@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from ...databases import Copier, GraphDatabaseWriter
 from ...pipeline import Pipeline
@@ -16,8 +16,6 @@ class RunCopy(Operation):
         from_target: Target,
         to_target: Target,
         schema: Schema,
-        node_types: List[str],
-        relationship_types: List[str],
         progress_reporter: Optional[PipelineProgressReporter] = None,
         batch_size: int = 1000,
         step_outbox_size: int = 10000,
@@ -28,8 +26,6 @@ class RunCopy(Operation):
         self.from_target = from_target
         self.to_target = to_target
         self.schema = schema
-        self.node_types = node_types
-        self.relationship_types = relationship_types
         self.progress_reporter = progress_reporter or PipelineProgressReporter()
         self.batch_size = batch_size
         self.step_outbox_size = step_outbox_size
@@ -52,8 +48,6 @@ class RunCopy(Operation):
     def build_copier(self) -> Copier:
         retriever = self.from_target.make_type_retriever(
             schema=self.schema,
-            node_types=self.node_types,
-            relationship_types=self.relationship_types,
             **self.retriever_overrides,
         )
         return Copier(retriever)

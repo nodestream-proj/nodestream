@@ -678,6 +678,69 @@ class Schema(WritesToYamlToStdout, LoadsFromYamlFile):
             relationship_type_name,
         ) in self.type_schemas
 
+    def filtered(
+        self,
+        node_filter: Optional[Set[str]] = None,
+        relationship_filter: Optional[Set[str]] = None,
+    ) -> "Schema":
+        """Return a new Schema restricted to the specified types.
+
+        Rules:
+        - If node_filter is None, all node types are included.
+        - If relationship_filter is None, all relationship types are included.
+        - An adjacency is included only when its relationship_type passes the
+          relationship_filter AND at least one of its endpoints passes the
+          node_filter.
+        - Nodes that participate in a surviving adjacency are always included,
+          even if they were not in node_filter — this ensures adjacency
+          endpoints are never dangling.
+        """
+        result = Schema()
+
+        # Determine which nodes to seed from the explicit filter.
+        included_nodes: Set[str] = (
+            set(node_filter) if node_filter is not None else {n.name for n in self.nodes}
+        )
+
+        # Determine which relationship types are allowed.
+        included_rels: Set[str] = (
+            set(relationship_filter)
+            if relationship_filter is not None
+            else {r.name for r in self.relationships}
+        )
+
+        # Build the set of surviving adjacencies (and collect endpoint nodes).
+        surviving_nodes: Set[str] = set(included_nodes)
+        surviving_adjacencies = []
+        for adjacency, cardinality in self.cardinalities.items():
+            if adjacency.relationship_type not in included_rels:
+                continue
+            touches_included = (
+                adjacency.from_node_type in included_nodes
+                or adjacency.to_node_type in included_nodes
+            )
+            if not touches_included:
+                continue
+            surviving_adjacencies.append((adjacency, cardinality))
+            surviving_nodes.add(adjacency.from_node_type)
+            surviving_nodes.add(adjacency.to_node_type)
+
+        # Populate result schema with surviving nodes.
+        for node in self.nodes:
+            if node.name in surviving_nodes:
+                result.put_node_type(node)
+
+        # Populate result schema with surviving relationship types.
+        surviving_rel_types = {adj.relationship_type for adj, _ in surviving_adjacencies}
+        for rel in self.relationships:
+            if rel.name in surviving_rel_types:
+                result.put_relationship_type(rel)
+
+        for adjacency, cardinality in surviving_adjacencies:
+            result.add_adjacency(adjacency, cardinality)
+
+        return result
+
     def diff_node_types(self, other: "Schema") -> Tuple[Set[str], Set[str]]:
         """Diff node types with another schema.
 

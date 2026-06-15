@@ -15,8 +15,6 @@ def subject(mocker, basic_schema):
         from_target=from_target,
         to_target=to_target,
         schema=basic_schema,
-        node_types=["Person", "Movie"],
-        relationship_types=["ACTED_IN"],
     )
 
 
@@ -29,8 +27,6 @@ def test_build_copier(subject):
     result = subject.build_copier()
     call_kwargs = subject.from_target.make_type_retriever.call_args[1]
     assert_that(call_kwargs["schema"], equal_to(subject.schema))
-    assert_that(call_kwargs["node_types"], equal_to(["Person", "Movie"]))
-    assert_that(call_kwargs["relationship_types"], equal_to(["ACTED_IN"]))
     from nodestream.databases.copy import Copier
 
     assert type(result) is Copier
@@ -58,14 +54,10 @@ def test_build_copier_node_only(mocker, basic_schema):
         from_target=from_target,
         to_target=to_target,
         schema=basic_schema,
-        node_types=["Person", "Movie"],
-        relationship_types=["ACTED_IN"],
         retriever_overrides={"node_only": True},
     )
     op.build_copier()
     call_kwargs = from_target.make_type_retriever.call_args[1]
-    assert_that(call_kwargs["node_types"], equal_to(["Person", "Movie"]))
-    assert_that(call_kwargs["relationship_types"], equal_to(["ACTED_IN"]))
     assert_that(call_kwargs["node_only"], equal_to(True))
 
 
