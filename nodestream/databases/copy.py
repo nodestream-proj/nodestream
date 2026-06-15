@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from logging import Logger, getLogger
-from typing import Any, AsyncGenerator, Callable, Dict, List
+from typing import AsyncGenerator, Dict, List
 
 from ..metrics import Metric, Metrics
 from ..model import Node, RelationshipWithNodes
@@ -11,11 +11,6 @@ from ..pipeline.channel import DoneObject
 from ..pipeline.step import StepContext
 from ..schema import Schema
 
-ORCHESTRATOR_NODE_QUEUE = Metric(
-    "orchestrator_node_queue",
-    "Number of nodes in the orchestrator node queue",
-    accumulate=False,
-)
 ORCHESTRATOR_REL_QUEUE = Metric(
     "orchestrator_rel_queue",
     "Number of relationships in the orchestrator relationship queue",
@@ -34,10 +29,6 @@ class TypeHistogram:
 
     node_counts: Dict[str, int] = field(default_factory=dict)
     relationship_counts: Dict[str, int] = field(default_factory=dict)
-
-    @classmethod
-    def empty(cls) -> "TypeHistogram":
-        return cls()
 
     def sorted_node_types(self) -> List[str]:
         return sorted(self.node_counts, key=self.node_counts.__getitem__, reverse=True)
@@ -104,144 +95,23 @@ class TypeRetriever(ABC):
         Default returns an empty histogram. Subclasses that support counting
         should override this to issue real COUNT queries.
         """
-        return TypeHistogram.empty()
-
-
-class ExtractionOrchestrator(ABC):
-    """Drives fetchNodes and/or fetchRelationships for a single copy run.
-
-    Two concrete modes, selected once at Copier construction time:
-      NodeOnlyOrchestrator   — fetches nodes, never calls fetchRelationships.
-      AdjacencyOrchestrator  — fetches nodes then relationships (default).
-    Sequential vs concurrent is a sub-variant of AdjacencyOrchestrator.
-    """
-
-    @abstractmethod
-    async def extract(
-        self,
-        retriever: TypeRetriever,
-        convertNode: Callable[[Node], Any],
-        convertRelationship: Callable[[RelationshipWithNodes], Any],
-    ) -> AsyncGenerator[Any, None]: ...
-
-
-class NodeOnlyOrchestrator(ExtractionOrchestrator):
-    """Yields only nodes — fetchRelationships is never called."""
-
-    async def extract(
-        self,
-        retriever: TypeRetriever,
-        convertNode: Callable[[Node], Any],
-        convertRelationship: Callable[[RelationshipWithNodes], Any],
-    ) -> AsyncGenerator[Any, None]:
-        async for node in retriever.fetchNodes():
-            yield convertNode(node)
-
-
-class SequentialAdjacencyOrchestrator(ExtractionOrchestrator):
-    """Yields nodes then relationships, sequentially."""
-
-    async def extract(
-        self,
-        retriever: TypeRetriever,
-        convertNode: Callable[[Node], Any],
-        convertRelationship: Callable[[RelationshipWithNodes], Any],
-    ) -> AsyncGenerator[Any, None]:
-        async for node in retriever.fetchNodes():
-            yield convertNode(node)
-        async for relationship in retriever.fetchRelationships():
-            yield convertRelationship(relationship)
-
-
-class ConcurrentAdjacencyOrchestrator(ExtractionOrchestrator):
-    """Producer/consumer adjacency orchestrator with separate node and relationship queues.
-
-    The node queue is fully produced and drained before the relationship queue
-    starts, preserving write-side ordering. Metrics track queue depth per type.
-    """
-
-    async def extract(
-        self,
-        retriever: TypeRetriever,
-        convertNode: Callable[[Node], Any],
-        convertRelationship: Callable[[RelationshipWithNodes], Any],
-    ) -> AsyncGenerator[Any, None]:
-        queueSize = retriever.orchestrator_queue_size
-
-        async def fillQueue(generator, queue, queueMetric) -> None:
-            try:
-                async for record in generator:
-                    Metrics.get().increment(queueMetric)
-                    await queue.put(record)
-            finally:
-                await queue.put(DoneObject)
-
-        async def drainQueue(queue, queueMetric):
-            while True:
-                message = await queue.get()
-                if message is DoneObject:
-                    break
-                Metrics.get().decrement(queueMetric)
-                yield message
-
-        nodeQueue: asyncio.Queue = asyncio.Queue(maxsize=queueSize)
-        nodesGenerator = (convertNode(node) async for node in retriever.fetchNodes())
-        nodeTask = asyncio.create_task(
-            fillQueue(nodesGenerator, nodeQueue, ORCHESTRATOR_NODE_QUEUE)
-        )
-        nodeError = None
-        try:
-            async for record in drainQueue(nodeQueue, ORCHESTRATOR_NODE_QUEUE):
-                yield record
-        finally:
-            try:
-                await nodeTask
-            except Exception as exception:
-                nodeError = exception
-        if nodeError is not None:
-            raise nodeError
-
-        relationshipQueue: asyncio.Queue = asyncio.Queue(maxsize=queueSize)
-        relationshipsGenerator = (
-            convertRelationship(relationship)
-            async for relationship in retriever.fetchRelationships()
-        )
-        relationshipTask = asyncio.create_task(
-            fillQueue(relationshipsGenerator, relationshipQueue, ORCHESTRATOR_REL_QUEUE)
-        )
-        relationshipError = None
-        try:
-            async for record in drainQueue(relationshipQueue, ORCHESTRATOR_REL_QUEUE):
-                yield record
-        finally:
-            try:
-                await relationshipTask
-            except Exception as exception:
-                relationshipError = exception
-        if relationshipError is not None:
-            raise relationshipError
-
-
-def buildExtractionOrchestrator(retriever: TypeRetriever) -> ExtractionOrchestrator:
-    if retriever.node_only:
-        return NodeOnlyOrchestrator()
-    if retriever.concurrency_limit > 1:
-        return ConcurrentAdjacencyOrchestrator()
-    return SequentialAdjacencyOrchestrator()
+        return TypeHistogram()
 
 
 class Copier(Extractor):
-    """Copies nodes and relationships from a source via a TypeRetriever.
+    """Copies nodes and/or relationships from a source via a TypeRetriever.
 
-    The fetch orchestration strategy (sequential vs concurrent, nodes vs
-    relationships-only) is resolved once at construction time and stored as
-    self.orchestrator — extract_records contains no branching.
+    node_only=True  → yields nodes only (fetchRelationships never called).
+    node_only=False → yields adjacencies via a producer/consumer queue;
+                      RelationshipWithNodes carries both endpoints so no
+                      separate node fetch is needed. The queue is unbounded
+                      when orchestrator_queue_size=0, making it effectively
+                      sequential for concurrency_limit=1.
     """
 
     def __init__(self, type_retriever: TypeRetriever) -> None:
         self.type_retriever = type_retriever
         self.logger = getLogger(__name__)
-        self.orchestrator = buildExtractionOrchestrator(type_retriever)
 
     async def start(self, context: StepContext):
         await super().start(context)
@@ -249,12 +119,38 @@ class Copier(Extractor):
         histogram.log(self.logger)
 
     async def extract_records(self):
-        async for record in self.orchestrator.extract(
-            self.type_retriever,
-            self.convert_node_to_ingest,
-            self.convert_relationship_to_ingest,
-        ):
-            yield record
+        if self.type_retriever.node_only:
+            async for node in self.type_retriever.fetchNodes():
+                yield self.convert_node_to_ingest(node)
+            return
+
+        queueSize = self.type_retriever.orchestrator_queue_size
+
+        async def fillQueue(queue) -> None:
+            try:
+                async for relationship in self.type_retriever.fetchRelationships():
+                    Metrics.get().increment(ORCHESTRATOR_REL_QUEUE)
+                    await queue.put(self.convert_relationship_to_ingest(relationship))
+            finally:
+                await queue.put(DoneObject)
+
+        queue: asyncio.Queue = asyncio.Queue(maxsize=queueSize)
+        task = asyncio.create_task(fillQueue(queue))
+        taskError = None
+        try:
+            while True:
+                record = await queue.get()
+                if record is DoneObject:
+                    break
+                Metrics.get().decrement(ORCHESTRATOR_REL_QUEUE)
+                yield record
+        finally:
+            try:
+                await task
+            except Exception as exc:
+                taskError = exc
+        if taskError is not None:
+            raise taskError
 
     def reorganize_node_key_properties(self, node: Node):
         """Move key fields from properties into key_values for ingestion."""
