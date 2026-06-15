@@ -192,13 +192,9 @@ async def test_extract_records(subject, mocker):
 
     records = [record async for record in subject.extract_records()]
 
-    assert_that(records, has_length(6))
-    assert records[0] == ("node", "Person")
-    assert records[1] == ("node", "Person")
-    assert records[2] == ("node", "Address")
-    assert records[3] == ("node", "Address")
-    assert records[4] == ("rel", "KNOWS")
-    assert records[5] == ("rel", "KNOWS")
+    assert_that(records, has_length(2))
+    assert records[0] == ("rel", "KNOWS")
+    assert records[1] == ("rel", "KNOWS")
 
 
 # ---------------------------------------------------------------------------
@@ -254,27 +250,23 @@ def concurrent_subject(mocker, basic_schema):
 
 
 @pytest.mark.asyncio
-async def test_concurrent_copier_nodes_before_relationships(concurrent_subject, mocker):
-    """Nodes are fully drained before relationships start in the concurrent path."""
-    order = []
-
-    async def node_gen():
-        order.append("nodes")
-        return
-        yield  # pragma: no cover
+async def test_concurrent_copier_relationships_yielded(concurrent_subject, mocker):
+    """Concurrent path yields relationship records."""
+    rel = RelationshipWithNodes(
+        Node("Person", {"name": "A"}),
+        Node("Person", {"name": "B"}),
+        Relationship("KNOWS", {}),
+    )
 
     async def rel_gen():
-        order.append("rels")
-        return
-        yield  # pragma: no cover
+        yield rel
 
-    concurrent_subject.type_retriever.fetchNodes = node_gen
     concurrent_subject.type_retriever.fetchRelationships = rel_gen
+    concurrent_subject.convert_relationship_to_ingest = lambda r: ("rel", r.relationship.type)
 
-    async for _ in concurrent_subject.extract_records():
-        pass
+    records = [r async for r in concurrent_subject.extract_records()]
 
-    assert order == ["nodes", "rels"]
+    assert ("rel", "KNOWS") in records
 
 
 @pytest.mark.asyncio
@@ -288,15 +280,15 @@ async def test_concurrent_copier_no_types(mocker, basic_schema):
 
 @pytest.mark.asyncio
 async def test_concurrent_copier_propagates_producer_error(mocker, basic_schema):
-    """If fetch_nodes raises, the error propagates out of extract_records."""
+    """If fetchRelationships raises, the error propagates out of extract_records."""
     schema = _build_schema_with_adjacencies(basic_schema)
-    retriever = _make_mock_retriever(mocker, basic_schema=schema, node_types=["Person"], concurrency_limit=2)
+    retriever = _make_mock_retriever(mocker, basic_schema=schema, relationship_types=["KNOWS"], concurrency_limit=2)
 
-    async def failing_nodes():
+    async def failing_rels():
         raise RuntimeError("database went away")
         yield  # pragma: no cover
 
-    retriever.fetchNodes = failing_nodes
+    retriever.fetchRelationships = failing_rels
 
     copier = Copier(retriever)
     with pytest.raises(RuntimeError, match="database went away"):
@@ -309,8 +301,8 @@ def test_copier_is_single_class(mocker, basic_schema):
     assert ConcurrentCopier is Copier
 
 
-def test_type_histogram_empty():
-    h = TypeHistogram.empty()
+def test_type_histogram_default():
+    h = TypeHistogram()
     assert h.node_counts == {}
     assert h.relationship_counts == {}
 
@@ -379,37 +371,29 @@ async def test_node_only_concurrent(mocker, basic_schema):
 
 
 @pytest.mark.asyncio
-async def test_concurrent_copier_yields_nodes_and_rels(mocker, basic_schema):
-    """Concurrent path yields both node and relationship records."""
+async def test_concurrent_copier_yields_rels(mocker, basic_schema):
+    """Concurrent path yields relationship records."""
     schema = _build_schema_with_adjacencies(basic_schema)
     retriever = _make_mock_retriever(
         mocker,
         basic_schema=schema,
-        node_types=["Person"],
         relationship_types=["KNOWS"],
         concurrency_limit=4,
     )
 
-    node = Node("Person", {"name": "Alice"})
     rel = RelationshipWithNodes(
         Node("Person", {"name": "A"}),
         Node("Person", {"name": "B"}),
         Relationship("KNOWS", {}),
     )
 
-    async def node_gen():
-        yield node
-
     async def rel_gen():
         yield rel
 
-    retriever.fetchNodes = node_gen
     retriever.fetchRelationships = rel_gen
     copier = Copier(retriever)
-    copier.convert_node_to_ingest = lambda n: ("node", n.type)
     copier.convert_relationship_to_ingest = lambda r: ("rel", r.relationship.type)
     records = [r async for r in copier.extract_records()]
-    assert ("node", "Person") in records
     assert ("rel", "KNOWS") in records
 
 
