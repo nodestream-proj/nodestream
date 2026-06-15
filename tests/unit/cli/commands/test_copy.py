@@ -175,7 +175,7 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
     assert run_copy_op.batch_size == 1000
     assert run_copy_op.flush_concurrency == 1
     assert run_copy_op.connector_overrides == {}
-    assert run_copy_op.retriever_overrides.get("concurrency_limit") == 1
+    assert run_copy_op.concurrency_limit == 1
 
 
 @pytest.mark.asyncio
@@ -196,7 +196,7 @@ async def test_handle_async_with_non_default_options(
     assert isinstance(run_copy_op, RunCopy)
     assert run_copy_op.flush_concurrency == 3
     assert run_copy_op.connector_overrides == {"uri": "bolt://remote:7687"}
-    assert run_copy_op.retriever_overrides.get("concurrency_limit") == 4
+    assert run_copy_op.concurrency_limit == 4
     assert run_copy_op.retriever_overrides.get("limit") == 500
     assert run_copy_op.retriever_overrides.get("sample_ratio") == 50
 
