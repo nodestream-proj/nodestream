@@ -33,13 +33,13 @@ def test_make_retriever(connector):
 
 @pytest.mark.asyncio
 async def test_retriever_fetch_nodes(retriver):
-    results = [r async for r in retriver.fetch_nodes(None)]
+    results = [r async for r in retriver.fetchNodes()]
     assert_that(results, empty())
 
 
 @pytest.mark.asyncio
 async def test_retriever_fetch_relationships(retriver):
-    results = [r async for r in retriver.fetch_relationships(None)]
+    results = [r async for r in retriver.fetchRelationships()]
     assert_that(results, empty())
 
 

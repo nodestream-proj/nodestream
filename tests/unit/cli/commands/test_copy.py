@@ -131,7 +131,7 @@ async def test_handle_async(copy_command, mocker, basic_schema, project):
         "connector-option": [],
         "retriever-option": [],
         "shard-size": None,
-        "relationships-only": False,
+        "node-only": False,
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
     }
@@ -188,7 +188,7 @@ async def test_handle_async_with_non_default_options(
         "connector-option": ["uri=bolt://remote:7687"],
         "retriever-option": ["limit=500", "sample_ratio=50"],
         "shard-size": None,
-        "relationships-only": False,
+        "node-only": False,
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
     }
@@ -250,7 +250,7 @@ async def test_handle_async_with_shard_size(
         "connector-option": [],
         "retriever-option": [],
         "shard-size": "5000",
-        "relationships-only": False,
+        "node-only": False,
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
     }
@@ -261,10 +261,10 @@ async def test_handle_async_with_shard_size(
 
 
 @pytest.mark.asyncio
-async def test_handle_async_with_relationships_only(
+async def test_handle_async_with_node_only(
     copy_command, mocker, basic_schema, project
 ):
-    """relationships_only=True is forwarded into retriever_overrides."""
+    """node_only=True is forwarded into retriever_overrides."""
     option_values = {
         "all": False,
         "node": [],
@@ -276,14 +276,14 @@ async def test_handle_async_with_relationships_only(
         "connector-option": [],
         "retriever-option": [],
         "shard-size": None,
-        "relationships-only": True,
+        "node-only": True,
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
     }
     _make_handle_async_setup(copy_command, mocker, project, basic_schema, option_values)
     await copy_command.handle_async()
     run_copy_op = copy_command.run_operation.call_args_list[-1].args[0]
-    assert run_copy_op.retriever_overrides.get("relationships_only") is True
+    assert run_copy_op.retriever_overrides.get("node_only") is True
 
 
 @pytest.mark.asyncio
@@ -302,7 +302,7 @@ async def test_handle_async_always_loads_schema(
         "connector-option": [],
         "retriever-option": [],
         "shard-size": None,
-        "relationships-only": False,
+        "node-only": False,
         "reporting-frequency": "1000",
         "metrics-interval-in-seconds": None,
     }

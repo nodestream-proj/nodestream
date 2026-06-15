@@ -105,12 +105,10 @@ class Copy(NodestreamCommand):
             flag=False,
         ),
         option(
-            "relationships-only",
+            "node-only",
             description=(
-                "Skip node fetching entirely — copy only relationships. "
-                "Nodes must already exist in the target; missing endpoints "
-                "are silently dropped (MATCH_ONLY). Useful for e2e test "
-                "partition seeding where nodes are pre-populated."
+                "Copy only nodes — skip relationship fetching entirely. "
+                "Useful when you want to seed nodes without their adjacencies."
             ),
             flag=True,
         ),
@@ -126,7 +124,7 @@ class Copy(NodestreamCommand):
             try:
                 from_target = self.get_taget_from_user(project, "from")
                 to_target = self.get_taget_from_user(project, "to")
-                relationships_only = bool(self.option("relationships-only"))
+                node_only = bool(self.option("node-only"))
 
                 # Always build the schema so type filters can be validated
                 # against it and the retriever has full type metadata.
@@ -174,7 +172,7 @@ class Copy(NodestreamCommand):
                 retriever_overrides.setdefault(
                     "orchestrator_queue_size", step_outbox_size
                 )
-                retriever_overrides.setdefault("relationships_only", relationships_only)
+                retriever_overrides.setdefault("node_only", node_only)
                 if shard_size_raw is not None:
                     retriever_overrides.setdefault("shard_size", int(shard_size_raw))
             except UnknownTargetError:
@@ -185,7 +183,7 @@ class Copy(NodestreamCommand):
                 extra={
                     "from": from_target.name,
                     "to": to_target.name,
-                    "relationships_only": relationships_only,
+                    "node_only": node_only,
                     "node_types": node_types,
                     "relationship_types": rel_types,
                     "retriever_overrides": retriever_overrides,

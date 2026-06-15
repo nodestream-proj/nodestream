@@ -51,11 +51,12 @@ class RunCopy(Operation):
 
     def build_copier(self) -> Copier:
         retriever = self.from_target.make_type_retriever(
+            schema=self.schema,
             node_types=self.node_types,
             relationship_types=self.relationship_types,
             **self.retriever_overrides,
         )
-        return Copier(retriever, self.schema)
+        return Copier(retriever)
 
     def build_writer(self) -> GraphDatabaseWriter:
         return self.to_target.make_writer(

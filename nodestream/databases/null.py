@@ -47,13 +47,15 @@ class NullQueryExecutor(QueryExecutor):
 
 
 class NullRetriever(TypeRetriever):
-    async def fetch_nodes(self, schema) -> AsyncGenerator[Node, None]:
+    def __init__(self, **_):
+        from ..schema.state import Schema
+        super().__init__(schema=Schema())
+
+    async def fetchNodes(self) -> AsyncGenerator[Node, None]:
         return
         yield  # pragma: no cover — makes this an async generator
 
-    async def fetch_relationships(
-        self, schema
-    ) -> AsyncGenerator[RelationshipWithNodes, None]:
+    async def fetchRelationships(self) -> AsyncGenerator[RelationshipWithNodes, None]:
         return
         yield  # pragma: no cover — makes this an async generator
 
