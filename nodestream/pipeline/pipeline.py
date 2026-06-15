@@ -512,25 +512,23 @@ class Pipeline(ExpandsSchemaFromChildren):
         # step to the next step. The channels are used to pass records between
         # the steps in the pipeline. The channels have a fixed size to control
         # the flow of records between the steps.
-        executors: List[Executor] = []
         current_input_name = None
         current_output_name = self.steps[-1].__class__.__name__ + f"_{len(self.steps)}"
 
-        # Here lies a footgun. DO NOT MOVE this executor from the first
-        # position in the list that makes its way to the gather call. It will
-        # break the pipeline because we need to ensure the on_start_callback
-        # is called before any operations occur in the actual steps in the
-        # pipeline. To do this, we need to make sure that the first coroutine
-        # scheduled is the one that calls the on_start_callback.
+        # pipeline_output_task is created first so that on_start_callback fires
+        # before any step coroutine gets a chance to run. asyncio schedules tasks
+        # in creation order within a single event-loop tick, so creating this task
+        # before the step tasks guarantees the ordering.
         current_input, current_output = channel(
             self.step_outbox_size, current_output_name, current_input_name
         )
-        executors.append(Executor.pipeline_output(current_input, reporter))
+        pipeline_output_task = create_task(
+            Executor.pipeline_output(current_input, reporter).run()
+        )
 
-        # Create the executors for the steps in the pipeline. The executors
-        # will be used to run the steps concurrently. The steps are created in
-        # reverse order so that the output of each step is connected to the
-        # input of the next step.
+        # Create tasks for each step executor. Steps are built in reverse order
+        # so that each step's output channel connects to the next step's input.
+        step_executors: List[Executor] = []
         for reversed_index, step in reversed(list(enumerate(self.steps))):
             index = len(self.steps) - reversed_index - 1
             storage = self.object_store.namespaced(str(index))
@@ -547,7 +545,7 @@ class Pipeline(ExpandsSchemaFromChildren):
             )
             exec = Executor.for_step(step, current_input, current_output, context)
             current_output = next_output
-            executors.append(exec)
+            step_executors.append(exec)
 
         # There is a "leftover" input channel that is not connected to any
         # step. This channel is connected to the first step in the pipeline
@@ -555,27 +553,22 @@ class Pipeline(ExpandsSchemaFromChildren):
         # onto it.
         await current_output.done()
 
-        # Run the pipeline by running all the steps and the pipeline output
-        # concurrently. If any executor raises (e.g. on_finish_callback re-raises
-        # a fatal writer error), cancel the remaining tasks so that blocking
-        # extractors (e.g. a StreamExtractor polling Kafka forever) don't keep
-        # the process alive as a zombie after the pipeline has already failed.
-        # executors[0] is always the pipeline_output executor (see comment above).
-        # Step executors occupy indices 1+.
-        tasks = [create_task(executor.run()) for executor in executors]
-        pipeline_output_task = tasks[0]
-        step_tasks = tasks[1:]
+        step_tasks = [create_task(executor.run()) for executor in step_executors]
+
+        # Run the pipeline by running all tasks concurrently. If any executor
+        # raises (e.g. on_finish_callback re-raises a fatal writer error), cancel
+        # the step tasks so that blocking extractors (e.g. a StreamExtractor
+        # polling Kafka forever) don't keep the process alive as a zombie.
+        # pipeline_output_task is intentionally excluded from cancellation — it
+        # must finish so that on_finish_callback (Metrics Report, "Pipeline
+        # Completed") always runs. Its input channel is already closed by the
+        # time any step raises, so it drains and exits on its own.
         try:
-            # Run all tasks concurrently.
             # StopStepExecution calls step.finish() before output.done(), so by
             # the time pipeline_output receives DoneObject and calls
             # on_finish_callback, all metrics from finish/flush are accumulated.
-            # If on_finish_callback re-raises a stored fatal error, gather raises
-            # and we cancel any remaining blocking step tasks (e.g. Kafka consumers).
-            await gather(*tasks)
+            await gather(pipeline_output_task, *step_tasks)
         except BaseException:
-            # Cancel only step executor tasks. pipeline_output_task has already
-            # raised from on_finish_callback and does not need cancellation.
             for task in step_tasks:
                 task.cancel()
             # Wait for step tasks to acknowledge cancellation.
