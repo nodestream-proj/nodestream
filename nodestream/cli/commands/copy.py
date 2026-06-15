@@ -194,24 +194,16 @@ class Copy(NodestreamCommand):
         if explicit_nodes:
             all_node_names = {n.name for n in schema.nodes}
             unknown = [n for n in explicit_nodes if n not in all_node_names]
-            if unknown:
-                self.line_error(
-                    f"Unknown node type(s): {', '.join(unknown)}. "
-                    f"Valid options are: {', '.join(sorted(all_node_names))}"
-                )
-                raise UnknownTargetError
-            node_filter = set(explicit_nodes)
+            for u in unknown:
+                logger.warning("Unknown node type %r — skipping", u)
+            node_filter = {n for n in explicit_nodes if n in all_node_names}
 
         if explicit_rels:
             all_rel_names = {r.name for r in schema.relationships}
             unknown = [r for r in explicit_rels if r not in all_rel_names]
-            if unknown:
-                self.line_error(
-                    f"Unknown relationship type(s): {', '.join(unknown)}. "
-                    f"Valid options are: {', '.join(sorted(all_rel_names))}"
-                )
-                raise UnknownTargetError
-            rel_filter = set(explicit_rels)
+            for u in unknown:
+                logger.warning("Unknown relationship type %r — skipping", u)
+            rel_filter = {r for r in explicit_rels if r in all_rel_names}
 
         if node_filter is None and rel_filter is None:
             return schema

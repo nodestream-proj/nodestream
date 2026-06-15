@@ -75,34 +75,33 @@ def test_apply_schema_filter_node_filter(copy_command, mocker, basic_schema):
     assert "Person" in node_names
 
 
-def test_apply_schema_filter_unknown_node_raises(copy_command, mocker, basic_schema):
-    copy_command.line_error = mocker.Mock()
-
+def test_apply_schema_filter_unknown_node_skipped(copy_command, mocker, basic_schema):
     def opt(name):
         if name == "node":
             return ["UnknownType"]
         return []
 
     copy_command.option = mocker.Mock(side_effect=opt)
-    with pytest.raises(UnknownTargetError):
-        copy_command.apply_schema_filter(basic_schema)
-    copy_command.line_error.assert_called_once()
+    # Should not raise — unknown types are warned and skipped.
+    result = copy_command.apply_schema_filter(basic_schema)
+    # No unknown nodes survive into the filtered schema.
+    node_names = {n.name for n in result.nodes}
+    assert "UnknownType" not in node_names
 
 
-def test_apply_schema_filter_unknown_relationship_raises(
+def test_apply_schema_filter_unknown_relationship_skipped(
     copy_command, mocker, basic_schema
 ):
-    copy_command.line_error = mocker.Mock()
-
     def opt(name):
         if name == "relationship":
             return ["NONEXISTENT"]
         return []
 
     copy_command.option = mocker.Mock(side_effect=opt)
-    with pytest.raises(UnknownTargetError):
-        copy_command.apply_schema_filter(basic_schema)
-    copy_command.line_error.assert_called_once()
+    # Should not raise — unknown types are warned and skipped.
+    result = copy_command.apply_schema_filter(basic_schema)
+    rel_names = {r.name for r in result.relationships}
+    assert "NONEXISTENT" not in rel_names
 
 
 # ---------------------------------------------------------------------------
