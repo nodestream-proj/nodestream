@@ -20,6 +20,7 @@ class RunCopy(Operation):
         batch_size: int = 1000,
         step_outbox_size: int = 10000,
         flush_concurrency: int = 1,
+        concurrency_limit: int = 1,
         connector_overrides: Optional[Dict[str, object]] = None,
         retriever_overrides: Optional[Dict[str, object]] = None,
     ) -> None:
@@ -30,6 +31,7 @@ class RunCopy(Operation):
         self.batch_size = batch_size
         self.step_outbox_size = step_outbox_size
         self.flush_concurrency = flush_concurrency
+        self.concurrency_limit = concurrency_limit
         self.connector_overrides = connector_overrides or {}
         self.retriever_overrides = retriever_overrides or {}
 
@@ -50,7 +52,11 @@ class RunCopy(Operation):
             schema=self.schema,
             **self.retriever_overrides,
         )
-        return Copier(retriever)
+        return Copier(
+            retriever,
+            concurrency_limit=self.concurrency_limit,
+            queue_size=self.step_outbox_size,
+        )
 
     def build_writer(self) -> GraphDatabaseWriter:
         return self.to_target.make_writer(

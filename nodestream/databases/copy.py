@@ -59,30 +59,20 @@ class TypeRetriever(ABC):
     The retriever owns schema, type decomposition, shard splitting, histogram
     computation, and node_only policy. It exposes two async generators of
     Extractor objects — one for node shards, one for relationship shards.
-    The Copier drives those extractors concurrently without knowing about
-    types, shards, or node_only.
+    The Copier drives those extractors concurrently; concurrency parameters
+    belong to the Copier, not here.
     """
 
-    def __init__(
-        self,
-        schema: Schema,
-        concurrency_limit: int = 1,
-        orchestrator_queue_size: int = 0,
-    ) -> None:
+    def __init__(self, schema: Schema) -> None:
         self.schema = schema
-        self.concurrency_limit = concurrency_limit
-        self.orchestrator_queue_size = orchestrator_queue_size
 
     @abstractmethod
-    async def fetchNodeExtractors(self) -> AsyncGenerator[Extractor, None]:
-        """Yield one Extractor per node shard/type to be copied."""
-        raise NotImplementedError
+    async def fetchExtractors(self) -> AsyncGenerator[Extractor, None]:
+        """Yield all Extractor objects for this copy run.
 
-    @abstractmethod
-    async def fetchRelationshipExtractors(self) -> AsyncGenerator[Extractor, None]:
-        """Yield one Extractor per relationship shard/type to be copied.
-
-        Yield nothing when node_only=True.
+        node_only=True  → yield node extractors only.
+        node_only=False → yield relationship extractors only (RelationshipWithNodes
+                          carries both endpoints, so a separate node pass is not needed).
         """
         raise NotImplementedError
 
@@ -104,8 +94,15 @@ class Copier(Extractor):
     types, shards, or node_only — all of that lives in the TypeRetriever.
     """
 
-    def __init__(self, type_retriever: TypeRetriever) -> None:
+    def __init__(
+        self,
+        type_retriever: TypeRetriever,
+        concurrency_limit: int = 1,
+        queue_size: int = 0,
+    ) -> None:
         self.type_retriever = type_retriever
+        self.concurrency_limit = concurrency_limit
+        self.queue_size = queue_size
         self.logger = getLogger(__name__)
 
     async def start(self, context: StepContext):
@@ -114,8 +111,8 @@ class Copier(Extractor):
         histogram.log(self.logger)
 
     async def extract_records(self):
-        queueSize = self.type_retriever.orchestrator_queue_size
-        semaphore = asyncio.Semaphore(self.type_retriever.concurrency_limit)
+        queueSize = self.queue_size
+        semaphore = asyncio.Semaphore(self.concurrency_limit)
         recordQueue: asyncio.Queue = asyncio.Queue(maxsize=queueSize)
 
         async def runExtractor(extractor: Extractor) -> None:
@@ -130,9 +127,7 @@ class Copier(Extractor):
         async def produceAll() -> None:
             tasks = []
             try:
-                async for extractor in self.type_retriever.fetchNodeExtractors():
-                    tasks.append(asyncio.create_task(runExtractor(extractor)))
-                async for extractor in self.type_retriever.fetchRelationshipExtractors():
+                async for extractor in self.type_retriever.fetchExtractors():
                     tasks.append(asyncio.create_task(runExtractor(extractor)))
                 await asyncio.gather(*tasks)
             finally:

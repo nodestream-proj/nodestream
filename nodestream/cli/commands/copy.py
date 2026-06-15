@@ -138,10 +138,6 @@ class Copy(NodestreamCommand):
                 connector_overrides = self.parse_key_value_options("connector-option")
                 retriever_overrides = self.parse_key_value_options("retriever-option")
 
-                retriever_overrides.setdefault("concurrency_limit", concurrency_limit)
-                retriever_overrides.setdefault(
-                    "orchestrator_queue_size", step_outbox_size
-                )
                 retriever_overrides.setdefault("node_only", node_only)
                 if shard_size_raw is not None:
                     retriever_overrides.setdefault("shard_size", int(shard_size_raw))
@@ -170,6 +166,7 @@ class Copy(NodestreamCommand):
                     batch_size=batch_size,
                     step_outbox_size=step_outbox_size,
                     flush_concurrency=flush_concurrency,
+                    concurrency_limit=concurrency_limit,
                     connector_overrides=connector_overrides,
                     retriever_overrides=retriever_overrides,
                 )
