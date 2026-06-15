@@ -228,13 +228,10 @@ class ConsoleMetricHandler(MetricHandler):
 
     def __init__(self, command: Command):
         self.metrics: dict[Metric, Number] = {}
-        self.totals: dict[Metric, Number] = {}
         self.command = command
 
     def increment(self, metric: Metric, value: Number):
         self.metrics[metric] = self.metrics.get(metric, 0) + value
-        if metric.accumulate:
-            self.totals[metric] = self.totals.get(metric, 0) + value
 
     def decrement(self, metric: Metric, value: Number):
         if not metric.accumulate:
@@ -251,29 +248,10 @@ class ConsoleMetricHandler(MetricHandler):
                 self.metrics[metric] = 0
         return metrics
 
-    def final_snapshot(self) -> dict[Metric, Number]:
-        """Return totals for accumulating metrics, current values for others."""
-        result = {}
-        all_metrics = set(self.metrics) | set(self.totals)
-        for metric in all_metrics:
-            if metric.accumulate:
-                result[metric.name] = self.totals.get(metric, 0)
-            else:
-                result[metric.name] = self.metrics.get(metric, 0)
-        return result
-
     def render(self):
         if self.command is None:
             return
         metrics = self.discharge()
-        stats = ((k, str(v)) for k, v in metrics.items())
-        table = self.command.table(STATS_TABLE_COLS, stats)
-        table.render()
-
-    def render_final(self):
-        if self.command is None:
-            return
-        metrics = self.final_snapshot()
         stats = ((k, str(v)) for k, v in metrics.items())
         table = self.command.table(STATS_TABLE_COLS, stats)
         table.render()
@@ -281,22 +259,16 @@ class ConsoleMetricHandler(MetricHandler):
     def tick(self):
         self.render()
 
-    def stop(self):
-        self.render_final()
-
 
 class JsonLogMetricHandler(MetricHandler):
     """A metric handler that logs metrics in JSON format."""
 
     def __init__(self):
         self.metrics: dict[Metric, Number] = {}
-        self.totals: dict[Metric, Number] = {}
         self.logger = getLogger(__name__)
 
     def increment(self, metric: Metric, value: Number):
         self.metrics[metric] = self.metrics.get(metric, 0) + value
-        if metric.accumulate:
-            self.totals[metric] = self.totals.get(metric, 0) + value
 
     def decrement(self, metric: Metric, value: Number):
         if not metric.accumulate:
@@ -313,33 +285,12 @@ class JsonLogMetricHandler(MetricHandler):
     def set_value(self, metric: Metric, value: Number):
         self.metrics[metric] = value
 
-    def final_snapshot(self) -> dict[Metric, Number]:
-        """Return totals for accumulating metrics, current values for others."""
-        result = {}
-        all_metrics = set(self.metrics) | set(self.totals)
-        for metric in all_metrics:
-            if metric.accumulate:
-                result[metric.name] = self.totals.get(metric, 0)
-            else:
-                result[metric.name] = self.metrics.get(metric, 0)
-        return result
-
     def render(self):
         metrics = self.discharge()
         self.logger.info(
             "Metrics Report",
             extra=metrics,
         )
-
-    def render_final(self):
-        metrics = self.final_snapshot()
-        self.logger.info(
-            "Metrics Report",
-            extra=metrics,
-        )
-
-    def stop(self):
-        self.render_final()
 
     def tick(self):
         self.render()
