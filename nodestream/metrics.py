@@ -263,12 +263,16 @@ class ConsoleMetricHandler(MetricHandler):
         return result
 
     def render(self):
+        if self.command is None:
+            return
         metrics = self.discharge()
         stats = ((k, str(v)) for k, v in metrics.items())
         table = self.command.table(STATS_TABLE_COLS, stats)
         table.render()
 
     def render_final(self):
+        if self.command is None:
+            return
         metrics = self.final_snapshot()
         stats = ((k, str(v)) for k, v in metrics.items())
         table = self.command.table(STATS_TABLE_COLS, stats)
