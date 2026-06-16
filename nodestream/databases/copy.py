@@ -151,7 +151,6 @@ class Copier(Extractor):
 
     def reorganize_node_key_properties(self, node):
         """Move key fields from properties into key_values for ingestion."""
-        from ..model import Node
         nodeTypeDefinition = self.type_retriever.schema.get_node_type_by_name(node.type)
         if nodeTypeDefinition is None:
             return

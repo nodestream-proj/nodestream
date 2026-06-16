@@ -2,7 +2,6 @@ from copy import deepcopy
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from hamcrest import assert_that, has_length
 
 from nodestream.databases.copy import (
     ConcurrentCopier,
@@ -164,7 +163,9 @@ async def test_extract_records_propagates_extractor_error(mocker, basic_schema):
 
     badExtractor = MagicMock(spec=Extractor)
     badExtractor.extract_records = _failing_extract
-    retriever = _make_mock_retriever(mocker, basic_schema=schema, extractors=[badExtractor])
+    retriever = _make_mock_retriever(
+        mocker, basic_schema=schema, extractors=[badExtractor]
+    )
     copier = Copier(retriever)
     with pytest.raises(RuntimeError, match="database went away"):
         async for _ in copier.extract_records():
@@ -216,7 +217,9 @@ async def test_copier_runs_multiple_extractors_concurrently(mocker, basic_schema
     e1 = _make_extractor("a", "b")
     e2 = _make_extractor("c")
     e3 = _make_extractor("d", "e")
-    retriever = _make_mock_retriever(mocker, basic_schema=schema, extractors=[e1, e2, e3])
+    retriever = _make_mock_retriever(
+        mocker, basic_schema=schema, extractors=[e1, e2, e3]
+    )
     copier = Copier(retriever, concurrency_limit=4)
     records = [r async for r in copier.extract_records()]
     assert set(records) == {"a", "b", "c", "d", "e"}
@@ -232,7 +235,9 @@ async def test_copier_propagates_extractor_error(mocker, basic_schema):
 
     badExtractor = MagicMock(spec=Extractor)
     badExtractor.extract_records = _fail
-    retriever = _make_mock_retriever(mocker, basic_schema=schema, extractors=[badExtractor])
+    retriever = _make_mock_retriever(
+        mocker, basic_schema=schema, extractors=[badExtractor]
+    )
     copier = Copier(retriever, concurrency_limit=2)
     with pytest.raises(RuntimeError, match="fetch failed"):
         async for _ in copier.extract_records():

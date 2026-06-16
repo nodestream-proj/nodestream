@@ -731,7 +731,9 @@ class Schema(WritesToYamlToStdout, LoadsFromYamlFile):
                 result.put_node_type(node)
 
         # Populate result schema with surviving relationship types.
-        surviving_rel_types = {adj.relationship_type for adj, _ in surviving_adjacencies}
+        surviving_rel_types = {
+            adj.relationship_type for adj, _ in surviving_adjacencies
+        }
         for rel in self.relationships:
             if rel.name in surviving_rel_types:
                 result.put_relationship_type(rel)

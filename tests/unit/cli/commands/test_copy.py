@@ -58,7 +58,9 @@ def test_get_target_from_user_from_option_unknown_target(copy_command, project, 
 def test_apply_schema_filter_no_filters_returns_full_schema(
     copy_command, mocker, basic_schema
 ):
-    copy_command.option = mocker.Mock(side_effect=lambda name: [] if name in ("node", "relationship") else None)
+    copy_command.option = mocker.Mock(
+        side_effect=lambda name: [] if name in ("node", "relationship") else None
+    )
     result = copy_command.apply_schema_filter(basic_schema)
     assert {n.name for n in result.nodes} == {n.name for n in basic_schema.nodes}
 
@@ -109,7 +111,9 @@ def test_apply_schema_filter_unknown_relationship_skipped(
 # ---------------------------------------------------------------------------
 
 
-def _make_handle_async_setup(copy_command, mocker, project, basic_schema, option_values):
+def _make_handle_async_setup(
+    copy_command, mocker, project, basic_schema, option_values
+):
     project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
     copy_command.run_operation = mocker.AsyncMock(
         side_effect=[None, None, project, None]
@@ -202,7 +206,9 @@ async def test_handle_async_with_non_default_options(
 
 
 @pytest.mark.asyncio
-async def test_handle_async_with_shard_size(copy_command, mocker, basic_schema, project):
+async def test_handle_async_with_shard_size(
+    copy_command, mocker, basic_schema, project
+):
     opts = {**_DEFAULT_OPTIONS, "shard-size": "5000"}
     _make_handle_async_setup(copy_command, mocker, project, basic_schema, opts)
     await copy_command.handle_async()

@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Iterable
+from typing import Iterable
 
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from ..schema.migrations import Migrator
@@ -49,6 +49,7 @@ class NullQueryExecutor(QueryExecutor):
 class NullRetriever(TypeRetriever):
     def __init__(self, **_):
         from ..schema.state import Schema
+
         super().__init__(schema=Schema())
 
     async def fetchExtractors(self):
