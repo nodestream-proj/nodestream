@@ -193,7 +193,14 @@ class LazyLoadedTagSafeLoader(SafeLoader):
 
 
 def wrap_unloaded_tag(self, node):
-    value = self.construct_scalar(node)
+    from yaml import MappingNode, SequenceNode
+
+    if isinstance(node, MappingNode):
+        value = self.construct_mapping(node, deep=True)
+    elif isinstance(node, SequenceNode):
+        value = self.construct_sequence(node, deep=True)
+    else:
+        value = self.construct_scalar(node)
     return LazyLoadedArgument(node.tag[1:], value)
 
 

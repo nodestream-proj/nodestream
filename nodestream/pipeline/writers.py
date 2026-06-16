@@ -2,6 +2,7 @@ from abc import abstractmethod
 from logging import INFO, getLevelName, getLogger
 from typing import Any, AsyncGenerator
 
+from ..metrics import RECORDS_WRITTEN, Metrics
 from .flush import Flush
 from .step import Step
 
@@ -19,6 +20,7 @@ class Writer(Step):
             await self.flush()
         else:
             await self.write_record(record)
+            Metrics.get().increment(RECORDS_WRITTEN)
         yield record
 
     @abstractmethod

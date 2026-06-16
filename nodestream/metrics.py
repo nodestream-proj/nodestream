@@ -123,6 +123,11 @@ INGEST_HOOKS_EXECUTED = Metric(
 STEPS_RUNNING = Metric(
     "steps_running", "Number of steps currently running in the pipeline"
 )
+RECORDS_WRITTEN = Metric(
+    "records_written",
+    "Number of records written by writer steps across all writer implementations",
+    accumulate=True,
+)
 
 
 try:
@@ -244,6 +249,8 @@ class ConsoleMetricHandler(MetricHandler):
         return metrics
 
     def render(self):
+        if self.command is None:
+            return
         metrics = self.discharge()
         stats = ((k, str(v)) for k, v in metrics.items())
         table = self.command.table(STATS_TABLE_COLS, stats)
@@ -251,9 +258,6 @@ class ConsoleMetricHandler(MetricHandler):
 
     def tick(self):
         self.render()
-
-    def stop(self):
-        pass
 
 
 class JsonLogMetricHandler(MetricHandler):
@@ -276,7 +280,6 @@ class JsonLogMetricHandler(MetricHandler):
             metrics[metric.name] = value
             if metric.accumulate:
                 self.metrics[metric] = 0
-
         return metrics
 
     def set_value(self, metric: Metric, value: Number):
@@ -288,9 +291,6 @@ class JsonLogMetricHandler(MetricHandler):
             "Metrics Report",
             extra=metrics,
         )
-
-    def stop(self):
-        pass
 
     def tick(self):
         self.render()

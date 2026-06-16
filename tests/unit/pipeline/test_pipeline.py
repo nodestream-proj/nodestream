@@ -1,3 +1,4 @@
+import asyncio
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -15,7 +16,6 @@ from nodestream.pipeline.pipeline import (
     RecordContext,
     StartStepState,
     StepExecutionState,
-    StepInput,
     StopStepExecution,
 )
 from nodestream.pipeline.progress_reporter import PipelineProgressReporter
@@ -743,24 +743,31 @@ async def test_pipeline_output_on_finish_callback_exceptions_not_swallowed(
     point).'
     """
 
+    from nodestream.pipeline.object_storage import NullObjectStore
+    from nodestream.pipeline.step import Step
+
     def on_finish_callback(metrics):
         raise ValueError("CLI status code exception")
 
-    input_mock = mocker.Mock(StepInput)
-    # No records to process
-    input_mock.get = mocker.AsyncMock(return_value=None)
+    class NoOpStep(Step):
+        async def emit_outstanding_records(self, context):
+            return
+            yield
 
-    executor = Executor.pipeline_output(
-        input_mock,
-        PipelineProgressReporter(
-            on_finish_callback=on_finish_callback,
-            logger=mocker.Mock(),
-        ),
+    pipeline = Pipeline(
+        steps=(NoOpStep(),),
+        step_outbox_size=10,
+        object_store=NullObjectStore(),
     )
 
-    # The exception should propagate up and not be caught
+    reporter = PipelineProgressReporter(
+        on_finish_callback=on_finish_callback,
+        logger=mocker.Mock(),
+    )
+
+    # The exception should propagate up from Pipeline.run() and not be caught
     with pytest.raises(ValueError, match="CLI status code exception"):
-        await executor.run()
+        await pipeline.run(reporter)
 
 
 @pytest.mark.asyncio
@@ -846,7 +853,6 @@ async def test_pipeline_cancels_blocking_extractor_on_fatal_error(mocker):
     cancel sibling tasks when one raises — leaving blocking tasks alive after
     the pipeline output executor had already failed.
     """
-    import asyncio
 
     from nodestream.pipeline.object_storage import NullObjectStore
     from nodestream.pipeline.step import Step
@@ -930,7 +936,6 @@ async def test_pipeline_fatal_error_drains_completed_steps_before_cancellation(m
     - The blocking extractor was cancelled and did NOT call finish()
       (it was stuck in emit_outstanding_records and never reached StopStepExecution)
     """
-    import asyncio
 
     from nodestream.pipeline.object_storage import NullObjectStore
     from nodestream.pipeline.step import Step
@@ -993,11 +998,12 @@ async def test_pipeline_fatal_error_drains_completed_steps_before_cancellation(m
         "StopStepExecution did not complete before the fatal error propagated."
     )
 
-    # The extractor was stuck in emit_outstanding_records and was cancelled before
-    # it ever reached StopStepExecution, so finish() must NOT have been called.
-    assert "extractor" not in finish_calls, (
-        "BlockingExtractor.finish() was called — expected it to be cancelled "
-        "mid-flight in emit_outstanding_records, never reaching StopStepExecution."
+    # The extractor was cancelled mid-flight in emit_outstanding_records, but
+    # finish() must still be called so that resources (e.g. Neo4j driver threads)
+    # are properly cleaned up — that's the whole point of this fix.
+    assert "extractor" in finish_calls, (
+        "BlockingExtractor.finish() was not called after cancellation — "
+        "resource cleanup (e.g. closing Neo4j driver background threads) would be skipped."
     )
 
 
@@ -1010,7 +1016,6 @@ async def test_pipeline_external_cancellation_still_cancels_sibling_tasks(mocker
     blocking sibling tasks alive as zombies even when the pipeline task itself was
     cancelled from outside.
     """
-    import asyncio
 
     from nodestream.pipeline.object_storage import NullObjectStore
     from nodestream.pipeline.step import Step
@@ -1115,3 +1120,113 @@ async def test_pipeline_logs_secondary_exceptions_during_cleanup(mocker):
     # We verify the logger.warning path is at least callable — secondary exceptions
     # are non-deterministic in this simple pipeline but the plumbing must exist.
     assert mock_logger.warning.call_count >= 0  # path exists; count depends on timing
+
+
+@pytest.mark.asyncio
+async def test_pipeline_logs_secondary_exception_from_cleanup(mocker):
+    """Steps that raise a non-CancelledError during cleanup have it logged as a warning."""
+    from nodestream.pipeline.object_storage import NullObjectStore
+    from nodestream.pipeline.step import Step
+
+    class BlockingExtractor(Step):
+        async def emit_outstanding_records(self, context):
+            yield {"data": "record"}
+            await asyncio.Event().wait()
+
+        async def process_record(self, record, context):
+            return
+            yield
+
+    class FatalWriterStep(Step):
+        async def process_record(self, record, context):
+            raise RuntimeError("primary error")
+            yield
+
+    fatal_errors = []
+
+    def on_fatal_error(exc):
+        fatal_errors.append(exc)
+
+    def on_finish(metrics):
+        if fatal_errors:
+            raise fatal_errors[0]
+
+    mock_logger = mocker.Mock()
+    reporter = PipelineProgressReporter(
+        on_fatal_error_callback=on_fatal_error,
+        on_finish_callback=on_finish,
+        logger=mock_logger,
+    )
+
+    # Return a secondary Exception from the cleanup gather to hit the logging path
+    secondary_exc = RuntimeError("secondary error during cleanup")
+    mocker.patch(
+        "nodestream.pipeline.pipeline.asyncio.wait_for",
+        return_value=[secondary_exc],
+    )
+
+    pipeline = Pipeline(
+        (BlockingExtractor(), FatalWriterStep()),
+        step_outbox_size=10,
+        object_store=NullObjectStore(),
+    )
+
+    with pytest.raises(RuntimeError, match="primary error"):
+        await pipeline.run(reporter)
+
+    warning_messages = [str(c) for c in mock_logger.warning.call_args_list]
+    assert any("Secondary exception" in m for m in warning_messages)
+
+
+@pytest.mark.asyncio
+async def test_pipeline_logs_timeout_during_cleanup(mocker):
+    """A cleanup timeout is logged as a warning and does not swallow the original error."""
+    from nodestream.pipeline.object_storage import NullObjectStore
+    from nodestream.pipeline.step import Step
+
+    class BlockingExtractor(Step):
+        async def emit_outstanding_records(self, context):
+            yield {"data": "record"}
+            await asyncio.Event().wait()
+
+        async def process_record(self, record, context):
+            return
+            yield
+
+    class FatalWriterStep(Step):
+        async def process_record(self, record, context):
+            raise RuntimeError("primary error")
+            yield
+
+    fatal_errors = []
+
+    def on_fatal_error(exc):
+        fatal_errors.append(exc)
+
+    def on_finish(metrics):
+        if fatal_errors:
+            raise fatal_errors[0]
+
+    mock_logger = mocker.Mock()
+    reporter = PipelineProgressReporter(
+        on_fatal_error_callback=on_fatal_error,
+        on_finish_callback=on_finish,
+        logger=mock_logger,
+    )
+
+    mocker.patch(
+        "nodestream.pipeline.pipeline.asyncio.wait_for",
+        side_effect=TimeoutError,
+    )
+
+    pipeline = Pipeline(
+        (BlockingExtractor(), FatalWriterStep()),
+        step_outbox_size=10,
+        object_store=NullObjectStore(),
+    )
+
+    with pytest.raises(RuntimeError, match="primary error"):
+        await pipeline.run(reporter)
+
+    warning_messages = [str(c) for c in mock_logger.warning.call_args_list]
+    assert any("timed out" in m for m in warning_messages)

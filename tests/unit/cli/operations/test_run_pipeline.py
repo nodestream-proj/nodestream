@@ -2,6 +2,9 @@ import pytest
 from hamcrest import assert_that, equal_to
 
 from nodestream.cli.operations.run_pipeline import (
+    ERROR_NO_PIPELINES_FOUND,
+    HINT_CHECK_PIPELINE_NAME,
+    HINT_USE_NODESTREAM_SHOW,
     WARNING_NO_TARGETS_PROVIDED,
     JsonProgressIndicator,
     ProgressIndicator,
@@ -285,6 +288,44 @@ def test_json_progress_indicator_on_fatal_error(mocker):
     indicator.logger.error.assert_called_once_with(
         "Pipeline Failed", exc_info=exception
     )
+
+
+@pytest.mark.asyncio
+async def test_run_pipeline_no_pipelines_found(run_pipeline_operation, mocker):
+    """perform() should print hints when no matching pipelines are found."""
+    cmd = mocker.Mock()
+    cmd.argument.return_value = ["nonexistent_pipeline"]
+    run_pipeline_operation.get_pipelines_to_run = mocker.Mock(return_value=[])
+    await run_pipeline_operation.perform(cmd)
+    cmd.line.assert_any_call(ERROR_NO_PIPELINES_FOUND)
+    cmd.line.assert_any_call(HINT_CHECK_PIPELINE_NAME)
+    cmd.line.assert_any_call(HINT_USE_NODESTREAM_SHOW)
+
+
+def test_make_run_request_verbose(run_pipeline_operation, mocker):
+    """make_run_request should print effective config when is_very_verbose is True."""
+    command = mocker.Mock()
+    option_responses = {
+        "storage-backend": None,
+        "annotations": [],
+        "step-outbox-size": "10000",
+        "target": [],
+        "metrics-interval-in-seconds": None,
+        "reporting-frequency": "10000",
+    }
+    command.option.side_effect = lambda opt: option_responses.get(opt)
+    command.has_json_logging_set = False
+    command.is_very_verbose = True
+    pipeline = mocker.Mock()
+    pipeline.name = "test"
+    pipeline.configuration = mocker.Mock()
+    pipeline.configuration.effective_targets = []
+    run_pipeline_operation.project.get_object_storage_by_name.return_value = None
+    run_pipeline_operation.project.get_target_by_name.return_value = None
+    request = run_pipeline_operation.make_run_request(command, pipeline)
+    # Trigger the verbose callback with a sample config
+    request.initialization_arguments.on_effective_configuration_resolved({"key": "val"})
+    command.line.assert_any_call("<info>Effective configuration:</info>")
 
 
 def test_json_progress_indicator_on_progress(mocker):
