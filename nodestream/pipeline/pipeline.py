@@ -344,8 +344,11 @@ class StopStepExecution(StepExecutionState):
         except Exception as e:
             self.context.report_error("Error stopping step", e)
 
-        # We are done regarless of what happens. There is no next state.
-        Metrics.get().decrement(STEPS_RUNNING)
+        finally:
+            # Decrement in finally so the gauge is always accurate even if
+            # finish()/output.done() raises CancelledError or another
+            # BaseException that bypasses the except clause above.
+            Metrics.get().decrement(STEPS_RUNNING)
 
         # If a prior state caught a CancelledError (or other BaseException) to
         # allow finish() to run, re-raise it now so the executor task is
@@ -559,10 +562,6 @@ class Pipeline(ExpandsSchemaFromChildren):
         # raises (e.g. on_finish_callback re-raises a fatal writer error), cancel
         # the step tasks so that blocking extractors (e.g. a StreamExtractor
         # polling Kafka forever) don't keep the process alive as a zombie.
-        # pipeline_output_task is intentionally excluded from cancellation — it
-        # must finish so that on_finish_callback (Metrics Report, "Pipeline
-        # Completed") always runs. Its input channel is already closed by the
-        # time any step raises, so it drains and exits on its own.
         try:
             # StopStepExecution calls step.finish() before output.done(), so by
             # the time pipeline_output receives DoneObject and calls
@@ -571,12 +570,17 @@ class Pipeline(ExpandsSchemaFromChildren):
         except BaseException:
             for task in step_tasks:
                 task.cancel()
-            # Wait for step tasks to acknowledge cancellation.
-            # Timeout prevents a misbehaving task from hanging indefinitely.
+            # Wait for step tasks AND the pipeline_output_task to finish within
+            # the timeout window. Step tasks are cancelled above; pipeline_output
+            # drains naturally once their output channels are closed, but if a
+            # step was cancelled before closing its channel (or on_finish_callback
+            # hangs), pipeline_output_task would block forever without this bound.
+            # Timeout prevents any misbehaving task from hanging indefinitely.
             # Secondary exceptions are logged so they aren't silently dropped.
             try:
                 results = await asyncio.wait_for(
-                    gather(*step_tasks, return_exceptions=True), timeout=30
+                    gather(pipeline_output_task, *step_tasks, return_exceptions=True),
+                    timeout=30,
                 )
                 for result in results:
                     if isinstance(result, Exception):
