@@ -55,15 +55,18 @@ class DebouncedIngestStrategy(IngestionStrategy, alias="debounced"):
         )
         return asyncio.gather(*update_coroutines)
 
-    async def flush_relationship_updates(self):
-        # Because databases tend to require exclusive locks on both nodes,
-        # and these updates are very likely to be related to at least one of the nodes
-        # in the relationship, we need to update relationships one operation type
-        # at a time to avoid deadlocks.
-        for rel_shape, rel_group in self.debouncer.drain_relationship_groups():
-            await self.executor.upsert_relationships_in_bulk_of_same_operation(
+    def flush_relationship_updates(self):
+        # Run all relationship-shape flushes concurrently. Neo4j may deadlock on
+        # shapes that share endpoint node types, but those are detected and returned
+        # as retryable errors — the executor's retry loop handles them. The speedup
+        # from parallelism far outweighs the occasional retry cost.
+        update_coroutines = (
+            self.executor.upsert_relationships_in_bulk_of_same_operation(
                 rel_shape, rel_group
             )
+            for rel_shape, rel_group in self.debouncer.drain_relationship_groups()
+        )
+        return asyncio.gather(*update_coroutines)
 
     async def flush(self):
         await self.flush_nodes_updates()

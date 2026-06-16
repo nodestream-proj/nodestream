@@ -148,6 +148,7 @@ class ConcurrentGraphDatabaseWriter(GraphDatabaseWriter):
 
         # Back-pressure: wait until a flush lane is available.
         await self.flush_lane_semaphore.acquire()
+        self._report_active_lanes()  # report immediately on acquire, not after release
         self._raise_if_flush_errors()
 
         # Rotate: save the full strategy, give the pipeline a fresh one.
