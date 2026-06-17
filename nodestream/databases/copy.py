@@ -44,8 +44,10 @@ class TypeHistogram:
         for nodeType in self.sorted_node_types():
             logger.info("  %s: %d", nodeType, self.node_counts[nodeType])
         logger.info("Relationship type histogram (descending):")
-        for relType in self.sorted_relationship_types():
-            logger.info("  %s: %d", relType, self.relationship_counts[relType])
+        for relationshipType in self.sorted_relationship_types():
+            logger.info(
+                "  %s: %d", relationshipType, self.relationship_counts[relationshipType]
+            )
         logger.info(
             "Total nodes: %d, Total relationships: %d",
             sum(self.node_counts.values()),
@@ -110,54 +112,51 @@ class Copier(Extractor):
         histogram.log(self.logger)
 
     async def extract_records(self):
-        queue_size = self.queue_size
         semaphore = asyncio.Semaphore(self.concurrency_limit)
-        record_queue: asyncio.Queue = asyncio.Queue(maxsize=queue_size)
+        recordQueue: asyncio.Queue = asyncio.Queue(maxsize=self.queue_size)
 
-        async def run_extractor(extractor: Extractor) -> None:
+        async def runExtractor(extractor: Extractor) -> None:
             async with semaphore:
                 Metrics.get().increment(ACTIVE_QUERIES)
                 try:
                     async for record in extractor.extract_records():
-                        await record_queue.put(record)
+                        await recordQueue.put(record)
                 finally:
                     Metrics.get().decrement(ACTIVE_QUERIES)
 
-        async def produce_all() -> None:
+        async def produceAll() -> None:
             tasks = []
             try:
                 async for extractor in self.type_retriever.fetch_extractors():
-                    tasks.append(asyncio.create_task(run_extractor(extractor)))
+                    tasks.append(asyncio.create_task(runExtractor(extractor)))
                 await asyncio.gather(*tasks)
             finally:
-                await record_queue.put(DoneObject)
+                await recordQueue.put(DoneObject)
 
-        producer_task = asyncio.create_task(produce_all())
-        producer_error = None
+        producerTask = asyncio.create_task(produceAll())
+        producerError = None
         try:
             while True:
-                record = await record_queue.get()
+                record = await recordQueue.get()
                 if record is DoneObject:
                     break
                 yield record
         finally:
             try:
-                await producer_task
+                await producerTask
             except Exception as exc:
-                producer_error = exc
-        if producer_error is not None:
-            raise producer_error
+                producerError = exc
+        if producerError is not None:
+            raise producerError
 
     def reorganize_node_key_properties(self, node):
         """Move key fields from properties into key_values for ingestion."""
-        node_type_definition = self.type_retriever.schema.get_node_type_by_name(
-            node.type
-        )
-        if node_type_definition is None:
+        nodeTypeDefinition = self.type_retriever.schema.get_node_type_by_name(node.type)
+        if nodeTypeDefinition is None:
             return
-        for key_name in node_type_definition.keys:
-            if key_name in node.properties:
-                node.key_values[key_name] = node.properties.pop(key_name)
+        for keyName in nodeTypeDefinition.keys:
+            if keyName in node.properties:
+                node.key_values[keyName] = node.properties.pop(keyName)
 
     def convert_node_to_ingest(self, node):
         self.reorganize_node_key_properties(node)
