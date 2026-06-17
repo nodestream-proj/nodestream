@@ -104,10 +104,10 @@ class Copy(NodestreamCommand):
             flag=False,
         ),
         option(
-            "node-only",
+            "preload-nodes",
             description=(
-                "Copy only nodes — skip relationship fetching entirely. "
-                "Useful when you want to seed nodes without their adjacencies."
+                "Copy nodes first, then relationships. "
+                "Useful when the destination needs nodes seeded before adjacencies are written."
             ),
             flag=True,
         ),
@@ -123,7 +123,7 @@ class Copy(NodestreamCommand):
             try:
                 from_target = self.get_taget_from_user(project, "from")
                 to_target = self.get_taget_from_user(project, "to")
-                node_only = bool(self.option("node-only"))
+                preloadNodes = bool(self.option("preload-nodes"))
 
                 full_schema = project.make_schema_for_copy(
                     include_additional_types=False
@@ -134,13 +134,13 @@ class Copy(NodestreamCommand):
                 step_outbox_size = int(self.option("step-outbox-size"))
                 flush_concurrency = int(self.option("flush-concurrency"))
                 concurrency_limit = int(self.option("concurrency-limit"))
-                shard_size_raw = self.option("shard-size")
+                shardSizeRaw = self.option("shard-size")
                 connector_overrides = self.parse_key_value_options("connector-option")
                 retriever_overrides = self.parse_key_value_options("retriever-option")
 
-                retriever_overrides.setdefault("node_only", node_only)
-                if shard_size_raw is not None:
-                    retriever_overrides.setdefault("shard_size", int(shard_size_raw))
+                retriever_overrides.setdefault("preload_nodes", preloadNodes)
+                if shardSizeRaw is not None:
+                    retriever_overrides.setdefault("shard_size", int(shardSizeRaw))
             except UnknownTargetError:
                 return 1
 
@@ -149,9 +149,12 @@ class Copy(NodestreamCommand):
                 extra={
                     "from": from_target.name,
                     "to": to_target.name,
-                    "node_only": node_only,
-                    "node_types": [n.name for n in schema.nodes],
-                    "relationship_types": [r.name for r in schema.relationships],
+                    "preload_nodes": preloadNodes,
+                    "node_types": [nodeType.name for nodeType in schema.nodes],
+                    "relationship_types": [
+                        relationshipType.name
+                        for relationshipType in schema.relationships
+                    ],
                     "retriever_overrides": retriever_overrides,
                     "connector_overrides": connector_overrides,
                 },

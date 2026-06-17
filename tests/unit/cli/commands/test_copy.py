@@ -156,7 +156,7 @@ _DEFAULT_OPTIONS = {
     "connector-option": [],
     "retriever-option": [],
     "shard-size": None,
-    "node-only": False,
+    "preload-nodes": False,
     "reporting-frequency": "1000",
     "metrics-interval-in-seconds": None,
 }
@@ -232,12 +232,14 @@ async def test_handle_async_with_shard_size(
 
 
 @pytest.mark.asyncio
-async def test_handle_async_with_node_only(copy_command, mocker, basic_schema, project):
-    opts = {**_DEFAULT_OPTIONS, "node-only": True}
+async def test_handle_async_with_preload_nodes(
+    copy_command, mocker, basic_schema, project
+):
+    opts = {**_DEFAULT_OPTIONS, "preload-nodes": True}
     _make_handle_async_setup(copy_command, mocker, project, basic_schema, opts)
     await copy_command.handle_async()
     run_copy_op = copy_command.run_operation.call_args_list[-1].args[0]
-    assert run_copy_op.retriever_overrides.get("node_only") is True
+    assert run_copy_op.retriever_overrides.get("preload_nodes") is True
 
 
 @pytest.mark.asyncio

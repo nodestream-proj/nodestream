@@ -72,9 +72,9 @@ class TypeRetriever(ABC):
     async def fetch_extractors(self) -> AsyncGenerator[Extractor, None]:
         """Yield all Extractor objects for this copy run.
 
-        node_only=True  → yield node extractors only.
-        node_only=False → yield relationship extractors only (RelationshipWithNodes
-                          carries both endpoints, so a separate node pass is not needed).
+        preload_nodes=True  → yield node extractors first, then relationship extractors.
+        preload_nodes=False → yield relationship extractors only (RelationshipWithNodes
+                              carries both endpoints, so a separate node pass is not needed).
         """
         raise NotImplementedError
 
@@ -92,7 +92,7 @@ class Copier(Extractor):
 
     Pulls Extractor objects from fetch_extractors() and runs them concurrently
     up to concurrency_limit via a producer/consumer queue. No branching on
-    types, shards, or node_only — all of that lives in the TypeRetriever.
+    types or shards — all of that lives in the TypeRetriever.
     """
 
     def __init__(

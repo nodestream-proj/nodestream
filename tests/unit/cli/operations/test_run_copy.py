@@ -44,8 +44,8 @@ def test_build_pipeline(subject, mocker):
     )
 
 
-def test_build_copier_node_only(mocker, basic_schema):
-    """node_only passed via retriever_overrides is forwarded to make_type_retriever."""
+def test_build_copier_preload_nodes(mocker, basic_schema):
+    """preload_nodes passed via retriever_overrides is forwarded to make_type_retriever."""
     from_target = mocker.Mock()
     from_target.name = "source"
     to_target = mocker.Mock()
@@ -54,11 +54,11 @@ def test_build_copier_node_only(mocker, basic_schema):
         from_target=from_target,
         to_target=to_target,
         schema=basic_schema,
-        retriever_overrides={"node_only": True},
+        retriever_overrides={"preload_nodes": True},
     )
     op.build_copier()
     call_kwargs = from_target.make_type_retriever.call_args[1]
-    assert_that(call_kwargs["node_only"], equal_to(True))
+    assert_that(call_kwargs["preload_nodes"], equal_to(True))
 
 
 @pytest.mark.asyncio
