@@ -67,7 +67,7 @@ class TypeRetriever(ABC):
         self.schema = schema
 
     @abstractmethod
-    async def fetchExtractors(self) -> AsyncGenerator[Extractor, None]:
+    async def fetch_extractors(self) -> AsyncGenerator[Extractor, None]:
         """Yield all Extractor objects for this copy run.
 
         node_only=True  → yield node extractors only.
@@ -88,9 +88,8 @@ class TypeRetriever(ABC):
 class Copier(Extractor):
     """Copies nodes and relationships from a source via a TypeRetriever.
 
-    Pulls Extractor objects from fetchNodeExtractors() then
-    fetchRelationshipExtractors() and runs them concurrently up to
-    concurrency_limit via a producer/consumer queue. No branching on
+    Pulls Extractor objects from fetch_extractors() and runs them concurrently
+    up to concurrency_limit via a producer/consumer queue. No branching on
     types, shards, or node_only — all of that lives in the TypeRetriever.
     """
 
@@ -111,52 +110,54 @@ class Copier(Extractor):
         histogram.log(self.logger)
 
     async def extract_records(self):
-        queueSize = self.queue_size
+        queue_size = self.queue_size
         semaphore = asyncio.Semaphore(self.concurrency_limit)
-        recordQueue: asyncio.Queue = asyncio.Queue(maxsize=queueSize)
+        record_queue: asyncio.Queue = asyncio.Queue(maxsize=queue_size)
 
-        async def runExtractor(extractor: Extractor) -> None:
+        async def run_extractor(extractor: Extractor) -> None:
             async with semaphore:
                 Metrics.get().increment(ACTIVE_QUERIES)
                 try:
                     async for record in extractor.extract_records():
-                        await recordQueue.put(record)
+                        await record_queue.put(record)
                 finally:
                     Metrics.get().decrement(ACTIVE_QUERIES)
 
-        async def produceAll() -> None:
+        async def produce_all() -> None:
             tasks = []
             try:
-                async for extractor in self.type_retriever.fetchExtractors():
-                    tasks.append(asyncio.create_task(runExtractor(extractor)))
+                async for extractor in self.type_retriever.fetch_extractors():
+                    tasks.append(asyncio.create_task(run_extractor(extractor)))
                 await asyncio.gather(*tasks)
             finally:
-                await recordQueue.put(DoneObject)
+                await record_queue.put(DoneObject)
 
-        producerTask = asyncio.create_task(produceAll())
-        producerError = None
+        producer_task = asyncio.create_task(produce_all())
+        producer_error = None
         try:
             while True:
-                record = await recordQueue.get()
+                record = await record_queue.get()
                 if record is DoneObject:
                     break
                 yield record
         finally:
             try:
-                await producerTask
+                await producer_task
             except Exception as exc:
-                producerError = exc
-        if producerError is not None:
-            raise producerError
+                producer_error = exc
+        if producer_error is not None:
+            raise producer_error
 
     def reorganize_node_key_properties(self, node):
         """Move key fields from properties into key_values for ingestion."""
-        nodeTypeDefinition = self.type_retriever.schema.get_node_type_by_name(node.type)
-        if nodeTypeDefinition is None:
+        node_type_definition = self.type_retriever.schema.get_node_type_by_name(
+            node.type
+        )
+        if node_type_definition is None:
             return
-        for keyName in nodeTypeDefinition.keys:
-            if keyName in node.properties:
-                node.key_values[keyName] = node.properties.pop(keyName)
+        for key_name in node_type_definition.keys:
+            if key_name in node.properties:
+                node.key_values[key_name] = node.properties.pop(key_name)
 
     def convert_node_to_ingest(self, node):
         self.reorganize_node_key_properties(node)

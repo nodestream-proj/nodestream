@@ -249,8 +249,16 @@ class ProcessRecordsState(StepExecutionState):
         # If we get an exception, we need to stop processing records by
         # transitioning to the stop state. Because this is part of the core
         # execution of the step, we consider this a fatal error.
-        except Exception as e:
-            self.context.report_error("Error processing record", e, fatal=True)
+        # BaseException (including CancelledError) is caught so that step.finish()
+        # is always called — e.g. to close Neo4j driver threads on cancellation.
+        except BaseException as e:
+            if not isinstance(e, Exception):
+                # CancelledError / KeyboardInterrupt: not a pipeline error, but
+                # we still need to run finish() for resource cleanup. Store it
+                # so StopStepExecution can re-raise it after finish() completes.
+                self.context.cancellation_cause = e
+            else:
+                self.context.report_error("Error processing record", e, fatal=True)
             return self.make_state(StopStepExecution)
 
         # If we have gotten here, then we have processed all of our input
@@ -289,12 +297,17 @@ class EmitOutstandingRecordsState(StepExecutionState):
         # If we get an exception, we will report it as fatal as steps
         # processing outstanding records is part of the core execution
         # of the step.
-        except Exception as e:
-            self.context.report_error(
-                "Error emitting outstanding records",
-                e,
-                fatal=True,
-            )
+        # BaseException (including CancelledError) is caught so that step.finish()
+        # is always called — e.g. to close Neo4j driver threads on cancellation.
+        except BaseException as e:
+            if not isinstance(e, Exception):
+                self.context.cancellation_cause = e
+            else:
+                self.context.report_error(
+                    "Error emitting outstanding records",
+                    e,
+                    fatal=True,
+                )
 
         # We are doing to transition to the stop state regardless of what
         # happened to get us here.
@@ -311,6 +324,12 @@ class StopStepExecution(StepExecutionState):
 
     async def execute_until_state_change(self) -> Optional[StepExecutionState]:
         try:
+            # Run finish() before signaling downstream. This ensures that any
+            # metrics accumulated during finish() (e.g. NODES_UPSERTED from a
+            # final flush) are recorded before pipeline_output calls
+            # on_finish_callback to emit the Metrics Report.
+            await self.step.finish(self.context)
+
             # Closing the output channel will signal to any downstream steps
             # that we are done processing records and that there nothing left
             # to wait for. Similarly, we mark the input as done to signal
@@ -319,17 +338,24 @@ class StopStepExecution(StepExecutionState):
             await self.output.done()
             self.input.done()
 
-            # Steps may need to do some finalization work when they are done.
-            await self.step.finish(self.context)
-
         # In the event of a failure closing out a step, we will report it as a
         # non-fatal error because all core work has been accomplished. Resource
         # cleanup, while messy, is not fatal to the pipeline as a whole.
         except Exception as e:
             self.context.report_error("Error stopping step", e)
 
-        # We are done regarless of what happens. There is no next state.
-        Metrics.get().decrement(STEPS_RUNNING)
+        finally:
+            # Decrement in finally so the gauge is always accurate even if
+            # finish()/output.done() raises CancelledError or another
+            # BaseException that bypasses the except clause above.
+            Metrics.get().decrement(STEPS_RUNNING)
+
+        # If a prior state caught a CancelledError (or other BaseException) to
+        # allow finish() to run, re-raise it now so the executor task is
+        # properly cancelled and the event loop knows this task is done.
+        if isinstance(self.context.cancellation_cause, BaseException):
+            raise self.context.cancellation_cause
+
         return None
 
 
@@ -397,6 +423,11 @@ class PipelineOutputStopState(PipelineOutputState):
     This is the state that the pipeline output is in when it is stopping. This
     is the final state that the pipeline output will be in. Once it transitions
     to this state, it will not transition to any other state and end execution.
+
+    By the time this state is entered, the upstream step has already called
+    step.finish() then output.done() (StopStepExecution runs finish before
+    signaling downstream). All metrics accumulated during finish/flush are
+    therefore already recorded when on_finish_callback is called here.
     """
 
     async def execute_until_state_change(self) -> Optional[ExecutionState]:
@@ -425,7 +456,9 @@ class Executor:
 
     @classmethod
     def pipeline_output(
-        cls, input: StepInput, reporter: PipelineProgressReporter
+        cls,
+        input: StepInput,
+        reporter: PipelineProgressReporter,
     ) -> "Executor":
         return cls(PipelineOutputStartState(input, reporter, Metrics.get()))
 
@@ -482,25 +515,23 @@ class Pipeline(ExpandsSchemaFromChildren):
         # step to the next step. The channels are used to pass records between
         # the steps in the pipeline. The channels have a fixed size to control
         # the flow of records between the steps.
-        executors: List[Executor] = []
         current_input_name = None
         current_output_name = self.steps[-1].__class__.__name__ + f"_{len(self.steps)}"
 
-        # Here lies a footgun. DO NOT MOVE this executor from the first
-        # position in the list that makes its way to the gather call. It will
-        # break the pipeline because we need to ensure the on_start_callback
-        # is called before any operations occur in the actual steps in the
-        # pipeline. To do this, we need to make sure that the first coroutine
-        # scheduled is the one that calls the on_start_callback.
+        # pipeline_output_task is created first so that on_start_callback fires
+        # before any step coroutine gets a chance to run. asyncio schedules tasks
+        # in creation order within a single event-loop tick, so creating this task
+        # before the step tasks guarantees the ordering.
         current_input, current_output = channel(
             self.step_outbox_size, current_output_name, current_input_name
         )
-        executors.append(Executor.pipeline_output(current_input, reporter))
+        pipeline_output_task = create_task(
+            Executor.pipeline_output(current_input, reporter).run()
+        )
 
-        # Create the executors for the steps in the pipeline. The executors
-        # will be used to run the steps concurrently. The steps are created in
-        # reverse order so that the output of each step is connected to the
-        # input of the next step.
+        # Create tasks for each step executor. Steps are built in reverse order
+        # so that each step's output channel connects to the next step's input.
+        step_executors: List[Executor] = []
         for reversed_index, step in reversed(list(enumerate(self.steps))):
             index = len(self.steps) - reversed_index - 1
             storage = self.object_store.namespaced(str(index))
@@ -517,7 +548,7 @@ class Pipeline(ExpandsSchemaFromChildren):
             )
             exec = Executor.for_step(step, current_input, current_output, context)
             current_output = next_output
-            executors.append(exec)
+            step_executors.append(exec)
 
         # There is a "leftover" input channel that is not connected to any
         # step. This channel is connected to the first step in the pipeline
@@ -525,23 +556,31 @@ class Pipeline(ExpandsSchemaFromChildren):
         # onto it.
         await current_output.done()
 
-        # Run the pipeline by running all the steps and the pipeline output
-        # concurrently. If any executor raises (e.g. on_finish_callback re-raises
-        # a fatal writer error), cancel the remaining tasks so that blocking
-        # extractors (e.g. a StreamExtractor polling Kafka forever) don't keep
-        # the process alive as a zombie after the pipeline has already failed.
-        tasks = [create_task(executor.run()) for executor in executors]
+        step_tasks = [create_task(executor.run()) for executor in step_executors]
+
+        # Run the pipeline by running all tasks concurrently. If any executor
+        # raises (e.g. on_finish_callback re-raises a fatal writer error), cancel
+        # the step tasks so that blocking extractors (e.g. a StreamExtractor
+        # polling Kafka forever) don't keep the process alive as a zombie.
         try:
-            await gather(*tasks)
+            # StopStepExecution calls step.finish() before output.done(), so by
+            # the time pipeline_output receives DoneObject and calls
+            # on_finish_callback, all metrics from finish/flush are accumulated.
+            await gather(pipeline_output_task, *step_tasks)
         except BaseException:
-            for task in tasks:
+            for task in step_tasks:
                 task.cancel()
-            # Wait for all tasks to acknowledge cancellation before re-raising.
-            # Timeout prevents a misbehaving task from hanging the cleanup indefinitely.
-            # Secondary exceptions from sibling tasks are logged so they aren't silently dropped.
+            # Wait for step tasks AND the pipeline_output_task to finish within
+            # the timeout window. Step tasks are cancelled above; pipeline_output
+            # drains naturally once their output channels are closed, but if a
+            # step was cancelled before closing its channel (or on_finish_callback
+            # hangs), pipeline_output_task would block forever without this bound.
+            # Timeout prevents any misbehaving task from hanging indefinitely.
+            # Secondary exceptions are logged so they aren't silently dropped.
             try:
                 results = await asyncio.wait_for(
-                    gather(*tasks, return_exceptions=True), timeout=30
+                    gather(pipeline_output_task, *step_tasks, return_exceptions=True),
+                    timeout=30,
                 )
                 for result in results:
                     if isinstance(result, Exception):

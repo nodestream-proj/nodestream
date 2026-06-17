@@ -52,7 +52,7 @@ class NullRetriever(TypeRetriever):
 
         super().__init__(schema=Schema())
 
-    async def fetchExtractors(self):
+    async def fetch_extractors(self):
         return
         yield  # pragma: no cover
 

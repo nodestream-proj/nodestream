@@ -52,6 +52,7 @@ def test_prometheus_metric_handler(mocker):
     mock_start_http_server.assert_called_once()
     handler.increment(RECORDS, 1)
     handler.decrement(RECORDS, 1)
+    handler.set_value(RECORDS, 42)
     handler.stop()
 
 
@@ -299,3 +300,13 @@ def test_metric_set_value_on_handler():
     metric = Metric("gauge", accumulate=False)
     metric.set_value(10, handler)
     assert handler.metrics[metric] == 10
+
+
+def test_console_metric_handler_render_no_op_when_no_command():
+    """ConsoleMetricHandler.render() should be a no-op when command is None."""
+    handler = ConsoleMetricHandler(command=None)
+    handler.increment(RECORDS, 5)
+    # Should not raise even though command is None
+    handler.tick()
+    # Value is unchanged — discharge did not run because render returned early
+    assert handler.metrics[RECORDS] == 5

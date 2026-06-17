@@ -76,29 +76,21 @@ def test_delayed_value_resolution(mocker):
     assert_that(loaded["delayed"].get_value().get_value(), equal_to("bob"))
 
 
-def test_wrap_unloaded_tag_mapping_node():
-    mapping_yaml = "config: !custom\n  key: value\n  nested: data\n"
-    LazyLoadedTagSafeLoader.add_constructor(
-        "!custom",
-        lambda loader, node: __import__(
-            "nodestream.file_io", fromlist=["wrap_unloaded_tag"]
-        ).wrap_unloaded_tag(loader, node),
-    )
-    loaded = yaml.load(mapping_yaml, Loader=LazyLoadedTagSafeLoader)
+def test_wrap_unloaded_tag_with_mapping_node():
+    """wrap_unloaded_tag should construct a dict when the node is a MappingNode."""
+    yaml_str = "config: !myconfig\n  key: value\n  other: 123\n"
+    loaded = yaml.load(yaml_str, Loader=LazyLoadedTagSafeLoader)
     arg = loaded["config"]
     assert isinstance(arg, LazyLoadedArgument)
-    assert arg.value == {"key": "value", "nested": "data"}
+    assert_that(arg.tag, equal_to("myconfig"))
+    assert_that(arg.value, equal_to({"key": "value", "other": 123}))
 
 
-def test_wrap_unloaded_tag_sequence_node():
-    sequence_yaml = "items: !custom\n  - alpha\n  - beta\n"
-    LazyLoadedTagSafeLoader.add_constructor(
-        "!custom",
-        lambda loader, node: __import__(
-            "nodestream.file_io", fromlist=["wrap_unloaded_tag"]
-        ).wrap_unloaded_tag(loader, node),
-    )
-    loaded = yaml.load(sequence_yaml, Loader=LazyLoadedTagSafeLoader)
+def test_wrap_unloaded_tag_with_sequence_node():
+    """wrap_unloaded_tag should construct a list when the node is a SequenceNode."""
+    yaml_str = "items: !mylist\n  - a\n  - b\n  - c\n"
+    loaded = yaml.load(yaml_str, Loader=LazyLoadedTagSafeLoader)
     arg = loaded["items"]
     assert isinstance(arg, LazyLoadedArgument)
-    assert arg.value == ["alpha", "beta"]
+    assert_that(arg.tag, equal_to("mylist"))
+    assert_that(arg.value, equal_to(["a", "b", "c"]))

@@ -44,11 +44,11 @@ def _make_extractor(*records):
 def _make_mock_retriever(mocker, basic_schema=None, extractors=()):
     retriever = mocker.Mock()
 
-    async def _fetchExtractors():
+    async def _fetch_extractors_impl():
         for e in extractors:
             yield e
 
-    retriever.fetchExtractors = _fetchExtractors
+    retriever.fetch_extractors = _fetch_extractors_impl
     retriever.build_histogram = AsyncMock(return_value=TypeHistogram())
     retriever.schema = basic_schema
     return retriever
@@ -267,7 +267,7 @@ def test_type_histogram_default():
 @pytest.mark.asyncio
 async def test_type_retriever_build_histogram_default(basic_schema):
     class MinimalRetriever(TypeRetriever):
-        async def fetchExtractors(self):
+        async def fetch_extractors(self):
             return
             yield  # pragma: no cover
 
