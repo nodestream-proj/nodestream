@@ -5,7 +5,7 @@ from nodestream.databases.null import (
     NullConnector,
     NullMigrator,
     NullQueryExecutor,
-    NullRetriver,
+    NullRetriever,
 )
 
 
@@ -15,8 +15,8 @@ def connector():
 
 
 @pytest.fixture
-def retriver():
-    return NullRetriver()
+def retriever():
+    return NullRetriever()
 
 
 def test_make_migrator(connector):
@@ -28,22 +28,22 @@ def test_make_executor(connector):
 
 
 def test_make_retriever(connector):
-    assert_that(connector.make_type_retriever(), instance_of(NullRetriver))
+    assert_that(connector.make_type_retriever(), instance_of(NullRetriever))
 
 
 @pytest.mark.asyncio
-async def test_retriever_fetch_extractors(retriver):
-    results = [r async for r in retriver.fetch_extractors()]
+async def test_retriever_fetch_extractors(retriever):
+    results = [result async for result in retriever.fetch_extractors()]
     assert_that(results, empty())
 
 
 def test_make_type_retriever_accepts_kwargs(connector):
     """make_type_retriever should accept and ignore arbitrary kwargs."""
     retriever = connector.make_type_retriever(limit=500, sample_ratio=50)
-    assert_that(retriever, instance_of(NullRetriver))
+    assert_that(retriever, instance_of(NullRetriever))
 
 
 def test_connector_get_type_retriever_forwards_kwargs(connector):
     """get_type_retriever should forward kwargs to make_type_retriever."""
     retriever = connector.get_type_retriever(limit=100, extra_param="value")
-    assert_that(retriever, instance_of(NullRetriver))
+    assert_that(retriever, instance_of(NullRetriever))

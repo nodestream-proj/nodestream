@@ -57,10 +57,6 @@ class NullRetriever(TypeRetriever):
         yield  # pragma: no cover
 
 
-# Backwards-compatible alias for any external code still referencing the old name.
-NullRetriver = NullRetriever
-
-
 class NullConnector(DatabaseConnector, alias="null"):
     def __init__(self, **_) -> None:
         pass

@@ -188,19 +188,23 @@ class Copy(NodestreamCommand):
         node_filter = []
         rel_filter = []
 
-        all_node_names = {n.name for n in schema.nodes}
-        for n in self.option("node") or []:
-            if n in all_node_names:
-                node_filter.append(n)
+        all_node_names = {nodeType.name for nodeType in schema.nodes}
+        for nodeTypeName in self.option("node") or []:
+            if nodeTypeName in all_node_names:
+                node_filter.append(nodeTypeName)
             else:
-                logger.warning("Unknown node type %r — skipping", n)
+                logger.warning("Unknown node type %r — skipping", nodeTypeName)
 
-        all_rel_names = {r.name for r in schema.relationships}
-        for r in self.option("relationship") or []:
-            if r in all_rel_names:
-                rel_filter.append(r)
+        all_rel_names = {
+            relationshipType.name for relationshipType in schema.relationships
+        }
+        for relationshipTypeName in self.option("relationship") or []:
+            if relationshipTypeName in all_rel_names:
+                rel_filter.append(relationshipTypeName)
             else:
-                logger.warning("Unknown relationship type %r — skipping", r)
+                logger.warning(
+                    "Unknown relationship type %r — skipping", relationshipTypeName
+                )
 
         return schema.filtered(node_filter=node_filter, relationship_filter=rel_filter)
 
