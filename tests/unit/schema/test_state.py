@@ -360,3 +360,47 @@ def test_pipeline_context_restores_on_exception():
     except ValueError:
         pass
     assert coordinator._current_pipeline is None
+
+
+# -- Schema.filtered() -------------------------------------------------------
+
+
+def test_filtered_no_filters_returns_all_types(basic_schema):
+    result = basic_schema.filtered()
+    assert {n.name for n in result.nodes} == {"Person", "Organization"}
+    assert {r.name for r in result.relationships} == {"BEST_FRIEND_OF", "HAS_EMPLOYEE"}
+
+
+def test_filtered_node_filter_includes_adjacency_endpoints(basic_schema):
+    # Filter to Person only; HAS_EMPLOYEE connects Organization→Person,
+    # so Organization should be pulled in as an endpoint.
+    result = basic_schema.filtered(node_filter=["Person"])
+    node_names = {n.name for n in result.nodes}
+    assert "Person" in node_names
+    assert "Organization" in node_names  # endpoint of HAS_EMPLOYEE
+
+
+def test_filtered_relationship_filter_excludes_unmatched_rel_type(basic_schema):
+    # Line 717: adjacency whose rel type is not in included_rels → continue
+    result = basic_schema.filtered(relationship_filter=["BEST_FRIEND_OF"])
+    rel_names = {r.name for r in result.relationships}
+    assert "BEST_FRIEND_OF" in rel_names
+    assert "HAS_EMPLOYEE" not in rel_names
+
+
+def test_filtered_node_filter_excludes_adjacency_with_no_matching_endpoint(
+    basic_schema,
+):
+    # Line 723: adjacency where neither endpoint touches included_nodes → continue
+    # Filter to Organization only; BEST_FRIEND_OF connects Person→Person,
+    # neither endpoint is Organization, so it should be excluded.
+    result = basic_schema.filtered(node_filter=["Organization"])
+    rel_names = {r.name for r in result.relationships}
+    assert "BEST_FRIEND_OF" not in rel_names
+    assert "HAS_EMPLOYEE" in rel_names  # Organization→Person survives
+
+
+def test_filtered_empty_lists_treated_as_no_filter(basic_schema):
+    result = basic_schema.filtered(node_filter=[], relationship_filter=[])
+    assert {n.name for n in result.nodes} == {"Person", "Organization"}
+    assert {r.name for r in result.relationships} == {"BEST_FRIEND_OF", "HAS_EMPLOYEE"}

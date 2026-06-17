@@ -106,6 +106,21 @@ def test_apply_schema_filter_unknown_relationship_skipped(
     assert "NONEXISTENT" not in rel_names
 
 
+def test_apply_schema_filter_known_relationship_included(
+    copy_command, mocker, basic_schema
+):
+    def opt(name):
+        if name == "relationship":
+            return ["BEST_FRIEND_OF"]
+        return []
+
+    copy_command.option = mocker.Mock(side_effect=opt)
+    result = copy_command.apply_schema_filter(basic_schema)
+    rel_names = {r.name for r in result.relationships}
+    assert "BEST_FRIEND_OF" in rel_names
+    assert "HAS_EMPLOYEE" not in rel_names
+
+
 # ---------------------------------------------------------------------------
 # handle_async integration tests
 # ---------------------------------------------------------------------------

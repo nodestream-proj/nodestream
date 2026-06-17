@@ -74,3 +74,31 @@ def test_delayed_value_resolution(mocker):
         loaded["delayed"].get_value(), LazyLoadedArgument("env", "USERNAME_FROM_ENV")
     )
     assert_that(loaded["delayed"].get_value().get_value(), equal_to("bob"))
+
+
+def test_wrap_unloaded_tag_mapping_node():
+    mapping_yaml = "config: !custom\n  key: value\n  nested: data\n"
+    LazyLoadedTagSafeLoader.add_constructor(
+        "!custom",
+        lambda loader, node: __import__(
+            "nodestream.file_io", fromlist=["wrap_unloaded_tag"]
+        ).wrap_unloaded_tag(loader, node),
+    )
+    loaded = yaml.load(mapping_yaml, Loader=LazyLoadedTagSafeLoader)
+    arg = loaded["config"]
+    assert isinstance(arg, LazyLoadedArgument)
+    assert arg.value == {"key": "value", "nested": "data"}
+
+
+def test_wrap_unloaded_tag_sequence_node():
+    sequence_yaml = "items: !custom\n  - alpha\n  - beta\n"
+    LazyLoadedTagSafeLoader.add_constructor(
+        "!custom",
+        lambda loader, node: __import__(
+            "nodestream.file_io", fromlist=["wrap_unloaded_tag"]
+        ).wrap_unloaded_tag(loader, node),
+    )
+    loaded = yaml.load(sequence_yaml, Loader=LazyLoadedTagSafeLoader)
+    arg = loaded["items"]
+    assert isinstance(arg, LazyLoadedArgument)
+    assert arg.value == ["alpha", "beta"]
