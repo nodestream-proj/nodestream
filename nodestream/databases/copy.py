@@ -2,7 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from logging import Logger, getLogger
-from typing import AsyncGenerator, Dict, List
+from typing import AsyncGenerator
 
 from ..metrics import Metric, Metrics
 from ..pipeline import Extractor
@@ -21,10 +21,11 @@ ACTIVE_QUERIES = Metric(
 class TypeHistogram:
     """Count estimates for all node and relationship types to be copied."""
 
-    node_counts: Dict[str, int] = field(default_factory=dict)
-    relationship_counts: Dict[str, int] = field(default_factory=dict)
+    node_counts: dict[str, int] = field(default_factory=dict)
+    relationship_counts: dict[str, int] = field(default_factory=dict)
 
-    def sorted_types_by_count(self, counts: Dict[str, int]) -> List[str]:
+    @staticmethod
+    def sorted_types_by_count(counts: dict[str, int]) -> list[str]:
         return sorted(counts, key=counts.__getitem__, reverse=True)
 
     def log(self, logger: Logger) -> None:
