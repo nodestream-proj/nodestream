@@ -186,27 +186,29 @@ class Copy(NodestreamCommand):
                             restricted to nodes in --node if also provided.
         """
         node_filter = []
-        rel_filter = []
+        relationship_filter = []
 
-        all_node_names = {nodeType.name for nodeType in schema.nodes}
-        for nodeTypeName in self.option("node") or []:
-            if nodeTypeName in all_node_names:
-                node_filter.append(nodeTypeName)
+        all_node_names = {node_type.name for node_type in schema.nodes}
+        for node_type_name in self.option("node") or []:
+            if node_type_name in all_node_names:
+                node_filter.append(node_type_name)
             else:
-                logger.warning("Unknown node type %r — skipping", nodeTypeName)
+                logger.warning("Unknown node type %r — skipping", node_type_name)
 
-        all_rel_names = {
-            relationshipType.name for relationshipType in schema.relationships
+        all_relationship_names = {
+            relationship_type.name for relationship_type in schema.relationships
         }
-        for relationshipTypeName in self.option("relationship") or []:
-            if relationshipTypeName in all_rel_names:
-                rel_filter.append(relationshipTypeName)
+        for relationship_type_name in self.option("relationship") or []:
+            if relationship_type_name in all_relationship_names:
+                relationship_filter.append(relationship_type_name)
             else:
                 logger.warning(
-                    "Unknown relationship type %r — skipping", relationshipTypeName
+                    "Unknown relationship type %r — skipping", relationship_type_name
                 )
 
-        return schema.filtered(node_filter=node_filter, relationship_filter=rel_filter)
+        return schema.filtered(
+            node_filter=node_filter, relationship_filter=relationship_filter
+        )
 
     def parse_key_value_options(self, option_name: str) -> Dict[str, object]:
         raw = self.option(option_name) or []

@@ -1,6 +1,7 @@
 import pytest
 from hamcrest import assert_that, empty, instance_of
 
+from nodestream.databases.copy import TypeHistogram
 from nodestream.databases.null import (
     NullConnector,
     NullMigrator,
@@ -35,6 +36,14 @@ def test_make_retriever(connector):
 async def test_retriever_fetch_extractors(retriever):
     results = [result async for result in retriever.fetch_extractors()]
     assert_that(results, empty())
+
+
+@pytest.mark.asyncio
+async def test_retriever_build_histogram_returns_empty(retriever):
+    histogram = await retriever.build_histogram()
+    assert_that(histogram, instance_of(TypeHistogram))
+    assert histogram.node_counts == {}
+    assert histogram.relationship_counts == {}
 
 
 def test_make_type_retriever_accepts_kwargs(connector):

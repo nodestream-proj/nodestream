@@ -9,7 +9,6 @@ from nodestream.databases.copy import (
     TypeHistogram,
     TypeRetriever,
 )
-from nodestream.model import Node, Relationship, RelationshipWithNodes
 from nodestream.pipeline import Extractor
 from nodestream.pipeline.object_storage import ObjectStore
 from nodestream.pipeline.progress_reporter import PipelineProgressReporter
@@ -173,40 +172,6 @@ async def test_extract_records_propagates_extractor_error(mocker, basic_schema):
 
 
 # ---------------------------------------------------------------------------
-# convert helpers (still on Copier for key reorganization)
-# ---------------------------------------------------------------------------
-
-
-def test_convert_node_to_ingest(subject):
-    input_node = Node("Person", properties={"name": "bob", "age": 30})
-    output_node = Node("Person", key_values={"name": "bob"}, properties={"age": 30})
-    ingest = subject.convert_node_to_ingest(input_node)
-    assert ingest == output_node.into_ingest()
-
-
-def test_convert_node_to_ingest_with_unknown_type_does_not_error(subject):
-    input_node = Node("UnknownType", properties={"name": "bob"})
-    ingest = subject.convert_node_to_ingest(input_node)
-    assert ingest.source.key_values == {}
-
-
-def test_convert_node_to_ingest_with_none_type_does_not_error(subject):
-    input_node = Node(type=None, properties={"name": "bob"})
-    ingest = subject.convert_node_to_ingest(input_node)
-    assert ingest.source.key_values == {}
-
-
-def test_convert_relationship_to_ingest(subject):
-    rel = RelationshipWithNodes(
-        Node("Person", properties={"name": "Bob"}),
-        Node("Person", properties={"name": "Alice"}),
-        Relationship("KNOWS", {"since": 2010}),
-    )
-    ingest = subject.convert_relationship_to_ingest(rel)
-    assert ingest == rel.into_ingest()
-
-
-# ---------------------------------------------------------------------------
 # Concurrency tests
 # ---------------------------------------------------------------------------
 
@@ -260,13 +225,18 @@ def test_type_histogram_default():
 
 
 # ---------------------------------------------------------------------------
-# TypeRetriever.build_histogram default
+# TypeRetriever.build_histogram abstract
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_type_retriever_build_histogram_default(basic_schema):
+async def test_type_retriever_build_histogram_is_abstract(basic_schema):
+    """TypeRetriever.build_histogram is abstract — subclasses must implement it."""
+
     class MinimalRetriever(TypeRetriever):
+        async def build_histogram(self) -> TypeHistogram:
+            return TypeHistogram()
+
         async def fetch_extractors(self):
             return
             yield  # pragma: no cover

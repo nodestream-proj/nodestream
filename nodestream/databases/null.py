@@ -3,7 +3,7 @@ from typing import Iterable
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from ..schema.migrations import Migrator
 from ..schema.migrations.operations import Operation
-from .copy import TypeRetriever
+from .copy import TypeHistogram, TypeRetriever
 from .database_connector import DatabaseConnector
 from .query_executor import (
     OperationOnNodeIdentity,
@@ -51,6 +51,9 @@ class NullRetriever(TypeRetriever):
         from ..schema.state import Schema
 
         super().__init__(schema=Schema())
+
+    async def build_histogram(self) -> TypeHistogram:
+        return TypeHistogram()
 
     async def fetch_extractors(self):
         return

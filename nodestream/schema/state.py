@@ -699,14 +699,14 @@ class Schema(WritesToYamlToStdout, LoadsFromYamlFile):
 
         # Determine which nodes to seed from the explicit filter.
         included_nodes: Set[str] = (
-            set(node_filter) if node_filter else {n.name for n in self.nodes}
+            set(node_filter) if node_filter else {node.name for node in self.nodes}
         )
 
         # Determine which relationship types are allowed.
         included_rels: Set[str] = (
             set(relationship_filter)
             if relationship_filter
-            else {r.name for r in self.relationships}
+            else {relationship.name for relationship in self.relationships}
         )
 
         # Build the set of surviving adjacencies (and collect endpoint nodes).

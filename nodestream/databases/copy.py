@@ -41,12 +41,12 @@ class TypeHistogram:
 
     def log(self, logger: Logger) -> None:
         logger.info("Node type histogram (descending):")
-        for nodeType in self.sorted_node_types():
-            logger.info("  %s: %d", nodeType, self.node_counts[nodeType])
+        for node_type in self.sorted_node_types():
+            logger.info("  %s: %d", node_type, self.node_counts[node_type])
         logger.info("Relationship type histogram (descending):")
-        for relationshipType in self.sorted_relationship_types():
+        for relationship_type in self.sorted_relationship_types():
             logger.info(
-                "  %s: %d", relationshipType, self.relationship_counts[relationshipType]
+                "  %s: %d", relationship_type, self.relationship_counts[relationship_type]
             )
         logger.info(
             "Total nodes: %d, Total relationships: %d",
@@ -78,13 +78,10 @@ class TypeRetriever(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     async def build_histogram(self) -> TypeHistogram:
-        """Return count estimates for all types to be copied.
-
-        Default returns an empty histogram. Subclasses that support counting
-        should override this to issue real COUNT queries.
-        """
-        return TypeHistogram()
+        """Return count estimates for all types to be copied."""
+        raise NotImplementedError
 
 
 class Copier(Extractor):
@@ -113,59 +110,41 @@ class Copier(Extractor):
 
     async def extract_records(self):
         semaphore = asyncio.Semaphore(self.concurrency_limit)
-        recordQueue: asyncio.Queue = asyncio.Queue(maxsize=self.queue_size)
+        record_queue: asyncio.Queue = asyncio.Queue(maxsize=self.queue_size)
 
-        async def runExtractor(extractor: Extractor) -> None:
+        async def run_extractor(extractor: Extractor) -> None:
             async with semaphore:
                 Metrics.get().increment(ACTIVE_QUERIES)
                 try:
                     async for record in extractor.extract_records():
-                        await recordQueue.put(record)
+                        await record_queue.put(record)
                 finally:
                     Metrics.get().decrement(ACTIVE_QUERIES)
 
-        async def produceAll() -> None:
+        async def produce_all() -> None:
             tasks = []
             try:
                 async for extractor in self.type_retriever.fetch_extractors():
-                    tasks.append(asyncio.create_task(runExtractor(extractor)))
+                    tasks.append(asyncio.create_task(run_extractor(extractor)))
                 await asyncio.gather(*tasks)
             finally:
-                await recordQueue.put(DoneObject)
+                await record_queue.put(DoneObject)
 
-        producerTask = asyncio.create_task(produceAll())
-        producerError = None
+        producer_task = asyncio.create_task(produce_all())
+        producer_error = None
         try:
             while True:
-                record = await recordQueue.get()
+                record = await record_queue.get()
                 if record is DoneObject:
                     break
                 yield record
         finally:
             try:
-                await producerTask
+                await producer_task
             except Exception as exc:
-                producerError = exc
-        if producerError is not None:
-            raise producerError
-
-    def reorganize_node_key_properties(self, node):
-        """Move key fields from properties into key_values for ingestion."""
-        nodeTypeDefinition = self.type_retriever.schema.get_node_type_by_name(node.type)
-        if nodeTypeDefinition is None:
-            return
-        for keyName in nodeTypeDefinition.keys:
-            if keyName in node.properties:
-                node.key_values[keyName] = node.properties.pop(keyName)
-
-    def convert_node_to_ingest(self, node):
-        self.reorganize_node_key_properties(node)
-        return node.into_ingest()
-
-    def convert_relationship_to_ingest(self, relationship):
-        self.reorganize_node_key_properties(relationship.from_node)
-        self.reorganize_node_key_properties(relationship.to_node)
-        return relationship.into_ingest()
+                producer_error = exc
+        if producer_error is not None:
+            raise producer_error
 
 
 ConcurrentCopier = Copier
