@@ -46,7 +46,9 @@ class TypeHistogram:
         logger.info("Relationship type histogram (descending):")
         for relationship_type in self.sorted_relationship_types():
             logger.info(
-                "  %s: %d", relationship_type, self.relationship_counts[relationship_type]
+                "  %s: %d",
+                relationship_type,
+                self.relationship_counts[relationship_type],
             )
         logger.info(
             "Total nodes: %d, Total relationships: %d",
