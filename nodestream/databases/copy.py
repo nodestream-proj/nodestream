@@ -24,22 +24,15 @@ class TypeHistogram:
     node_counts: Dict[str, int] = field(default_factory=dict)
     relationship_counts: Dict[str, int] = field(default_factory=dict)
 
-    def sorted_node_types(self) -> List[str]:
-        return sorted(self.node_counts, key=self.node_counts.__getitem__, reverse=True)
-
-    def sorted_relationship_types(self) -> List[str]:
-        return sorted(
-            self.relationship_counts,
-            key=self.relationship_counts.__getitem__,
-            reverse=True,
-        )
+    def sorted_types_by_count(self, counts: Dict[str, int]) -> List[str]:
+        return sorted(counts, key=counts.__getitem__, reverse=True)
 
     def log(self, logger: Logger) -> None:
         logger.info("Node type histogram (descending):")
-        for node_type in self.sorted_node_types():
+        for node_type in self.sorted_types_by_count(self.node_counts):
             logger.info("  %s: %d", node_type, self.node_counts[node_type])
         logger.info("Relationship type histogram (descending):")
-        for relationship_type in self.sorted_relationship_types():
+        for relationship_type in self.sorted_types_by_count(self.relationship_counts):
             logger.info(
                 "  %s: %d",
                 relationship_type,
@@ -58,6 +51,10 @@ class TypeRetriever(ABC):
     Owns the schema and is responsible for building a TypeHistogram and yielding
     Extractor objects for each type in the copy run. The Copier drives those
     extractors concurrently; concurrency parameters belong to the Copier, not here.
+
+    Required call order: ``build_histogram()`` must be awaited before
+    ``fetch_extractors()`` is iterated. Implementations should assert this
+    invariant; the Copier guarantees it via ``start()``.
     """
 
     def __init__(self, schema: Schema) -> None:
@@ -65,7 +62,10 @@ class TypeRetriever(ABC):
 
     @abstractmethod
     async def fetch_extractors(self) -> AsyncGenerator[Extractor, None]:
-        """Yield all Extractor objects for this copy run in implementation-defined order."""
+        """Yield all Extractor objects for this copy run in implementation-defined order.
+
+        ``build_histogram()`` must be called before iterating this generator.
+        """
         raise NotImplementedError
 
     @abstractmethod
@@ -80,6 +80,12 @@ class Copier(Extractor):
     Pulls Extractor objects from fetch_extractors() and runs them concurrently
     up to concurrency_limit via a producer/consumer queue. No branching on
     types or shards — all of that lives in the TypeRetriever.
+
+    Args:
+        type_retriever: Supplies the extractors and histogram for this run.
+        concurrency_limit: Maximum number of extractor tasks running at once.
+        queue_size: Maximum records buffered between producer and consumer.
+            0 means unbounded.
     """
 
     def __init__(
@@ -137,6 +143,8 @@ class Copier(Extractor):
             try:
                 await producer_task
             except Exception as exc:
+                # Store the error instead of raising here so the finally block
+                # completes before propagating — re-raised immediately after.
                 producer_error = exc
         if producer_error is not None:
             raise producer_error

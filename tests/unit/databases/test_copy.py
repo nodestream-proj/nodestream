@@ -71,12 +71,12 @@ def _make_step_context():
 
 def test_histogram_sorted_node_types():
     h = TypeHistogram({"Person": 10, "Address": 200, "Device": 5})
-    assert h.sorted_node_types() == ["Address", "Person", "Device"]
+    assert h.sorted_types_by_count(h.node_counts) == ["Address", "Person", "Device"]
 
 
 def test_histogram_sorted_relationship_types():
     h = TypeHistogram(relationship_counts={"KNOWS": 5, "LIVES_AT": 100})
-    assert h.sorted_relationship_types() == ["LIVES_AT", "KNOWS"]
+    assert h.sorted_types_by_count(h.relationship_counts) == ["LIVES_AT", "KNOWS"]
 
 
 def test_histogram_log(mocker):
