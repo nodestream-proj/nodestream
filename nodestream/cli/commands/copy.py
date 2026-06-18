@@ -1,5 +1,4 @@
 from logging import getLogger
-from typing import Dict
 
 from cleo.helpers import option
 
@@ -123,7 +122,7 @@ class Copy(NodestreamCommand):
             try:
                 from_target = self.get_taget_from_user(project, "from")
                 to_target = self.get_taget_from_user(project, "to")
-                preloadNodes = bool(self.option("preload-nodes"))
+                preload_nodes = bool(self.option("preload-nodes"))
 
                 full_schema = project.make_schema_for_copy(
                     include_additional_types=False
@@ -134,13 +133,13 @@ class Copy(NodestreamCommand):
                 step_outbox_size = int(self.option("step-outbox-size"))
                 flush_concurrency = int(self.option("flush-concurrency"))
                 concurrency_limit = int(self.option("concurrency-limit"))
-                shardSizeRaw = self.option("shard-size")
+                shard_size_raw = self.option("shard-size")
                 connector_overrides = self.parse_key_value_options("connector-option")
                 retriever_overrides = self.parse_key_value_options("retriever-option")
 
-                retriever_overrides.setdefault("preload_nodes", preloadNodes)
-                if shardSizeRaw is not None:
-                    retriever_overrides.setdefault("shard_size", int(shardSizeRaw))
+                retriever_overrides.setdefault("preload_nodes", preload_nodes)
+                if shard_size_raw is not None:
+                    retriever_overrides.setdefault("shard_size", int(shard_size_raw))
             except UnknownTargetError:
                 return 1
 
@@ -149,11 +148,11 @@ class Copy(NodestreamCommand):
                 extra={
                     "from": from_target.name,
                     "to": to_target.name,
-                    "preload_nodes": preloadNodes,
-                    "node_types": [nodeType.name for nodeType in schema.nodes],
+                    "preload_nodes": preload_nodes,
+                    "node_types": [node_type.name for node_type in schema.nodes],
                     "relationship_types": [
-                        relationshipType.name
-                        for relationshipType in schema.relationships
+                        relationship_type.name
+                        for relationship_type in schema.relationships
                     ],
                     "retriever_overrides": retriever_overrides,
                     "connector_overrides": connector_overrides,
@@ -210,9 +209,9 @@ class Copy(NodestreamCommand):
             node_filter=node_filter, relationship_filter=relationship_filter
         )
 
-    def parse_key_value_options(self, option_name: str) -> Dict[str, object]:
+    def parse_key_value_options(self, option_name: str) -> dict[str, object]:
         raw = self.option(option_name) or []
-        overrides: Dict[str, object] = {}
+        overrides: dict[str, object] = {}
         for item in raw:
             key, _, value = item.partition("=")
             if value.lower() == "true":

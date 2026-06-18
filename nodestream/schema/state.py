@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Callable, Dict, Iterable, Optional, Set, Tuple
 
 from nodestream.utils import LayeredDict, LayeredList
 
@@ -680,8 +680,8 @@ class Schema(WritesToYamlToStdout, LoadsFromYamlFile):
 
     def filtered(
         self,
-        node_filter: Optional[List[str]] = None,
-        relationship_filter: Optional[List[str]] = None,
+        node_filter: list[str] | None = None,
+        relationship_filter: list[str] | None = None,
     ) -> "Schema":
         """Return a new Schema restricted to the specified types.
 

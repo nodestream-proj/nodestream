@@ -48,6 +48,7 @@ class NullQueryExecutor(QueryExecutor):
 
 class NullRetriever(TypeRetriever):
     def __init__(self, **_):
+        # Local import avoids a circular dependency: schema.state → databases → copy
         from ..schema.state import Schema
 
         super().__init__(schema=Schema())
