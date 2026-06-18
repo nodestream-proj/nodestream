@@ -10,11 +10,6 @@ from ..pipeline.channel import DoneObject
 from ..pipeline.step import StepContext
 from ..schema import Schema
 
-ORCHESTRATOR_QUEUE = Metric(
-    "orchestrator_queue",
-    "Number of extractor jobs pending in the copier queue",
-    accumulate=False,
-)
 ACTIVE_QUERIES = Metric(
     "active_queries",
     "Number of active database queries in the copier",
@@ -60,11 +55,9 @@ class TypeHistogram:
 class TypeRetriever(ABC):
     """Abstract base for retrieving graph objects from a source database.
 
-    The retriever owns schema, type decomposition, shard splitting, histogram
-    computation, and node_only policy. It exposes two async generators of
-    Extractor objects — one for node shards, one for relationship shards.
-    The Copier drives those extractors concurrently; concurrency parameters
-    belong to the Copier, not here.
+    Owns the schema and is responsible for building a TypeHistogram and yielding
+    Extractor objects for each type in the copy run. The Copier drives those
+    extractors concurrently; concurrency parameters belong to the Copier, not here.
     """
 
     def __init__(self, schema: Schema) -> None:
@@ -72,12 +65,7 @@ class TypeRetriever(ABC):
 
     @abstractmethod
     async def fetch_extractors(self) -> AsyncGenerator[Extractor, None]:
-        """Yield all Extractor objects for this copy run.
-
-        preload_nodes=True  → yield node extractors first, then relationship extractors.
-        preload_nodes=False → yield relationship extractors only (RelationshipWithNodes
-                              carries both endpoints, so a separate node pass is not needed).
-        """
+        """Yield all Extractor objects for this copy run in implementation-defined order."""
         raise NotImplementedError
 
     @abstractmethod
@@ -124,6 +112,11 @@ class Copier(Extractor):
                     Metrics.get().decrement(ACTIVE_QUERIES)
 
         async def produce_all() -> None:
+            # All extractor tasks are created upfront before any are awaited.
+            # The semaphore enforces concurrency_limit, so tasks queue behind
+            # it rather than running freely. Creating them all at once lets
+            # asyncio schedule them as soon as a semaphore slot opens without
+            # requiring the producer loop to still be running.
             tasks = []
             try:
                 async for extractor in self.type_retriever.fetch_extractors():
