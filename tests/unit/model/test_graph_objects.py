@@ -26,8 +26,10 @@ def test_node_into_ingest():
 def test_relationship_into_ingest_defaults():
     """into_ingest() respects the creation rule fields on RelationshipWithNodes.
 
-    Default construction uses EAGER on both sides; the retriever is responsible
-    for setting MATCH_ONLY when performing a copy operation.
+    Default construction uses MATCH_ONLY on both node sides to preserve safe
+    semantics for the normal ingest pipeline — endpoint nodes are matched, not
+    created. The copy extractor explicitly sets EAGER on both sides when it
+    constructs RelationshipWithNodes so that missing destination nodes are created.
     """
     relationship = Relationship("KNOWS", {"since": 2010})
     from_node = Node("Person", {"name": "John"})
@@ -39,14 +41,14 @@ def test_relationship_into_ingest_defaults():
     assert_that(ingest.source, equal_to(from_node))
     assert_that(ingest.relationships[0].from_node, equal_to(from_node))
     assert_that(ingest.relationships[0].to_node, equal_to(to_node))
-    # Defaults: both sides EAGER (no hardcoding in into_ingest anymore).
+    # Defaults: MATCH_ONLY — safe for normal ingest, copy sets EAGER explicitly.
     assert_that(
         ingest.relationships[0].from_side_node_creation_rule,
-        equal_to(NodeCreationRule.EAGER),
+        equal_to(NodeCreationRule.MATCH_ONLY),
     )
     assert_that(
         ingest.relationships[0].to_side_node_creation_rule,
-        equal_to(NodeCreationRule.EAGER),
+        equal_to(NodeCreationRule.MATCH_ONLY),
     )
     assert_that(
         ingest.relationships[0].relationship_creation_rule,

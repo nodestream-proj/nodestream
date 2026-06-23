@@ -190,8 +190,8 @@ class RelationshipWithNodes(DeduplicatableObject):
     relationship: Relationship
     outbound: bool = True  # lets us maintain knowledge of which node is the source node
 
-    to_side_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
-    from_side_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
+    to_side_node_creation_rule: NodeCreationRule = NodeCreationRule.MATCH_ONLY
+    from_side_node_creation_rule: NodeCreationRule = NodeCreationRule.MATCH_ONLY
     relationship_creation_rule: RelationshipCreationRule = (
         RelationshipCreationRule.EAGER
     )

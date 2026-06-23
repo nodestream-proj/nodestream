@@ -141,12 +141,16 @@ class Copier(Extractor):
                     break
                 yield record
         finally:
+            # Cancel the producer first so it stops blocking on a full queue
+            # if the consumer exited early (exception or generator abandoned).
+            producer_task.cancel()
             try:
                 await producer_task
-            except Exception as exc:
-                # Store the error instead of raising here so the finally block
-                # completes before propagating — re-raised immediately after.
-                producer_error = exc
+            except (asyncio.CancelledError, Exception) as exc:
+                # Store non-cancellation errors to re-raise after the finally
+                # completes. CancelledError is expected when we cancelled above.
+                if not isinstance(exc, asyncio.CancelledError):
+                    producer_error = exc
         if producer_error is not None:
             raise producer_error
 
