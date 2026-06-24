@@ -59,7 +59,7 @@ class PipelineInitializationArguments:
 
     @classmethod
     def for_introspection(cls) -> "PipelineInitializationArguments":
-        return cls(annotations=["introspection"])
+        return cls(annotations=["introspection"], schema_only=True)
 
     @classmethod
     def for_schema_collection(cls) -> "PipelineInitializationArguments":
@@ -130,8 +130,11 @@ class StepDefinition(LoadsFromYaml):
         Resolves the class by import path without instantiating it, so this
         is safe to call in a credential-free schema-collection context.
         """
-        resolved_class = find_class(self.implementation_path)
-        return issubclass(resolved_class, ExpandsSchema)
+        try:
+            resolved_class = find_class(self.implementation_path)
+            return issubclass(resolved_class, ExpandsSchema)
+        except Exception:
+            return False
 
     def load_step(self) -> Step:
         arguments = LazyLoadedArgument.resolve_if_needed(self.arguments)
@@ -166,12 +169,17 @@ class PipelineFileContents(LoadsFromYamlFile):
 
     def initialize_with_arguments(self, init_args: PipelineInitializationArguments):
         with set_config(init_args.effective_config_values):
-            steps_defined_in_file = [
-                step_definition.load_step()
-                for step_definition in self.step_definitions
-                if step_definition.should_be_loaded(init_args.annotations)
-                and (not init_args.schema_only or step_definition.expands_schema())
-            ]
+            steps_defined_in_file = []
+            for step_definition in self.step_definitions:
+                if not step_definition.should_be_loaded(init_args.annotations):
+                    continue
+                if init_args.schema_only and not step_definition.expands_schema():
+                    continue
+                try:
+                    steps_defined_in_file.append(step_definition.load_step())
+                except Exception:
+                    if not init_args.schema_only:
+                        raise
             steps = steps_defined_in_file + (init_args.extra_steps or [])
         return Pipeline(
             steps,

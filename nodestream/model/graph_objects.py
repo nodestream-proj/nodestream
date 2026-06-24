@@ -190,8 +190,8 @@ class RelationshipWithNodes(DeduplicatableObject):
     relationship: Relationship
     outbound: bool = True  # lets us maintain knowledge of which node is the source node
 
-    to_side_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
-    from_side_node_creation_rule: NodeCreationRule = NodeCreationRule.EAGER
+    to_side_node_creation_rule: NodeCreationRule = NodeCreationRule.MATCH_ONLY
+    from_side_node_creation_rule: NodeCreationRule = NodeCreationRule.MATCH_ONLY
     relationship_creation_rule: RelationshipCreationRule = (
         RelationshipCreationRule.EAGER
     )
@@ -218,13 +218,16 @@ class RelationshipWithNodes(DeduplicatableObject):
     def into_ingest(self) -> "DesiredIngestion":
         from .desired_ingestion import DesiredIngestion
 
-        ingest = DesiredIngestion(source=self.from_node)
+        ingest = DesiredIngestion(
+            source=self.from_node,
+            source_node_creation_rule=self.from_side_node_creation_rule,
+        )
         ingest.add_relationship(
             self.to_node,
             self.relationship,
             outbound=True,
-            node_creation_rule=NodeCreationRule.MATCH_ONLY,
-            relationship_creation_rule=RelationshipCreationRule.EAGER,
+            node_creation_rule=self.to_side_node_creation_rule,
+            relationship_creation_rule=self.relationship_creation_rule,
         )
         return ingest
 

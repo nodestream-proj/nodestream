@@ -50,57 +50,126 @@ def test_get_target_from_user_from_option_unknown_target(copy_command, project, 
     copy_command.line_error.assert_called_once_with("Unknown target: unknown")
 
 
-def test_get_type_selection_from_user_from_option(copy_command, mocker, basic_schema):
-    copy_command.option = mocker.Mock(side_effect=[False, ["Person"]])
-    types = copy_command.get_type_selection_from_user(basic_schema.nodes, "node")
-    assert_that(types, equal_to(["Person"]))
-    copy_command.option.assert_called_with("node")
+# ---------------------------------------------------------------------------
+# apply_schema_filter tests
+# ---------------------------------------------------------------------------
 
 
-def test_get_type_selection_from_user_from_prompt(copy_command, mocker, basic_schema):
-    copy_command.option = mocker.Mock(side_effect=[False, None])
-    copy_command.choice = mocker.Mock(return_value=["Person"])
-    types = copy_command.get_type_selection_from_user(basic_schema.nodes, "node")
-    assert_that(types, equal_to(["Person"]))
-    copy_command.option.assert_called_with("node")
-    copy_command.choice.assert_called_with(
-        "Which node types would you like to copy? (You can select multiple by separating them with a comma)",
-        ["Person", "Organization"],
-        multiple=True,
-    )
-
-
-def test_get_type_selection_from_user_from_all_flag(copy_command, mocker, basic_schema):
-    copy_command.option = mocker.Mock(return_value=True)
-    types = copy_command.get_type_selection_from_user(basic_schema.nodes, "node")
-    assert_that(types, equal_to(["Person", "Organization"]))
-    copy_command.option.assert_called_once_with("all")
-
-
-def test_get_type_selection_from_user_from_option_unknown_type(
+def test_apply_schema_filter_no_filters_returns_full_schema(
     copy_command, mocker, basic_schema
 ):
-    copy_command.line_error = mocker.Mock()
-    with pytest.raises(UnknownTargetError):
-        copy_command.option = mocker.Mock(side_effect=[False, ["Unknown"]])
-        copy_command.get_type_selection_from_user(basic_schema.nodes, "node")
-    copy_command.line_error.assert_called_once_with(
-        "Unknown node type: Unknown. Valid options are: Person, Organization"
+    copy_command.option = mocker.Mock(
+        side_effect=lambda name: [] if name in ("node", "relationship") else None
     )
+    result = copy_command.apply_schema_filter(basic_schema)
+    assert {n.name for n in result.nodes} == {n.name for n in basic_schema.nodes}
+
+
+def test_apply_schema_filter_node_filter(copy_command, mocker, basic_schema):
+    def opt(name):
+        if name == "node":
+            return ["Person"]
+        return []
+
+    copy_command.option = mocker.Mock(side_effect=opt)
+    result = copy_command.apply_schema_filter(basic_schema)
+    node_names = {n.name for n in result.nodes}
+    assert "Person" in node_names
+
+
+def test_apply_schema_filter_unknown_node_skipped(copy_command, mocker, basic_schema):
+    def opt(name):
+        if name == "node":
+            return ["UnknownType"]
+        return []
+
+    copy_command.option = mocker.Mock(side_effect=opt)
+    # Should not raise — unknown types are warned and skipped.
+    result = copy_command.apply_schema_filter(basic_schema)
+    # No unknown nodes survive into the filtered schema.
+    node_names = {n.name for n in result.nodes}
+    assert "UnknownType" not in node_names
+
+
+def test_apply_schema_filter_unknown_relationship_skipped(
+    copy_command, mocker, basic_schema
+):
+    def opt(name):
+        if name == "relationship":
+            return ["NONEXISTENT"]
+        return []
+
+    copy_command.option = mocker.Mock(side_effect=opt)
+    # Should not raise — unknown types are warned and skipped.
+    result = copy_command.apply_schema_filter(basic_schema)
+    rel_names = {r.name for r in result.relationships}
+    assert "NONEXISTENT" not in rel_names
+
+
+def test_apply_schema_filter_known_relationship_included(
+    copy_command, mocker, basic_schema
+):
+    def opt(name):
+        if name == "relationship":
+            return ["BEST_FRIEND_OF"]
+        return []
+
+    copy_command.option = mocker.Mock(side_effect=opt)
+    result = copy_command.apply_schema_filter(basic_schema)
+    rel_names = {r.name for r in result.relationships}
+    assert "BEST_FRIEND_OF" in rel_names
+    assert "HAS_EMPLOYEE" not in rel_names
+
+
+# ---------------------------------------------------------------------------
+# handle_async integration tests
+# ---------------------------------------------------------------------------
+
+
+def _make_handle_async_setup(
+    copy_command, mocker, project, basic_schema, option_values
+):
+    project.make_schema_for_copy = mocker.Mock(return_value=basic_schema)
+    copy_command.run_operation = mocker.AsyncMock(
+        side_effect=[None, None, project, None]
+    )
+    copy_command.get_taget_from_user = mocker.Mock(
+        side_effect=[project.targets_by_name["test"], project.targets_by_name["test2"]]
+    )
+    copy_command.apply_schema_filter = mocker.Mock(return_value=basic_schema)
+    copy_command.option = mocker.Mock(side_effect=lambda name: option_values[name])
+    mocker.patch.object(
+        type(copy_command),
+        "has_json_logging_set",
+        new_callable=mocker.PropertyMock,
+        return_value=False,
+    )
+
+
+_DEFAULT_OPTIONS = {
+    "node": [],
+    "relationship": [],
+    "concurrency-limit": "1",
+    "batch-size": "1000",
+    "step-outbox-size": "10000",
+    "flush-concurrency": "1",
+    "connector-option": [],
+    "retriever-option": [],
+    "shard-size": None,
+    "preload-nodes": False,
+    "reporting-frequency": "1000",
+    "metrics-interval-in-seconds": None,
+}
 
 
 @pytest.mark.asyncio
 async def test_handle_async_unknown_target_error(copy_command, mocker):
-    # assume we load the project and the user selects a target that doesn't exist
     copy_command.line_error = mocker.Mock()
     copy_command.run_operation = mocker.AsyncMock()
     copy_command.get_taget_from_user = mocker.Mock(side_effect=UnknownTargetError)
-    # InitializeLogger, InitializeMetricsHandler, InitializeProject = 3 operations
-    # then get_taget_from_user raises, so RunCopy is never called.
     result = await copy_command.handle_async()
     assert_that(result, equal_to(1))
     assert copy_command.run_operation.await_count == 3
-    # Verify no RunCopy operation was created.
     run_copy_calls = [
         c
         for c in copy_command.run_operation.call_args_list
@@ -111,105 +180,82 @@ async def test_handle_async_unknown_target_error(copy_command, mocker):
 
 @pytest.mark.asyncio
 async def test_handle_async(copy_command, mocker, basic_schema, project):
-    project.make_schema = mocker.Mock(return_value=basic_schema)
-    copy_command.line = mocker.Mock()
-    copy_command.run_operation = mocker.AsyncMock(
-        side_effect=[None, None, project, None]
+    _make_handle_async_setup(
+        copy_command, mocker, project, basic_schema, _DEFAULT_OPTIONS
     )
-    copy_command.get_taget_from_user = mocker.Mock(
-        side_effect=[project.targets_by_name["test"], project.targets_by_name["test2"]]
-    )
-    copy_command.get_type_selection_from_user = mocker.Mock(
-        side_effect=[["Person", "Organization"], ["BEST_FRIEND_OF", "HAS_EMPLOYEE"]]
-    )
-
-    option_values = {
-        "concurrency-limit": "1",
-        "batch-size": "1000",
-        "step-outbox-size": "10000",
-        "flush-concurrency": "1",
-        "connector-option": [],
-        "retriever-option": [],
-        "reporting-frequency": "1000",
-        "metrics-interval-in-seconds": None,
-    }
-    copy_command.option = mocker.Mock(side_effect=lambda name: option_values[name])
-    mocker.patch.object(
-        type(copy_command),
-        "has_json_logging_set",
-        new_callable=mocker.PropertyMock,
-        return_value=False,
-    )
-
     await copy_command.handle_async()
-    # InitializeLogger, InitializeMetricsHandler, InitializeProject, RunCopy = 4
     assert copy_command.run_operation.await_count == 4
 
-    # The last operation should be a RunCopy with the expected arguments.
-    run_copy_call = copy_command.run_operation.call_args_list[-1]
-    run_copy_op = run_copy_call.args[0]
+    run_copy_op = copy_command.run_operation.call_args_list[-1].args[0]
     assert isinstance(run_copy_op, RunCopy)
     assert run_copy_op.from_target == project.targets_by_name["test"]
     assert run_copy_op.to_target == project.targets_by_name["test2"]
-    assert run_copy_op.node_types == ["Person", "Organization"]
-    assert run_copy_op.relationship_types == ["BEST_FRIEND_OF", "HAS_EMPLOYEE"]
+    assert run_copy_op.schema is basic_schema
     assert run_copy_op.batch_size == 1000
-    assert run_copy_op.concurrency_limit == 1
     assert run_copy_op.flush_concurrency == 1
     assert run_copy_op.connector_overrides == {}
-    assert run_copy_op.retriever_overrides == {}
+    assert run_copy_op.concurrency_limit == 1
 
 
 @pytest.mark.asyncio
 async def test_handle_async_with_non_default_options(
     copy_command, mocker, basic_schema, project
 ):
-    """Conditional output lines should fire when concurrency/overrides are non-default."""
-    project.make_schema = mocker.Mock(return_value=basic_schema)
-    copy_command.line = mocker.Mock()
-    copy_command.run_operation = mocker.AsyncMock(
-        side_effect=[None, None, project, None]
-    )
-    copy_command.get_taget_from_user = mocker.Mock(
-        side_effect=[project.targets_by_name["test"], project.targets_by_name["test2"]]
-    )
-    copy_command.get_type_selection_from_user = mocker.Mock(
-        side_effect=[["Person", "Organization"], ["BEST_FRIEND_OF"]]
-    )
-
-    option_values = {
+    opts = {
+        **_DEFAULT_OPTIONS,
         "concurrency-limit": "4",
-        "batch-size": "1000",
-        "step-outbox-size": "10000",
         "flush-concurrency": "3",
         "connector-option": ["uri=bolt://remote:7687"],
         "retriever-option": ["limit=500", "sample_ratio=50"],
-        "reporting-frequency": "1000",
-        "metrics-interval-in-seconds": None,
     }
-    copy_command.option = mocker.Mock(side_effect=lambda name: option_values[name])
-    mocker.patch.object(
-        type(copy_command),
-        "has_json_logging_set",
-        new_callable=mocker.PropertyMock,
-        return_value=False,
-    )
-
+    _make_handle_async_setup(copy_command, mocker, project, basic_schema, opts)
     await copy_command.handle_async()
 
     run_copy_op = copy_command.run_operation.call_args_list[-1].args[0]
     assert isinstance(run_copy_op, RunCopy)
-    assert run_copy_op.concurrency_limit == 4
     assert run_copy_op.flush_concurrency == 3
     assert run_copy_op.connector_overrides == {"uri": "bolt://remote:7687"}
-    assert run_copy_op.retriever_overrides == {"limit": 500, "sample_ratio": 50}
+    assert run_copy_op.concurrency_limit == 4
+    assert run_copy_op.retriever_overrides.get("limit") == 500
+    assert run_copy_op.retriever_overrides.get("sample_ratio") == 50
 
-    # Verify the conditional output lines were printed.
-    printed = [str(c) for c in copy_command.line.call_args_list]
-    assert any("Concurrency Limit" in s for s in printed)
-    assert any("Flush Concurrency" in s for s in printed)
-    assert any("Connector Overrides" in s for s in printed)
-    assert any("Retriever Options" in s for s in printed)
+
+@pytest.mark.asyncio
+async def test_handle_async_with_shard_size(
+    copy_command, mocker, basic_schema, project
+):
+    opts = {**_DEFAULT_OPTIONS, "shard-size": "5000"}
+    _make_handle_async_setup(copy_command, mocker, project, basic_schema, opts)
+    await copy_command.handle_async()
+    run_copy_op = copy_command.run_operation.call_args_list[-1].args[0]
+    assert run_copy_op.retriever_overrides.get("shard_size") == 5000
+
+
+@pytest.mark.asyncio
+async def test_handle_async_with_preload_nodes(
+    copy_command, mocker, basic_schema, project
+):
+    opts = {**_DEFAULT_OPTIONS, "preload-nodes": True}
+    _make_handle_async_setup(copy_command, mocker, project, basic_schema, opts)
+    await copy_command.handle_async()
+    run_copy_op = copy_command.run_operation.call_args_list[-1].args[0]
+    assert run_copy_op.retriever_overrides.get("preload_nodes") is True
+
+
+@pytest.mark.asyncio
+async def test_handle_async_always_loads_schema(
+    copy_command, mocker, basic_schema, project
+):
+    _make_handle_async_setup(
+        copy_command, mocker, project, basic_schema, _DEFAULT_OPTIONS
+    )
+    await copy_command.handle_async()
+    project.make_schema_for_copy.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# parse_key_value_options tests
+# ---------------------------------------------------------------------------
 
 
 def test_parse_key_value_options_int(copy_command, mocker):

@@ -1,9 +1,9 @@
-from typing import AsyncGenerator, Iterable
+from typing import Iterable
 
 from ..model import IngestionHook, Node, RelationshipWithNodes, TimeToLiveConfiguration
 from ..schema.migrations import Migrator
 from ..schema.migrations.operations import Operation
-from .copy import TypeRetriever
+from .copy import TypeHistogram, TypeRetriever
 from .database_connector import DatabaseConnector
 from .query_executor import (
     OperationOnNodeIdentity,
@@ -46,25 +46,19 @@ class NullQueryExecutor(QueryExecutor):
         pass
 
 
-class NullRetriver(TypeRetriever):
-    async def preview_node_count(self, _: str) -> int:
-        return 0
+class NullRetriever(TypeRetriever):
+    def __init__(self, schema=None, **_):
+        # Local import avoids a circular dependency: schema.state → databases → copy
+        from ..schema.state import Schema
 
-    async def preview_relationship_count(self, _: str) -> int:
-        return 0
+        super().__init__(schema=schema or Schema())
 
-    def get_nodes_of_type(self, _: str) -> AsyncGenerator[Node, None]:
-        return empty_async_generator()
+    async def build_histogram(self) -> TypeHistogram:
+        return TypeHistogram()
 
-    def get_relationships_of_type_between(
-        self, __: str, ___: str, ____: str
-    ) -> AsyncGenerator[RelationshipWithNodes, None]:
-        return empty_async_generator()
-
-    def get_relationships_of_type(
-        self, _: str
-    ) -> AsyncGenerator[RelationshipWithNodes, None]:
-        return empty_async_generator()
+    async def fetch_extractors(self):
+        return
+        yield  # pragma: no cover
 
 
 class NullConnector(DatabaseConnector, alias="null"):
@@ -78,4 +72,4 @@ class NullConnector(DatabaseConnector, alias="null"):
         return NullQueryExecutor()
 
     def make_type_retriever(self, **kwargs) -> TypeRetriever:
-        return NullRetriver()
+        return NullRetriever(**kwargs)

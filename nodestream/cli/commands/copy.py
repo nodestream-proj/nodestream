@@ -1,10 +1,10 @@
-from typing import Dict, List
+from logging import getLogger
 
 from cleo.helpers import option
 
 from ...metrics import Metrics
 from ...project import Project, Target
-from ...schema import GraphObjectSchema
+from ...schema import Schema
 from ..operations import (
     InitializeLogger,
     InitializeMetricsHandler,
@@ -14,6 +14,8 @@ from ..operations import (
 from ..operations.run_pipeline import create_progress_reporter
 from .nodestream_command import NodestreamCommand
 from .shared_options import JSON_OPTION, PROJECT_FILE_OPTION, PROMETHEUS_OPTIONS
+
+logger = getLogger(__name__)
 
 
 class UnknownTargetError(Exception):
@@ -28,16 +30,15 @@ class Copy(NodestreamCommand):
         JSON_OPTION,
         option("from", "f", "The target to copy from", flag=False),
         option("to", "t", "The target to copy to", flag=False),
-        option("all", "a", "Copy all node and relationship types", flag=True),
         option(
             "node",
-            description="Specify a node type to copy",
+            description="Filter to these node types (omit for all)",
             flag=False,
             multiple=True,
         ),
         option(
             "relationship",
-            description="Specify a relationship type to copy",
+            description="Filter to these relationship types (omit for all)",
             flag=False,
             multiple=True,
         ),
@@ -90,6 +91,25 @@ class Copy(NodestreamCommand):
             flag=False,
             multiple=True,
         ),
+        option(
+            "shard-size",
+            description=(
+                "Split each type into fixed-size shards of this many records, "
+                "interleaved across types for sustained concurrency. "
+                "Requires the type retriever to support sharding. "
+                "Disabled when not set."
+            ),
+            default=None,
+            flag=False,
+        ),
+        option(
+            "preload-nodes",
+            description=(
+                "Copy nodes first, then relationships. "
+                "Useful when the destination needs nodes seeded before adjacencies are written."
+            ),
+            flag=True,
+        ),
         *PROMETHEUS_OPTIONS,
     ]
 
@@ -102,60 +122,96 @@ class Copy(NodestreamCommand):
             try:
                 from_target = self.get_taget_from_user(project, "from")
                 to_target = self.get_taget_from_user(project, "to")
-                # For copy operations we intentionally build a schema *without*
-                # expanding additional types so that we only copy the concrete
-                # node / relationship types declared in pipelines.
-                schema = project.make_schema(include_additional_types=False)
-                all_node_types = schema.nodes
-                all_rel_types = schema.relationships
-                node_types = self.get_type_selection_from_user(all_node_types, "node")
-                rel_types = self.get_type_selection_from_user(
-                    all_rel_types, "relationship"
+                preload_nodes = bool(self.option("preload-nodes"))
+
+                full_schema = project.make_schema_for_copy(
+                    include_additional_types=False
                 )
-                concurrency_limit = int(self.option("concurrency-limit"))
+                schema = self.apply_schema_filter(full_schema)
+
                 batch_size = int(self.option("batch-size"))
                 step_outbox_size = int(self.option("step-outbox-size"))
                 flush_concurrency = int(self.option("flush-concurrency"))
+                concurrency_limit = int(self.option("concurrency-limit"))
+                shard_size_raw = self.option("shard-size")
                 connector_overrides = self.parse_key_value_options("connector-option")
                 retriever_overrides = self.parse_key_value_options("retriever-option")
+
+                retriever_overrides.setdefault("preload_nodes", preload_nodes)
+                if shard_size_raw is not None:
+                    retriever_overrides.setdefault("shard_size", int(shard_size_raw))
             except UnknownTargetError:
                 return 1
 
-            self.line("Starting to Copy:")
-            self.line(f"<info>From: {from_target.name}</info>")
-            self.line(f"<info>To: {to_target.name}</info>")
-            self.line(f"<info>Node Types: {', '.join(node_types)}</info>")
-            self.line(f"<info>Relationship Types: {', '.join(rel_types)}</info>")
-            if concurrency_limit > 1:
-                self.line(f"<info>Concurrency Limit: {concurrency_limit}</info>")
-            if flush_concurrency > 1:
-                self.line(f"<info>Flush Concurrency: {flush_concurrency}</info>")
-            if connector_overrides:
-                self.line(f"<info>Connector Overrides: {connector_overrides}</info>")
-            if retriever_overrides:
-                self.line(f"<info>Retriever Options: {retriever_overrides}</info>")
+            logger.info(
+                "Starting copy",
+                extra={
+                    "from": from_target.name,
+                    "to": to_target.name,
+                    "preload_nodes": preload_nodes,
+                    "node_types": [node_type.name for node_type in schema.nodes],
+                    "relationship_types": [
+                        relationship_type.name
+                        for relationship_type in schema.relationships
+                    ],
+                    "retriever_overrides": retriever_overrides,
+                    "connector_overrides": connector_overrides,
+                },
+            )
             reporter = create_progress_reporter(self, "copy")
             await self.run_operation(
                 RunCopy(
                     from_target=from_target,
                     to_target=to_target,
                     schema=schema,
-                    node_types=node_types,
-                    relationship_types=rel_types,
-                    concurrency_limit=concurrency_limit,
                     progress_reporter=reporter,
                     batch_size=batch_size,
                     step_outbox_size=step_outbox_size,
                     flush_concurrency=flush_concurrency,
+                    concurrency_limit=concurrency_limit,
                     connector_overrides=connector_overrides,
                     retriever_overrides=retriever_overrides,
                 )
             )
         return 0
 
-    def parse_key_value_options(self, option_name: str) -> Dict[str, object]:
+    def apply_schema_filter(self, schema: Schema) -> Schema:
+        """Return a filtered schema based on --node and --relationship flags.
+
+        No flags: full schema (all nodes + all adjacencies).
+        --node A B: nodes A and B plus all adjacencies touching either,
+                    restricted by --relationship if also provided.
+        --relationship X Y: all adjacencies of type X or Y (and their endpoint nodes),
+                            restricted to nodes in --node if also provided.
+        """
+        node_filter = []
+        relationship_filter = []
+
+        all_node_names = {node_type.name for node_type in schema.nodes}
+        for node_type_name in self.option("node") or []:
+            if node_type_name in all_node_names:
+                node_filter.append(node_type_name)
+            else:
+                logger.warning("Unknown node type %r — skipping", node_type_name)
+
+        all_relationship_names = {
+            relationship_type.name for relationship_type in schema.relationships
+        }
+        for relationship_type_name in self.option("relationship") or []:
+            if relationship_type_name in all_relationship_names:
+                relationship_filter.append(relationship_type_name)
+            else:
+                logger.warning(
+                    "Unknown relationship type %r — skipping", relationship_type_name
+                )
+
+        return schema.filtered(
+            node_filter=node_filter, relationship_filter=relationship_filter
+        )
+
+    def parse_key_value_options(self, option_name: str) -> dict[str, object]:
         raw = self.option(option_name) or []
-        overrides: Dict[str, object] = {}
+        overrides: dict[str, object] = {}
         for item in raw:
             key, _, value = item.partition("=")
             if value.lower() == "true":
@@ -174,48 +230,13 @@ class Copy(NodestreamCommand):
         return overrides
 
     def get_taget_from_user(self, project: Project, action: str) -> Target:
-        # If the user has specified the target in the options, we don't need to prompt
-        # them for anything. We can just use the target they specified.
         if (choice := self.option(action)) is None:
             prompt = f"Which target would you like to copy {action}?"
             choices = [t for t in project.targets_by_name.keys()]
             choice = self.choice(prompt, choices)
 
-        # If the target they specified is unknown, we should error out.
         try:
             return project.get_target_by_name(choice)
         except ValueError:
             self.line_error(f"Unknown target: {choice}")
             raise UnknownTargetError
-
-    def get_type_selection_from_user(
-        self, types: List[GraphObjectSchema], type_name: str
-    ) -> List[str]:
-        choices = [str(t.name) for t in types]
-
-        # If the user has specified the --all flag, we don't need to prompt them for
-        # anything. We can just return all the types.
-        if self.option("all"):
-            return choices
-
-        # If the user has specified type(s) in the options, we don't need to prompt
-        # them for anything. We can just return the type they specified. If they
-        # specified an unknown type, we should error out.
-        selections_from_options = self.option(type_name)
-        if selections_from_options:
-            for selection in selections_from_options:
-                if selection not in choices:
-                    self.line_error(
-                        f"Unknown {type_name} type: {selection}. "
-                        f"Valid options are: {', '.join(choices)}"
-                    )
-                    raise UnknownTargetError
-            return selections_from_options
-
-        # If the user has not specified the type(s) in the options, we need to prompt
-        # them for the type(s). We can just return the type they specified.
-        return self.choice(
-            f"Which {type_name} types would you like to copy? (You can select multiple by separating them with a comma)",
-            choices,
-            multiple=True,
-        )

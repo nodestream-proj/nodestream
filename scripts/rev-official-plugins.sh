@@ -2,6 +2,9 @@
 
 set -e
 
+ORIGINAL_DIR="$(pwd)"
+trap 'cd "$ORIGINAL_DIR"' EXIT
+
 CURRENT_VERSION=$(poetry version -s)
 
 # Discover all plugin repos matching the nodestream-plugin-* prefix
@@ -27,18 +30,23 @@ for plugin_path in "${PLUGINS[@]}"; do
     git stash || true
     git checkout "$DEFAULT_BRANCH"
 
-    # Keep pulls simple: only fast-forward. If we can't, skip this plugin and move on.
-    if ! git pull --ff-only origin "$DEFAULT_BRANCH"; then
+    # Fetch all remote refs so that remote tracking branches (including release
+    # branches) are available locally for checkout.
+    git fetch origin
+
+    # Fast-forward the default branch. If we can't, skip this plugin.
+    if ! git merge --ff-only "origin/$DEFAULT_BRANCH"; then
         echo "Cannot fast-forward $DEFAULT_BRANCH for $plugin; skipping this plugin."
         cd - >/dev/null
         continue
     fi
 
     # Checkout the release branch or create it if it doesn't exist.
+    REMOTE_HAS_RELEASE=$(git ls-remote --heads origin "refs/heads/release-${CURRENT_VERSION}" | head -1)
     if git show-ref --verify --quiet "refs/heads/release-$CURRENT_VERSION"; then
         echo "Checking out existing local release-$CURRENT_VERSION"
         git checkout "release-$CURRENT_VERSION"
-    elif git ls-remote --heads origin | grep -q "refs/heads/release-$CURRENT_VERSION"; then
+    elif [ -n "$REMOTE_HAS_RELEASE" ]; then
         echo "Creating local tracking branch release-$CURRENT_VERSION from origin"
         git checkout -b "release-$CURRENT_VERSION" "origin/release-$CURRENT_VERSION"
     else

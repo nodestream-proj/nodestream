@@ -795,3 +795,47 @@ async def test_auto_change_detections_with_permutations(
     # Compare the detected changes to the expected changes.
     for scenario in scenario_instances:
         scenario.compare_to_expected_detections(detections)
+
+
+@pytest.mark.asyncio
+async def test_detect_node_key_changes_raises_when_key_deleted():
+    """detect_node_key_changes raises NotImplementedError when a node key is removed."""
+    memory_migrator = InMemoryMigrator()
+    input = ScenarioMigratorInput()
+
+    # Start with a node type that has two keys.
+    await memory_migrator.execute_operation(
+        CreateNodeType(name="Person", keys={"id", "email"}, properties=set())
+    )
+    from_state = StaticStateProvider(deepcopy(memory_migrator.schema))
+
+    # Build "to" state where one key is demoted to a regular property.
+    to_schema = deepcopy(memory_migrator.schema)
+    person = next(n for n in to_schema.nodes if n.name == "Person")
+    person.properties["email"].is_key = False
+    to_state = StaticStateProvider(to_schema)
+
+    detector = AutoChangeDetector(input, from_state, to_state)
+    with pytest.raises(NotImplementedError):
+        await detector.detect_changes()
+
+
+@pytest.mark.asyncio
+async def test_detect_relationship_key_changes_raises_when_key_deleted():
+    """detect_relationship_key_changes raises NotImplementedError when a key is removed."""
+    memory_migrator = InMemoryMigrator()
+    input = ScenarioMigratorInput()
+
+    await memory_migrator.execute_operation(
+        CreateRelationshipType(name="KNOWS", keys={"since", "weight"}, properties=set())
+    )
+    from_state = StaticStateProvider(deepcopy(memory_migrator.schema))
+
+    to_schema = deepcopy(memory_migrator.schema)
+    rel = next(r for r in to_schema.relationships if r.name == "KNOWS")
+    rel.properties["weight"].is_key = False
+    to_state = StaticStateProvider(to_schema)
+
+    detector = AutoChangeDetector(input, from_state, to_state)
+    with pytest.raises(NotImplementedError):
+        await detector.detect_changes()

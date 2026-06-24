@@ -462,6 +462,21 @@ class Project(ExpandsSchemaFromChildren, LoadsFromYamlFile, SavesToYamlFile):
     def get_child_expanders(self) -> Iterable[ExpandsSchema]:
         return self.scopes_by_name.values()
 
+    def make_schema_for_copy(self, include_additional_types: bool = False) -> Schema:
+        """Build schema across all pipelines regardless of annotation, for copy operations.
+
+        Unlike make_schema (which filters by the 'introspection' annotation), this loads
+        every pipeline but still only instantiates ExpandsSchema steps — so no credentials
+        are needed. This gives the full adjacency graph needed for typed relationship queries.
+        """
+        coordinator = SchemaExpansionCoordinator(
+            schema := Schema(), include_additional_types=include_additional_types
+        )
+        for scope in self.scopes_by_name.values():
+            for pipeline in scope.pipelines_by_name.values():
+                pipeline.expand_schema_for_copy(coordinator)
+        return schema
+
     def dig_for_step_of_type(
         self, step_type: Type[T]
     ) -> Iterable[Tuple[PipelineDefinition, int, T]]:

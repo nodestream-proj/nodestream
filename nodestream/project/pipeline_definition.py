@@ -181,3 +181,14 @@ class PipelineDefinition(ExpandsSchema, SavesToYaml, LoadsFromYaml):
         """Expand schema using full introspection — requires a complete environment."""
         with coordinator.pipeline_context(self.name):
             self.initialize_for_introspection().expand_schema(coordinator)
+
+    def expand_schema_for_copy(self, coordinator: SchemaExpansionCoordinator):
+        try:
+            with coordinator.pipeline_context(self.name):
+                self.initialize_for_schema_collection().expand_schema(coordinator)
+        except Exception:
+            logger.warning(
+                "Schema collection failed for pipeline '%s'; skipping.",
+                self.name,
+                exc_info=True,
+            )

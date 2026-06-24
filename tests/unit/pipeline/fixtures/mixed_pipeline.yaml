@@ -1,0 +1,10 @@
+- implementation: nodestream.pipeline.step:PassStep
+  arguments:
+    name: extractor-that-needs-credentials
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: source_node
+        node_type: TestNode
+        key:
+          id: !jmespath id

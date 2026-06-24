@@ -1,11 +1,12 @@
 import pytest
 from hamcrest import assert_that, empty, instance_of
 
+from nodestream.databases.copy import TypeHistogram
 from nodestream.databases.null import (
     NullConnector,
     NullMigrator,
     NullQueryExecutor,
-    NullRetriver,
+    NullRetriever,
 )
 
 
@@ -15,8 +16,8 @@ def connector():
 
 
 @pytest.fixture
-def retriver():
-    return NullRetriver()
+def retriever():
+    return NullRetriever()
 
 
 def test_make_migrator(connector):
@@ -28,45 +29,30 @@ def test_make_executor(connector):
 
 
 def test_make_retriever(connector):
-    assert_that(connector.make_type_retriever(), instance_of(NullRetriver))
+    assert_that(connector.make_type_retriever(), instance_of(NullRetriever))
 
 
 @pytest.mark.asyncio
-async def test_retriever_get_nodes_of_type(retriver):
-    results = [r async for r in retriver.get_nodes_of_type("Foo")]
+async def test_retriever_fetch_extractors(retriever):
+    results = [result async for result in retriever.fetch_extractors()]
     assert_that(results, empty())
 
 
 @pytest.mark.asyncio
-async def test_retriever_get_relationships_of_type(retriver):
-    results = [
-        r
-        async for r in retriver.get_relationships_of_type_between(
-            "Person", "Person", "KNOWS"
-        )
-    ]
-    assert_that(results, empty())
-
-
-@pytest.mark.asyncio
-async def test_retriever_preview_node_count(retriver):
-    count = await retriver.preview_node_count("Person")
-    assert count == 0
-
-
-@pytest.mark.asyncio
-async def test_retriever_preview_relationship_count(retriver):
-    count = await retriver.preview_relationship_count("KNOWS")
-    assert count == 0
+async def test_retriever_build_histogram_returns_empty(retriever):
+    histogram = await retriever.build_histogram()
+    assert_that(histogram, instance_of(TypeHistogram))
+    assert histogram.node_counts == {}
+    assert histogram.relationship_counts == {}
 
 
 def test_make_type_retriever_accepts_kwargs(connector):
     """make_type_retriever should accept and ignore arbitrary kwargs."""
     retriever = connector.make_type_retriever(limit=500, sample_ratio=50)
-    assert_that(retriever, instance_of(NullRetriver))
+    assert_that(retriever, instance_of(NullRetriever))
 
 
 def test_connector_get_type_retriever_forwards_kwargs(connector):
     """get_type_retriever should forward kwargs to make_type_retriever."""
     retriever = connector.get_type_retriever(limit=100, extra_param="value")
-    assert_that(retriever, instance_of(NullRetriver))
+    assert_that(retriever, instance_of(NullRetriever))

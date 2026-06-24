@@ -669,3 +669,17 @@ def test_dig_for_step_of_type_yields_matching_steps(project, mocker):
     assert_that(pl2, same_instance(pipeline2))
     assert_that(idx2, equal_to(1))
     assert isinstance(step2, DummyStep)
+
+
+def test_make_schema_for_copy_returns_schema(project, mocker):
+    """make_schema_for_copy collects schema from all pipelines and returns it."""
+    for scope in project.scopes_by_name.values():
+        for pipeline in scope.pipelines_by_name.values():
+            pipeline.expand_schema_for_copy = mocker.Mock()
+
+    schema = project.make_schema_for_copy()
+
+    assert isinstance(schema, Schema)
+    for scope in project.scopes_by_name.values():
+        for pipeline in scope.pipelines_by_name.values():
+            pipeline.expand_schema_for_copy.assert_called_once()
