@@ -153,5 +153,3 @@ class Copier(Extractor):
                     producer_error = exc
         if producer_error is not None:
             raise producer_error
-
-

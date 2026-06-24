@@ -208,7 +208,6 @@ async def test_copier_propagates_extractor_error(mocker, basic_schema):
             pass
 
 
-
 # ---------------------------------------------------------------------------
 # TypeHistogram default
 # ---------------------------------------------------------------------------
