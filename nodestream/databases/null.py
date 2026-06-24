@@ -47,11 +47,11 @@ class NullQueryExecutor(QueryExecutor):
 
 
 class NullRetriever(TypeRetriever):
-    def __init__(self, **_):
+    def __init__(self, schema=None, **_):
         # Local import avoids a circular dependency: schema.state → databases → copy
         from ..schema.state import Schema
 
-        super().__init__(schema=Schema())
+        super().__init__(schema=schema or Schema())
 
     async def build_histogram(self) -> TypeHistogram:
         return TypeHistogram()
@@ -72,4 +72,4 @@ class NullConnector(DatabaseConnector, alias="null"):
         return NullQueryExecutor()
 
     def make_type_retriever(self, **kwargs) -> TypeRetriever:
-        return NullRetriever()
+        return NullRetriever(**kwargs)

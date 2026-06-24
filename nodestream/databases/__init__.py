@@ -1,4 +1,4 @@
-from .copy import ConcurrentCopier, Copier, TypeRetriever
+from .copy import Copier, TypeRetriever
 from .database_connector import DatabaseConnector
 from .debounced_ingest_strategy import DebouncedIngestStrategy
 from .writer import ConcurrentGraphDatabaseWriter, GraphDatabaseWriter
@@ -10,5 +10,4 @@ __all__ = (
     "DatabaseConnector",
     "TypeRetriever",
     "Copier",
-    "ConcurrentCopier",
 )

@@ -155,4 +155,3 @@ class Copier(Extractor):
             raise producer_error
 
 
-ConcurrentCopier = Copier

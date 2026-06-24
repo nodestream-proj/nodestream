@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from nodestream.databases.copy import (
-    ConcurrentCopier,
     Copier,
     TypeHistogram,
     TypeRetriever,
@@ -208,9 +207,6 @@ async def test_copier_propagates_extractor_error(mocker, basic_schema):
         async for _ in copier.extract_records():
             pass
 
-
-def test_copier_and_concurrent_copier_are_same_class():
-    assert ConcurrentCopier is Copier
 
 
 # ---------------------------------------------------------------------------
