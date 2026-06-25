@@ -109,13 +109,13 @@ def test_load_pipeline_for_introspection():
     file_path = Path("tests/unit/pipeline/fixtures/simple_pipeline.yaml")
     file_loader = PipelineFile(file_path)
     pipeline = file_loader.load_pipeline_for_introspection()
-    # schema_only=True: only ExpandsSchema steps are loaded; PassStep doesn't expand schema
-    assert_that(pipeline.steps, has_length(0))
+    assert_that(pipeline.steps, has_length(2))
+    assert_that(pipeline.steps[0], instance_of(PassStep))
 
 
-def test_load_pipeline_for_introspection_only_loads_schema_steps():
+def test_load_pipeline_for_schema_collection_only_loads_schema_steps():
     """Mixed pipeline: PassStep (non-schema) and Interpreter (ExpandsSchema).
-    Introspection must only load the Interpreter — PassStep must never be instantiated.
+    Schema collection must only load the Interpreter — PassStep must never be instantiated.
     """
     file_path = Path("tests/unit/pipeline/fixtures/mixed_pipeline.yaml")
     file_loader = PipelineFile(file_path)
@@ -128,9 +128,8 @@ def test_load_pipeline_for_introspection_only_loads_schema_steps():
         return original_load(self)
 
     with patch.object(StepDefinition, "load_step", tracking_load):
-        pipeline = file_loader.load_pipeline_for_introspection()
+        pipeline = file_loader.load_pipeline_for_schema_collection()
 
-    # Only the Interpreter should have been instantiated
     assert loaded_impls == [
         "nodestream.interpreting:Interpreter"
     ], f"Expected only Interpreter to be loaded, got: {loaded_impls}"
