@@ -59,7 +59,7 @@ class PipelineInitializationArguments:
 
     @classmethod
     def for_introspection(cls) -> "PipelineInitializationArguments":
-        return cls(annotations=["introspection"], schema_only=True)
+        return cls(annotations=["introspection"])
 
     @classmethod
     def for_schema_collection(cls) -> "PipelineInitializationArguments":
