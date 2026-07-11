@@ -4,22 +4,23 @@ import pytest
 from hamcrest import assert_that, equal_to, instance_of
 
 from nodestream.pipeline.filters import (
-    EnforceSchema,
     ExcludeWhenValuesMatchPossibilities,
     Filter,
-    Schema,
     SchemaEnforcer,
     ValueMatchesRegexFilter,
     ValuesMatchPossibilitiesFilter,
-    WarnSchema,
 )
+from nodestream.schema.state import Schema
 
 from ..stubs import StubbedValueProvider
 
 PASSING_FILTER_CONFIGURATION = [
     {
         "value": StubbedValueProvider("test"),
-        "possibilities": [StubbedValueProvider("A Miss"), StubbedValueProvider("test")],
+        "possibilities": [
+            StubbedValueProvider("A Miss"),
+            StubbedValueProvider("test"),
+        ],
     }
 ]
 
@@ -84,7 +85,7 @@ async def test_base_filter_filters_correctly():
     assert_that(results, equal_to([]))
 
 
-REGEX = r".*[\[\]\{\}\(\)\\\/~,]+"
+REGEX = r".*[\[\]\{\}\(\)\\\/~]+"
 REGEX_TEST_CASES = [
     {"value": "[test]", "include": True, "expect": False},
     {"value": "test", "include": True, "expect": True},
@@ -97,7 +98,9 @@ REGEX_TEST_CASES = [
 async def test_match_regex():
     for test_case in REGEX_TEST_CASES:
         subject = ValueMatchesRegexFilter.from_file_data(
-            value=test_case["value"], regex=REGEX, include=test_case["include"]
+            value=test_case["value"],
+            regex=REGEX,
+            include=test_case["include"],
         )
         result = await subject.filter_record({})
         assert_that(result, equal_to(test_case["expect"]))
@@ -116,9 +119,7 @@ async def test_schema_enforcer_with_fetch_schema(mocker, schema_dict):
     context = mocker.Mock()
     context.object_store = object_store
 
-    subject = SchemaEnforcer.from_file_data(
-        enforcement_policy="enforce", key="test_key"
-    )
+    subject = SchemaEnforcer(enforcement_policy="enforce", key="test_key")
     await subject.start(context)
 
     record = {"name": "test"}
@@ -138,7 +139,7 @@ async def test_schema_enforcer_with_infer_schema(mocker):
     context = mocker.Mock()
     context.object_store = object_store
 
-    subject = SchemaEnforcer.from_file_data(inference_sample_size=2)
+    subject = SchemaEnforcer(inference_sample_size=2)
     await subject.start(context)
 
     record = {"name": "test"}
@@ -157,8 +158,8 @@ async def test_schema_enforcer_with_infer_schema(mocker):
 async def test_schema_enforcement_modes(schema_dict):
     schema = Schema(schema_dict)
 
-    enforce_mode = EnforceSchema(schema)
-    warn_mode = WarnSchema(schema)
+    enforce_mode = SchemaEnforcer(schema=schema, enforcement_policy="enforce")
+    warn_mode = SchemaEnforcer(schema=schema, enforcement_policy="warn")
 
     record = {"name": "test"}
     assert_that(enforce_mode.should_filter(record), equal_to(False))
@@ -171,7 +172,7 @@ async def test_schema_enforcement_modes(schema_dict):
 
 @pytest.mark.asyncio
 async def test_infer_mode_schema_already_exists(mocker, schema_dict):
-    subject = SchemaEnforcer.from_file_data(inference_sample_size=2)
+    subject = SchemaEnforcer(inference_sample_size=2)
 
     context = mocker.Mock()
     context.object_store.get_pickled.return_value = schema_dict
@@ -184,7 +185,7 @@ async def test_infer_mode_schema_already_exists(mocker, schema_dict):
 
 @pytest.mark.asyncio
 async def test_enforce_mode_schema_not_present(mocker):
-    subject = SchemaEnforcer.from_file_data(key="test_key")
+    subject = SchemaEnforcer(key="test_key")
 
     context = mocker.Mock()
     context.object_store.get_pickled.return_value = None
@@ -197,7 +198,7 @@ async def test_enforce_mode_schema_not_present(mocker):
 async def test_invalid_enforcement_policy(mocker, schema_dict):
     context = mocker.Mock()
     context.object_store.get_pickled.return_value = schema_dict
-    subject = SchemaEnforcer.from_file_data(
+    subject = SchemaEnforcer(
         enforcement_policy="invalid", inference_sample_size=2
     )
 
@@ -209,12 +210,12 @@ async def test_invalid_enforcement_policy(mocker, schema_dict):
 async def test_warn_policy(mocker):
     context = mocker.Mock()
     context.object_store.get_pickled.return_value = None
-    subject = SchemaEnforcer.from_file_data(
+    subject = SchemaEnforcer(
         inference_sample_size=0, enforcement_policy="warn"
     )
     await subject.start(context)
     assert_that(await subject.filter_record({}), equal_to(False))
-    assert_that(subject.mode, instance_of(WarnSchema))
+    assert_that(subject.mode, instance_of(SchemaEnforcer.WarnSchema))
 
 
 def test_filter_import_error(mocker):
@@ -230,6 +231,6 @@ def test_filter_import_error(mocker):
         SchemaEnforcer()
 
     assert (
-        "SchemaEnforcer requires genson and jsonschema to be installed. Install the `validation` extra."
+        "SchemaEnforcer requires genson and jsonschema to be installed." " Install the `validation` extra."
         in str(excinfo.value)
     )
