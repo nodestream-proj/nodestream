@@ -324,27 +324,30 @@ class StopStepExecution(StepExecutionState):
 
     async def execute_until_state_change(self) -> Optional[StepExecutionState]:
         try:
-            # Run finish() before signaling downstream. This ensures that any
-            # metrics accumulated during finish() (e.g. NODES_UPSERTED from a
-            # final flush) are recorded before pipeline_output calls
-            # on_finish_callback to emit the Metrics Report.
-            await self.step.finish(self.context)
+            try:
+                # Run finish() before signaling downstream. This ensures that
+                # any metrics accumulated during finish() (e.g. NODES_UPSERTED
+                # from a final flush) are recorded before pipeline_output calls
+                # on_finish_callback to emit the Metrics Report.
+                await self.step.finish(self.context)
 
-            # Closing the output channel will signal to any downstream steps
-            # that we are done processing records and that there nothing left
-            # to wait for. Similarly, we mark the input as done to signal
-            # to any upstream steps that we are done processing records and
-            # that producing more records is futile.
-            await self.output.done()
-            self.input.done()
-
-        # In the event of a failure closing out a step, we will report it as a
-        # non-fatal error because all core work has been accomplished. Resource
-        # cleanup, while messy, is not fatal to the pipeline as a whole.
-        except Exception as e:
-            self.context.report_error("Error stopping step", e)
-
+            # In the event of a failure closing out a step, we will report it as
+            # a non-fatal error because all core work has been accomplished.
+            # Resource cleanup, while messy, is not fatal to the pipeline as a
+            # whole.
+            except Exception as e:
+                self.context.report_error("Error stopping step", e)
         finally:
+            try:
+                # Always close both channels, even when finish() fails. Without
+                # the DoneObject and input-drop signal, neighboring steps can
+                # wait forever and leave the pipeline in a zombie state.
+                await self.output.done()
+            except Exception as e:
+                self.context.report_error("Error stopping step", e)
+            finally:
+                self.input.done()
+
             # Decrement in finally so the gauge is always accurate even if
             # finish()/output.done() raises CancelledError or another
             # BaseException that bypasses the except clause above.

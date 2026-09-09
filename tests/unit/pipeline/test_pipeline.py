@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from nodestream.pipeline.channel import channel
+from nodestream.pipeline.channel import DoneObject, channel
 from nodestream.pipeline.pipeline import (
     EmitOutstandingRecordsState,
     EmitResult,
@@ -492,6 +492,8 @@ async def test_stop_step_execution_finish_exception(mock_step, mock_context):
     mock_context.report_error.assert_called_once_with(
         "Error stopping step", mock_step.finish.side_effect
     )
+    assert await output_channel.channel.get() is DoneObject
+    assert input_channel.channel.input_dropped is True
     assert next_state is None
 
 
