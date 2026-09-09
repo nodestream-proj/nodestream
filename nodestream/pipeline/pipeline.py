@@ -330,25 +330,33 @@ class StopStepExecution(StepExecutionState):
             # on_finish_callback to emit the Metrics Report.
             await self.step.finish(self.context)
 
-            # Closing the output channel will signal to any downstream steps
-            # that we are done processing records and that there nothing left
-            # to wait for. Similarly, we mark the input as done to signal
-            # to any upstream steps that we are done processing records and
-            # that producing more records is futile.
-            await self.output.done()
-            self.input.done()
-
         # In the event of a failure closing out a step, we will report it as a
         # non-fatal error because all core work has been accomplished. Resource
         # cleanup, while messy, is not fatal to the pipeline as a whole.
         except Exception as e:
-            self.context.report_error("Error stopping step", e)
+            self.context.report_error(
+                "Error stopping step; channels closed despite the error", e
+            )
 
         finally:
-            # Decrement in finally so the gauge is always accurate even if
-            # finish()/output.done() raises CancelledError or another
-            # BaseException that bypasses the except clause above.
-            Metrics.get().decrement(STEPS_RUNNING)
+            try:
+                # Close the channels here, not in the try block, so both
+                # always close even if finish() raises or is cancelled. Mark
+                # input done first: if a second cancellation arrives while we
+                # then wait on output.done(), the upstream neighbor is
+                # already freed.
+                #
+                # Closing the output channel signals downstream steps that
+                # there is nothing left to wait for. Marking the input done
+                # signals upstream steps that producing more records is
+                # futile.
+                self.input.done()
+                await self.output.done()
+            finally:
+                # Decrement in its own finally so the gauge is always
+                # accurate even if input.done()/output.done() itself raises
+                # CancelledError or another BaseException.
+                Metrics.get().decrement(STEPS_RUNNING)
 
         # If a prior state caught a CancelledError (or other BaseException) to
         # allow finish() to run, re-raise it now so the executor task is
