@@ -220,13 +220,16 @@ async def test_process_records_state_drops_record_when_no_emission():
 # Tests for StopStepExecution
 @pytest.mark.asyncio
 async def test_stop_step_execution(mock_step, mock_context):
-    input_channel, output_channel = channel(10)
+    input_channel, _ = channel(10)
+    downstream_input, output_channel = channel(10)
     state = StopStepExecution(mock_step, mock_context, input_channel, output_channel)
 
     next_state = await state.execute_until_state_change()
 
     mock_step.finish.assert_called_once_with(mock_context)
     assert next_state is None
+    assert input_channel.channel.input_dropped is True
+    assert await downstream_input.get() is None
 
 
 # Tests for Executor
@@ -481,7 +484,8 @@ async def test_emit_outstanding_records_state_exception_handling(
 # Tests for StopStepExecution error handling
 @pytest.mark.asyncio
 async def test_stop_step_execution_finish_exception(mock_step, mock_context):
-    input_channel, output_channel = channel(10)
+    input_channel, _ = channel(10)
+    downstream_input, output_channel = channel(10)
     state = StopStepExecution(mock_step, mock_context, input_channel, output_channel)
 
     # Mock finish to raise an exception
@@ -490,11 +494,53 @@ async def test_stop_step_execution_finish_exception(mock_step, mock_context):
     next_state = await state.execute_until_state_change()
 
     mock_context.report_error.assert_called_once_with(
-        "Error stopping step", mock_step.finish.side_effect
+        "Error stopping step; channels closed despite the error",
+        mock_step.finish.side_effect,
     )
     assert await output_channel.channel.get() is DoneObject
     assert input_channel.channel.input_dropped is True
     assert next_state is None
+    assert input_channel.channel.input_dropped is True
+    assert await downstream_input.get() is None
+
+
+@pytest.mark.asyncio
+async def test_stop_step_execution_closes_channels_before_reraising_cancellation(
+    mock_step, mock_context
+):
+    input_channel, _ = channel(10)
+    downstream_input, output_channel = channel(10)
+    state = StopStepExecution(mock_step, mock_context, input_channel, output_channel)
+
+    mock_context.cancellation_cause = asyncio.CancelledError()
+
+    with pytest.raises(asyncio.CancelledError):
+        await state.execute_until_state_change()
+
+    mock_step.finish.assert_called_once_with(mock_context)
+    assert input_channel.channel.input_dropped is True
+    assert await downstream_input.get() is None
+
+
+@pytest.mark.asyncio
+async def test_stop_step_execution_decrements_metric_when_output_done_cancelled(
+    mock_step, mock_context, monkeypatch
+):
+    input_channel, _ = channel(10)
+    output_channel = Mock(spec=StepOutput)
+    output_channel.done = AsyncMock(side_effect=asyncio.CancelledError())
+    state = StopStepExecution(mock_step, mock_context, input_channel, output_channel)
+
+    mock_metrics = Mock()
+    monkeypatch.setattr(
+        "nodestream.pipeline.pipeline.Metrics.get", lambda: mock_metrics
+    )
+
+    with pytest.raises(asyncio.CancelledError):
+        await state.execute_until_state_change()
+
+    mock_metrics.decrement.assert_called_once_with(STEPS_RUNNING)
+    assert input_channel.channel.input_dropped is True
 
 
 # Tests for PipelineOutputState call_ignoring_errors method
