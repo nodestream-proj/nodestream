@@ -37,15 +37,15 @@ SAS_PREVIEW_COLUMNS = ("Column2", "Column3", "Column4", "Column8")
 SAS_PREVIEW = [
     {
         "Column2": "pear",
-        "Column3": 84,
+        "Column3": 84.0,
         "Column4": datetime(1965, 12, 10),
         "Column8": None,
     },
     {
         "Column2": "dog",
-        "Column3": 49,
+        "Column3": 49.0,
         "Column4": datetime(1977, 3, 7),
-        "Column8": 339,
+        "Column8": 339.0,
     },
 ]
 
@@ -439,7 +439,7 @@ def _assert_sas_records(records):
     )
     assert records[0]["Column1"] == pytest.approx(0.636)
     assert all(
-        record["Column3"] is None or isinstance(record["Column3"], int)
+        record["Column3"] is None or isinstance(record["Column3"], float)
         for record in records
     )
 
@@ -552,7 +552,7 @@ async def test_sas7bdat_chunksize_keeps_column_types(sas7bdat_file: Path, monkey
     _assert_sas_records(records)
 
 
-def test_normalize_frame_decides_numeric_types_per_column():
+def test_normalize_frame_keeps_numbers_as_floats():
     frame = pd.DataFrame(
         {
             "whole": [2.0, None, 4.0],
@@ -561,9 +561,10 @@ def test_normalize_frame_decides_numeric_types_per_column():
         }
     )
     records = _normalize_frame(frame)
-    assert isinstance(records[0]["whole"], int)
+    assert isinstance(records[0]["whole"], float)
+    assert records[0]["whole"] == 2.0
     assert records[1]["whole"] is None
-    assert records[2]["whole"] == 4
+    assert records[2]["whole"] == 4.0
     assert isinstance(records[0]["mixed"], float)
     assert records[0]["mixed"] == 2.0
     assert records[1]["mixed"] == 2.5

@@ -61,7 +61,7 @@ We highly recommend following our tutorials [here](https://nodestream-proj.githu
 
 `FileExtractor` reads `.json`, `.jsonl`, `.csv`, `.yaml`, `.txt`, `.parquet`, and `.sas7bdat`. Suffix case is ignored, so `.JSON` and `.SAS7BDAT` use the same codecs as their lowercase forms. `.gz` and `.bz2` are decompressed first. A `.zip` archive is expanded one member at a time, and each member is read by its own suffix, so one zip can mix CSV, JSON, and sas7bdat.
 
-SAS stores numbers as floats. A column is emitted as integers only when every present value in the current read chunk (10,000 rows by default) is a whole number; otherwise that column stays float. Missing values are `None`. SAS dates and datetimes are Python `datetime` objects.
+SAS numbers stay floats, including whole numbers such as `2.0`, so a property has one type on every row. Cast them with a normalizer when a pipeline wants integers. Missing values are `None`. SAS dates and datetimes are Python `datetime` objects.
 
 ## Packages 
 

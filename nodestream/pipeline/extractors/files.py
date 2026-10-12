@@ -406,26 +406,15 @@ class CommaSeperatedValuesFileFormat(FileCodec, alias=".csv"):
         return DictReader(reader)
 
 
-def _integral_float_column(series: pd.Series) -> bool:
-    values = series.dropna()
-    if values.empty or not bool((values % 1 == 0).all()):
-        return False
-    return float(values.abs().max()) <= 2**53
-
-
 def _normalize_frame(frame: pd.DataFrame) -> list[JsonLikeDocument]:
     """Turn one SAS chunk into plain records.
 
-    A float column becomes ints only when every present value in this chunk
-    is a whole number that fits in 2**53. Mixed columns stay floats so a
-    property does not change type from row to row inside the chunk. Missing
-    values are None. Timestamps become datetime objects.
+    SAS stores every number as a float, so numeric columns stay float even
+    when a value is a whole number. Missing values are None. Timestamps
+    become datetime objects.
     """
     normalized = frame.copy()
     normalized.columns = [str(column).strip() for column in normalized.columns]
-    for column in normalized.select_dtypes(include="float").columns:
-        if _integral_float_column(normalized[column]):
-            normalized[column] = normalized[column].astype("Int64")
     for column in list(normalized.columns):
         if not pd.api.types.is_datetime64_any_dtype(normalized[column]):
             continue
@@ -481,10 +470,10 @@ class Sas7bdatFileFormat(FileCodec, alias=".sas7bdat"):
 
     Each row is a dictionary keyed by column name, like csv.DictReader.
     Missing values are None and SAS dates are Python datetime objects.
-    SAS stores every number as a float. A column is emitted as ints only
-    when every present value in the current chunk is a whole number.
-    `chunksize` rows are normalized together (10,000 by default), so a
-    fractional value in a later chunk keeps that chunk's column as float.
+    SAS stores every number as a float, including whole numbers, so numeric
+    properties stay one type across rows. Cast them later with a normalizer
+    if a pipeline wants integers. Rows are read in chunks of `chunksize`
+    (10,000 by default).
     """
 
     chunksize = 10_000
