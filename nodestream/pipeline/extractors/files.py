@@ -406,55 +406,73 @@ class CommaSeperatedValuesFileFormat(FileCodec, alias=".csv"):
         return DictReader(reader)
 
 
-def _normalize_frame(frame: pd.DataFrame) -> list[JsonLikeDocument]:
+def _sas_text_encoding(reader) -> str:
+    """Return the codec for SAS text cells.
+
+    The file is read as raw bytes, so a bad byte is handled per cell instead
+    of aborting the reader. pandas records the declared encoding on
+    `inferred_encoding`. An unknown code is not a Python codec, and those
+    files are decoded as latin-1.
+    """
+    encoding = getattr(reader, "inferred_encoding", None)
+    if isinstance(encoding, str) and not encoding.startswith("unknown"):
+        return encoding
+    LOGGER.warning("Could not infer SAS text encoding; decoding text as latin-1.")
+    return "latin-1"
+
+
+def _normalize_frame(
+    frame: pd.DataFrame, encoding: str | None = None
+) -> list[JsonLikeDocument]:
     """Turn one SAS chunk into plain records.
 
     SAS stores every number as a float, so numeric columns stay float even
     when a value is a whole number. Missing values are None. Timestamps
-    become datetime objects.
+    become datetime objects. Text cells arrive as bytes; they are decoded
+    with `encoding`, and a byte that does not fit is replaced.
     """
     normalized = frame.copy()
     normalized.columns = [str(column).strip() for column in normalized.columns]
     for column in list(normalized.columns):
-        if not pd.api.types.is_datetime64_any_dtype(normalized[column]):
+        series = normalized[column]
+        if pd.api.types.is_datetime64_any_dtype(series):
+            normalized[column] = pd.Series(
+                [
+                    None if pd.isna(value) else pd.Timestamp(value).to_pydatetime()
+                    for value in series
+                ],
+                index=normalized.index,
+                dtype=object,
+            )
             continue
-        normalized[column] = pd.Series(
-            [
-                None if pd.isna(value) else pd.Timestamp(value).to_pydatetime()
-                for value in normalized[column]
-            ],
-            index=normalized.index,
-            dtype=object,
-        )
+        if encoding and _series_holds_bytes(series):
+            normalized[column] = series.str.decode(encoding, errors="replace")
     normalized = normalized.astype(object).where(normalized.notna(), None)
     return normalized.to_dict(orient="records")
 
 
-def _open_sas_reader(reader: IOBase, chunksize: int):
-    kwargs = {
-        "format": "sas7bdat",
-        "iterator": True,
-        "chunksize": chunksize,
-        "compression": None,
-    }
-    try:
-        return pd.read_sas(reader, encoding="infer", **kwargs)
-    except (LookupError, UnicodeError):
-        if reader.seekable():
-            reader.seek(0)
-        LOGGER.warning(
-            "Could not infer SAS text encoding; reading the file as latin-1."
-        )
-        return pd.read_sas(reader, encoding="latin-1", **kwargs)
+def _series_holds_bytes(series: pd.Series) -> bool:
+    if series.dtype != object:
+        return False
+    present = series.dropna()
+    return not present.empty and isinstance(present.iloc[0], (bytes, bytearray))
 
 
 def _iter_sas7bdat_records(
     reader: IOBase, chunksize: int
 ) -> Iterable[JsonLikeDocument]:
     """Yield one dictionary per row from an open sas7bdat file."""
-    with _open_sas_reader(reader, chunksize) as sas_reader:
+    with pd.read_sas(
+        reader,
+        format="sas7bdat",
+        iterator=True,
+        chunksize=chunksize,
+        compression=None,
+        encoding=None,
+    ) as sas_reader:
+        encoding = _sas_text_encoding(sas_reader)
         for frame in sas_reader:
-            yield from _normalize_frame(frame)
+            yield from _normalize_frame(frame, encoding)
 
 
 class Sas7bdatFileFormat(FileCodec, alias=".sas7bdat"):
@@ -472,8 +490,10 @@ class Sas7bdatFileFormat(FileCodec, alias=".sas7bdat"):
     Missing values are None and SAS dates are Python datetime objects.
     SAS stores every number as a float, including whole numbers, so numeric
     properties stay one type across rows. Cast them later with a normalizer
-    if a pipeline wants integers. Rows are read in chunks of `chunksize`
-    (10,000 by default).
+    if a pipeline wants integers. Text is decoded with the encoding declared
+    in the file. A byte that does not fit that encoding is replaced, and the
+    rest of the file is still read. An unknown encoding is decoded as latin-1.
+    Rows are read in chunks of `chunksize` (10,000 by default).
     """
 
     chunksize = 10_000
@@ -593,8 +613,9 @@ class ZipArchive(ArchiveCodec, alias=".zip"):
 
     Members are extracted one at a time onto disk and handed back to the
     file extractor, which selects a codec from the member suffix. A zip of
-    CSV, JSON, or sas7bdat files is read by those codecs. One member failing
-    does not stop the members after it.
+    CSV, JSON, or sas7bdat files is read by those codecs. A member that
+    cannot be unpacked, or that fails while it is parsed, does not stop
+    the members after it.
 
     `max_member_bytes` skips members whose uncompressed size is larger than
     the cap so a zip bomb cannot expand without bound.
@@ -618,10 +639,23 @@ class ZipArchive(ArchiveCodec, alias=".zip"):
                         continue
                     suffix = "".join(PurePosixPath(member_name).suffixes)
                     with tempfile.NamedTemporaryFile(suffix=suffix) as temp_file:
-                        with archive.open(info) as src:
-                            copied = _copy_with_limit(
-                                src, temp_file, self.max_member_bytes
+                        try:
+                            with archive.open(info) as src:
+                                copied = _copy_with_limit(
+                                    src, temp_file, self.max_member_bytes
+                                )
+                        except (
+                            zipfile.BadZipFile,
+                            NotImplementedError,
+                            OSError,
+                        ) as exc:
+                            LOGGER.warning(
+                                "Skipping member %s in %s that could not be unpacked: %s",
+                                member_name,
+                                self.file,
+                                exc,
                             )
+                            continue
                         if not copied:
                             LOGGER.warning(
                                 "Skipping oversized member %s in %s",

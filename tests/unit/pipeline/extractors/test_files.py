@@ -2,6 +2,7 @@ import bz2
 import csv
 import gzip
 import json
+import logging
 import typing
 import zipfile
 from datetime import datetime
@@ -497,23 +498,42 @@ async def test_zip_reads_csv_and_skips_directories(base_dir: str):
     assert await _records_from(archive_path) == [SIMPLE_RECORD]
 
 
+def _corrupt_zip_member_crc(path: Path, member: str) -> None:
+    """Flip one stored payload byte so the member's CRC no longer matches."""
+    with zipfile.ZipFile(path) as archive:
+        offset = archive.getinfo(member).header_offset
+    raw = bytearray(path.read_bytes())
+    name_len = int.from_bytes(raw[offset + 26 : offset + 28], "little")
+    extra_len = int.from_bytes(raw[offset + 28 : offset + 30], "little")
+    data_start = offset + 30 + name_len + extra_len
+    raw[data_start] ^= 0xFF
+    path.write_bytes(raw)
+
+
 @pytest.mark.asyncio
 async def test_zip_bad_member_does_not_drop_later_members(
-    base_dir: str, sas7bdat_file: Path, mocker
+    base_dir: str, sas7bdat_file: Path, mocker, caplog
 ):
     archive_path = Path(base_dir) / "bundle.zip"
     with zipfile.ZipFile(archive_path, "w") as archive:
+        archive.writestr("a_corrupt.csv", "record\nvalue\n")
         archive.writestr("a_bad.sas7bdat", b"this is not a sas7bdat file")
         archive.write(sas7bdat_file, "b_good.sas7bdat")
+    _corrupt_zip_member_crc(archive_path, "a_corrupt.csv")
     subject = FileExtractor([LocalFileSource([archive_path])])
     subject.logger = mocker.Mock()
-    records = [record async for record in subject.extract_records()]
+    with caplog.at_level(
+        logging.WARNING, logger="nodestream.pipeline.extractors.files"
+    ):
+        records = [record async for record in subject.extract_records()]
     _assert_sas_records(records)
     warning = " ".join(
         str(arg) for call in subject.logger.warning.call_args_list for arg in call.args
     )
     assert "a_bad.sas7bdat" in warning
+    assert "a_corrupt.csv" in caplog.text
     assert "b_good.sas7bdat" not in warning
+    assert "b_good.sas7bdat" not in caplog.text
 
 
 @pytest.mark.asyncio
@@ -552,6 +572,32 @@ async def test_sas7bdat_chunksize_keeps_column_types(sas7bdat_file: Path, monkey
     _assert_sas_records(records)
 
 
+# Byte 70 of a sas7bdat header is the encoding code. 62 is cp1252, 20 is UTF-8.
+SAS_ENCODING_OFFSET = 70
+SAS_CP1252_ENCODING = 62
+SAS_UTF8_ENCODING = 20
+
+
+@pytest.mark.asyncio
+async def test_sas7bdat_bad_text_byte_is_replaced(base_dir: str, sas7bdat_file: Path):
+    path = Path(base_dir) / "bad-byte.sas7bdat"
+    data = bytearray(sas7bdat_file.read_bytes())
+    assert data[SAS_ENCODING_OFFSET] == SAS_CP1252_ENCODING
+    data[SAS_ENCODING_OFFSET] = SAS_UTF8_ENCODING
+    pear = data.find(b"pear")
+    assert pear != -1
+    data[pear + 1] = 0xFF
+    path.write_bytes(data)
+    records = await _records_from(path)
+    assert len(records) == 10
+    assert records[0]["Column2"] == "p\ufffdar"
+    assert records[1]["Column2"] == "dog"
+    assert records[0]["Column3"] == 84.0
+    assert isinstance(records[0]["Column3"], float)
+    assert records[0]["Column4"] == datetime(1965, 12, 10)
+    assert records[0]["Column8"] is None
+
+
 def test_normalize_frame_keeps_numbers_as_floats():
     frame = pd.DataFrame(
         {
@@ -571,6 +617,14 @@ def test_normalize_frame_keeps_numbers_as_floats():
     assert records[2]["mixed"] is None
     assert records[0]["when"] == datetime(2020, 1, 15)
     assert records[1]["when"] is None
+
+
+def test_normalize_frame_replaces_undecodable_text():
+    frame = pd.DataFrame({"name": [b"p\xffar", None, b"dog"]})
+    records = _normalize_frame(frame, encoding="utf-8")
+    assert records[0]["name"] == "p\ufffdar"
+    assert records[1]["name"] is None
+    assert records[2]["name"] == "dog"
 
 
 @pytest.mark.parametrize(
