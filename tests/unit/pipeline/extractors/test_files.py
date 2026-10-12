@@ -15,14 +15,23 @@ import yaml
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline.extractors.files import (
+    SUPPORTED_ARCHIVE_FORMAT_REGISTRY,
+    SUPPORTED_FILE_FORMAT_REGISTRY,
+    FileCodec,
     FileExtractor,
     FileSource,
     LocalFileSource,
     ReadableFile,
     RemoteFileSource,
+    Sas7bdatFileFormat,
+    ZipArchive,
+    _is_data_member,
+    _normalize_frame,
 )
 
 SIMPLE_RECORD = {"record": "value"}
+# Synthetic table from the pandas test suite
+# (pandas/tests/io/sas/data/test1.sas7bdat). pandas is BSD-3-Clause.
 SAS7BDAT_FIXTURE = Path(__file__).resolve().parents[3] / "data" / "sample.sas7bdat"
 SAS_PREVIEW_COLUMNS = ("Column2", "Column3", "Column4", "Column8")
 SAS_PREVIEW = [
@@ -140,7 +149,7 @@ def yaml_file(base_dir: str):
         yield temp_file
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def sas7bdat_file(base_dir: str):
     dest = Path(base_dir) / "sample.sas7bdat"
     dest.write_bytes(SAS7BDAT_FIXTURE.read_bytes())
@@ -286,7 +295,6 @@ def test_declarative_init(
     gzip_file,
     unsupported_file,
     parquet_file,
-    sas7bdat_file,
 ):
     subject = FileExtractor.local(globs=[f"{base_dir}/**"])
     assert isinstance(subject.file_sources[0], LocalFileSource)
@@ -307,7 +315,7 @@ def test_declarative_init(
             unsupported_file,
             parquet_file,
         ]
-    } | {sas7bdat_file}
+    }
 
 
 @pytest.mark.asyncio
@@ -421,14 +429,19 @@ async def _records_from(path: Path):
     return [record async for record in subject.extract_records()]
 
 
-def _assert_sas_records(records, copies: int = 1):
-    assert len(records) == 10 * copies
+def _assert_sas_records(records):
+    assert len(records) == 10
     assert all(len(record) == 100 for record in records)
     assert _sas_preview(records) == SAS_PREVIEW
-    assert isinstance(records[0]["Column1"], float)
+    assert all(
+        record["Column1"] is None or isinstance(record["Column1"], float)
+        for record in records
+    )
     assert records[0]["Column1"] == pytest.approx(0.636)
-    if copies == 2:
-        assert _sas_preview(records[10:]) == SAS_PREVIEW
+    assert all(
+        record["Column3"] is None or isinstance(record["Column3"], int)
+        for record in records
+    )
 
 
 @pytest.mark.asyncio
@@ -460,25 +473,59 @@ async def test_bz2_compressed_sas7bdat(base_dir: str, sas7bdat_file: Path):
 
 
 @pytest.mark.asyncio
-async def test_zip_archive_reads_sas7bdat_members(base_dir: str, sas7bdat_file: Path):
-    payload = sas7bdat_file.read_bytes()
+async def test_zip_archive_dispatches_each_member(base_dir: str, sas7bdat_file: Path):
     archive_path = Path(base_dir) / "bundle.zip"
     with zipfile.ZipFile(archive_path, "w") as archive:
-        archive.writestr("tables/one.sas7bdat", payload)
+        archive.write(sas7bdat_file, "tables/one.sas7bdat")
         archive.writestr("notes/readme.txt", "ignore me")
-        archive.writestr("notes/people.csv", "name\nada\n")
+        archive.writestr("notes/people.csv", "record\nvalue\n")
         archive.writestr("__MACOSX/._one.sas7bdat", b"not a sas file")
-        archive.writestr("tables/two.SAS7BDAT", payload)
-    _assert_sas_records(await _records_from(archive_path), copies=2)
+        archive.write(sas7bdat_file, "tables/two.SAS7BDAT")
+    records = await _records_from(archive_path)
+    _assert_sas_records(records[:10])
+    assert records[10] == {"line": "ignore me"}
+    assert records[11] == SIMPLE_RECORD
+    _assert_sas_records(records[12:])
 
 
 @pytest.mark.asyncio
-async def test_zip_without_sas7bdat_yields_no_records(base_dir: str):
+async def test_zip_reads_csv_and_skips_directories(base_dir: str):
     archive_path = Path(base_dir) / "notes.zip"
     with zipfile.ZipFile(archive_path, "w") as archive:
         archive.writestr("notes.csv", "record\nvalue\n")
         archive.writestr("folder/", b"")
-    assert await _records_from(archive_path) == []
+    assert await _records_from(archive_path) == [SIMPLE_RECORD]
+
+
+@pytest.mark.asyncio
+async def test_zip_bad_member_does_not_drop_later_members(
+    base_dir: str, sas7bdat_file: Path, mocker
+):
+    archive_path = Path(base_dir) / "bundle.zip"
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        archive.writestr("a_bad.sas7bdat", b"this is not a sas7bdat file")
+        archive.write(sas7bdat_file, "b_good.sas7bdat")
+    subject = FileExtractor([LocalFileSource([archive_path])])
+    subject.logger = mocker.Mock()
+    records = [record async for record in subject.extract_records()]
+    _assert_sas_records(records)
+    warning = " ".join(
+        str(arg) for call in subject.logger.warning.call_args_list for arg in call.args
+    )
+    assert "a_bad.sas7bdat" in warning
+    assert "b_good.sas7bdat" not in warning
+
+
+@pytest.mark.asyncio
+async def test_zip_skips_oversized_members(
+    base_dir: str, sas7bdat_file: Path, monkeypatch
+):
+    monkeypatch.setattr(ZipArchive, "max_member_bytes", 32)
+    archive_path = Path(base_dir) / "bundle.zip"
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        archive.write(sas7bdat_file, "big.sas7bdat")
+        archive.writestr("notes.csv", "record\nvalue\n")
+    assert await _records_from(archive_path) == [SIMPLE_RECORD]
 
 
 @pytest.mark.asyncio
@@ -489,3 +536,69 @@ async def test_invalid_sas7bdat_is_skipped(base_dir: str, mocker):
     subject.logger = mocker.Mock()
     assert [record async for record in subject.extract_records()] == []
     subject.logger.warning.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_suffix_lookup_is_case_insensitive(base_dir: str):
+    path = Path(base_dir) / "DATA.JSON"
+    path.write_text(json.dumps(SIMPLE_RECORD), encoding="utf-8")
+    assert await _records_from(path) == [SIMPLE_RECORD]
+
+
+@pytest.mark.asyncio
+async def test_sas7bdat_chunksize_keeps_column_types(sas7bdat_file: Path, monkeypatch):
+    monkeypatch.setattr(Sas7bdatFileFormat, "chunksize", 2)
+    records = await _records_from(sas7bdat_file)
+    _assert_sas_records(records)
+
+
+def test_normalize_frame_decides_numeric_types_per_column():
+    frame = pd.DataFrame(
+        {
+            "whole": [2.0, None, 4.0],
+            "mixed": [2.0, 2.5, None],
+            "when": [pd.Timestamp("2020-01-15"), pd.NaT, pd.Timestamp("2020-02-01")],
+        }
+    )
+    records = _normalize_frame(frame)
+    assert isinstance(records[0]["whole"], int)
+    assert records[1]["whole"] is None
+    assert records[2]["whole"] == 4
+    assert isinstance(records[0]["mixed"], float)
+    assert records[0]["mixed"] == 2.0
+    assert records[1]["mixed"] == 2.5
+    assert records[2]["mixed"] is None
+    assert records[0]["when"] == datetime(2020, 1, 15)
+    assert records[1]["when"] is None
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("tables/one.sas7bdat", True),
+        ("tables\\one.sas7bdat", True),
+        ("/tables/one.sas7bdat", True),
+        ("one.SAS7BDAT", True),
+        ("notes/readme.txt", True),
+        ("folder/", False),
+        ("", False),
+        ("__MACOSX/._one.sas7bdat", False),
+        ("tables/._one.sas7bdat", False),
+    ],
+)
+def test_is_data_member(name, expected):
+    assert _is_data_member(name) is expected
+
+
+def test_zip_is_an_archive_codec_not_a_file_format():
+    assert ".zip" in SUPPORTED_ARCHIVE_FORMAT_REGISTRY
+    assert ".zip" not in SUPPORTED_FILE_FORMAT_REGISTRY
+
+    class PluginZip(FileCodec, alias=".zip"):
+        def read_file_from_handle(self, reader):
+            return []
+
+    try:
+        assert SUPPORTED_FILE_FORMAT_REGISTRY.get(".zip") is PluginZip
+    finally:
+        del SUPPORTED_FILE_FORMAT_REGISTRY.registry[".zip"]

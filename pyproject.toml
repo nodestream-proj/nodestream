@@ -89,6 +89,7 @@ nodestream = 'nodestream.cli.application:run'
 [tool.poetry.plugins."nodestream.plugins"]
 "argument_resolvers" = "nodestream.pipeline.argument_resolvers"
 "file_formats" = "nodestream.pipeline.extractors.files"
+"archive_formats" = "nodestream.pipeline.extractors.files"
 "interpretations" = "nodestream.interpreting.interpretations"
 "normalizers" = "nodestream.pipeline.normalizers"
 "value_providers" = "nodestream.pipeline.value_providers"
