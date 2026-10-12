@@ -3,6 +3,7 @@ import gzip
 import json
 import sys
 import tempfile
+import zipfile
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from csv import DictReader
@@ -368,6 +369,148 @@ class CommaSeperatedValuesFileFormat(FileCodec, alias=".csv"):
         self, reader: TextIOWrapper
     ) -> Iterable[JsonLikeDocument]:
         return DictReader(reader)
+
+
+def _sas_text_encoding(inferred: Any) -> str:
+    if isinstance(inferred, str) and inferred and not inferred.startswith("unknown"):
+        return inferred
+    return "latin-1"
+
+
+def _decode_sas_text(value: bytes, encoding: str) -> str:
+    try:
+        return value.decode(encoding)
+    except (LookupError, UnicodeDecodeError):
+        return value.decode("latin-1")
+
+
+def _sas_column_name(column: Any, encoding: str) -> str:
+    if isinstance(column, bytes):
+        column = _decode_sas_text(column, encoding)
+    return str(column).strip()
+
+
+def _sas_value(value: Any, encoding: str) -> Any:
+    """Convert one SAS cell into a plain Python value.
+
+    SAS stores every number as a float and uses blanks or NaN for missing
+    values. Integral floats become ints so a count of 2 does not surface as
+    2.0, and missing values become None.
+    """
+    if isinstance(value, bytes):
+        return _decode_sas_text(value, encoding)
+    if isinstance(value, pd.Timestamp):
+        return value.to_pydatetime()
+
+    item = getattr(value, "item", None)
+    if callable(item) and not isinstance(value, (str, bytes)):
+        try:
+            value = item()
+        except (TypeError, ValueError):
+            pass
+
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
+
+    if isinstance(value, float) and value.is_integer() and abs(value) <= 2**53:
+        return int(value)
+    return value
+
+
+def iter_sas7bdat_records(reader: IOBase) -> Iterable[JsonLikeDocument]:
+    """Yield one dictionary per row from an open sas7bdat file."""
+    sas_reader = pd.read_sas(
+        reader,
+        format="sas7bdat",
+        encoding=None,
+        iterator=True,
+        chunksize=10_000,
+        compression=None,
+    )
+    encoding = _sas_text_encoding(getattr(sas_reader, "inferred_encoding", None))
+    try:
+        for frame in sas_reader:
+            for record in frame.to_dict(orient="records"):
+                yield {
+                    _sas_column_name(column, encoding): _sas_value(cell, encoding)
+                    for column, cell in record.items()
+                }
+    finally:
+        try:
+            sas_reader.close()
+        except Exception:
+            pass
+
+
+def _is_sas7bdat_member(name: str) -> bool:
+    normalized = name.replace("\\", "/").lstrip("/")
+    if not normalized or normalized.endswith("/"):
+        return False
+    if normalized.startswith("__MACOSX/") or "/__MACOSX/" in f"/{normalized}":
+        return False
+    filename = Path(normalized).name
+    if filename.startswith("._"):
+        return False
+    return filename.lower().endswith(".sas7bdat")
+
+
+class Sas7bdatFileFormat(FileCodec, alias=".sas7bdat"):
+    """File format codec for SAS sas7bdat files.
+
+    This class is used to read sas7bdat files. The class reads the file and
+    returns an iterable of records. The records are read one by one from
+    the file and yielded as they are read.
+
+    The class is registered with the file format registry using the alias
+    ".sas7bdat". This means that when the pipeline encounters a file with the
+    suffix .sas7bdat, it will use this class to read the file.
+
+    Each row is yielded as a dictionary keyed by column name, in the same
+    way a CSV file is read with csv.DictReader. Numeric missing values are
+    None. Dates and datetimes are Python datetime objects.
+    """
+
+    def read_file_from_handle(self, reader: IOBase) -> Iterable[JsonLikeDocument]:
+        return iter_sas7bdat_records(reader)
+
+
+# SAS libraries on Windows commonly write the suffix in uppercase.
+SUPPORTED_FILE_FORMAT_REGISTRY.registry[".SAS7BDAT"] = Sas7bdatFileFormat
+
+
+class Sas7bdatZipFileFormat(FileCodec, alias=".zip"):
+    """File format codec for zip archives that contain sas7bdat files.
+
+    This class is used to read zip archives. The class opens the archive and
+    returns an iterable of records from every sas7bdat member inside it.
+    Members that are not sas7bdat files are skipped. Directory entries and
+    macOS metadata files are skipped as well.
+
+    The class is registered with the file format registry using the alias
+    ".zip". This means that when the pipeline encounters a file with the
+    suffix .zip, it will use this class to read the file.
+
+    Records from each sas7bdat member are yielded in archive order, using the
+    same row dictionaries as Sas7bdatFileFormat.
+    """
+
+    def read_file_from_handle(self, reader: IOBase) -> Iterable[JsonLikeDocument]:
+        if not reader.seekable():
+            reader = BytesIO(reader.read())
+        else:
+            reader.seek(0)
+
+        payloads: list[BytesIO] = []
+        with zipfile.ZipFile(reader) as archive:
+            for name in archive.namelist():
+                if _is_sas7bdat_member(name):
+                    payloads.append(BytesIO(archive.read(name)))
+
+        for payload in payloads:
+            yield from iter_sas7bdat_records(payload)
 
 
 class YamlFileFormat(FileCodec, alias=".yaml"):

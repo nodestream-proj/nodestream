@@ -3,6 +3,8 @@ import csv
 import gzip
 import json
 import typing
+import zipfile
+from datetime import datetime
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import AsyncIterator
@@ -21,6 +23,22 @@ from nodestream.pipeline.extractors.files import (
 )
 
 SIMPLE_RECORD = {"record": "value"}
+SAS7BDAT_FIXTURE = Path(__file__).resolve().parents[3] / "data" / "sample.sas7bdat"
+SAS_PREVIEW_COLUMNS = ("Column2", "Column3", "Column4", "Column8")
+SAS_PREVIEW = [
+    {
+        "Column2": "pear",
+        "Column3": 84,
+        "Column4": datetime(1965, 12, 10),
+        "Column8": None,
+    },
+    {
+        "Column2": "dog",
+        "Column3": 49,
+        "Column4": datetime(1977, 3, 7),
+        "Column8": 339,
+    },
+]
 
 
 @pytest.fixture(autouse=True)
@@ -120,6 +138,13 @@ def yaml_file(base_dir: str):
         yaml.dump(SIMPLE_RECORD, temp_file)
         temp_file.seek(0)
         yield temp_file
+
+
+@pytest.fixture(autouse=True)
+def sas7bdat_file(base_dir: str):
+    dest = Path(base_dir) / "sample.sas7bdat"
+    dest.write_bytes(SAS7BDAT_FIXTURE.read_bytes())
+    return dest
 
 
 @pytest.fixture(autouse=True)
@@ -261,6 +286,7 @@ def test_declarative_init(
     gzip_file,
     unsupported_file,
     parquet_file,
+    sas7bdat_file,
 ):
     subject = FileExtractor.local(globs=[f"{base_dir}/**"])
     assert isinstance(subject.file_sources[0], LocalFileSource)
@@ -281,7 +307,7 @@ def test_declarative_init(
             unsupported_file,
             parquet_file,
         ]
-    }
+    } | {sas7bdat_file}
 
 
 @pytest.mark.asyncio
@@ -381,3 +407,85 @@ async def test_unified_extractor_multiple_source_types(json_file, csv_file, http
     )
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD] * 4))
+
+
+def _sas_preview(records):
+    return [
+        {column: record[column] for column in SAS_PREVIEW_COLUMNS}
+        for record in records[:2]
+    ]
+
+
+async def _records_from(path: Path):
+    subject = FileExtractor([LocalFileSource([path])])
+    return [record async for record in subject.extract_records()]
+
+
+def _assert_sas_records(records, copies: int = 1):
+    assert len(records) == 10 * copies
+    assert all(len(record) == 100 for record in records)
+    assert _sas_preview(records) == SAS_PREVIEW
+    assert isinstance(records[0]["Column1"], float)
+    assert records[0]["Column1"] == pytest.approx(0.636)
+    if copies == 2:
+        assert _sas_preview(records[10:]) == SAS_PREVIEW
+
+
+@pytest.mark.asyncio
+async def test_sas7bdat_file(sas7bdat_file: Path):
+    _assert_sas_records(await _records_from(sas7bdat_file))
+
+
+@pytest.mark.asyncio
+async def test_uppercase_sas7bdat_suffix(base_dir: str, sas7bdat_file: Path):
+    path = Path(base_dir) / "PEOPLE.SAS7BDAT"
+    path.write_bytes(sas7bdat_file.read_bytes())
+    _assert_sas_records(await _records_from(path))
+
+
+@pytest.mark.asyncio
+async def test_gzip_compressed_sas7bdat(base_dir: str, sas7bdat_file: Path):
+    path = Path(base_dir) / "people.sas7bdat.gz"
+    with gzip.open(path, "wb") as compressed:
+        compressed.write(sas7bdat_file.read_bytes())
+    _assert_sas_records(await _records_from(path))
+
+
+@pytest.mark.asyncio
+async def test_bz2_compressed_sas7bdat(base_dir: str, sas7bdat_file: Path):
+    path = Path(base_dir) / "people.sas7bdat.bz2"
+    with bz2.open(path, "wb") as compressed:
+        compressed.write(sas7bdat_file.read_bytes())
+    _assert_sas_records(await _records_from(path))
+
+
+@pytest.mark.asyncio
+async def test_zip_archive_reads_sas7bdat_members(base_dir: str, sas7bdat_file: Path):
+    payload = sas7bdat_file.read_bytes()
+    archive_path = Path(base_dir) / "bundle.zip"
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        archive.writestr("tables/one.sas7bdat", payload)
+        archive.writestr("notes/readme.txt", "ignore me")
+        archive.writestr("notes/people.csv", "name\nada\n")
+        archive.writestr("__MACOSX/._one.sas7bdat", b"not a sas file")
+        archive.writestr("tables/two.SAS7BDAT", payload)
+    _assert_sas_records(await _records_from(archive_path), copies=2)
+
+
+@pytest.mark.asyncio
+async def test_zip_without_sas7bdat_yields_no_records(base_dir: str):
+    archive_path = Path(base_dir) / "notes.zip"
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        archive.writestr("notes.csv", "record\nvalue\n")
+        archive.writestr("folder/", b"")
+    assert await _records_from(archive_path) == []
+
+
+@pytest.mark.asyncio
+async def test_invalid_sas7bdat_is_skipped(base_dir: str, mocker):
+    path = Path(base_dir) / "bad.sas7bdat"
+    path.write_bytes(b"this is not a sas7bdat file")
+    subject = FileExtractor([LocalFileSource([path])])
+    subject.logger = mocker.Mock()
+    assert [record async for record in subject.extract_records()] == []
+    subject.logger.warning.assert_called_once()
