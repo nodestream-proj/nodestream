@@ -429,10 +429,13 @@ def _normalize_frame(
     SAS stores every number as a float, so numeric columns stay float even
     when a value is a whole number. Missing values are None. Timestamps
     become datetime objects. Text cells arrive as bytes; they are decoded
-    with `encoding`, and a byte that does not fit is replaced.
+    with `encoding`, and a byte that does not fit is replaced. Column names
+    arrive as latin-1 and are re-decoded with the file encoding.
     """
     normalized = frame.copy()
-    normalized.columns = [str(column).strip() for column in normalized.columns]
+    normalized.columns = [
+        _sas_column_name(column, encoding) for column in normalized.columns
+    ]
     for column in list(normalized.columns):
         series = normalized[column]
         if pd.api.types.is_datetime64_any_dtype(series):
@@ -449,6 +452,16 @@ def _normalize_frame(
             normalized[column] = series.str.decode(encoding, errors="replace")
     normalized = normalized.astype(object).where(normalized.notna(), None)
     return normalized.to_dict(orient="records")
+
+
+def _sas_column_name(column, encoding: str | None) -> str:
+    name = str(column).strip()
+    if not encoding:
+        return name
+    try:
+        return name.encode("latin-1").decode(encoding, errors="replace").strip()
+    except UnicodeEncodeError:
+        return name
 
 
 def _series_holds_bytes(series: pd.Series) -> bool:

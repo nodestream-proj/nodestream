@@ -627,6 +627,18 @@ def test_normalize_frame_replaces_undecodable_text():
     assert records[2]["name"] == "dog"
 
 
+def test_normalize_frame_decodes_non_ascii_column_names():
+    mojibake = "Größe".encode("utf-8").decode("latin-1")
+    assert mojibake == "Gr\u00c3\u00b6\u00c3\u009fe"
+    frame = pd.DataFrame({mojibake: [2.0], "id": [1.0]})
+    records = _normalize_frame(frame, encoding="utf-8")
+    assert list(records[0]) == ["Größe", "id"]
+    assert records[0]["Größe"] == 2.0
+    assert isinstance(records[0]["Größe"], float)
+    assert records[0]["id"] == 1.0
+    assert isinstance(records[0]["id"], float)
+
+
 @pytest.mark.parametrize(
     ("name", "expected"),
     [
