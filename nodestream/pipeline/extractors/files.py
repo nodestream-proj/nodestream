@@ -406,7 +406,7 @@ class CommaSeperatedValuesFileFormat(FileCodec, alias=".csv"):
         return DictReader(reader)
 
 
-def _sas_text_encoding(reader) -> str:
+def _sas_text_encoding(reader, source: str) -> str:
     """Return the codec for SAS text cells.
 
     The file is read as raw bytes, so a bad byte is handled per cell instead
@@ -417,12 +417,41 @@ def _sas_text_encoding(reader) -> str:
     encoding = getattr(reader, "inferred_encoding", None)
     if isinstance(encoding, str) and not encoding.startswith("unknown"):
         return encoding
-    LOGGER.warning("Could not infer SAS text encoding; decoding text as latin-1.")
+    LOGGER.warning(
+        "Could not infer SAS text encoding; decoding text as latin-1 in %s.",
+        source,
+    )
     return "latin-1"
 
 
+def _count_undecodable_cells(series: pd.Series, encoding: str) -> int:
+    count = 0
+    for value in series:
+        if not isinstance(value, (bytes, bytearray)):
+            continue
+        try:
+            value.decode(encoding)
+        except UnicodeDecodeError:
+            count += 1
+    return count
+
+
+def _log_replaced_sas_bytes(replaced: dict[str, int], source: str) -> None:
+    total = sum(replaced.values())
+    if not total:
+        return
+    LOGGER.warning(
+        "replaced undecodable bytes in %s cells (columns: %s) in %s",
+        total,
+        ", ".join(replaced),
+        source,
+    )
+
+
 def _normalize_frame(
-    frame: pd.DataFrame, encoding: str | None = None
+    frame: pd.DataFrame,
+    encoding: str | None = None,
+    replaced: dict[str, int] | None = None,
 ) -> list[JsonLikeDocument]:
     """Turn one SAS chunk into plain records.
 
@@ -450,6 +479,10 @@ def _normalize_frame(
             )
             continue
         if encoding and _series_holds_bytes(series):
+            if replaced is not None:
+                count = _count_undecodable_cells(series, encoding)
+                if count:
+                    replaced[column] = replaced.get(column, 0) + count
             normalized[column] = series.str.decode(encoding, errors="replace")
     normalized = normalized.astype(object).where(normalized.notna(), None)
     return normalized.to_dict(orient="records")
@@ -470,20 +503,24 @@ def _series_holds_bytes(series: pd.Series) -> bool:
 
 
 def _iter_sas7bdat_records(
-    reader: IOBase, chunksize: int
+    reader: IOBase, chunksize: int, source: str
 ) -> Iterable[JsonLikeDocument]:
     """Yield one dictionary per row from an open sas7bdat file."""
-    with pd.read_sas(
-        reader,
-        format="sas7bdat",
-        iterator=True,
-        chunksize=chunksize,
-        compression=None,
-        encoding=None,
-    ) as sas_reader:
-        encoding = _sas_text_encoding(sas_reader)
-        for frame in sas_reader:
-            yield from _normalize_frame(frame, encoding)
+    replaced: dict[str, int] = {}
+    try:
+        with pd.read_sas(
+            reader,
+            format="sas7bdat",
+            iterator=True,
+            chunksize=chunksize,
+            compression=None,
+            encoding=None,
+        ) as sas_reader:
+            encoding = _sas_text_encoding(sas_reader, source)
+            for frame in sas_reader:
+                yield from _normalize_frame(frame, encoding, replaced)
+    finally:
+        _log_replaced_sas_bytes(replaced, source)
 
 
 class Sas7bdatFileFormat(FileCodec, alias=".sas7bdat"):
@@ -509,8 +546,13 @@ class Sas7bdatFileFormat(FileCodec, alias=".sas7bdat"):
 
     chunksize = 10_000
 
-    def read_file_from_handle(self, reader: IOBase) -> Iterable[JsonLikeDocument]:
-        return _iter_sas7bdat_records(reader, self.chunksize)
+    def read_file_from_handle(
+        self, reader: IOBase, source: str | None = None
+    ) -> Iterable[JsonLikeDocument]:
+        if not source:
+            name = getattr(reader, "name", None)
+            source = str(name) if name else "unknown file"
+        return _iter_sas7bdat_records(reader, self.chunksize, source)
 
 
 class YamlFileFormat(FileCodec, alias=".yaml"):
@@ -608,15 +650,8 @@ def _is_data_member(name: str) -> bool:
     return bool(filename) and not filename.startswith("._")
 
 
-def _copy_with_limit(src: IOBase, dst: IOBase, limit: int) -> bool:
-    remaining = limit
-    while remaining > 0:
-        chunk = src.read(min(1024 * 1024, remaining))
-        if not chunk:
-            return True
-        dst.write(chunk)
-        remaining -= len(chunk)
-    return src.read(1) == b""
+def _format_gb(num_bytes: int) -> str:
+    return f"{num_bytes / 1024**3:.1f} GB"
 
 
 class ZipArchive(ArchiveCodec, alias=".zip"):
@@ -643,18 +678,20 @@ class ZipArchive(ArchiveCodec, alias=".zip"):
                     member_name = info.filename.replace("\\", "/")
                     if info.file_size > self.max_member_bytes:
                         LOGGER.warning(
-                            "Skipping oversized member %s in %s",
+                            "Skipping oversized member %s in %s "
+                            "(%s > %s limit, ZipArchive.max_member_bytes)",
                             member_name,
                             self.file,
+                            _format_gb(info.file_size),
+                            _format_gb(self.max_member_bytes),
                         )
                         continue
                     suffix = "".join(PurePosixPath(member_name).suffixes)
                     with tempfile.NamedTemporaryFile(suffix=suffix) as temp_file:
                         try:
                             with archive.open(info) as src:
-                                copied = _copy_with_limit(
-                                    src, temp_file, self.max_member_bytes
-                                )
+                                for chunk in iter(lambda: src.read(1024 * 1024), b""):
+                                    temp_file.write(chunk)
                         except (
                             zipfile.BadZipFile,
                             NotImplementedError,
@@ -665,13 +702,6 @@ class ZipArchive(ArchiveCodec, alias=".zip"):
                                 member_name,
                                 self.file,
                                 exc,
-                            )
-                            continue
-                        if not copied:
-                            LOGGER.warning(
-                                "Skipping oversized member %s in %s",
-                                member_name,
-                                self.file,
                             )
                             continue
                         temp_file.seek(0)
@@ -1015,8 +1045,9 @@ class FileExtractor(Extractor):
                 except Exception as e:
                     self.logger.warning(
                         "Failed to read archive %s. "
-                        "Please ensure the file is in the correct format.",
+                        "Please ensure the file is in the correct format: %s",
                         file,
+                        e,
                         extra={"exception": str(e)},
                     )
                 break
@@ -1027,7 +1058,11 @@ class FileExtractor(Extractor):
             try:
                 codec = _lookup_codec(SUPPORTED_FILE_FORMAT_REGISTRY, suffix)()
                 async with file.as_reader(codec.reader or BufferedReader) as reader:
-                    for record in codec.read_file_from_handle(reader):
+                    if isinstance(codec, Sas7bdatFileFormat):
+                        records = codec.read_file_from_handle(reader, source=str(file))
+                    else:
+                        records = codec.read_file_from_handle(reader)
+                    for record in records:
                         yield record
             except MissingFromRegistryError:
                 # If we didn't find a file format codec, break out of the loop
@@ -1036,9 +1071,10 @@ class FileExtractor(Extractor):
             except Exception as e:
                 self.logger.warning(
                     "Failed to parse %s file (at path %s). "
-                    "Please ensure the file is in the correct format.",
+                    "Please ensure the file is in the correct format: %s",
                     file,
                     file.path_like(),
+                    e,
                     extra={"exception": str(e)},
                 )
 

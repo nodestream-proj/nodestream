@@ -31,6 +31,14 @@ from nodestream.pipeline.extractors.files import (
 )
 
 SIMPLE_RECORD = {"record": "value"}
+
+
+def _warning_message(logger) -> str:
+    logger.warning.assert_called_once()
+    args = logger.warning.call_args.args
+    return args[0] % args[1:]
+
+
 # sample.sas7bdat is pandas' test1.sas7bdat; see tests/data/LICENSE-pandas.
 SAS7BDAT_FIXTURE = Path(__file__).resolve().parents[3] / "data" / "sample.sas7bdat"
 SAS_PREVIEW_COLUMNS = ("Column2", "Column3", "Column4", "Column8")
@@ -537,14 +545,36 @@ async def test_zip_bad_member_does_not_drop_later_members(
 
 @pytest.mark.asyncio
 async def test_zip_skips_oversized_members(
-    base_dir: str, sas7bdat_file: Path, monkeypatch
+    base_dir: str, sas7bdat_file: Path, monkeypatch, caplog
 ):
-    monkeypatch.setattr(ZipArchive, "max_member_bytes", 32)
+    limit = 32
+    monkeypatch.setattr(ZipArchive, "max_member_bytes", limit)
     archive_path = Path(base_dir) / "bundle.zip"
     with zipfile.ZipFile(archive_path, "w") as archive:
         archive.write(sas7bdat_file, "big.sas7bdat")
         archive.writestr("notes.csv", "record\nvalue\n")
-    assert await _records_from(archive_path) == [SIMPLE_RECORD]
+    with caplog.at_level(
+        logging.WARNING, logger="nodestream.pipeline.extractors.files"
+    ):
+        assert await _records_from(archive_path) == [SIMPLE_RECORD]
+    size_gb = f"{sas7bdat_file.stat().st_size / 1024**3:.1f} GB"
+    limit_gb = f"{limit / 1024**3:.1f} GB"
+    assert (
+        "Skipping oversized member big.sas7bdat in "
+        f"{archive_path} ({size_gb} > {limit_gb} limit, ZipArchive.max_member_bytes)"
+    ) in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_invalid_zip_logs_the_unpack_error(base_dir: str, mocker):
+    path = Path(base_dir) / "bad.zip"
+    path.write_bytes(b"this is not a zip file")
+    subject = FileExtractor([LocalFileSource([path])])
+    subject.logger = mocker.Mock()
+    assert [record async for record in subject.extract_records()] == []
+    message = _warning_message(subject.logger)
+    assert message.startswith(f"Failed to read archive {path}.")
+    assert message.endswith("File is not a zip file")
 
 
 @pytest.mark.asyncio
@@ -554,7 +584,11 @@ async def test_invalid_sas7bdat_is_skipped(base_dir: str, mocker):
     subject = FileExtractor([LocalFileSource([path])])
     subject.logger = mocker.Mock()
     assert [record async for record in subject.extract_records()] == []
-    subject.logger.warning.assert_called_once()
+    message = _warning_message(subject.logger)
+    reason = subject.logger.warning.call_args.kwargs["extra"]["exception"]
+    assert message.startswith(f"Failed to parse {path} file (at path {path}).")
+    assert message.endswith(reason)
+    assert reason
 
 
 @pytest.mark.asyncio
@@ -578,7 +612,9 @@ SAS_UTF8_ENCODING = 20
 
 
 @pytest.mark.asyncio
-async def test_sas7bdat_bad_text_byte_is_replaced(base_dir: str, sas7bdat_file: Path):
+async def test_sas7bdat_bad_text_byte_is_replaced(
+    base_dir: str, sas7bdat_file: Path, caplog
+):
     path = Path(base_dir) / "bad-byte.sas7bdat"
     data = bytearray(sas7bdat_file.read_bytes())
     assert data[SAS_ENCODING_OFFSET] == SAS_CP1252_ENCODING
@@ -587,7 +623,10 @@ async def test_sas7bdat_bad_text_byte_is_replaced(base_dir: str, sas7bdat_file: 
     assert pear != -1
     data[pear + 1] = 0xFF
     path.write_bytes(data)
-    records = await _records_from(path)
+    with caplog.at_level(
+        logging.WARNING, logger="nodestream.pipeline.extractors.files"
+    ):
+        records = await _records_from(path)
     assert len(records) == 10
     assert records[0]["Column2"] == "p\ufffdar"
     assert records[1]["Column2"] == "dog"
@@ -595,6 +634,54 @@ async def test_sas7bdat_bad_text_byte_is_replaced(base_dir: str, sas7bdat_file: 
     assert isinstance(records[0]["Column3"], float)
     assert records[0]["Column4"] == datetime(1965, 12, 10)
     assert records[0]["Column8"] is None
+    assert caplog.messages == [
+        f"replaced undecodable bytes in 1 cells (columns: Column2) in {path}"
+    ]
+
+
+@pytest.mark.asyncio
+async def test_replaced_sas_bytes_are_logged_once_per_file(
+    base_dir: str, sas7bdat_file: Path, monkeypatch, caplog
+):
+    monkeypatch.setattr(Sas7bdatFileFormat, "chunksize", 1)
+    path = Path(base_dir) / "bad-bytes.sas7bdat"
+    data = bytearray(sas7bdat_file.read_bytes())
+    data[SAS_ENCODING_OFFSET] = SAS_UTF8_ENCODING
+    # Row 0 and row 1 of Column2, so the bad cells fall in different chunks.
+    row0 = data.find(b"pear     ")
+    row1 = data.find(b"dog      pear     apple    pear ")
+    assert row0 != -1 and row1 != -1 and row0 != row1
+    data[row0 + 1] = 0xFF
+    data[row1 + 1] = 0xFF
+    path.write_bytes(data)
+    with caplog.at_level(
+        logging.WARNING, logger="nodestream.pipeline.extractors.files"
+    ):
+        records = await _records_from(path)
+    assert records[0]["Column2"] == "p\ufffdar"
+    assert records[1]["Column2"] == "d\ufffdg"
+    assert caplog.messages == [
+        f"replaced undecodable bytes in 2 cells (columns: Column2) in {path}"
+    ]
+
+
+@pytest.mark.asyncio
+async def test_unknown_sas_encoding_names_the_file(
+    base_dir: str, sas7bdat_file: Path, caplog
+):
+    path = Path(base_dir) / "unknown-encoding.sas7bdat"
+    data = bytearray(sas7bdat_file.read_bytes())
+    data[SAS_ENCODING_OFFSET] = 0
+    path.write_bytes(data)
+    with caplog.at_level(
+        logging.WARNING, logger="nodestream.pipeline.extractors.files"
+    ):
+        records = await _records_from(path)
+    assert len(records) == 10
+    assert records[0]["Column2"] == "pear"
+    assert caplog.messages == [
+        f"Could not infer SAS text encoding; decoding text as latin-1 in {path}."
+    ]
 
 
 def test_normalize_frame_keeps_numbers_as_floats():
