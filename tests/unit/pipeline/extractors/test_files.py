@@ -31,8 +31,7 @@ from nodestream.pipeline.extractors.files import (
 )
 
 SIMPLE_RECORD = {"record": "value"}
-# Synthetic table from the pandas test suite
-# (pandas/tests/io/sas/data/test1.sas7bdat). pandas is BSD-3-Clause.
+# sample.sas7bdat is pandas' test1.sas7bdat; see tests/data/LICENSE-pandas.
 SAS7BDAT_FIXTURE = Path(__file__).resolve().parents[3] / "data" / "sample.sas7bdat"
 SAS_PREVIEW_COLUMNS = ("Column2", "Column3", "Column4", "Column8")
 SAS_PREVIEW = [
