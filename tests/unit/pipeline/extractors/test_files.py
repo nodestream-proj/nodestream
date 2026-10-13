@@ -6,6 +6,7 @@ import logging
 import typing
 import zipfile
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import AsyncIterator
@@ -27,6 +28,7 @@ from nodestream.pipeline.extractors.files import (
     Sas7bdatFileFormat,
     ZipArchive,
     _is_data_member,
+    _iter_sas7bdat_records,
     _normalize_frame,
 )
 
@@ -544,6 +546,34 @@ async def test_zip_bad_member_does_not_drop_later_members(
 
 
 @pytest.mark.asyncio
+async def test_zip_encrypted_member_does_not_drop_later_members(
+    base_dir: str, mocker, caplog
+):
+    archive_path = Path(base_dir) / "bundle.zip"
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        archive.writestr("first.csv", "record\nfirst\n")
+        archive.writestr("secret.csv", "record\nsecret\n")
+        archive.writestr("notes.csv", "record\nvalue\n")
+        # Traditional encryption is flag bit 0. ZipFile.open raises
+        # RuntimeError for that flag when no password is supplied.
+        archive.getinfo("secret.csv").flag_bits |= 1
+    subject = FileExtractor([LocalFileSource([archive_path])])
+    subject.logger = mocker.Mock()
+    with caplog.at_level(
+        logging.WARNING, logger="nodestream.pipeline.extractors.files"
+    ):
+        records = [record async for record in subject.extract_records()]
+    assert records == [{"record": "first"}, SIMPLE_RECORD]
+    subject.logger.warning.assert_not_called()
+    assert (
+        f"Skipping member secret.csv in {archive_path} that could not be unpacked: "
+    ) in caplog.text
+    assert "is encrypted, password required for extraction" in caplog.text
+    assert "first.csv" not in caplog.text
+    assert "notes.csv" not in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_zip_skips_oversized_members(
     base_dir: str, sas7bdat_file: Path, monkeypatch, caplog
 ):
@@ -733,7 +763,11 @@ def test_normalize_frame_decodes_non_ascii_column_names():
             "id": [1.0],
         }
     )
-    records = _normalize_frame(frame, encoding="utf-8")
+    replaced_headers: dict[str, str] = {}
+    records = _normalize_frame(
+        frame, encoding="utf-8", replaced_headers=replaced_headers
+    )
+    assert replaced_headers == {}
     assert list(records[0]) == ["Größe", "Città", "Å", "Grösse", "id"]
     assert records[0]["Größe"] == 2.0
     assert isinstance(records[0]["Größe"], float)
@@ -761,6 +795,64 @@ def test_normalize_frame_decodes_non_ascii_column_names():
 )
 def test_is_data_member(name, expected):
     assert _is_data_member(name) is expected
+
+
+def test_replaced_sas_column_names_are_logged_once(monkeypatch, caplog):
+    class _Reader:
+        inferred_encoding = "utf-8"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def __iter__(self):
+            # Two chunks share one header, so the column name is counted once.
+            yield pd.DataFrame({"c\xffol ": [b"ok"]})
+            yield pd.DataFrame({"c\xffol ": [b"ok"]})
+
+    monkeypatch.setattr(
+        "nodestream.pipeline.extractors.files.pd.read_sas",
+        lambda *args, **kwargs: _Reader(),
+    )
+    with caplog.at_level(
+        logging.WARNING, logger="nodestream.pipeline.extractors.files"
+    ):
+        records = list(_iter_sas7bdat_records(BytesIO(), 1, "sample.sas7bdat"))
+    assert records == [{"c\ufffdol": "ok"}, {"c\ufffdol": "ok"}]
+    assert caplog.messages == [
+        "replaced undecodable bytes in 1 column names (c\ufffdol) in sample.sas7bdat"
+    ]
+
+
+def test_replaced_sas_cells_and_column_names_share_one_warning(monkeypatch, caplog):
+    class _Reader:
+        inferred_encoding = "utf-8"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def __iter__(self):
+            yield pd.DataFrame({"c\xffol": [b"p\xff"]})
+            yield pd.DataFrame({"c\xffol": [b"ok"]})
+
+    monkeypatch.setattr(
+        "nodestream.pipeline.extractors.files.pd.read_sas",
+        lambda *args, **kwargs: _Reader(),
+    )
+    with caplog.at_level(
+        logging.WARNING, logger="nodestream.pipeline.extractors.files"
+    ):
+        records = list(_iter_sas7bdat_records(BytesIO(), 1, "sample.sas7bdat"))
+    assert records == [{"c\ufffdol": "p\ufffd"}, {"c\ufffdol": "ok"}]
+    assert caplog.messages == [
+        "replaced undecodable bytes in 1 cells (columns: c\ufffdol) "
+        "and 1 column names (c\ufffdol) in sample.sas7bdat"
+    ]
 
 
 def test_zip_is_an_archive_codec_not_a_file_format():

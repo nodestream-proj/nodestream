@@ -436,9 +436,34 @@ def _count_undecodable_cells(series: pd.Series, encoding: str) -> int:
     return count
 
 
-def _log_replaced_sas_bytes(replaced: dict[str, int], source: str) -> None:
+def _log_replaced_sas_bytes(
+    replaced: dict[str, int],
+    source: str,
+    replaced_headers: dict[str, str] | None = None,
+) -> None:
+    """Log one warning for undecodable SAS cells and column names."""
     total = sum(replaced.values())
-    if not total:
+    header_names = list((replaced_headers or {}).values())
+    if not total and not header_names:
+        return
+    if total and header_names:
+        LOGGER.warning(
+            "replaced undecodable bytes in %s cells (columns: %s) "
+            "and %s column names (%s) in %s",
+            total,
+            ", ".join(replaced),
+            len(header_names),
+            ", ".join(header_names),
+            source,
+        )
+        return
+    if header_names:
+        LOGGER.warning(
+            "replaced undecodable bytes in %s column names (%s) in %s",
+            len(header_names),
+            ", ".join(header_names),
+            source,
+        )
         return
     LOGGER.warning(
         "replaced undecodable bytes in %s cells (columns: %s) in %s",
@@ -452,6 +477,7 @@ def _normalize_frame(
     frame: pd.DataFrame,
     encoding: str | None = None,
     replaced: dict[str, int] | None = None,
+    replaced_headers: dict[str, str] | None = None,
 ) -> list[JsonLikeDocument]:
     """Turn one SAS chunk into plain records.
 
@@ -460,12 +486,18 @@ def _normalize_frame(
     become datetime objects. Text cells arrive as bytes; they are decoded
     with `encoding`, and a byte that does not fit is replaced. Column names
     arrive as latin-1 and are re-decoded with the file encoding before
-    surrounding spaces are stripped.
+    surrounding spaces are stripped. A column name that does not fit is
+    replaced and recorded once in `replaced_headers` (later chunks repeat
+    the same header).
     """
     normalized = frame.copy()
-    normalized.columns = [
-        _sas_column_name(column, encoding) for column in normalized.columns
-    ]
+    names = []
+    for column in normalized.columns:
+        name, header_replaced = _sas_column_name(column, encoding)
+        names.append(name)
+        if header_replaced and replaced_headers is not None:
+            replaced_headers.setdefault(str(column), name)
+    normalized.columns = names
     for column in list(normalized.columns):
         series = normalized[column]
         if pd.api.types.is_datetime64_any_dtype(series):
@@ -488,11 +520,18 @@ def _normalize_frame(
     return normalized.to_dict(orient="records")
 
 
-def _sas_column_name(column, encoding: str | None) -> str:
+def _sas_column_name(column, encoding: str | None) -> tuple[str, bool]:
+    """Return the stripped name and whether decoding replaced bytes."""
     name = str(column)
+    replaced = False
     if encoding:
-        name = name.encode("latin-1").decode(encoding, errors="replace")
-    return name.strip()
+        raw = name.encode("latin-1")
+        try:
+            name = raw.decode(encoding)
+        except UnicodeDecodeError:
+            name = raw.decode(encoding, errors="replace")
+            replaced = True
+    return name.strip(), replaced
 
 
 def _series_holds_bytes(series: pd.Series) -> bool:
@@ -507,6 +546,7 @@ def _iter_sas7bdat_records(
 ) -> Iterable[JsonLikeDocument]:
     """Yield one dictionary per row from an open sas7bdat file."""
     replaced: dict[str, int] = {}
+    replaced_headers: dict[str, str] = {}
     try:
         with pd.read_sas(
             reader,
@@ -518,9 +558,9 @@ def _iter_sas7bdat_records(
         ) as sas_reader:
             encoding = _sas_text_encoding(sas_reader, source)
             for frame in sas_reader:
-                yield from _normalize_frame(frame, encoding, replaced)
+                yield from _normalize_frame(frame, encoding, replaced, replaced_headers)
     finally:
-        _log_replaced_sas_bytes(replaced, source)
+        _log_replaced_sas_bytes(replaced, source, replaced_headers)
 
 
 class Sas7bdatFileFormat(FileCodec, alias=".sas7bdat"):
@@ -696,6 +736,10 @@ class ZipArchive(ArchiveCodec, alias=".zip"):
                             zipfile.BadZipFile,
                             NotImplementedError,
                             OSError,
+                            # Encrypted members raise RuntimeError when no
+                            # password is set. Keep that inside this member
+                            # so later members are still read.
+                            RuntimeError,
                         ) as exc:
                             LOGGER.warning(
                                 "Skipping member %s in %s that could not be unpacked: %s",
