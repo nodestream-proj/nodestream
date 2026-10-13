@@ -57,6 +57,12 @@ Conviced? Install nodestream with `pip` to get started.
 
 We highly recommend following our tutorials [here](https://nodestream-proj.github.io/docs/docs/category/tutorial---basics/)
 
+### Reading files
+
+`FileExtractor` reads `.json`, `.jsonl`, `.csv`, `.yaml`, `.txt`, `.parquet`, and `.sas7bdat`. Suffix case is ignored, so `.JSON` and `.SAS7BDAT` use the same codecs as their lowercase forms. `.gz` and `.bz2` are decompressed first. A `.zip` archive is expanded one member at a time, and each member is read by its own suffix, so one zip can mix CSV, JSON, and sas7bdat. A member that cannot be unpacked or parsed is skipped and does not drop the members after it.
+
+SAS numbers stay floats, including whole numbers such as `2.0`, so a property has one type on every row. Cast them with a normalizer when a pipeline wants integers. Missing values are `None`. SAS dates and datetimes are Python `datetime` objects. SAS text uses the encoding declared in the file. A byte that does not fit that encoding is replaced, and the rest of the file is still read. An unknown encoding is decoded as latin-1.
+
 ## Packages 
 
 Nodestream is built on a Highly Pluggable and Modular Architecture. Thus... we have a lot of packages to keep track of. 

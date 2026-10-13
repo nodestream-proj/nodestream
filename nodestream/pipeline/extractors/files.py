@@ -3,13 +3,14 @@ import gzip
 import json
 import sys
 import tempfile
+import zipfile
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from csv import DictReader
 from glob import glob
 from io import BufferedReader, BytesIO, IOBase, TextIOWrapper
 from logging import getLogger
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import (
     Any,
     AsyncContextManager,
@@ -34,7 +35,22 @@ from .extractor import Extractor
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
+SUPPORTED_ARCHIVE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_FILE_SOURCES_REGISTRY = SubclassRegistry()
+
+LOGGER = getLogger(__name__)
+
+
+def _lookup_codec(registry: SubclassRegistry, suffix: str):
+    """Resolve a codec by suffix, ignoring case.
+
+    `.JSON` and `.json` select the same codec. Compression, archive, and
+    file-format lookups all go through this helper.
+    """
+    try:
+        return registry.get(suffix)
+    except MissingFromRegistryError:
+        return registry.get(suffix.lower())
 
 
 class Utf8TextIOWrapper(TextIOWrapper):
@@ -262,6 +278,26 @@ class CompressionCodec(Pluggable, ABC):
         raise NotImplementedError
 
 
+@SUPPORTED_ARCHIVE_FORMAT_REGISTRY.connect_baseclass
+class ArchiveCodec(Pluggable, ABC):
+    """Base class for archive codecs.
+
+    An archive is a container of named members, not a file format. Expanding
+    an archive yields one readable file per member so each member is parsed
+    by the codec for its own suffix.
+    """
+
+    entrypoint_name = "archive_formats"
+
+    def __init__(self, file: ReadableFile) -> None:
+        self.file = file
+
+    @abstractmethod
+    def members(self) -> AsyncIterator[ReadableFile]:
+        """Yield one readable file per archive member."""
+        raise NotImplementedError
+
+
 class JsonFileFormat(FileCodec, alias=".json"):
     """File format codec for JSON files.
 
@@ -370,6 +406,195 @@ class CommaSeperatedValuesFileFormat(FileCodec, alias=".csv"):
         return DictReader(reader)
 
 
+def _sas_text_encoding(reader, source: str) -> str:
+    """Return the codec for SAS text cells.
+
+    The file is read as raw bytes, so a bad byte is handled per cell instead
+    of aborting the reader. pandas records the declared encoding on
+    `inferred_encoding`. An unknown code is not a Python codec, and those
+    files are decoded as latin-1.
+    """
+    encoding = getattr(reader, "inferred_encoding", None)
+    if isinstance(encoding, str) and not encoding.startswith("unknown"):
+        return encoding
+    LOGGER.warning(
+        "Could not infer SAS text encoding; decoding text as latin-1 in %s.",
+        source,
+    )
+    return "latin-1"
+
+
+def _count_undecodable_cells(series: pd.Series, encoding: str) -> int:
+    count = 0
+    for value in series:
+        if not isinstance(value, (bytes, bytearray)):
+            continue
+        try:
+            value.decode(encoding)
+        except UnicodeDecodeError:
+            count += 1
+    return count
+
+
+def _log_replaced_sas_bytes(
+    replaced: dict[str, int],
+    source: str,
+    replaced_headers: dict[str, str] | None = None,
+) -> None:
+    """Log one warning for undecodable SAS cells and column names."""
+    total = sum(replaced.values())
+    header_names = list((replaced_headers or {}).values())
+    if not total and not header_names:
+        return
+    if total and header_names:
+        LOGGER.warning(
+            "replaced undecodable bytes in %s cells (columns: %s) "
+            "and %s column names (%s) in %s",
+            total,
+            ", ".join(replaced),
+            len(header_names),
+            ", ".join(header_names),
+            source,
+        )
+        return
+    if header_names:
+        LOGGER.warning(
+            "replaced undecodable bytes in %s column names (%s) in %s",
+            len(header_names),
+            ", ".join(header_names),
+            source,
+        )
+        return
+    LOGGER.warning(
+        "replaced undecodable bytes in %s cells (columns: %s) in %s",
+        total,
+        ", ".join(replaced),
+        source,
+    )
+
+
+def _normalize_frame(
+    frame: pd.DataFrame,
+    encoding: str | None = None,
+    replaced: dict[str, int] | None = None,
+    replaced_headers: dict[str, str] | None = None,
+) -> list[JsonLikeDocument]:
+    """Turn one SAS chunk into plain records.
+
+    SAS stores every number as a float, so numeric columns stay float even
+    when a value is a whole number. Missing values are None. Timestamps
+    become datetime objects. Text cells arrive as bytes; they are decoded
+    with `encoding`, and a byte that does not fit is replaced. Column names
+    arrive as latin-1 and are re-decoded with the file encoding before
+    surrounding spaces are stripped. A column name that does not fit is
+    replaced and recorded once in `replaced_headers` (later chunks repeat
+    the same header).
+    """
+    normalized = frame.copy()
+    names = []
+    for column in normalized.columns:
+        name, header_replaced = _sas_column_name(column, encoding)
+        names.append(name)
+        if header_replaced and replaced_headers is not None:
+            replaced_headers.setdefault(str(column), name)
+    normalized.columns = names
+    for column in list(normalized.columns):
+        series = normalized[column]
+        if pd.api.types.is_datetime64_any_dtype(series):
+            normalized[column] = pd.Series(
+                [
+                    None if pd.isna(value) else pd.Timestamp(value).to_pydatetime()
+                    for value in series
+                ],
+                index=normalized.index,
+                dtype=object,
+            )
+            continue
+        if encoding and _series_holds_bytes(series):
+            if replaced is not None:
+                count = _count_undecodable_cells(series, encoding)
+                if count:
+                    replaced[column] = replaced.get(column, 0) + count
+            normalized[column] = series.str.decode(encoding, errors="replace")
+    normalized = normalized.astype(object).where(normalized.notna(), None)
+    return normalized.to_dict(orient="records")
+
+
+def _sas_column_name(column, encoding: str | None) -> tuple[str, bool]:
+    """Return the stripped name and whether decoding replaced bytes."""
+    name = str(column)
+    replaced = False
+    if encoding:
+        raw = name.encode("latin-1")
+        try:
+            name = raw.decode(encoding)
+        except UnicodeDecodeError:
+            name = raw.decode(encoding, errors="replace")
+            replaced = True
+    return name.strip(), replaced
+
+
+def _series_holds_bytes(series: pd.Series) -> bool:
+    if series.dtype != object:
+        return False
+    present = series.dropna()
+    return not present.empty and isinstance(present.iloc[0], (bytes, bytearray))
+
+
+def _iter_sas7bdat_records(
+    reader: IOBase, chunksize: int, source: str
+) -> Iterable[JsonLikeDocument]:
+    """Yield one dictionary per row from an open sas7bdat file."""
+    replaced: dict[str, int] = {}
+    replaced_headers: dict[str, str] = {}
+    try:
+        with pd.read_sas(
+            reader,
+            format="sas7bdat",
+            iterator=True,
+            chunksize=chunksize,
+            compression=None,
+            encoding=None,
+        ) as sas_reader:
+            encoding = _sas_text_encoding(sas_reader, source)
+            for frame in sas_reader:
+                yield from _normalize_frame(frame, encoding, replaced, replaced_headers)
+    finally:
+        _log_replaced_sas_bytes(replaced, source, replaced_headers)
+
+
+class Sas7bdatFileFormat(FileCodec, alias=".sas7bdat"):
+    """File format codec for SAS sas7bdat files.
+
+    This class is used to read sas7bdat files. The class reads the file and
+    returns an iterable of records. The records are read one by one from
+    the file and yielded as they are read.
+
+    The class is registered with the file format registry using the alias
+    ".sas7bdat". Suffix lookup is case-insensitive, so `.SAS7BDAT` uses this
+    codec too.
+
+    Each row is a dictionary keyed by column name, like csv.DictReader.
+    Missing values are None and SAS dates are Python datetime objects.
+    SAS stores every number as a float, including whole numbers, so numeric
+    properties stay one type across rows. Cast them later with a normalizer
+    if a pipeline wants integers. Text is decoded with the encoding declared
+    in the file. A byte that does not fit that encoding is replaced, and the
+    rest of the file is still read. An unknown encoding is decoded as latin-1.
+    Rows are read in chunks of `chunksize` (10,000 by default).
+    """
+
+    chunksize = 10_000
+
+    def read_file_from_handle(
+        self, reader: IOBase, source: str | None = None
+    ) -> Iterable[JsonLikeDocument]:
+        if not source:
+            name = getattr(reader, "name", None)
+            source = str(name) if name else "unknown file"
+        return _iter_sas7bdat_records(reader, self.chunksize, source)
+
+
 class YamlFileFormat(FileCodec, alias=".yaml"):
     """File format codec for YAML files.
 
@@ -447,6 +672,88 @@ class Bz2FileFormat(CompressionCodec, alias=".bz2"):
                     temp_file.write(decompressor.decompress(chunk))
             temp_file.seek(0)
             yield TempFile(new_path, temp_file, str(self.file))
+
+
+def _is_data_member(name: str) -> bool:
+    """Return whether a zip member should be parsed.
+
+    Directory entries and macOS metadata (`__MACOSX/`, AppleDouble `._*`
+    files) are not data files. The check is about the member name, not the
+    format: csv, json, and sas7bdat members are all data.
+    """
+    normalized = name.replace("\\", "/").lstrip("/")
+    if not normalized or normalized.endswith("/"):
+        return False
+    if normalized.startswith("__MACOSX/") or "/__MACOSX/" in f"/{normalized}":
+        return False
+    filename = PurePosixPath(normalized).name
+    return bool(filename) and not filename.startswith("._")
+
+
+def _format_gb(num_bytes: int) -> str:
+    return f"{num_bytes / 1024**3:.1f} GB"
+
+
+class ZipArchive(ArchiveCodec, alias=".zip"):
+    """Archive codec for zip files.
+
+    Members are extracted one at a time onto disk and handed back to the
+    file extractor, which selects a codec from the member suffix. A zip of
+    CSV, JSON, or sas7bdat files is read by those codecs. A member that
+    cannot be unpacked, or that fails while it is parsed, does not stop
+    the members after it.
+
+    `max_member_bytes` skips members whose uncompressed size is larger than
+    the cap so a zip bomb cannot expand without bound.
+    """
+
+    max_member_bytes = 2 * 1024**3
+
+    async def members(self) -> AsyncIterator[ReadableFile]:
+        async with self.file.as_reader(BufferedReader) as reader:
+            with zipfile.ZipFile(reader) as archive:
+                for info in archive.infolist():
+                    if not _is_data_member(info.filename):
+                        continue
+                    member_name = info.filename.replace("\\", "/")
+                    if info.file_size > self.max_member_bytes:
+                        LOGGER.warning(
+                            "Skipping oversized member %s in %s "
+                            "(%s > %s limit, ZipArchive.max_member_bytes)",
+                            member_name,
+                            self.file,
+                            _format_gb(info.file_size),
+                            _format_gb(self.max_member_bytes),
+                        )
+                        continue
+                    suffix = "".join(PurePosixPath(member_name).suffixes)
+                    with tempfile.NamedTemporaryFile(suffix=suffix) as temp_file:
+                        try:
+                            with archive.open(info) as src:
+                                for chunk in iter(lambda: src.read(1024 * 1024), b""):
+                                    temp_file.write(chunk)
+                        except (
+                            zipfile.BadZipFile,
+                            NotImplementedError,
+                            OSError,
+                            # Encrypted members raise RuntimeError when no
+                            # password is set. Keep that inside this member
+                            # so later members are still read.
+                            RuntimeError,
+                        ) as exc:
+                            LOGGER.warning(
+                                "Skipping member %s in %s that could not be unpacked: %s",
+                                member_name,
+                                self.file,
+                                exc,
+                            )
+                            continue
+                        temp_file.seek(0)
+                        yield TempFile(
+                            Path(temp_file.name),
+                            temp_file,
+                            f"{self.file}!{member_name}",
+                        )
 
 
 class LocalFileSource(FileSource, alias="local"):
@@ -734,6 +1041,7 @@ class FileExtractor(Extractor):
     def __init__(self, file_sources: Sequence[FileSource]) -> None:
         self.file_sources = file_sources
         self.logger = getLogger(__name__)
+        ArchiveCodec.import_all()
 
     async def read_file(
         self,
@@ -749,7 +1057,9 @@ class FileExtractor(Extractor):
             # the decompressed file in an intermediary file. The intermediary
             # file will be read by the file format codec.
             try:
-                algo = SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY.get(suffix)(file)
+                algo = _lookup_codec(SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY, suffix)(
+                    file
+                )
                 decompression = algo.decompress_file()
                 file = await decompression.__aenter__()
                 intermediaries.append(decompression)
@@ -765,13 +1075,38 @@ class FileExtractor(Extractor):
                 )
                 break
 
+            # Archives expand into members. Each member is parsed on its own,
+            # so a bad member does not drop the members that follow it.
+            try:
+                archive_type = _lookup_codec(SUPPORTED_ARCHIVE_FORMAT_REGISTRY, suffix)
+            except MissingFromRegistryError:
+                archive_type = None
+            if archive_type is not None:
+                try:
+                    async for member in archive_type(file).members():
+                        async for record in self.read_file(member):
+                            yield record
+                except Exception as e:
+                    self.logger.warning(
+                        "Failed to read archive %s. "
+                        "Please ensure the file is in the correct format: %s",
+                        file,
+                        e,
+                        extra={"exception": str(e)},
+                    )
+                break
+
             # If we didn't find a compression codec, try to find a file format
             # codec that can read the file. If a file format codec is found,
             # read the file and yield the records.
             try:
-                codec = SUPPORTED_FILE_FORMAT_REGISTRY.get(suffix)()
+                codec = _lookup_codec(SUPPORTED_FILE_FORMAT_REGISTRY, suffix)()
                 async with file.as_reader(codec.reader or BufferedReader) as reader:
-                    for record in codec.read_file_from_handle(reader):
+                    if isinstance(codec, Sas7bdatFileFormat):
+                        records = codec.read_file_from_handle(reader, source=str(file))
+                    else:
+                        records = codec.read_file_from_handle(reader)
+                    for record in records:
                         yield record
             except MissingFromRegistryError:
                 # If we didn't find a file format codec, break out of the loop
@@ -780,9 +1115,10 @@ class FileExtractor(Extractor):
             except Exception as e:
                 self.logger.warning(
                     "Failed to parse %s file (at path %s). "
-                    "Please ensure the file is in the correct format.",
+                    "Please ensure the file is in the correct format: %s",
                     file,
                     file.path_like(),
+                    e,
                     extra={"exception": str(e)},
                 )
 
