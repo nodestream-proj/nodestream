@@ -430,7 +430,8 @@ def _normalize_frame(
     when a value is a whole number. Missing values are None. Timestamps
     become datetime objects. Text cells arrive as bytes; they are decoded
     with `encoding`, and a byte that does not fit is replaced. Column names
-    arrive as latin-1 and are re-decoded with the file encoding.
+    arrive as latin-1 and are re-decoded with the file encoding before
+    surrounding spaces are stripped.
     """
     normalized = frame.copy()
     normalized.columns = [
@@ -455,13 +456,10 @@ def _normalize_frame(
 
 
 def _sas_column_name(column, encoding: str | None) -> str:
-    name = str(column).strip()
-    if not encoding:
-        return name
-    try:
-        return name.encode("latin-1").decode(encoding, errors="replace").strip()
-    except UnicodeEncodeError:
-        return name
+    name = str(column)
+    if encoding:
+        name = name.encode("latin-1").decode(encoding, errors="replace")
+    return name.strip()
 
 
 def _series_holds_bytes(series: pd.Series) -> bool:

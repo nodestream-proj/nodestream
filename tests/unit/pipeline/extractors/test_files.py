@@ -628,13 +628,33 @@ def test_normalize_frame_replaces_undecodable_text():
 
 
 def test_normalize_frame_decodes_non_ascii_column_names():
-    mojibake = "Größe".encode("utf-8").decode("latin-1")
-    assert mojibake == "Gr\u00c3\u00b6\u00c3\u009fe"
-    frame = pd.DataFrame({mojibake: [2.0], "id": [1.0]})
+    def as_pandas_header(name: str) -> str:
+        return name.encode("utf-8").decode("latin-1")
+
+    groesse = as_pandas_header("Größe")
+    citta = as_pandas_header("Città")
+    angstrom = as_pandas_header("Å")
+    padded = as_pandas_header("Grösse ")
+    assert groesse == "Gr\u00c3\u00b6\u00c3\u009fe"
+    assert citta.endswith("\u00a0")
+    assert angstrom.endswith("\u0085")
+    frame = pd.DataFrame(
+        {
+            groesse: [2.0],
+            citta: ["rome"],
+            angstrom: [1.0],
+            padded: [3.0],
+            "id": [1.0],
+        }
+    )
     records = _normalize_frame(frame, encoding="utf-8")
-    assert list(records[0]) == ["Größe", "id"]
+    assert list(records[0]) == ["Größe", "Città", "Å", "Grösse", "id"]
     assert records[0]["Größe"] == 2.0
     assert isinstance(records[0]["Größe"], float)
+    assert records[0]["Città"] == "rome"
+    assert records[0]["Å"] == 1.0
+    assert isinstance(records[0]["Å"], float)
+    assert records[0]["Grösse"] == 3.0
     assert records[0]["id"] == 1.0
     assert isinstance(records[0]["id"], float)
 
