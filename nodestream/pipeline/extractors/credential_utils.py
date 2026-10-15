@@ -1,10 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from time import time
 from typing import Optional
 from uuid import uuid4
 
 import boto3
-import pytz
 from botocore.credentials import RefreshableCredentials
 from botocore.session import Session
 
@@ -54,7 +53,7 @@ class AwsClientFactory:
             "secret_key": session_credentials.secret_key,
             "token": session_credentials.token,
             "expiry_time": datetime.fromtimestamp(
-                time() + self.session_ttl, tz=pytz.utc
+                time() + self.session_ttl, tz=timezone.utc
             ).isoformat(),
         }
 

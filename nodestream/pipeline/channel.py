@@ -46,11 +46,12 @@ class Channel:
 
     @classmethod
     def create_with_naming(
-        cls, size: int, input_name: str = "Void", output_name: str = "Void"
+        cls, size: int, input_name: str | None = None, output_name: str | None = None
     ) -> "Channel":
+        default = "Void"
         metric = Metric(
-            f"buffered_{input_name}_to_{output_name}",
-            f"Records buffered: {input_name} → {output_name}",
+            f"buffered_{input_name or default}_to_{output_name or default}",
+            f"Records buffered: {input_name or default} → {output_name or default}",
             accumulate=False,
         )
         return cls(size, metric)
@@ -65,9 +66,9 @@ class Channel:
         Returns:
             object: The object that was retrieved from the channel.
         """
-        object = await self.queue.get()
+        q = await self.queue.get()
         Metrics.get().decrement(self.metric)
-        return object
+        return q
 
     async def put(self, obj) -> bool:
         """Put an object in the channel.
@@ -98,8 +99,8 @@ class StepOutput:
 
     __slots__ = ("channel",)
 
-    def __init__(self, channel: Channel) -> None:
-        self.channel = channel
+    def __init__(self, init_channel: Channel) -> None:
+        self.channel = init_channel
 
     async def done(self):
         """Mark the output channel as done.
@@ -144,8 +145,8 @@ class StepInput:
 
     __slots__ = ("channel",)
 
-    def __init__(self, channel: Channel) -> None:
-        self.channel = channel
+    def __init__(self, init_channel: Channel) -> None:
+        self.channel = init_channel
 
     async def get(self) -> Optional[object]:
         """Get an object from the input channel.
@@ -157,10 +158,10 @@ class StepInput:
         Returns:
             object: The object that was retrieved from the channel.
         """
-        if (object := await self.channel.get()) is DoneObject:
+        if (chan := await self.channel.get()) is DoneObject:
             return None
 
-        return object
+        return chan
 
     def done(self):
         """Mark the input channel as done.
@@ -180,5 +181,5 @@ def channel(
         input_name: The name of the input step.
         output_name: The name of the output step.
     """
-    channel = Channel.create_with_naming(size, input_name, output_name)
-    return StepInput(channel), StepOutput(channel)
+    new_channel = Channel.create_with_naming(size, input_name, output_name)
+    return StepInput(new_channel), StepOutput(new_channel)

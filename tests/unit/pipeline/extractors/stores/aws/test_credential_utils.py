@@ -2,7 +2,6 @@ import datetime
 from unittest.mock import patch
 
 import pytest
-import pytz
 from freezegun import freeze_time
 from hamcrest import assert_that, equal_to, has_key, not_
 
@@ -81,7 +80,9 @@ class MockCredentials:
 
 # Testing against a different timezone to ensure the time is being converted to UTC
 @freeze_time(
-    datetime.datetime(1998, 3, 25, 12, 0, 1, tzinfo=pytz.timezone("Etc/GMT-8"))
+    datetime.datetime(
+        1998, 3, 25, 12, 0, 1, tzinfo=datetime.timezone(datetime.timedelta(hours=8))
+    )
 )
 def test_get_credentials_from_proider_chain(client_without_role):
     mock_credentials = MockCredentials(
