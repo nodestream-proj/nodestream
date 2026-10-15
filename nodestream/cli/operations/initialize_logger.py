@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Any
 
-from pythonjsonlogger.jsonlogger import JsonFormatter
+from pythonjsonlogger.json import JsonFormatter
 
 from nodestream.cli.commands.nodestream_command import NodestreamCommand
 from nodestream.metrics import Metrics

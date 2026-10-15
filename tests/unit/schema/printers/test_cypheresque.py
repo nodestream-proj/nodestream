@@ -9,8 +9,7 @@ def test_print_schema_to_string(basic_schema):
 
     assert_that(
         result,
-        equal_to(
-            """Node Types:
+        equal_to("""Node Types:
 Person: name: STRING, age: INTEGER
 Organization: name: STRING, industry: STRING
 Relationship Types:
@@ -19,6 +18,5 @@ HAS_EMPLOYEE: since: DATETIME
 Adjancies:
 (:Person)-[:BEST_FRIEND_OF]->(:Person)
 (:Organization)-[:HAS_EMPLOYEE]->(:Person)
-"""
-        ),
+"""),
     )

@@ -23,7 +23,7 @@ from typing import (
 )
 
 import pandas as pd
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 from yaml import safe_load
 
 from ...model import JsonLikeDocument
@@ -123,7 +123,7 @@ class RemoteFile(ReadableFile):
     """A class that represents a remote file that can be read.
 
     This class is used to read files from a remote URL. The class uses the
-    httpx library to stream the file from the URL and return a reader that
+    httpx2 library to stream the file from the URL and return a reader that
     can be used to read the file.
     """
 
@@ -486,7 +486,7 @@ class RemoteFileSource(FileSource, alias="http"):
     """A class that represents a source of remote files to be read.
 
     This class is used to read files from remote URLs. The class takes a list
-    of URLs and a memory spooling maximum size in MB. The class uses the httpx
+    of URLs and a memory spooling maximum size in MB. The class uses the httpx2
     library to stream the files from the URLs and yield instances of RemoteFile
     that can be read by the pipeline.
     """

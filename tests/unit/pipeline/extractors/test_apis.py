@@ -1,4 +1,5 @@
 import pytest
+import respx
 from hamcrest import assert_that, equal_to
 
 from nodestream.pipeline.extractors.apis import SimpleApiExtractor
@@ -11,36 +12,37 @@ TODOS_RESPONSE = [
 
 
 @pytest.mark.asyncio
-async def test_api_no_pagination_no_nesting(httpx_mock):
-    httpx_mock.add_response(url=TODO_API, json=TODOS_RESPONSE)
+async def test_api_no_pagination_no_nesting(httpx2_mock: respx.Router):
+    httpx2_mock.get(TODO_API).respond(200, json=TODOS_RESPONSE)
     subject = SimpleApiExtractor(TODO_API)
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to(TODOS_RESPONSE))
 
 
 @pytest.mark.asyncio
-async def test_api_no_pagination_with_nesting(httpx_mock):
-    httpx_mock.add_response(url=TODO_API, json={"todos": TODOS_RESPONSE})
+async def test_api_no_pagination_with_nesting(httpx2_mock: respx.Router):
+    httpx2_mock.get(TODO_API).respond(200, json={"todos": TODOS_RESPONSE})
     subject = SimpleApiExtractor(TODO_API, yield_from="todos")
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to(TODOS_RESPONSE))
 
 
 @pytest.mark.asyncio
-async def test_api_pagination_no_nesting(httpx_mock):
-    httpx_mock.add_response(url=TODO_API, json=TODOS_RESPONSE[:1])
-    httpx_mock.add_response(url=TODO_API + "?o=1", json=TODOS_RESPONSE[1:])
-    httpx_mock.add_response(url=TODO_API + "?o=2", json=[])
+async def test_api_pagination_no_nesting(httpx2_mock: respx.Router):
+    # respx matches the first route that fits. A bare URL also fits "?o=N", so list it last.
+    httpx2_mock.get(TODO_API + "?o=2").respond(200, json=[])
+    httpx2_mock.get(TODO_API + "?o=1").respond(200, json=TODOS_RESPONSE[1:])
+    httpx2_mock.get(TODO_API).respond(200, json=TODOS_RESPONSE[:1])
     subject = SimpleApiExtractor(TODO_API, offset_query_param="o")
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to(TODOS_RESPONSE))
 
 
 @pytest.mark.asyncio
-async def test_api_pagination_with_nesting(httpx_mock):
-    httpx_mock.add_response(url=TODO_API, json={"todos": TODOS_RESPONSE[:1]})
-    httpx_mock.add_response(url=TODO_API + "?o=1", json={"todos": TODOS_RESPONSE[1:]})
-    httpx_mock.add_response(url=TODO_API + "?o=2", json={"todos": []})
+async def test_api_pagination_with_nesting(httpx2_mock: respx.Router):
+    httpx2_mock.get(TODO_API + "?o=2").respond(200, json={"todos": []})
+    httpx2_mock.get(TODO_API + "?o=1").respond(200, json={"todos": TODOS_RESPONSE[1:]})
+    httpx2_mock.get(TODO_API).respond(200, json={"todos": TODOS_RESPONSE[:1]})
     subject = SimpleApiExtractor(TODO_API, offset_query_param="o", yield_from="todos")
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to(TODOS_RESPONSE))

@@ -9,6 +9,7 @@ from typing import AsyncIterator
 
 import pandas as pd
 import pytest
+import respx
 import yaml
 from hamcrest import assert_that, equal_to
 
@@ -285,14 +286,10 @@ def test_declarative_init(
 
 
 @pytest.mark.asyncio
-async def test_remote_file_extractor_extract_records(httpx_mock):
+async def test_remote_file_extractor_extract_records(httpx2_mock: respx.Router):
     files = ["https://example.com/file.json", "https://example.com/file2.json"]
     for file in files:
-        httpx_mock.add_response(
-            url=file,
-            method="GET",
-            json=SIMPLE_RECORD,
-        )
+        httpx2_mock.get(file).respond(200, json=SIMPLE_RECORD)
     subject = FileExtractor.remote(urls=files)
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD, SIMPLE_RECORD]))
@@ -363,14 +360,12 @@ def test_file_source_default_description():
 
 
 @pytest.mark.asyncio
-async def test_unified_extractor_multiple_source_types(json_file, csv_file, httpx_mock):
+async def test_unified_extractor_multiple_source_types(
+    json_file, csv_file, httpx2_mock: respx.Router
+):
     urls = ["https://example.com/file.json", "https://example.com/file2.json"]
     for url in urls:
-        httpx_mock.add_response(
-            url=url,
-            method="GET",
-            json=SIMPLE_RECORD,
-        )
+        httpx2_mock.get(url).respond(200, json=SIMPLE_RECORD)
 
     subject = FileExtractor.from_file_data(
         [

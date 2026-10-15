@@ -1,13 +1,16 @@
 import asyncio
-from unittest.mock import AsyncMock, Mock
+from typing import Optional
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from nodestream.metrics import STEPS_RUNNING
-from nodestream.pipeline.channel import StepOutput, channel
+from nodestream.metrics import STEPS_RUNNING, Metrics
+from nodestream.pipeline.channel import Channel, StepInput, StepOutput, channel
+from nodestream.pipeline.object_storage import NullObjectStore, ObjectStore
 from nodestream.pipeline.pipeline import (
     EmitOutstandingRecordsState,
     EmitResult,
+    ExecutionState,
     Executor,
     Pipeline,
     PipelineOutputProcessRecordsState,
@@ -20,7 +23,8 @@ from nodestream.pipeline.pipeline import (
     StopStepExecution,
 )
 from nodestream.pipeline.progress_reporter import PipelineProgressReporter
-from nodestream.pipeline.step import Step, StepContext
+from nodestream.pipeline.step import PassStep, Step, StepContext
+from nodestream.schema import ExpandsSchema, SchemaExpansionCoordinator
 
 
 @pytest.fixture
@@ -28,8 +32,8 @@ def mock_step():
     step = Mock(spec=Step)
     step.start = AsyncMock()
     step.finish = AsyncMock()
-    step.process_record = AsyncMock()
-    step.emit_outstanding_records = AsyncMock()
+    step.process_record = Mock()
+    step.emit_outstanding_records = Mock()
     step.finalize_record = AsyncMock()
     return step
 
@@ -42,10 +46,98 @@ def mock_context():
     return context
 
 
+class SampleStepExecutionState(StepExecutionState):
+    def __init__(
+        self,
+        step: Step,
+        context: StepContext,
+        step_input: StepInput,
+        output: StepOutput,
+    ):
+        super().__init__(step, context, step_input, output)
+
+    async def execute_until_state_change(self) -> Optional[ExecutionState]:
+        pass
+
+
 @pytest.fixture
 def step_execution_state(mock_step, mock_context):
     input_channel, output_channel = channel(10)
-    return StepExecutionState(mock_step, mock_context, input_channel, output_channel)
+    return SampleStepExecutionState(
+        mock_step, mock_context, input_channel, output_channel
+    )
+
+
+def on_finish(fatal_errors):
+    def inner(_metrics):
+        if fatal_errors:
+            raise fatal_errors[0]
+
+    return inner
+
+
+def on_fatal_error(fatal_errors):
+    def inner(exc):
+        fatal_errors.append(exc)
+
+    return inner
+
+
+# noinspection unused-parameter
+async def empty_generator(data=None, context=None):
+    """Mock process_record to return empty generator"""
+    return
+    # noinspection unreachable-code
+    yield  # pragma: no cover
+
+
+class NoOpStep(Step):
+    def __init__(self):
+        self.emit_outstanding_records = empty_generator
+
+
+class BlockingExtractor(Step):
+    def __init__(self, blocking=None, event: asyncio.Event | None = None):
+        self.process_record = empty_generator
+        self.blocking = blocking
+        self.event = event or asyncio.Event()
+        self.finish_calls = []
+
+    async def emit_outstanding_records(self, context):
+        yield {"data": "record"}
+        if self.blocking:
+            self.blocking.set()  # signal that we're about to block
+        await self.event.wait()
+
+    async def finish(self, context):
+        self.finish_calls.append("extractor")
+
+
+class FatalWriterStep(Step):
+    def __init__(self, error_msg="primary error"):
+        self.error_msg = error_msg
+        self.finish_calls = []
+
+    async def process_record(self, record, context):
+        raise RuntimeError(self.error_msg)
+        # noinspection unreachable-code
+        yield
+
+    async def finish(self, context):
+        self.finish_calls.append("writer")
+
+
+class PassThroughWriter(Step):
+    def __init__(self):
+        self.process_record = empty_generator
+
+
+class FailingExtractor(Step):
+    def __init__(self):
+        self.process_record = empty_generator
+
+    async def emit_outstanding_records(self, context):
+        yield {"data": "record"}
 
 
 # Tests for Record class
@@ -201,16 +293,13 @@ async def test_process_records_state_drops_record_when_no_emission():
         record="test_data", originating_step=originating_step, callback_token="token"
     )
 
-    # Mock process_record to return empty generator
-    async def empty_generator(data, context):
-        return
-        yield  # pragma: no cover
-
     mock_step.process_record.return_value = empty_generator("test_data", mock_context)
 
+    channel_result: Channel = input_channel.channel
+    assert channel_result is not None
     # Put record and end signal
-    await input_channel.channel.put(test_record)
-    await input_channel.channel.put(None)
+    await channel_result.put(test_record)
+    await channel_result.put(None)
 
     await state.execute_until_state_change()
 
@@ -269,7 +358,6 @@ async def test_pipeline_output_observes_data_not_record():
     reporter = PipelineProgressReporter(observability_callback=observe_callback)
 
     # Create pipeline output state
-    from nodestream.metrics import Metrics
 
     metrics = Metrics()
     state = PipelineOutputProcessRecordsState(input_channel, reporter, metrics)
@@ -382,7 +470,7 @@ async def test_process_records_state_exception_handling(mock_step, mock_context)
     )
 
     # Mock process_record to raise an exception directly (not return a coroutine)
-    def failing_process_record(data, context):
+    def failing_process_record(_data, _context):
         raise Exception("Processing failed")
 
     mock_step.process_record = failing_process_record
@@ -420,7 +508,7 @@ async def test_process_records_state_closed_downstream_transition(
     )
 
     # Mock process_record to return a generator with records
-    async def test_generator(data, context):
+    async def test_generator(_data, _context):
         yield "output_record"
 
     mock_step.process_record.return_value = test_generator("test_data", mock_context)
@@ -443,7 +531,7 @@ async def test_emit_outstanding_records_state_success(mock_step, mock_context):
     )
 
     # Mock emit_outstanding_records to return a generator
-    async def outstanding_generator(context):
+    async def outstanding_generator(_context):
         yield "outstanding_record1"
         yield "outstanding_record2"
 
@@ -467,7 +555,7 @@ async def test_emit_outstanding_records_state_exception_handling(
     )
 
     # Mock emit_outstanding_records to raise an exception directly
-    def failing_emit_outstanding(context):
+    def failing_emit_outstanding(_context):
         raise Exception("Outstanding records failed")
 
     mock_step.emit_outstanding_records = failing_emit_outstanding
@@ -547,7 +635,6 @@ async def test_stop_step_execution_decrements_metric_when_output_done_cancelled(
 async def test_pipeline_output_state_call_ignoring_errors_success():
     input_channel, _ = channel(10)
     reporter = PipelineProgressReporter()
-    from nodestream.metrics import Metrics
 
     metrics = Metrics()
 
@@ -568,7 +655,6 @@ async def test_pipeline_output_state_call_ignoring_errors_success():
 async def test_pipeline_output_state_call_ignoring_errors_exception():
     input_channel, _ = channel(10)
     reporter = PipelineProgressReporter()
-    from nodestream.metrics import Metrics
 
     metrics = Metrics()
 
@@ -587,7 +673,6 @@ async def test_pipeline_output_state_call_ignoring_errors_exception():
 async def test_pipeline_output_start_state():
     input_channel, _ = channel(10)
     reporter = PipelineProgressReporter()
-    from nodestream.metrics import Metrics
 
     metrics = Metrics()
 
@@ -603,7 +688,6 @@ async def test_pipeline_output_start_state():
 async def test_pipeline_output_stop_state():
     input_channel, _ = channel(10)
     reporter = PipelineProgressReporter()
-    from nodestream.metrics import Metrics
 
     metrics = Metrics()
 
@@ -621,7 +705,6 @@ async def test_executor_run():
     mock_step.start = AsyncMock()
     mock_step.finish = AsyncMock()
     mock_step.process_record = AsyncMock()
-    mock_step.emit_outstanding_records = AsyncMock()
     mock_step.finalize_record = AsyncMock()
 
     input_channel, output_channel = channel(10)
@@ -631,12 +714,9 @@ async def test_executor_run():
 
     executor = Executor.for_step(mock_step, input_channel, output_channel, mock_context)
 
-    # Mock emit_outstanding_records to return empty generator
-    async def empty_generator(context):
-        return
-        yield  # pragma: no cover
-
-    mock_step.emit_outstanding_records.return_value = empty_generator(mock_context)
+    mock_step.emit_outstanding_records = Mock(
+        return_value=empty_generator(mock_context)
+    )
 
     # Close input to end processing
     await input_channel.channel.put(None)
@@ -645,14 +725,12 @@ async def test_executor_run():
 
     mock_step.start.assert_called_once_with(mock_context)
     mock_step.finish.assert_called_once_with(mock_context)
+    mock_context.report_error.assert_not_called()
 
 
 # Tests for Pipeline class
 @pytest.mark.asyncio
 async def test_pipeline_init():
-    from nodestream.pipeline.object_storage import NullObjectStore
-    from nodestream.pipeline.step import PassStep
-
     steps = (PassStep(), PassStep())
     step_outbox_size = 100
     object_store = NullObjectStore()
@@ -666,16 +744,12 @@ async def test_pipeline_init():
 
 @pytest.mark.asyncio
 async def test_pipeline_get_child_expanders():
-    from nodestream.pipeline.object_storage import NullObjectStore
-    from nodestream.pipeline.step import PassStep
-    from nodestream.schema import ExpandsSchema
-
     # Create a mock step that implements both Step and ExpandsSchema
     class MockExpanderStep(Step, ExpandsSchema):
         def process_record(self, record, context):
             yield record
 
-        def expand_schema(self, schema):
+        def expand_schema(self, coordinator: SchemaExpansionCoordinator):
             pass
 
     mock_expander_step = MockExpanderStep()
@@ -692,9 +766,6 @@ async def test_pipeline_get_child_expanders():
 
 @pytest.mark.asyncio
 async def test_pipeline_run():
-    from nodestream.pipeline.object_storage import NullObjectStore
-    from nodestream.pipeline.step import PassStep
-
     # Create simple steps
     step1 = PassStep()
     step2 = PassStep()
@@ -745,7 +816,9 @@ async def test_emit_from_generator_early_return_on_closed_downstream(
 async def test_process_records_state_should_continue_false(mock_step, mock_context):
     """Test ProcessRecordsState when emit result should_continue is False."""
     input_channel, output_channel = channel(10)
-    state = ProcessRecordsState(mock_step, mock_context, input_channel, output_channel)
+    state: ProcessRecordsState = ProcessRecordsState(
+        mock_step, mock_context, input_channel, output_channel
+    )
 
     # Create a record
     originating_step = Mock(spec=Step)
@@ -755,13 +828,12 @@ async def test_process_records_state_should_continue_false(mock_step, mock_conte
     )
 
     # Mock process_record to return a generator that yields records
-    async def test_generator(data, context):
+    async def test_generator(_data, _context):
         yield "output_record"
 
     mock_step.process_record.return_value = test_generator("test_data", mock_context)
 
     # Mock emit_from_generator to return CLOSED_DOWNSTREAM to trigger should_continue = False
-    from unittest.mock import patch
 
     with patch.object(
         state, "emit_from_generator", return_value=EmitResult.CLOSED_DOWNSTREAM
@@ -785,21 +857,13 @@ async def test_pipeline_output_on_finish_callback_exceptions_not_swallowed(
 
     This test covers the case described in the diff comment:
     'For cases where the reporter _wants_ to have the exception thrown
-    (e.g to have a status code in the CLI) we need to make sure we call
-    on_finish_callback without swallowing exceptions (because thats the
+    (e.g. to have a status code in the CLI) we need to make sure we call
+    on_finish_callback without swallowing exceptions (because that's the
     point).'
     """
 
-    from nodestream.pipeline.object_storage import NullObjectStore
-    from nodestream.pipeline.step import Step
-
-    def on_finish_callback(metrics):
+    def on_finish_callback(_metrics):
         raise ValueError("CLI status code exception")
-
-    class NoOpStep(Step):
-        async def emit_outstanding_records(self, context):
-            return
-            yield
 
     pipeline = Pipeline(
         steps=(NoOpStep(),),
@@ -829,8 +893,6 @@ async def test_pipeline_on_start_callback_called_before_step_operations(
     to ensure the on_start_callback is called before any operations
     occur in the actual steps in the pipeline.'
     """
-    from nodestream.pipeline.object_storage import ObjectStore
-    from nodestream.pipeline.pipeline import Pipeline
 
     # Track the order of operations
     call_order = []
@@ -838,24 +900,24 @@ async def test_pipeline_on_start_callback_called_before_step_operations(
     def on_start_callback():
         call_order.append("on_start_callback")
 
-    def on_finish_callback(metrics):
+    def on_finish_callback(_metrics):
         call_order.append("on_finish_callback")
 
     # Create a mock step that records when it starts
     mock_step = mocker.Mock(Step)
     mock_step.__class__.__name__ = "MockStep"
 
-    async def mock_start(context):
+    async def mock_start(_context):
         call_order.append("step_start")
 
-    async def mock_finish(context):
+    async def mock_finish(_context):
         call_order.append("step_finish")
 
-    async def mock_process_record(record, context):
+    async def mock_process_record(record, _context):
         call_order.append("step_process")
         yield record
 
-    async def mock_emit_outstanding_records(context):
+    async def mock_emit_outstanding_records(_context):
         call_order.append("step_emit_outstanding")
         for record in ():
             yield record
@@ -901,48 +963,18 @@ async def test_pipeline_cancels_blocking_extractor_on_fatal_error(mocker):
     the pipeline output executor had already failed.
     """
 
-    from nodestream.pipeline.object_storage import NullObjectStore
-    from nodestream.pipeline.step import Step
-
     block_event = asyncio.Event()  # never set — simulates a blocking poll
-
-    class BlockingExtractor(Step):
-        """Emits one record, then blocks until cancelled — like a Kafka consumer."""
-
-        async def emit_outstanding_records(self, context):
-            yield {"data": "record"}
-            # Block indefinitely; only exits via CancelledError when task is cancelled.
-            await block_event.wait()
-
-        async def process_record(self, record, context):
-            # Extractors don't consume input; this is unreachable.
-            return
-            yield
-
-    class FatalWriterStep(Step):
-        """Raises a fatal error on the first record received."""
-
-        async def process_record(self, record, context):
-            raise RuntimeError("fatal writer error")
-            yield  # noqa: F701
 
     fatal_errors = []
 
-    def on_fatal_error(exc):
-        fatal_errors.append(exc)
-
-    def on_finish(metrics):
-        if fatal_errors:
-            raise fatal_errors[0]
-
     reporter = PipelineProgressReporter(
-        on_fatal_error_callback=on_fatal_error,
-        on_finish_callback=on_finish,
+        on_fatal_error_callback=on_fatal_error(fatal_errors),
+        on_finish_callback=on_finish(fatal_errors),
         logger=mocker.Mock(),
     )
 
     pipeline = Pipeline(
-        (BlockingExtractor(), FatalWriterStep()),
+        (BlockingExtractor(event=block_event), FatalWriterStep("fatal writer error")),
         step_outbox_size=10,
         object_store=NullObjectStore(),
     )
@@ -980,57 +1012,26 @@ async def test_pipeline_fatal_error_drains_completed_steps_before_cancellation(m
     - The fatal error is raised from Pipeline.run()
     - The writer step (which hit the fatal error) still called finish()
       via StopStepExecution — the graceful drain happened
-    - The blocking extractor was cancelled and did NOT call finish()
+    - The blocking extractor was canceled and did NOT call finish()
       (it was stuck in emit_outstanding_records and never reached StopStepExecution)
     """
-
-    from nodestream.pipeline.object_storage import NullObjectStore
-    from nodestream.pipeline.step import Step
 
     block_event = asyncio.Event()  # never set — simulates a blocking Kafka poll
     finish_calls = []
 
-    class BlockingExtractor(Step):
-        """Emits one record then blocks forever — simulates a Kafka consumer."""
-
-        async def emit_outstanding_records(self, context):
-            yield {"data": "record"}
-            await block_event.wait()  # blocks until cancelled
-
-        async def process_record(self, record, context):
-            return
-            yield
-
-        async def finish(self, context):
-            finish_calls.append("extractor")
-
-    class FatalWriterStep(Step):
-        """Raises on the first record, then completes StopStepExecution normally."""
-
-        async def process_record(self, record, context):
-            raise RuntimeError("fatal writer error")
-            yield
-
-        async def finish(self, context):
-            finish_calls.append("writer")
-
     fatal_errors = []
 
-    def on_fatal_error(exc):
-        fatal_errors.append(exc)
-
-    def on_finish(metrics):
-        if fatal_errors:
-            raise fatal_errors[0]
-
     reporter = PipelineProgressReporter(
-        on_fatal_error_callback=on_fatal_error,
-        on_finish_callback=on_finish,
+        on_fatal_error_callback=on_fatal_error(fatal_errors),
+        on_finish_callback=on_finish(fatal_errors),
         logger=mocker.Mock(),
     )
-
+    blocking_extractor = BlockingExtractor(event=block_event)
+    blocking_extractor.finish_calls = finish_calls
+    fatal_writer = FatalWriterStep("fatal writer error")
+    fatal_writer.finish_calls = finish_calls
     pipeline = Pipeline(
-        (BlockingExtractor(), FatalWriterStep()),
+        (blocking_extractor, fatal_writer),
         step_outbox_size=10,
         object_store=NullObjectStore(),
     )
@@ -1045,7 +1046,7 @@ async def test_pipeline_fatal_error_drains_completed_steps_before_cancellation(m
         "StopStepExecution did not complete before the fatal error propagated."
     )
 
-    # The extractor was cancelled mid-flight in emit_outstanding_records, but
+    # The extractor was canceled mid-flight in emit_outstanding_records, but
     # finish() must still be called so that resources (e.g. Neo4j driver threads)
     # are properly cleaned up — that's the whole point of this fix.
     assert "extractor" in finish_calls, (
@@ -1061,29 +1062,11 @@ async def test_pipeline_external_cancellation_still_cancels_sibling_tasks(mocker
     CancelledError is a BaseException, not Exception. Before the fix, the cleanup
     block used `except Exception` which would miss an external cancellation — leaving
     blocking sibling tasks alive as zombies even when the pipeline task itself was
-    cancelled from outside.
+    canceled from outside.
     """
-
-    from nodestream.pipeline.object_storage import NullObjectStore
-    from nodestream.pipeline.step import Step
 
     blocking = asyncio.Event()  # set when extractor is about to block
     block_event = asyncio.Event()  # never set — holds extractor open
-
-    class BlockingExtractor(Step):
-        async def emit_outstanding_records(self, context):
-            yield {"data": "record"}
-            blocking.set()  # signal that we're about to block
-            await block_event.wait()
-
-        async def process_record(self, record, context):
-            return
-            yield
-
-    class PassThroughWriter(Step):
-        async def process_record(self, record, context):
-            return
-            yield
 
     reporter = PipelineProgressReporter(
         on_finish_callback=lambda metrics: None,
@@ -1091,7 +1074,7 @@ async def test_pipeline_external_cancellation_still_cancels_sibling_tasks(mocker
     )
 
     pipeline = Pipeline(
-        (BlockingExtractor(), PassThroughWriter()),
+        (BlockingExtractor(blocking=blocking, event=block_event), PassThroughWriter()),
         step_outbox_size=10,
         object_store=NullObjectStore(),
     )
@@ -1121,35 +1104,13 @@ async def test_pipeline_external_cancellation_still_cancels_sibling_tasks(mocker
 @pytest.mark.asyncio
 async def test_pipeline_logs_secondary_exceptions_during_cleanup(mocker):
     """Secondary exceptions from sibling tasks during cleanup must be logged, not silently dropped."""
-    from nodestream.pipeline.object_storage import NullObjectStore
-    from nodestream.pipeline.step import Step
-
-    class FailingExtractor(Step):
-        async def emit_outstanding_records(self, context):
-            yield {"data": "record"}
-
-        async def process_record(self, record, context):
-            return
-            yield
-
-    class FatalWriterStep(Step):
-        async def process_record(self, record, context):
-            raise RuntimeError("primary error")
-            yield
 
     fatal_errors = []
 
-    def on_fatal_error(exc):
-        fatal_errors.append(exc)
-
-    def on_finish(metrics):
-        if fatal_errors:
-            raise fatal_errors[0]
-
     mock_logger = mocker.Mock()
     reporter = PipelineProgressReporter(
-        on_fatal_error_callback=on_fatal_error,
-        on_finish_callback=on_finish,
+        on_fatal_error_callback=on_fatal_error(fatal_errors),
+        on_finish_callback=on_finish(fatal_errors),
         logger=mock_logger,
     )
 
@@ -1172,36 +1133,13 @@ async def test_pipeline_logs_secondary_exceptions_during_cleanup(mocker):
 @pytest.mark.asyncio
 async def test_pipeline_logs_secondary_exception_from_cleanup(mocker):
     """Steps that raise a non-CancelledError during cleanup have it logged as a warning."""
-    from nodestream.pipeline.object_storage import NullObjectStore
-    from nodestream.pipeline.step import Step
-
-    class BlockingExtractor(Step):
-        async def emit_outstanding_records(self, context):
-            yield {"data": "record"}
-            await asyncio.Event().wait()
-
-        async def process_record(self, record, context):
-            return
-            yield
-
-    class FatalWriterStep(Step):
-        async def process_record(self, record, context):
-            raise RuntimeError("primary error")
-            yield
 
     fatal_errors = []
 
-    def on_fatal_error(exc):
-        fatal_errors.append(exc)
-
-    def on_finish(metrics):
-        if fatal_errors:
-            raise fatal_errors[0]
-
     mock_logger = mocker.Mock()
     reporter = PipelineProgressReporter(
-        on_fatal_error_callback=on_fatal_error,
-        on_finish_callback=on_finish,
+        on_fatal_error_callback=on_fatal_error(fatal_errors),
+        on_finish_callback=on_finish(fatal_errors),
         logger=mock_logger,
     )
 
@@ -1228,36 +1166,12 @@ async def test_pipeline_logs_secondary_exception_from_cleanup(mocker):
 @pytest.mark.asyncio
 async def test_pipeline_logs_timeout_during_cleanup(mocker):
     """A cleanup timeout is logged as a warning and does not swallow the original error."""
-    from nodestream.pipeline.object_storage import NullObjectStore
-    from nodestream.pipeline.step import Step
-
-    class BlockingExtractor(Step):
-        async def emit_outstanding_records(self, context):
-            yield {"data": "record"}
-            await asyncio.Event().wait()
-
-        async def process_record(self, record, context):
-            return
-            yield
-
-    class FatalWriterStep(Step):
-        async def process_record(self, record, context):
-            raise RuntimeError("primary error")
-            yield
-
     fatal_errors = []
-
-    def on_fatal_error(exc):
-        fatal_errors.append(exc)
-
-    def on_finish(metrics):
-        if fatal_errors:
-            raise fatal_errors[0]
 
     mock_logger = mocker.Mock()
     reporter = PipelineProgressReporter(
-        on_fatal_error_callback=on_fatal_error,
-        on_finish_callback=on_finish,
+        on_fatal_error_callback=on_fatal_error(fatal_errors),
+        on_finish_callback=on_finish(fatal_errors),
         logger=mock_logger,
     )
 

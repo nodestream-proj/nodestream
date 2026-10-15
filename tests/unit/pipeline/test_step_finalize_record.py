@@ -4,7 +4,7 @@ from nodestream.pipeline.pipeline import RecordContext
 from nodestream.pipeline.step import Step
 
 
-class TestStep(Step):
+class TrackFinalizeRecordStep(Step):
     """Test step that tracks finalize_record calls."""
 
     def __init__(self):
@@ -37,7 +37,7 @@ class ResourceTrackingStep(Step):
 @pytest.mark.asyncio
 async def test_step_finalize_record_custom_implementation():
     """Test that custom finalize_record implementation is called."""
-    step = TestStep()
+    step = TrackFinalizeRecordStep()
 
     tokens = ["token1", "token2", {"complex": "token"}]
 
@@ -50,7 +50,7 @@ async def test_step_finalize_record_custom_implementation():
 @pytest.mark.asyncio
 async def test_finalize_record_called_on_record_drop():
     """Test that finalize_record is called when a record is dropped."""
-    step = TestStep()
+    step = TrackFinalizeRecordStep()
     token = "test_token"
 
     record = RecordContext(
@@ -65,7 +65,7 @@ async def test_finalize_record_called_on_record_drop():
 @pytest.mark.asyncio
 async def test_finalize_record_called_with_correct_token():
     """Test that finalize_record is called with the correct callback token."""
-    step = TestStep()
+    step = TrackFinalizeRecordStep()
 
     # Test with simple data (token == data)
     record1 = RecordContext.from_step_emission(step, "simple_data")
@@ -136,8 +136,8 @@ async def test_finalize_record_exception_handling():
 @pytest.mark.asyncio
 async def test_finalize_record_with_child_records():
     """Test finalize_record behavior with parent-child record relationships."""
-    parent_step = TestStep()
-    child_step = TestStep()
+    parent_step = TrackFinalizeRecordStep()
+    child_step = TrackFinalizeRecordStep()
 
     parent_record = RecordContext(
         record="parent",
@@ -178,7 +178,7 @@ async def test_finalize_record_with_child_records():
 @pytest.mark.asyncio
 async def test_finalize_record_multiple_tokens_same_step():
     """Test finalize_record called multiple times on same step."""
-    step = TestStep()
+    step = TrackFinalizeRecordStep()
 
     records = []
     for i in range(5):
@@ -198,7 +198,7 @@ async def test_finalize_record_multiple_tokens_same_step():
 @pytest.mark.asyncio
 async def test_finalize_record_with_none_token():
     """Test finalize_record behavior with None token."""
-    step = TestStep()
+    step = TrackFinalizeRecordStep()
 
     record = RecordContext(record="test", originating_step=step, callback_token=None)
 
@@ -210,7 +210,7 @@ async def test_finalize_record_with_none_token():
 @pytest.mark.asyncio
 async def test_finalize_record_with_complex_token():
     """Test finalize_record with complex token objects."""
-    step = TestStep()
+    step = TrackFinalizeRecordStep()
 
     complex_token = {
         "id": "record_123",
