@@ -1942,7 +1942,7 @@ files = [
 name = "prometheus-client"
 version = "0.26.0"
 description = "Python client for the Prometheus monitoring system."
-optional = false
+optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 markers = "extra == \"prometheus\""
@@ -3413,4 +3413,4 @@ validation = ["genson", "jsonschema"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "c8b5e4650be4a37d5bfd76f0f0d37f8a23d1a5da390f17d4264e9fd0a446b7ca"
+content-hash = "04d97d0b6c61e3b2c6b60a88efc680c0e81da2b417b4d1564c5a2006d71ffdc9"
