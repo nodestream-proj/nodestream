@@ -1,9 +1,10 @@
 import json
 from dataclasses import asdict
+from datetime import datetime
 from pathlib import Path
 
 import pytest
-from pandas import Timestamp
+from freezegun import freeze_time
 
 from nodestream.model import DesiredIngestion
 from nodestream.pipeline import (
@@ -17,7 +18,7 @@ from nodestream.schema.printers import SchemaPrinter
 def set_default(obj):
     if isinstance(obj, frozenset):
         return list(obj)
-    if isinstance(obj, Timestamp):
+    if isinstance(obj, datetime):
         return obj.isoformat()
     raise TypeError
 
@@ -42,6 +43,7 @@ def drive_definition_to_completion():
     return _drive_definition_to_completion
 
 
+@freeze_time("2021-06-18T00:00:00")
 @pytest.mark.integration
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
@@ -56,10 +58,7 @@ def drive_definition_to_completion():
 async def test_pipeline_interpretation_snapshot(
     snapshot, drive_definition_to_completion, pipeline_name, mocker
 ):
-    from pandas import Timestamp
 
-    mocked_ts = mocker.patch("pandas.Timestamp.utcnow")
-    mocked_ts.return_value = Timestamp("2021-06-18")
     snapshot.snapshot_dir = "tests/integration/snapshots"
     pipeline_file = get_pipeline_fixture_file_by_name(pipeline_name)
     definition = PipelineDefinition.from_path(pipeline_file)

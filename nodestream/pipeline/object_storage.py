@@ -8,7 +8,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, TypeVar
 
-from botocore.exceptions import ClientError
+try:
+    from botocore.exceptions import ClientError
+except ImportError:
+    # Only S3ObjectStore uses it, and AwsClientFactory raises before it can run.
+    pass
 
 from ..pluggable import Pluggable
 from ..subclass_registry import SubclassRegistry

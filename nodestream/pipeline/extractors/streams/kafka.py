@@ -2,7 +2,12 @@ import asyncio
 from logging import getLogger
 from typing import Any, Iterable, List, Optional
 
-from confluent_kafka import Consumer, KafkaException
+try:
+    from confluent_kafka import Consumer, KafkaException
+
+    _has_kafka = True
+except ImportError:
+    _has_kafka = False
 
 from .extractor import StreamConnector
 
@@ -37,6 +42,8 @@ class KafkaConsumerFactory:
         security_protocol: str,
         **kwargs: Any,
     ):
+        if not _has_kafka:
+            raise ImportError("Optional dependency kafka is not installed.")
         consumer = Consumer(
             cls.build_consumer_config(
                 offset_reset,
@@ -67,6 +74,8 @@ class KafkaStreamConnector(StreamConnector, alias="kafka"):
         max_records: int = 10,
         poll_timeout: int = 30,
     ):
+        if not _has_kafka:
+            raise ImportError("Optional dependency kafka is not installed.")
         self.bootstrap_servers = bootstrap_servers
         self.topic = topic
         self.max_records = 10

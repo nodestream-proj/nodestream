@@ -1,7 +1,7 @@
-from abc import ABC, abstractclassmethod, abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Type
+from typing import Any, Callable, Type
 
 from schema import Schema
 from yaml import SafeDumper, SafeLoader, dump, load
@@ -10,15 +10,17 @@ from yaml import SafeDumper, SafeLoader, dump, load
 class DescribesYamlSchema(ABC):
     """A mixin for classes that can be described by a YAML schema."""
 
-    @abstractclassmethod
-    def describe_yaml_schema(self) -> Schema:
+    @classmethod
+    @abstractmethod
+    def describe_yaml_schema(cls) -> Schema:
         raise NotImplementedError
 
 
 class LoadsFromYaml(DescribesYamlSchema):
     """A mixin for classes that can be read from YAML."""
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def from_file_data(cls, data):
         """Create an instance of this class from the given file data.
 
@@ -47,7 +49,7 @@ class LoadsFromYaml(DescribesYamlSchema):
         return cls.from_file_data(validated_data)
 
 
-class LoadsFromYamlFile(LoadsFromYaml):
+class LoadsFromYamlFile(LoadsFromYaml, ABC):
     """A mixin for classes that can be read from a YAML file."""
 
     @classmethod
@@ -93,7 +95,7 @@ class SavesToYaml(DescribesYamlSchema):
         raise NotImplementedError
 
 
-class SavesToYamlFile(SavesToYaml):
+class SavesToYamlFile(SavesToYaml, ABC):
     """A mixin for classes that can be written to a YAML file."""
 
     @classmethod
@@ -133,7 +135,7 @@ class SavesToYamlFile(SavesToYaml):
             )
 
 
-class WritesToYamlToStdout(SavesToYamlFile):
+class WritesToYamlToStdout(SavesToYamlFile, ABC):
     """A mixin for classes that can be written as YAML to stdout."""
 
     def to_yaml_string(self) -> str:
@@ -146,7 +148,7 @@ class WritesToYamlToStdout(SavesToYamlFile):
             sort_keys=True,
         )
 
-    def write_to_stdout(self, print_fn=print):
+    def write_to_stdout(self, print_fn: Callable[..., object] = print):
         """Write this object as YAML to the given print function.
 
         The default behavior uses the built-in :func:`print`, but callers can

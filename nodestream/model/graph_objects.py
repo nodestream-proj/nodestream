@@ -1,10 +1,9 @@
 import time
 from abc import ABC
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Optional, Tuple
-
-from pandas import Timestamp
 
 from .creation_rules import NodeCreationRule, RelationshipCreationRule
 
@@ -30,14 +29,14 @@ class DeduplicatableObject(ABC):
 
 
 @lru_cache(maxsize=128)
-def _get_cached_timestamp(time_hash: int) -> Timestamp:
+def _get_cached_timestamp(time_hash: int) -> datetime:
     del time_hash  # Unused; just needed to cache the result
-    return Timestamp.utcnow()
+    return datetime.now(timezone.utc)
 
 
 def get_cached_timestamp(
     max_age_in_seconds: int = 2, epoch: Optional[float] = None
-) -> Timestamp:
+) -> datetime:
     # calling time.time() is relatively fast, but getting a Timestamp object
     # is relatively slow.
     epoch = epoch or time.time()
