@@ -1,12 +1,16 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from time import time
 from typing import Optional
 from uuid import uuid4
 
-import boto3
-import pytz
-from botocore.credentials import RefreshableCredentials
-from botocore.session import Session
+try:
+    import boto3
+    from botocore.credentials import RefreshableCredentials
+    from botocore.session import Session
+
+    _has_boto3 = True
+except ImportError:
+    _has_boto3 = False
 
 
 class AwsClientFactory:
@@ -17,6 +21,8 @@ class AwsClientFactory:
         session_ttl: int = 3000,
         **boto_session_args,
     ) -> None:
+        if not _has_boto3:
+            raise ImportError("The aws optional dependencies are required.")
         self.assume_role_arn = assume_role_arn
         self.assume_role_external_id = assume_role_external_id
         self.session_args = self._init_session_args(**boto_session_args)
@@ -54,7 +60,7 @@ class AwsClientFactory:
             "secret_key": session_credentials.secret_key,
             "token": session_credentials.token,
             "expiry_time": datetime.fromtimestamp(
-                time() + self.session_ttl, tz=pytz.utc
+                time() + self.session_ttl, tz=timezone.utc
             ).isoformat(),
         }
 

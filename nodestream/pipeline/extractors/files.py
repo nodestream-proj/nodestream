@@ -22,7 +22,6 @@ from typing import (
     Sequence,
 )
 
-import pandas as pd
 from httpx import AsyncClient
 from yaml import safe_load
 
@@ -31,6 +30,13 @@ from ...pluggable import Pluggable
 from ...subclass_registry import MissingFromRegistryError, SubclassRegistry
 from .credential_utils import AwsClientFactory
 from .extractor import Extractor
+
+try:
+    import pandas as pd
+except ImportError:
+    _has_pandas = False
+else:
+    _has_pandas = True
 
 SUPPORTED_FILE_FORMAT_REGISTRY = SubclassRegistry()
 SUPPORTED_COMPRESSED_FILE_FORMAT_REGISTRY = SubclassRegistry()
@@ -320,6 +326,8 @@ class ParquetFileFormat(FileCodec, alias=".parquet"):
     """
 
     def read_file_from_handle(self, fp: IOBase) -> Iterable[JsonLikeDocument]:
+        if not _has_pandas:
+            raise ImportError("Pandas is required to read parquet files.")
         df = pd.read_parquet(fp, engine="pyarrow")
         return (row[1].to_dict() for row in df.iterrows())
 

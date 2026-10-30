@@ -2,7 +2,6 @@ import datetime
 from unittest.mock import patch
 
 import pytest
-import pytz
 from freezegun import freeze_time
 from hamcrest import assert_that, equal_to, has_key, not_
 
@@ -81,7 +80,9 @@ class MockCredentials:
 
 # Testing against a different timezone to ensure the time is being converted to UTC
 @freeze_time(
-    datetime.datetime(1998, 3, 25, 12, 0, 1, tzinfo=pytz.timezone("Etc/GMT-8"))
+    datetime.datetime(
+        1998, 3, 25, 12, 0, 1, tzinfo=datetime.timezone(datetime.timedelta(hours=8))
+    )
 )
 def test_get_credentials_from_proider_chain(client_without_role):
     mock_credentials = MockCredentials(
@@ -153,3 +154,11 @@ def test_get_credentials_from_provider_chain_uses_session_args(
     client_without_role.session_args = {"region_name": "us-east-1"}
     client_without_role.get_credentials_from_provider_chain()
     assert_that(client_without_role.session_args["region_name"], equal_to("us-east-1"))
+
+
+def test_init_without_boto3_raises_import_error(mocker):
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
+
+    mocker.patch("nodestream.pipeline.extractors.credential_utils._has_boto3", False)
+    with pytest.raises(ImportError, match="aws optional dependencies"):
+        AwsClientFactory()

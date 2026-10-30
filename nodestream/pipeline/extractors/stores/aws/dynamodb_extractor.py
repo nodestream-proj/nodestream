@@ -1,7 +1,11 @@
 from logging import getLogger
 from typing import Any, AsyncGenerator, Dict, Optional
 
-from boto3.dynamodb.types import TypeDeserializer
+try:
+    from boto3.dynamodb.types import TypeDeserializer
+except ImportError:
+    # AwsClientFactory raises before DynamoRecord can run without the aws extra.
+    pass
 
 from ...credential_utils import AwsClientFactory
 from ...extractor import Extractor

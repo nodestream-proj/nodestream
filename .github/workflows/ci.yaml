@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -40,3 +43,38 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.python-version }}-${{ matrix.os }}
+
+  extras-install:
+    name: install (${{ matrix.args || 'no extras' }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # One extra at a time: an extra that needs a package from another extra fails here.
+        args:
+          - ""
+          - "--extras aws"
+          - "--extras kafka"
+          - "--extras parquet"
+          - "--extras prometheus"
+          - "--extras validation"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install poetry
+        run: pipx install poetry
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'poetry'
+      - name: Install
+        # --only main skips the dev group: moto pulls in boto3 and would hide a missing guard.
+        run: |
+          poetry env use 3.10
+          poetry install --only main ${{ matrix.args }}
+      - name: Import every module
+        # Fails only if a module imports an optional package without a try/except guard.
+        run: >
+          poetry run python -c
+          "import importlib, pkgutil, nodestream;
+          [importlib.import_module(m.name) for m in pkgutil.walk_packages(nodestream.__path__, 'nodestream.')]"
