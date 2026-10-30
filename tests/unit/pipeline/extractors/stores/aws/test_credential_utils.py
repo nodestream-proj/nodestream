@@ -154,3 +154,11 @@ def test_get_credentials_from_provider_chain_uses_session_args(
     client_without_role.session_args = {"region_name": "us-east-1"}
     client_without_role.get_credentials_from_provider_chain()
     assert_that(client_without_role.session_args["region_name"], equal_to("us-east-1"))
+
+
+def test_init_without_boto3_raises_import_error(mocker):
+    from nodestream.pipeline.extractors.credential_utils import AwsClientFactory
+
+    mocker.patch("nodestream.pipeline.extractors.credential_utils._has_boto3", False)
+    with pytest.raises(ImportError, match="aws optional dependencies"):
+        AwsClientFactory()

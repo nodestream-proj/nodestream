@@ -3,6 +3,7 @@ import csv
 import gzip
 import json
 import typing
+from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import AsyncIterator
@@ -16,6 +17,7 @@ from nodestream.pipeline.extractors.files import (
     FileExtractor,
     FileSource,
     LocalFileSource,
+    ParquetFileFormat,
     ReadableFile,
     RemoteFileSource,
 )
@@ -381,3 +383,9 @@ async def test_unified_extractor_multiple_source_types(json_file, csv_file, http
     )
     results = [r async for r in subject.extract_records()]
     assert_that(results, equal_to([SIMPLE_RECORD] * 4))
+
+
+def test_parquet_file_format_without_pandas_raises_import_error(mocker):
+    mocker.patch("nodestream.pipeline.extractors.files._has_pandas", False)
+    with pytest.raises(ImportError, match="Pandas is required"):
+        ParquetFileFormat().read_file_from_handle(BytesIO())

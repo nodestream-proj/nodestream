@@ -6,6 +6,7 @@ from hamcrest import assert_that, calling, equal_to, not_, raises
 from hamcrest.core.core.future import future_raising, resolved
 
 from nodestream.pipeline.extractors.streams import KafkaStreamConnector
+from nodestream.pipeline.extractors.streams.kafka import KafkaConsumerFactory
 
 
 @dataclass
@@ -98,3 +99,17 @@ async def test_process_message_error(connector, mocker):
     assert_that(
         calling(connector.process_message).with_args(test_msg), raises(KafkaException)
     )
+
+
+def test_consumer_factory_without_kafka_raises_import_error(mocker):
+    mocker.patch("nodestream.pipeline.extractors.streams.kafka._has_kafka", False)
+    with pytest.raises(ImportError, match="kafka is not installed"):
+        KafkaConsumerFactory.new(
+            "topic", "group", ["localhost:9092"], "latest", "PLAINTEXT"
+        )
+
+
+def test_stream_connector_without_kafka_raises_import_error(mocker):
+    mocker.patch("nodestream.pipeline.extractors.streams.kafka._has_kafka", False)
+    with pytest.raises(ImportError, match="kafka is not installed"):
+        KafkaStreamConnector(bootstrap_servers=["localhost:9092"], topic="topic")
